@@ -47,23 +47,44 @@ class BusinessAnalyzer:
 
     # Integration detection
     INTEGRATION_PATTERNS: dict[str, list[str]] = {
+        # LLM Providers
+        "Groq": ["groq", "api.groq.com"],
+        "OpenAI": ["openai", "api.openai.com"],
+        "Anthropic": ["anthropic", "api.anthropic.com"],
+        "Mistral": ["mistral", "api.mistral.ai"],
+        "Cohere": ["cohere", "api.cohere.ai"],
+        "Replicate": ["replicate"],
+        "Together": ["together", "api.together.xyz"],
+        "Ollama": ["ollama"],
+        "LiteLLM": ["litellm"],
+        # Payment & Finance
         "Stripe": ["stripe"],
-        "Supabase": ["supabase", "@supabase/supabase-js"],
-        "Firebase": ["firebase", "firebase-admin"],
-        "AWS": ["boto3", "aws-sdk", "@aws-sdk"],
-        "OpenAI": ["openai"],
-        "Anthropic": ["anthropic"],
-        "Auth0": ["auth0"],
-        "Clerk": ["@clerk"],
-        "Sentry": ["sentry", "@sentry"],
-        "Segment": ["analytics-node", "@segment"],
-        "Twilio": ["twilio"],
-        "SendGrid": ["sendgrid", "@sendgrid"],
         "Plaid": ["plaid"],
-        "Prisma": ["@prisma/client"],
-        "Redis": ["redis", "ioredis"],
+        # Databases
+        "Supabase": ["supabase", "@supabase/supabase-js", "supabase.co"],
+        "PlanetScale": ["planetscale", "@planetscale"],
+        "Neon": ["neon", "neon.tech"],
+        "Turso": ["turso", "@libsql"],
+        "Firebase": ["firebase", "firebase-admin"],
         "PostgreSQL": ["pg", "psycopg2", "asyncpg"],
         "MongoDB": ["mongodb", "mongoose", "pymongo"],
+        "Prisma": ["@prisma/client"],
+        "Redis": ["redis", "ioredis"],
+        # Infrastructure
+        "AWS": ["boto3", "aws-sdk", "@aws-sdk"],
+        "Vercel": ["vercel", "@vercel"],
+        "Railway": ["railway"],
+        "Fly.io": ["fly.io", "flyctl"],
+        "Render": ["render.com"],
+        # Auth
+        "Auth0": ["auth0"],
+        "Clerk": ["@clerk"],
+        # Monitoring & Analytics
+        "Sentry": ["sentry", "@sentry"],
+        "Segment": ["analytics-node", "@segment"],
+        # Communication
+        "Twilio": ["twilio"],
+        "SendGrid": ["sendgrid", "@sendgrid"],
     }
 
     # Domain keywords
@@ -87,6 +108,7 @@ class BusinessAnalyzer:
         self,
         tech_intel: TechnicalIntel,
         readme_content: str | None = None,
+        root_path: str | None = None,
     ) -> BusinessIntel:
         """
         Infer business context from technical intelligence.
@@ -94,6 +116,7 @@ class BusinessAnalyzer:
         Args:
             tech_intel: Technical intelligence from codebase
             readme_content: Optional README content for context
+            root_path: Optional root path for code scanning
 
         Returns:
             BusinessIntel with inferred context
@@ -103,8 +126,18 @@ class BusinessAnalyzer:
         # Infer product type
         intel.product_type = self._infer_product_type(tech_intel)
 
-        # Detect integrations
-        intel.integrations = self._detect_integrations(tech_intel)
+        # Detect integrations from dependencies
+        deps_integrations = self._detect_integrations(tech_intel)
+
+        # Also scan code for integrations (catches Groq, API URLs, etc.)
+        code_integrations = []
+        if root_path:
+            code_integrations = await self._detect_integrations_from_code(root_path)
+
+        # Merge both sources
+        intel.integrations = sorted(
+            list(set(deps_integrations + code_integrations))
+        )
 
         # Infer domain
         intel.domain = self._infer_domain(tech_intel, readme_content)
@@ -146,7 +179,7 @@ class BusinessAnalyzer:
         return None
 
     def _detect_integrations(self, tech: TechnicalIntel) -> list[str]:
-        """Detect third-party integrations."""
+        """Detect third-party integrations from dependency files."""
         all_deps = set()
         for deps in tech.dependencies.values():
             all_deps.update(dep.lower() for dep in deps)
@@ -159,6 +192,30 @@ class BusinessAnalyzer:
                     break
 
         return detected
+
+    async def _detect_integrations_from_code(self, root_path: str) -> list[str]:
+        """
+        Detect integrations by scanning actual code files.
+
+        This catches integrations that aren't in dependency files,
+        like direct API calls to Groq, OpenAI, etc.
+        """
+        from pathlib import Path
+
+        from cso_ai.intel.delta_detector import CodeScanner
+
+        scanner = CodeScanner()
+        root = Path(root_path)
+
+        if not root.exists():
+            return []
+
+        try:
+            result = await scanner.scan_integrations(root)
+            return result.get("integrations", [])
+        except Exception:
+            # If scanning fails, return empty list
+            return []
 
     def _infer_domain(
         self,

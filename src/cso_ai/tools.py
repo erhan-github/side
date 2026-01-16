@@ -432,9 +432,9 @@ async def _handle_analyze_codebase(arguments: dict[str, Any]) -> str:
             except (OSError, UnicodeDecodeError):
                 continue
 
-    # Run business analysis
+    # Run business analysis (with code scanning for integrations)
     biz_analyzer = BusinessAnalyzer()
-    biz_intel = await biz_analyzer.analyze(tech_intel, readme_content)
+    biz_intel = await biz_analyzer.analyze(tech_intel, readme_content, root_path=str(root))
 
     # Store in database
     db = _get_database()
@@ -1007,11 +1007,18 @@ Thinking as your Chief Strategy Officer...
         if (a.relevance_score or 0) >= 50
     ]
 
+    # Get recent deltas for context
+    project_path = profile.get("path", "")
+    recent_deltas = []
+    if project_path:
+        recent_deltas = db.get_recent_deltas(project_path, limit=10, days=7)
+
     try:
         advice = await strategist.get_strategy(
             question=question,
             profile=profile,
             articles=articles_data,
+            recent_deltas=recent_deltas,
         )
         output += advice + "\n"
     except Exception as e:
@@ -1245,39 +1252,40 @@ async def _handle_strategy(arguments: dict[str, Any]) -> str:
    "CSO, sync" or "CSO, analyze my codebase"
 """
 
-    # Prefer skeleton for basic info
-    if skeleton:
-        project_name = skeleton.get("name", "Unknown")
-        domain = skeleton.get("domain", "Unknown")
-        stage = skeleton.get("stage", "Unknown")
-        primary_lang = skeleton.get("primary_language", "Unknown")
-        description = skeleton.get("description", "")
-        project_path = skeleton.get("path", "")
-    else:
-        # Fall back to profile
+    # Use profile if available (has most complete data), otherwise skeleton
+    if profile:
         tech = profile.get("technical", {})
         biz = profile.get("business", {})
         project_name = Path(profile.get("path", "")).name
         domain = biz.get("domain", "Unknown")
         stage = biz.get("stage", "Unknown")
         primary_lang = tech.get("primary_language", "Unknown")
-        description = ""
+        description = skeleton.get("description", "") if skeleton else ""
         project_path = profile.get("path", "")
-    
-    # Get recent deltas for context
-    deltas = db.get_recent_deltas(project_path, limit=10, days=7) if project_path else []
-    delta_summary = db.get_delta_summary(project_path, days=7) if project_path else {}
-    
-    # Also get health info from profile if available
-    health = {}
-    git = {}
-    issues = {}
-    if profile:
-        tech = profile.get("technical", {})
-        biz = profile.get("business", {})
         health = tech.get("health_signals", {})
         git = health.get("git", {})
         issues = health.get("code_issues", {})
+    elif skeleton:
+        project_name = skeleton.get("name", "Unknown")
+        domain = skeleton.get("domain", "Unknown")
+        stage = skeleton.get("stage", "Unknown")
+        primary_lang = skeleton.get("primary_language", "Unknown")
+        description = skeleton.get("description", "")
+        project_path = skeleton.get("path", "")
+        health = {}
+        git = {}
+        issues = {}
+    else:
+        # This shouldn't happen due to check above, but handle it
+        return """🎯 Strategic Advice
+
+❌ No project data yet. Run sync first:
+   "CSO, sync" or "CSO, analyze my codebase"
+"""
+    
+    # Get recent deltas for context
+    deltas = db.get_recent_deltas(project_path, limit=10, days=7)
+    delta_summary = db.get_delta_summary(project_path, days=7)
 
     output = f"""🎯 Strategic Advice
 
@@ -1310,8 +1318,8 @@ Project: {project_name}
         
         question = context if context else "What should I focus on? Give 3-5 specific, actionable recommendations."
         
-        # Build a minimal profile for the strategist
-        minimal_profile = profile or {
+        # Use existing profile if available, otherwise build minimal one
+        strategy_profile = profile if profile else {
             "path": project_path,
             "technical": {"primary_language": primary_lang},
             "business": {"domain": domain, "stage": stage},
@@ -1320,8 +1328,9 @@ Project: {project_name}
         try:
             advice = await strategist.get_strategy(
                 question=f"{question}\n\nContext: {llm_context}",
-                profile=minimal_profile,
+                profile=strategy_profile,
                 articles=[],  # Skip articles for speed
+                recent_deltas=deltas,
             )
             output += advice
             output += "\n\n" + "─" * 40 + "\n"
@@ -1334,9 +1343,8 @@ Project: {project_name}
     output += "📋 Based on your project analysis:\n\n"
 
     recommendations = []
-
-    # Stage-based advice
-    stage = biz.get('stage', 'mvp')
+    
+    biz = profile.get("business", {}) if profile else {}
     if stage == 'mvp':
         recommendations.append("🚀 MVP Stage: Focus on core features, not perfection")
         recommendations.append("👥 Talk to 5+ users this week for validation")
@@ -1381,7 +1389,12 @@ Project: {project_name}
 
 async def _handle_sync(arguments: dict[str, Any]) -> str:
     """Quick sync: detect what changed since last check."""
-    import subprocess
+    from cso_ai.intel.delta_detector import (
+        CodeScanner,
+        GitDiffAnalyzer,
+        Snapshot,
+        SnapshotComparer,
+    )
     
     path = arguments.get("path", ".")
     if path == ".":
@@ -1394,152 +1407,140 @@ async def _handle_sync(arguments: dict[str, Any]) -> str:
     
     db = _get_database()
     
-    # Check if we have a skeleton for this project
-    skeleton = db.get_skeleton(str(root))
+    # Check if we have a skeleton or profile for this project
+    project_path = str(root)
+    skeleton = db.get_skeleton(project_path)
+    profile = db.get_profile(project_path)
     
     output = f"🔄 Syncing: {root.name}\n\n"
     
-    # If no skeleton, create one first (lightweight)
+    # If no skeleton, create one from profile if available, otherwise minimal
     if skeleton is None:
         output += "📋 First sync - creating project skeleton...\n\n"
         
-        # Quick language detection
-        languages: dict[str, int] = {}
-        for ext, lang in [
-            (".py", "Python"), (".js", "JavaScript"), (".ts", "TypeScript"),
-            (".swift", "Swift"), (".kt", "Kotlin"), (".go", "Go"),
-            (".rs", "Rust"), (".java", "Java"), (".rb", "Ruby"),
-        ]:
-            count = len(list(root.rglob(f"*{ext}")))
-            if count > 0:
-                languages[lang] = count
-        
-        primary_lang = max(languages, key=languages.get) if languages else "Unknown"
-        
-        # Quick README scan for description
-        description = None
-        for readme_name in ["README.md", "README.rst", "README"]:
-            readme_path = root / readme_name
-            if readme_path.exists():
-                try:
-                    content = readme_path.read_text(encoding="utf-8")[:500]
-                    # Get first paragraph
-                    lines = [l.strip() for l in content.split("\n") if l.strip() and not l.startswith("#")]
-                    if lines:
-                        description = lines[0][:150]
-                    break
-                except (OSError, UnicodeDecodeError):
-                    continue
-        
-        # Infer domain from project name/structure
-        domain = "General"
-        name_lower = root.name.lower()
-        if any(x in name_lower for x in ["ai", "ml", "llm", "model"]):
-            domain = "AI/ML"
-        elif any(x in name_lower for x in ["api", "backend", "server"]):
-            domain = "Backend"
-        elif any(x in name_lower for x in ["web", "frontend", "ui"]):
-            domain = "Frontend"
-        elif any(x in name_lower for x in ["mobile", "ios", "android"]):
-            domain = "Mobile"
+        # Use profile data if available (no need to re-scan)
+        if profile:
+            tech = profile.get("technical", {})
+            biz = profile.get("business", {})
+            primary_lang = tech.get("primary_language", "Unknown")
+            languages = tech.get("languages", {})
+            domain = biz.get("domain", "General")
+            stage = biz.get("stage", "mvp")
+            description = None  # Description not in profile
+        else:
+            # Minimal detection - just infer from project name
+            primary_lang = "Unknown"
+            languages = {}
+            domain = "General"
+            stage = "mvp"
+            description = None
+            
+            # Quick domain inference from name only (no file scanning)
+            name_lower = root.name.lower()
+            if any(x in name_lower for x in ["ai", "ml", "llm", "model"]):
+                domain = "AI/ML"
+            elif any(x in name_lower for x in ["api", "backend", "server"]):
+                domain = "Backend"
+            elif any(x in name_lower for x in ["web", "frontend", "ui"]):
+                domain = "Frontend"
+            elif any(x in name_lower for x in ["mobile", "ios", "android"]):
+                domain = "Mobile"
         
         # Save skeleton
         db.save_skeleton(
-            path=str(root),
+            path=project_path,
             name=root.name,
             description=description,
             primary_language=primary_lang,
             languages=languages,
             domain=domain,
-            stage="mvp",
+            stage=stage,
         )
         
-        skeleton = db.get_skeleton(str(root))
-        output += f"✅ Skeleton created:\n"
-        output += f"   {root.name}: {primary_lang} {domain}\n"
-        if description:
-            output += f"   \"{description[:60]}...\"\n"
+        output += f"✅ Skeleton created\n\n"
+    
+    # Enhanced delta detection using new system
+    # 1. Scan current codebase state (only what we need for deltas)
+    scanner = CodeScanner()
+    integrations_result = await scanner.scan_integrations(root)
+    env_vars_result = await scanner.scan_env_vars(root)
+    frameworks_result = await scanner.scan_frameworks(root)
+    
+    # 2. Analyze recent git activity
+    git_analyzer = GitDiffAnalyzer()
+    git_signals = await git_analyzer.analyze_recent(root, days=7)
+    
+    # 3. Build current snapshot
+    current_snapshot_data = {
+        "integrations": integrations_result.get("integrations", []),
+        "frameworks": frameworks_result.get("frameworks", []),
+        "env_vars": env_vars_result.get("env_vars", []),
+    }
+    new_snapshot = Snapshot.create("all", current_snapshot_data)
+    
+    # 4. Compare to last snapshot
+    old_snapshot_dict = db.get_latest_snapshot(project_path, "all")
+    old_snapshot = None
+    if old_snapshot_dict:
+        old_snapshot = Snapshot(
+            snapshot_type=old_snapshot_dict["snapshot_type"],
+            data=old_snapshot_dict["data"],
+            hash=old_snapshot_dict["hash"],
+        )
+    
+    comparer = SnapshotComparer()
+    semantic_deltas = comparer.compare(old_snapshot, new_snapshot)
+    
+    # 5. Record semantic deltas
+    significant_changes = False
+    if semantic_deltas:
+        output += "📊 Semantic changes detected:\n"
+        for delta in semantic_deltas:
+            output += f"   • {delta.summary}\n"
+            db.record_delta(
+                project_path=project_path,
+                delta_type=delta.delta_type.value,
+                summary=delta.summary,
+                details=delta.details,
+            )
+            if delta.is_significant:
+                significant_changes = True
+        output += "\n"
+    else:
+        output += "✅ No semantic changes detected\n\n"
+    
+    # 6. Record git activity (if any commits)
+    if git_signals.get("commits"):
+        commit_count = len(git_signals["commits"])
+        output += f"📝 Git activity: {commit_count} commit(s) in last 7 days\n"
+        if git_signals.get("focus_areas"):
+            output += f"   Focus areas: {', '.join(git_signals['focus_areas'][:3])}\n"
         output += "\n"
     
-    # Now detect deltas (what changed since last sync)
-    deltas_detected = []
+    # 7. Save new snapshot
+    db.save_snapshot(
+        project_path=project_path,
+        snapshot_type="all",
+        data=current_snapshot_data,
+        snapshot_hash=new_snapshot.hash,
+    )
     
-    # Check git for recent commits
-    git_dir = root / ".git"
-    if git_dir.exists():
-        try:
-            # Get commits since yesterday
-            result = subprocess.run(
-                ["git", "log", "--oneline", "--since=1.day.ago", "-10"],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                commits = result.stdout.strip().split("\n")
-                commit_count = len(commits)
-                if commit_count > 0:
-                    deltas_detected.append(f"📝 {commit_count} commit(s) today")
-                    # Record delta
-                    db.record_delta(
-                        project_path=str(root),
-                        delta_type="commits",
-                        summary=f"{commit_count} commits today",
-                        details={"commits": commits[:5]},
-                    )
-            
-            # Get changed files
-            result = subprocess.run(
-                ["git", "diff", "--name-only", "HEAD~5", "HEAD"],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                files = result.stdout.strip().split("\n")
-                file_count = len(files)
-                if file_count > 0:
-                    deltas_detected.append(f"📁 {file_count} file(s) changed recently")
-                    db.record_delta(
-                        project_path=str(root),
-                        delta_type="files",
-                        summary=f"{file_count} files changed",
-                        details={"files": files[:10]},
-                    )
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            pass
+    # 8. Update profile if significant changes detected
+    if significant_changes:
+        output += "🔄 Significant changes detected - profile should be updated\n"
+        output += "   Run 'analyze_codebase' to refresh your profile\n\n"
     
-    # Quick TODO scan (just count, don't deep scan)
-    try:
-        result = subprocess.run(
-            ["grep", "-r", "-c", "TODO", "--include=*.py", "--include=*.ts", "--include=*.js"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if result.returncode == 0:
-            lines = [l for l in result.stdout.strip().split("\n") if l]
-            todo_count = sum(int(l.split(":")[-1]) for l in lines if ":" in l)
-            if todo_count > 0:
-                deltas_detected.append(f"📋 {todo_count} TODOs in codebase")
-    except (subprocess.TimeoutExpired, FileNotFoundError, ValueError):
-        pass
-    
-    # Show results
-    if deltas_detected:
-        output += "📊 Changes detected:\n"
-        for delta in deltas_detected:
-            output += f"   {delta}\n"
-    else:
-        output += "✅ No significant changes since last sync\n"
+    # Show current state summary
+    if current_snapshot_data["integrations"]:
+        output += "🔌 Current integrations:\n"
+        for integration in current_snapshot_data["integrations"][:5]:
+            output += f"   • {integration}\n"
+        output += "\n"
     
     # Show recent delta history
-    recent_deltas = db.get_recent_deltas(str(root), limit=5, days=7)
+    recent_deltas = db.get_recent_deltas(project_path, limit=5, days=7)
     if recent_deltas:
-        output += f"\n📈 Recent activity ({len(recent_deltas)} events):\n"
+        output += f"📈 Recent activity ({len(recent_deltas)} events):\n"
         for d in recent_deltas[:3]:
             output += f"   • {d['summary']} ({d['recorded_at'][:10]})\n"
     

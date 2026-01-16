@@ -40,6 +40,9 @@ You provide actionable, specific advice - not generic platitudes.
 ## The User's Profile
 {profile}
 
+## Recent Changes (Last 7 Days)
+{recent_changes}
+
 ## Recent Relevant Articles
 {articles}
 
@@ -48,11 +51,12 @@ You provide actionable, specific advice - not generic platitudes.
 
 ## Instructions
 1. Answer based on the specific context of their project
-2. Reference relevant articles when applicable
-3. Be direct and actionable - give 3-5 specific recommendations
-4. Think like a real CSO - what would you actually recommend?
-5. If you don't have enough information, say so
-6. Keep your response focused and under 500 words
+2. Consider recent changes when giving advice - the project state may have evolved
+3. Reference relevant articles when applicable
+4. Be direct and actionable - give 3-5 specific recommendations
+5. Think like a real CSO - what would you actually recommend?
+6. If you don't have enough information, say so
+7. Keep your response focused and under 500 words
 
 Provide your strategic advice:"""
 
@@ -138,6 +142,7 @@ Respond with ONLY valid JSON:
         question: str,
         profile: dict[str, Any],
         articles: list[dict[str, Any]] | None = None,
+        recent_deltas: list[dict[str, Any]] | None = None,
     ) -> str:
         """
         Get strategic advice for a question.
@@ -148,6 +153,7 @@ Respond with ONLY valid JSON:
             question: The user's strategic question
             profile: The codebase/business profile
             articles: Optional relevant articles for context
+            recent_deltas: Optional recent deltas/changes detected
 
         Returns:
             Strategic advice from Groq
@@ -157,6 +163,9 @@ Respond with ONLY valid JSON:
 
         # Format profile
         profile_text = self._format_profile(profile)
+
+        # Format recent changes
+        changes_text = self._format_recent_changes(recent_deltas)
 
         # Format articles
         articles_text = "No articles available."
@@ -168,6 +177,7 @@ Respond with ONLY valid JSON:
 
         prompt = self.STRATEGY_PROMPT.format(
             profile=profile_text,
+            recent_changes=changes_text,
             articles=articles_text,
             question=question,
         )
@@ -298,6 +308,30 @@ Respond with ONLY valid JSON:
                 lines.append(f"  - {msg[:60]}")
 
         return "\n".join(lines)
+
+    def _format_recent_changes(
+        self, deltas: list[dict[str, Any]] | None
+    ) -> str:
+        """Format recent deltas for strategy context."""
+        if not deltas:
+            return "No recent changes detected"
+
+        lines = []
+        for delta in deltas[:10]:  # Limit to 10 most recent
+            delta_type = delta.get("delta_type", "")
+            summary = delta.get("summary", "")
+
+            # Format based on type
+            if "integration" in delta_type.lower():
+                lines.append(f"🔌 {summary}")
+            elif "framework" in delta_type.lower():
+                lines.append(f"🏗️ {summary}")
+            elif "env" in delta_type.lower():
+                lines.append(f"⚙️ {summary}")
+            else:
+                lines.append(f"📝 {summary}")
+
+        return "\n".join(lines) if lines else "No significant changes"
 
     def _fallback_strategy(
         self,

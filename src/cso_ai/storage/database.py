@@ -117,12 +117,26 @@ class Database:
                     FOREIGN KEY (project_path) REFERENCES project_skeleton(path)
                 );
 
+                -- Snapshots for point-in-time comparison
+                CREATE TABLE IF NOT EXISTS snapshots (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    project_path TEXT NOT NULL,
+                    snapshot_type TEXT NOT NULL,
+                    data TEXT NOT NULL,
+                    hash TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY (project_path) REFERENCES project_skeleton(path)
+                );
+
                 -- Indexes
                 CREATE INDEX IF NOT EXISTS idx_articles_source ON articles(source);
                 CREATE INDEX IF NOT EXISTS idx_articles_relevance ON articles(relevance_score DESC);
                 CREATE INDEX IF NOT EXISTS idx_insights_profile ON insights(profile_path);
                 CREATE INDEX IF NOT EXISTS idx_deltas_project ON deltas(project_path);
                 CREATE INDEX IF NOT EXISTS idx_deltas_time ON deltas(recorded_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_snapshots_project ON snapshots(project_path);
+                CREATE INDEX IF NOT EXISTS idx_snapshots_type ON snapshots(snapshot_type);
+                CREATE INDEX IF NOT EXISTS idx_snapshots_time ON snapshots(created_at DESC);
             """)
 
     @contextmanager
@@ -480,3 +494,124 @@ class Database:
             "by_type": summary,
             "days": days,
         }
+
+    # -------------------------------------------------------------------------
+    # Snapshot Operations (Point-in-time comparisons)
+    # -------------------------------------------------------------------------
+
+    def save_snapshot(
+        self,
+        project_path: str,
+        snapshot_type: str,
+        data: dict[str, Any],
+        snapshot_hash: str,
+    ) -> None:
+        """
+        Save a snapshot for point-in-time comparison.
+
+        Args:
+            project_path: Path identifier for the project
+            snapshot_type: Type of snapshot ('integrations', 'stack', 'architecture', 'config', 'all')
+            data: Snapshot data as dict
+            snapshot_hash: Hash of the snapshot for quick comparison
+        """
+        now = datetime.utcnow().isoformat()
+
+        with self._connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO snapshots (project_path, snapshot_type, data, hash, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    project_path,
+                    snapshot_type,
+                    json.dumps(data),
+                    snapshot_hash,
+                    now,
+                ),
+            )
+
+    def get_latest_snapshot(
+        self,
+        project_path: str,
+        snapshot_type: str,
+    ) -> dict[str, Any] | None:
+        """
+        Get the latest snapshot of a given type for a project.
+
+        Args:
+            project_path: Path identifier for the project
+            snapshot_type: Type of snapshot to retrieve
+
+        Returns:
+            Snapshot dict with data, hash, and timestamp, or None if not found
+        """
+        with self._connection() as conn:
+            row = conn.execute(
+                """
+                SELECT * FROM snapshots 
+                WHERE project_path = ? AND snapshot_type = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+                """,
+                (project_path, snapshot_type),
+            ).fetchone()
+
+            if row is None:
+                return None
+
+            return {
+                "project_path": row["project_path"],
+                "snapshot_type": row["snapshot_type"],
+                "data": json.loads(row["data"]),
+                "hash": row["hash"],
+                "created_at": row["created_at"],
+            }
+
+    def get_snapshots(
+        self,
+        project_path: str,
+        snapshot_type: str | None = None,
+        limit: int = 10,
+    ) -> list[dict[str, Any]]:
+        """
+        Get snapshots for a project, optionally filtered by type.
+
+        Args:
+            project_path: Path identifier for the project
+            snapshot_type: Optional filter by snapshot type
+            limit: Maximum number of snapshots to return
+
+        Returns:
+            List of snapshot dicts
+        """
+        query = """
+            SELECT * FROM snapshots 
+            WHERE project_path = ?
+        """
+        params: list[Any] = [project_path]
+
+        if snapshot_type:
+            query += " AND snapshot_type = ?"
+            params.append(snapshot_type)
+
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+
+        snapshots = []
+        with self._connection() as conn:
+            rows = conn.execute(query, params).fetchall()
+
+            for row in rows:
+                snapshots.append(
+                    {
+                        "project_path": row["project_path"],
+                        "snapshot_type": row["snapshot_type"],
+                        "data": json.loads(row["data"]),
+                        "hash": row["hash"],
+                        "created_at": row["created_at"],
+                    }
+                )
+
+        return snapshots
