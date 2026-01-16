@@ -3,6 +3,23 @@ CSO.ai MCP Tools - The interface to your AI Chief Strategy Officer.
 
 These tools are designed to be invoked through natural conversation.
 The descriptions help Cursor understand when to use each tool.
+
+DELTA-BASED TRACKING:
+1. SKELETON (one-time): Basic project understanding (2-3 lines)
+   - Languages, domain, what the project is about
+   - Created on first analysis, rarely updated
+
+2. DELTA (frequent): What changed since last sync
+   - New commits, files changed, TODOs added/removed
+   - Quick sync each time you use CSO
+
+3. STRATEGY: Based on skeleton + recent deltas
+   - No need to re-analyze entire codebase each time
+
+SIMPLIFIED CORE TOOLS (Fast):
+- read: Top 5 relevant articles (instant from cache)
+- strategy: Advice based on skeleton + deltas
+- sync: Quick delta check (what changed?)
 """
 
 import os
@@ -38,6 +55,81 @@ def _get_database() -> Database:
 # =============================================================================
 
 TOOLS: list[Tool] = [
+    # =========================================================================
+    # SIMPLIFIED CORE TOOLS (Fast, Primary Use)
+    # =========================================================================
+    Tool(
+        name="read",
+        description="""Show the most relevant articles to read right now. FAST.
+
+Triggers on:
+- "what should I read?"
+- "relevant articles"
+- "CSO, anything interesting?"
+- "tech news for me"
+- "what's worth reading?"
+
+Returns top 5 cached articles scored for YOUR stack. Instant response.""",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "refresh": {
+                    "type": "boolean",
+                    "description": "Force refresh from sources (slower). Default: false",
+                    "default": False,
+                },
+            },
+            "required": [],
+        },
+    ),
+    Tool(
+        name="strategy",
+        description="""Strategic advice based on your project's current state. FAST.
+
+Triggers on:
+- "CSO, what should I focus on?"
+- "what's our strategy?"
+- "strategic advice"
+- "what are the priorities?"
+- "CSO, help me think"
+
+Uses: project skeleton + recent deltas + LLM reasoning.""",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "context": {
+                    "type": "string",
+                    "description": "Optional: what you're working on right now",
+                },
+            },
+            "required": [],
+        },
+    ),
+    Tool(
+        name="sync",
+        description="""Quick sync: detect what changed since last check. FAST.
+
+Triggers on:
+- "CSO, sync"
+- "what changed?"
+- "update CSO"
+- "quick sync"
+
+Checks git commits, file changes, TODOs. Updates delta tracker.""",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Path to project. Defaults to current directory.",
+                },
+            },
+            "required": [],
+        },
+    ),
+    # =========================================================================
+    # FULL TOOLS (Detailed operations, may be slower)
+    # =========================================================================
     # -------------------------------------------------------------------------
     # Status & Connection
     # -------------------------------------------------------------------------
@@ -237,6 +329,11 @@ Returns: articles count, profile info, LLM status.""",
 async def handle_tool_call(name: str, arguments: dict[str, Any]) -> str:
     """Route tool calls to appropriate handlers."""
     handlers = {
+        # Simplified core tools (fast)
+        "read": _handle_read,
+        "strategy": _handle_strategy,
+        "sync": _handle_sync,
+        # Full tools
         "ping": _handle_ping,
         "analyze_codebase": _handle_analyze_codebase,
         "show_profile": _handle_show_profile,
@@ -265,38 +362,38 @@ async def _handle_ping(arguments: dict[str, Any]) -> str:
     """CSO.ai status check."""
     timestamp = datetime.now(timezone.utc).isoformat()
 
-    # Check if we have a profile
+    # Check what we have
     db = _get_database()
+    skeleton = db.get_latest_skeleton()
     profile = db.get_latest_profile()
-    profile_status = "✅ Profile loaded" if profile else "⚠️ No profile yet"
+    
+    if skeleton:
+        project_status = f"✅ {skeleton['name']} ({skeleton['primary_language']})"
+    elif profile:
+        project_status = f"✅ Profile loaded"
+    else:
+        project_status = "⚠️ No project yet - run 'sync'"
 
-    return f"""🧠 CSO.ai is online and ready.
+    return f"""🧠 CSO.ai Ready
 
 ┌─────────────────────────────────────────┐
 │         Chief Strategy Officer          │
-│         Version 0.1.0                   │
-│         {timestamp[:19]}          │
-│         {profile_status}                │
+│         {project_status:^31} │
 └─────────────────────────────────────────┘
 
-I can help you with:
+🚀 QUICK START (Fast):
+  • "CSO, sync" - First time? Sync your project
+  • "what should I read?" - Top articles for you
+  • "what's our strategy?" - Strategic advice
 
-📊 INTELLIGENCE
-  • analyze_codebase - Deep technical analysis
-  • show_profile - What I understand about you
+📊 DETAILED (Slower):
+  • "analyze codebase" - Full deep analysis
+  • "refresh articles" - Fetch fresh content
 
-📰 MARKET
-  • whats_new - Relevant tech trends
-  • business_insights - Strategic intelligence
-  • explore [topic] - Deep-dive research
-
-🔍 EVALUATION
-  • analyze_url - Is this worth reading?
-
-💡 Just ask naturally:
-  "CSO, what should be our strategy?"
-  "What's happening in our space?"
-  "Is this article worth reading?"
+💡 Delta Tracking:
+  CSO learns your project skeleton once,
+  then tracks changes (deltas) to give
+  fast, relevant advice each time.
 """
 
 
@@ -1039,4 +1136,414 @@ async def _handle_stats(arguments: dict[str, Any]) -> str:
 💡 Use 'analyze_codebase' to update your profile.
 """
 
+    return output
+
+
+# =============================================================================
+# SIMPLIFIED CORE HANDLERS (Fast)
+# =============================================================================
+
+
+async def _handle_read(arguments: dict[str, Any]) -> str:
+    """Return top 5 relevant articles from cache. FAST."""
+    force_refresh = arguments.get("refresh", False)
+    
+    db = _get_database()
+    profile = db.get_latest_profile()
+    skeleton = db.get_latest_skeleton()
+    
+    if profile is None and skeleton is None:
+        return """📚 Reading List
+
+❌ No project data yet. Run sync first:
+   "CSO, sync"
+"""
+
+    # Get cached articles first (instant)
+    cached_articles = db.get_articles(limit=100)
+    
+    # If refresh requested or no articles, fetch new ones
+    if force_refresh or len(cached_articles) == 0:
+        try:
+            from cso_ai.intel.market import MarketAnalyzer
+            market = MarketAnalyzer()
+            articles = await market.get_tech_articles(profile, days=7, limit=20)
+            cached_articles = articles
+        except Exception as e:
+            if len(cached_articles) == 0:
+                return f"📚 Reading List\n\n❌ No articles. Error: {str(e)[:50]}"
+
+    # Get top 5 by relevance score
+    sorted_articles = sorted(
+        cached_articles,
+        key=lambda a: a.relevance_score or 0,
+        reverse=True
+    )[:5]
+
+    if not sorted_articles:
+        return "📚 Reading List\n\nNo articles found. Try: refresh=true"
+
+    # Get stack info from profile or skeleton
+    if profile:
+        tech = profile.get("technical", {})
+        primary_lang = tech.get('primary_language', '?')
+        frameworks = tech.get('frameworks', [])
+    elif skeleton:
+        primary_lang = skeleton.get('primary_language', '?')
+        frameworks = []
+    else:
+        primary_lang = '?'
+        frameworks = []
+    
+    output = f"""📚 Top Articles for You
+
+Stack: {primary_lang} | {', '.join(frameworks[:2]) or 'No frameworks'}
+
+"""
+
+    for i, article in enumerate(sorted_articles, 1):
+        score = article.relevance_score or 0
+        # Visual score indicator
+        if score >= 70:
+            indicator = "🔥"
+        elif score >= 50:
+            indicator = "👍"
+        else:
+            indicator = "📄"
+        
+        title = article.title[:55] + "..." if len(article.title) > 55 else article.title
+        output += f"{i}. {indicator} [{score:.0f}] {title}\n"
+        output += f"   {article.url}\n"
+        if article.relevance_reason:
+            reason = article.relevance_reason[:70]
+            if len(article.relevance_reason) > 70:
+                reason += "..."
+            output += f"   → {reason}\n"
+        output += "\n"
+
+    output += "─" * 40 + "\n"
+    output += "💡 Add refresh=true to get fresh articles"
+
+    return output
+
+
+async def _handle_strategy(arguments: dict[str, Any]) -> str:
+    """Strategic advice based on skeleton + deltas. Uses LLM if available."""
+    context = arguments.get("context", "")
+    
+    db = _get_database()
+    
+    # Try skeleton first (fast, lightweight)
+    skeleton = db.get_latest_skeleton()
+    profile = db.get_latest_profile()
+    
+    # Use skeleton if available, fall back to profile
+    if skeleton is None and profile is None:
+        return """🎯 Strategic Advice
+
+❌ No project data yet. Run sync first:
+   "CSO, sync" or "CSO, analyze my codebase"
+"""
+
+    # Prefer skeleton for basic info
+    if skeleton:
+        project_name = skeleton.get("name", "Unknown")
+        domain = skeleton.get("domain", "Unknown")
+        stage = skeleton.get("stage", "Unknown")
+        primary_lang = skeleton.get("primary_language", "Unknown")
+        description = skeleton.get("description", "")
+        project_path = skeleton.get("path", "")
+    else:
+        # Fall back to profile
+        tech = profile.get("technical", {})
+        biz = profile.get("business", {})
+        project_name = Path(profile.get("path", "")).name
+        domain = biz.get("domain", "Unknown")
+        stage = biz.get("stage", "Unknown")
+        primary_lang = tech.get("primary_language", "Unknown")
+        description = ""
+        project_path = profile.get("path", "")
+    
+    # Get recent deltas for context
+    deltas = db.get_recent_deltas(project_path, limit=10, days=7) if project_path else []
+    delta_summary = db.get_delta_summary(project_path, days=7) if project_path else {}
+    
+    # Also get health info from profile if available
+    health = {}
+    git = {}
+    issues = {}
+    if profile:
+        tech = profile.get("technical", {})
+        biz = profile.get("business", {})
+        health = tech.get("health_signals", {})
+        git = health.get("git", {})
+        issues = health.get("code_issues", {})
+
+    output = f"""🎯 Strategic Advice
+
+Project: {project_name}
+{primary_lang} | {domain} | {stage}
+"""
+    
+    if description:
+        output += f"\"{description[:60]}...\"\n"
+    
+    # Show recent activity
+    if deltas:
+        output += f"\n📊 Recent: {len(deltas)} changes tracked\n"
+    
+    output += "\n"
+
+    # Try LLM first (if available)
+    from cso_ai.intel.strategist import Strategist
+    strategist = Strategist()
+    
+    if strategist.is_available:
+        # Build context with skeleton + deltas
+        llm_context = f"Project: {project_name} ({primary_lang}, {domain}, {stage})"
+        if description:
+            llm_context += f"\nAbout: {description}"
+        if delta_summary.get("total_deltas", 0) > 0:
+            llm_context += f"\nRecent changes: {delta_summary['total_deltas']} events"
+            for dtype, summaries in delta_summary.get("by_type", {}).items():
+                llm_context += f"\n- {dtype}: {len(summaries)} events"
+        
+        question = context if context else "What should I focus on? Give 3-5 specific, actionable recommendations."
+        
+        # Build a minimal profile for the strategist
+        minimal_profile = profile or {
+            "path": project_path,
+            "technical": {"primary_language": primary_lang},
+            "business": {"domain": domain, "stage": stage},
+        }
+        
+        try:
+            advice = await strategist.get_strategy(
+                question=f"{question}\n\nContext: {llm_context}",
+                profile=minimal_profile,
+                articles=[],  # Skip articles for speed
+            )
+            output += advice
+            output += "\n\n" + "─" * 40 + "\n"
+            output += "💡 Powered by Groq LLM"
+            return output
+        except Exception as e:
+            output += f"⚠️ LLM error: {str(e)[:30]}\n\n"
+
+    # Fallback: Rule-based advice
+    output += "📋 Based on your project analysis:\n\n"
+
+    recommendations = []
+
+    # Stage-based advice
+    stage = biz.get('stage', 'mvp')
+    if stage == 'mvp':
+        recommendations.append("🚀 MVP Stage: Focus on core features, not perfection")
+        recommendations.append("👥 Talk to 5+ users this week for validation")
+    elif stage == 'early':
+        recommendations.append("📈 Early Stage: Start measuring key metrics")
+        recommendations.append("🔄 Establish feedback loops with users")
+    elif stage == 'growth':
+        recommendations.append("⚡ Growth Stage: Focus on performance and scale")
+        recommendations.append("🏗️ Technical debt becomes critical now")
+
+    # Health-based advice
+    if not health.get('has_ci'):
+        recommendations.append("⚙️ Add CI/CD - critical for team velocity")
+    if not health.get('has_tests'):
+        recommendations.append("🧪 Add tests for critical paths")
+    
+    # Git activity advice
+    recent = git.get('recent_commits', 0)
+    if recent == 0:
+        recommendations.append("⚠️ No recent commits - momentum is key")
+    elif recent > 50:
+        recommendations.append("🔥 High velocity! Make sure quality keeps up")
+    
+    # TODO advice
+    todo_count = len(issues.get('todos', []))
+    if todo_count > 10:
+        recommendations.append(f"📝 {todo_count} TODOs - schedule a cleanup sprint")
+    
+    # Focus areas from git
+    focus = git.get('focus_areas', [])
+    if focus:
+        recommendations.append(f"🎯 Recent focus: {', '.join(focus[:3])}")
+
+    for rec in recommendations[:5]:
+        output += f"{rec}\n"
+
+    output += "\n" + "─" * 40 + "\n"
+    output += "💡 Set GROQ_API_KEY for smarter LLM-powered advice"
+
+    return output
+
+
+async def _handle_sync(arguments: dict[str, Any]) -> str:
+    """Quick sync: detect what changed since last check."""
+    import subprocess
+    
+    path = arguments.get("path", ".")
+    if path == ".":
+        path = os.getcwd()
+    
+    root = Path(path).resolve()
+    
+    if not root.exists() or not root.is_dir():
+        return f"❌ Invalid path: {root}"
+    
+    db = _get_database()
+    
+    # Check if we have a skeleton for this project
+    skeleton = db.get_skeleton(str(root))
+    
+    output = f"🔄 Syncing: {root.name}\n\n"
+    
+    # If no skeleton, create one first (lightweight)
+    if skeleton is None:
+        output += "📋 First sync - creating project skeleton...\n\n"
+        
+        # Quick language detection
+        languages: dict[str, int] = {}
+        for ext, lang in [
+            (".py", "Python"), (".js", "JavaScript"), (".ts", "TypeScript"),
+            (".swift", "Swift"), (".kt", "Kotlin"), (".go", "Go"),
+            (".rs", "Rust"), (".java", "Java"), (".rb", "Ruby"),
+        ]:
+            count = len(list(root.rglob(f"*{ext}")))
+            if count > 0:
+                languages[lang] = count
+        
+        primary_lang = max(languages, key=languages.get) if languages else "Unknown"
+        
+        # Quick README scan for description
+        description = None
+        for readme_name in ["README.md", "README.rst", "README"]:
+            readme_path = root / readme_name
+            if readme_path.exists():
+                try:
+                    content = readme_path.read_text(encoding="utf-8")[:500]
+                    # Get first paragraph
+                    lines = [l.strip() for l in content.split("\n") if l.strip() and not l.startswith("#")]
+                    if lines:
+                        description = lines[0][:150]
+                    break
+                except (OSError, UnicodeDecodeError):
+                    continue
+        
+        # Infer domain from project name/structure
+        domain = "General"
+        name_lower = root.name.lower()
+        if any(x in name_lower for x in ["ai", "ml", "llm", "model"]):
+            domain = "AI/ML"
+        elif any(x in name_lower for x in ["api", "backend", "server"]):
+            domain = "Backend"
+        elif any(x in name_lower for x in ["web", "frontend", "ui"]):
+            domain = "Frontend"
+        elif any(x in name_lower for x in ["mobile", "ios", "android"]):
+            domain = "Mobile"
+        
+        # Save skeleton
+        db.save_skeleton(
+            path=str(root),
+            name=root.name,
+            description=description,
+            primary_language=primary_lang,
+            languages=languages,
+            domain=domain,
+            stage="mvp",
+        )
+        
+        skeleton = db.get_skeleton(str(root))
+        output += f"✅ Skeleton created:\n"
+        output += f"   {root.name}: {primary_lang} {domain}\n"
+        if description:
+            output += f"   \"{description[:60]}...\"\n"
+        output += "\n"
+    
+    # Now detect deltas (what changed since last sync)
+    deltas_detected = []
+    
+    # Check git for recent commits
+    git_dir = root / ".git"
+    if git_dir.exists():
+        try:
+            # Get commits since yesterday
+            result = subprocess.run(
+                ["git", "log", "--oneline", "--since=1.day.ago", "-10"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                commits = result.stdout.strip().split("\n")
+                commit_count = len(commits)
+                if commit_count > 0:
+                    deltas_detected.append(f"📝 {commit_count} commit(s) today")
+                    # Record delta
+                    db.record_delta(
+                        project_path=str(root),
+                        delta_type="commits",
+                        summary=f"{commit_count} commits today",
+                        details={"commits": commits[:5]},
+                    )
+            
+            # Get changed files
+            result = subprocess.run(
+                ["git", "diff", "--name-only", "HEAD~5", "HEAD"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                files = result.stdout.strip().split("\n")
+                file_count = len(files)
+                if file_count > 0:
+                    deltas_detected.append(f"📁 {file_count} file(s) changed recently")
+                    db.record_delta(
+                        project_path=str(root),
+                        delta_type="files",
+                        summary=f"{file_count} files changed",
+                        details={"files": files[:10]},
+                    )
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+    
+    # Quick TODO scan (just count, don't deep scan)
+    try:
+        result = subprocess.run(
+            ["grep", "-r", "-c", "TODO", "--include=*.py", "--include=*.ts", "--include=*.js"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            lines = [l for l in result.stdout.strip().split("\n") if l]
+            todo_count = sum(int(l.split(":")[-1]) for l in lines if ":" in l)
+            if todo_count > 0:
+                deltas_detected.append(f"📋 {todo_count} TODOs in codebase")
+    except (subprocess.TimeoutExpired, FileNotFoundError, ValueError):
+        pass
+    
+    # Show results
+    if deltas_detected:
+        output += "📊 Changes detected:\n"
+        for delta in deltas_detected:
+            output += f"   {delta}\n"
+    else:
+        output += "✅ No significant changes since last sync\n"
+    
+    # Show recent delta history
+    recent_deltas = db.get_recent_deltas(str(root), limit=5, days=7)
+    if recent_deltas:
+        output += f"\n📈 Recent activity ({len(recent_deltas)} events):\n"
+        for d in recent_deltas[:3]:
+            output += f"   • {d['summary']} ({d['recorded_at'][:10]})\n"
+    
+    output += "\n" + "─" * 40 + "\n"
+    output += "💡 Use 'strategy' for advice based on these changes"
+    
     return output
