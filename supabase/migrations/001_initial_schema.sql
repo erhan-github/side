@@ -237,5 +237,72 @@ END;
 $$;
 
 -- ============================================================================
--- Done! Your CSO.ai database is ready.
+-- 8. CORE TABLES: PLANS, DECISIONS, LEARNINGS (Universal Sync)
+-- ============================================================================
+
+-- PLANS: Strategic roadmap items (Goals, Milestones, Tasks)
+CREATE TABLE IF NOT EXISTS plans (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID DEFAULT gen_random_uuid(), -- Linked to a project context
+    profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT,
+    type TEXT NOT NULL DEFAULT 'goal', -- 'objective', 'milestone', 'goal', 'task'
+    status TEXT DEFAULT 'active', -- 'active', 'done', 'dropped', 'blocked'
+    due_date TIMESTAMPTZ,
+    priority INT DEFAULT 0,
+    parent_id UUID REFERENCES plans(id),
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_plans_profile ON plans(profile_id);
+CREATE INDEX IF NOT EXISTS idx_plans_status ON plans(status);
+
+-- DECISIONS: Strategic choices (The "Brain")
+CREATE TABLE IF NOT EXISTS decisions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID,
+    profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    
+    question TEXT NOT NULL,
+    answer TEXT NOT NULL,
+    reasoning TEXT,
+    category TEXT, -- 'tech', 'business', 'product'
+    confidence INT DEFAULT 5,
+    
+    plan_id UUID REFERENCES plans(id),
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_decisions_profile ON decisions(profile_id);
+
+-- LEARNINGS: Insights and discoveries
+CREATE TABLE IF NOT EXISTS learnings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID,
+    profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    
+    insight TEXT NOT NULL,
+    source TEXT,
+    impact TEXT DEFAULT 'medium',
+    
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS for Core Tables
+ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE decisions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE learnings ENABLE ROW LEVEL SECURITY;
+
+-- Only service role (server) can write for now to ensure integrity
+CREATE POLICY "Plans are private" ON plans FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Decisions are private" ON decisions FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Learnings are private" ON learnings FOR ALL USING (auth.role() = 'service_role');
+
+-- ============================================================================
+-- Done! Your sideMCP database is UNIVERSAL and READY.
 -- ============================================================================
