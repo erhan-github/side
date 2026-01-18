@@ -9,7 +9,7 @@ const os = require('os');
 const { execSync } = require('child_process');
 
 async function main() {
-    console.log(chalk.bold.white('\n🧠 sideMCP | Your Strategic Sidecar\n'));
+    console.log(chalk.bold.white('\n🧠 CSO.ai | Your Strategic Partner\n'));
 
     // 1. Detect Environment
     const questions = [
@@ -101,7 +101,7 @@ async function main() {
         console.log('1. Restart ' + editor);
         console.log('2. Open the AI Pane');
         console.log('3. Type: "Plan my next feature"');
-        console.log('\n' + chalk.dim('Strategic Token Balance: 0 (Refill at sideMCP.com)'));
+        console.log('\n' + chalk.dim('Strategic Token Balance: 0 (Refill at CSO.ai)'));
 
     } catch (error) {
         spinner.fail('Installation failed.');

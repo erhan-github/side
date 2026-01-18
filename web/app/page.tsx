@@ -25,7 +25,7 @@ const CAPABILITY_SPECS: Record<string, CapabilitySpec> = {
       { label: "Node Types", value: "Classes, Functions, Imports, Mixins" },
       { label: "Analysis Latency", value: "< 200ms per file" }
     ],
-    moat: "While typical AI tools just read your code as 'text', sideMCP understands it as 'structure'. This allows us to detect architectural drift and circular dependencies instantly."
+    moat: "While typical AI tools just read your code as 'text', CSO.ai understands it as 'structure'. This allows us to detect architectural drift and circular dependencies instantly."
   },
   "Strategic Roadmap (plan.md)": {
     description: "A living, breathing strategy document that persists across IDE sessions. It's not just a chat history; it's a structured database of your project's goals, milestones, and active tasks.",
@@ -35,7 +35,7 @@ const CAPABILITY_SPECS: Record<string, CapabilitySpec> = {
       { label: "Context Window", value: "Infinite (Database-backed)" },
       { label: "Schema", value: "Universal Task Schema v1" }
     ],
-    moat: "Chats are ephemeral. Strategies are forever. sideMCP is the only tool that maintains a persistent 'Plan of Record' that survives when you close the VS Code window."
+    moat: "Chats are ephemeral. Strategies are forever. CSO.ai is the only tool that maintains a persistent 'Plan of Record' that survives when you close the VS Code window."
   },
   "Market Knowledge (Stack)": {
     description: "Real-time intelligence on libraries, frameworks, and SaaS tools. We analyze thousands of hacker news threads and github repos to tell you 'what to use' before you write a single line of bad code.",
@@ -45,10 +45,10 @@ const CAPABILITY_SPECS: Record<string, CapabilitySpec> = {
       { label: "Embedding", value: "OpenAI text-embedding-3-small" },
       { label: "Vector DB", value: "pgvector (Supabase)" }
     ],
-    moat: "Cursor knows how to write code. sideMCP knows *what* code to write. We prevent technical debt by steering you toward winning technologies from Day 1."
+    moat: "Cursor knows how to write code. CSO.ai knows *what* code to write. We prevent technical debt by steering you toward winning technologies from Day 1."
   },
   "Decision Memory": {
-    description: "A forensic audit trail of every technical decision you make. Why did you choose Postgres? Why did you switch to Tailwind? sideMCP remembers, so you don't have to defend your choices to investors later.",
+    description: "A forensic audit trail of every technical decision you make. Why did you choose Postgres? Why did you switch to Tailwind? CSO.ai remembers, so you don't have to defend your choices to investors later.",
     specs: [
       { label: "Record Type", value: "Immutable Log" },
       { label: "Query Engine", value: "Semantic Search + SQL" },
@@ -89,7 +89,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 bg-white rounded-sm" />
-            <span className="font-bold tracking-tight">sideMCP</span>
+            <span className="font-bold tracking-tight">CSO.ai</span>
           </div>
           <div className="flex items-center gap-6 text-sm font-medium text-zinc-400">
             <Link href="#difference" className="hover:text-white transition-colors">The Difference</Link>
@@ -112,12 +112,12 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-6 max-w-4xl mx-auto">
-            Add sideMCP to your IDE.
+            Add Side to your IDE.
           </h1>
 
           <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
             Upgrade <strong>your IDE</strong> from a code editor <br className="hidden md:block" />
-            to a <span className="text-white font-medium">Strategic Sidecar</span>.
+            to a <span className="text-white font-medium">Strategic Partner</span>.
           </p>
           <p className="text-sm text-zinc-500 mb-8 -mt-6">
             Native support for Cursor, Windsurf, Claude, and VS Code.
@@ -176,7 +176,7 @@ export default function Home() {
             <h2 className="text-3xl font-bold tracking-tight text-center mb-4">The AI Development Stack</h2>
             <p className="text-zinc-400 text-center mb-16 max-w-2xl mx-auto">
               To build great software, you need three layers:<br />
-              <span className="text-zinc-500">1. Execution (Cursor) • 2. Automation (Devin) • </span><strong className="text-white">3. Strategy (sideMCP)</strong>
+              <span className="text-zinc-500">1. Execution (Cursor) • 2. Automation (Devin) • </span><strong className="text-white">3. Strategy (CSO.ai)</strong>
             </p>
 
             {/* Honest Comparison */}
@@ -186,7 +186,7 @@ export default function Home() {
                   <tr className="border-b border-white/10">
                     <th className="py-4 px-6 text-zinc-400 font-medium tracking-wide text-sm uppercase">Capability</th>
                     <th className="py-4 px-6 text-center">
-                      <span className="text-white font-bold tracking-tight">sideMCP (Strategy)</span>
+                      <span className="text-white font-bold tracking-tight">CSO.ai (Strategy)</span>
                     </th>
                     <th className="py-4 px-6 text-center font-medium">Agents & IDEs (Execution)</th>
                   </tr>
@@ -354,13 +354,13 @@ export default function Home() {
             {/* The Point */}
             <div className="text-center max-w-2xl mx-auto p-8 rounded-3xl border border-white/10 bg-zinc-900/30 hover:border-white/20 transition-colors">
               <p className="text-xl text-white mb-4">
-                <strong>Cursor + Devin + sideMCP</strong> = The Complete Stack.
+                <strong>Cursor + Devin + CSO.ai</strong> = The Complete Stack.
               </p>
               <p className="text-zinc-400 mb-6">
                 Let the agents write the code. We&apos;ll make sure they building the <em>right</em> thing.
               </p>
               <p className="text-xs text-zinc-600 border-t border-white/5 pt-4">
-                * Unlike context search tools (Cody, Continue) which index <em>past</em> history, sideMCP maintains a forward-looking <strong>Decision Graph</strong>.
+                * Unlike context search tools (Cody, Continue) which index <em>past</em> history, CSO.ai maintains a forward-looking <strong>Decision Graph</strong>.
               </p>
             </div>
           </div>

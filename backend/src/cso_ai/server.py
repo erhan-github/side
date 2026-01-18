@@ -1,5 +1,5 @@
 """
-sideMCP Server - Your Strategic Sidecar.
+CSO.ai Server - Your Strategic Partner.
 
 This module implements the stdio-based MCP server that responds to tool calls
 from Cursor and other MCP-compatible clients.
@@ -85,7 +85,7 @@ logging.basicConfig(
 logger = logging.getLogger("side-mcp")
 
 # Create MCP server instance
-server = Server("side-mcp")
+server = Server("cso-ai")
 
 # Define prompts - simplified for 3 core tools
 PROMPTS: list[Prompt] = [
@@ -157,7 +157,7 @@ async def get_prompt(name: str, arguments: dict[str, str] | None) -> GetPromptRe
         return handler()
 
     return GetPromptResult(
-        description="sideMCP - Instant Strategic Intelligence",
+        description="CSO.ai - Instant Strategic Intelligence",
         messages=[
             PromptMessage(
                 role="user",
@@ -214,7 +214,7 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
 
 async def run_server() -> None:
     """Run the CSO.ai MCP server with background services."""
-    logger.info("🧠 sideMCP starting up...")
+    logger.info("🧠 CSO.ai starting up...")
     
     # Initialize background services
     # We use the current directory as the project root
@@ -227,7 +227,7 @@ async def run_server() -> None:
         
         startup_time = time.time() - start_time
         logger.info("=" * 80)
-        logger.info("🚀 sideMCP SERVER IS LIVE")
+        logger.info("🚀 CSO.ai SERVER IS LIVE")
         logger.info(f"⚡ Startup time: {startup_time:.3f}s")
         logger.info("💡 STRATEGIC TIP: Use 'strategy' tool with specific context for better ROI.")
         logger.info("=" * 80)
@@ -252,7 +252,7 @@ def main() -> None:
     try:
         asyncio.run(run_server())
     except KeyboardInterrupt:
-        logger.info("sideMCP shutting down...")
+        logger.info("CSO.ai shutting down...")
     except Exception as err:
         logger.error(f"sideMCP error: {err}", exc_info=True)
         raise
