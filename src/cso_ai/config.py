@@ -1,7 +1,7 @@
 """
-CSO.ai Configuration.
+sideMCP Configuration.
 
-Central configuration for the CSO.ai system.
+Central configuration for the sideMCP system.
 """
 
 import os
@@ -11,10 +11,10 @@ from pathlib import Path
 
 @dataclass
 class CSOConfig:
-    """Configuration for CSO.ai."""
+    """Configuration for sideMCP."""
 
     # Data storage (local fallback)
-    data_dir: Path = field(default_factory=lambda: Path.home() / ".cso-ai")
+    data_dir: Path = field(default_factory=lambda: Path.home() / ".side-mcp")
     db_name: str = "data.db"
 
     # Supabase Configuration (cloud storage with tenant isolation)
