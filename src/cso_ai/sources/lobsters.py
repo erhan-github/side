@@ -55,6 +55,10 @@ class LobstersSource:
 
         return filtered[:limit]
 
+    async def close(self) -> None:
+        """Close the HTTP client."""
+        await self.client.close()
+
     def _parse_rss(self, xml_content: str) -> list[Article]:
         """Parse RSS XML into articles."""
         articles = []

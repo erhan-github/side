@@ -38,7 +38,7 @@ class GitHubSource:
 
     async def fetch(self, days: int = 7, limit: int = 25) -> list[Article]:
         """
-        Fetch trending repositories.
+        Fetch trending repositories IN PARALLEL.
 
         Args:
             days: Not used (trending is always recent)
@@ -47,19 +47,31 @@ class GitHubSource:
         Returns:
             List of articles (repos as articles)
         """
-        articles = []
-
-        for period in ["daily", "weekly"]:
+        import asyncio
+        
+        async def fetch_period(period: str) -> list[Article]:
             try:
                 html = await self.client.get_text(
                     f"{self.TRENDING_URL}?since={period}",
                     headers=self.headers,
                 )
-                repos = self._parse_trending(html, period)
-                articles.extend(repos)
+                return self._parse_trending(html, period)
             except Exception as e:
                 print(f"GitHub fetch error: {e}")
-                continue
+                return []
+        
+        # Fetch daily and weekly in parallel
+        results = await asyncio.gather(
+            fetch_period("daily"),
+            fetch_period("weekly"),
+            return_exceptions=True
+        )
+        
+        # Flatten results
+        articles = []
+        for result in results:
+            if isinstance(result, list):
+                articles.extend(result)
 
         # Deduplicate
         seen = set()
@@ -70,6 +82,10 @@ class GitHubSource:
                 unique.append(article)
 
         return unique[:limit]
+
+    async def close(self) -> None:
+        """Close the HTTP client."""
+        await self.client.close()
 
     def _parse_trending(self, html: str, period: str) -> list[Article]:
         """Parse GitHub trending page."""

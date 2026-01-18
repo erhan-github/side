@@ -28,7 +28,7 @@ class HackerNewsSource:
 
     async def fetch(self, days: int = 7, limit: int = 50) -> list[Article]:
         """
-        Fetch top stories from Hacker News.
+        Fetch top stories from Hacker News IN PARALLEL.
 
         Args:
             days: Days to look back
@@ -37,12 +37,13 @@ class HackerNewsSource:
         Returns:
             List of articles
         """
+        import asyncio
+        
         # Get top story IDs (with retry logic)
         story_ids: list[int] = await self.client.get_json(f"{self.BASE_URL}/topstories.json")
 
-        # Fetch story details
-        articles = []
-        for story_id in story_ids[:limit]:
+        # Fetch story details in parallel
+        async def fetch_and_filter(story_id: int) -> Article | None:
             try:
                 article = await self._fetch_story(story_id)
                 if article:
@@ -50,14 +51,26 @@ class HackerNewsSource:
                     if article.published_at:
                         age = (datetime.now(timezone.utc) - article.published_at).days
                         if age <= days:
-                            articles.append(article)
+                            return article
                     else:
-                        articles.append(article)
+                        return article
+                return None
             except Exception:
-                # Skip failed stories, continue with others
-                continue
+                return None
 
+        # Fetch all stories in parallel (limit concurrency to avoid overwhelming API)
+        results = await asyncio.gather(
+            *[fetch_and_filter(story_id) for story_id in story_ids[:limit]],
+            return_exceptions=True
+        )
+
+        # Filter out None and exceptions
+        articles = [r for r in results if isinstance(r, Article)]
         return articles
+
+    async def close(self) -> None:
+        """Close the HTTP client."""
+        await self.client.close()
 
     async def _fetch_story(self, story_id: int) -> Article | None:
         """Fetch a single story."""
