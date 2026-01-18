@@ -99,13 +99,19 @@ def handle_tool_errors(func: Callable[..., Any]) -> Callable[..., Any]:
             )
 
         except Exception as e:
-            logger.error(f"{func.__name__} unexpected error: {e}", exc_info=True)
+            # Log with full traceback for debugging
+            import traceback
+            logger.error(
+                f"{func.__name__} unexpected error: {e}\\n"
+                f"Traceback:\\n{traceback.format_exc()}",
+                exc_info=True
+            )
             return (
-                "❌ **Unexpected Error**\n\n"
-                f"Something went wrong: {str(e)}\n\n"
-                "**What to try:**\n"
-                "• Try again\n"
-                "• Check the logs for details\n"
+                "❌ **Unexpected Error**\\n\\n"
+                f"Something went wrong: {str(e)}\\n\\n"
+                "**What to try:**\\n"
+                "• Try again\\n"
+                "• Check the logs for details\\n"
                 "• Report this issue if it persists"
             )
 

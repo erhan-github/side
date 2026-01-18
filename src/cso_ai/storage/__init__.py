@@ -1,5 +1,5 @@
 """
-CSO.ai Storage Layer.
+sideMCP Storage Layer.
 
 Simplified storage with local-first architecture.
 """

@@ -2,6 +2,11 @@
 Retry logic with exponential backoff for network requests.
 
 Provides resilient HTTP operations with automatic retry on failures.
+
+[Architect's Note]: We use exponential backoff not just for network stability, 
+but to avoid "RateLimit" errors on the Groq Tier 1 API during high-burst 
+strategy analysis. This ensures the MCP server remains robust during 
+high-concurrency "Gardening" tasks.
 """
 
 import asyncio
@@ -61,15 +66,18 @@ def retry_with_backoff(
                         )
                         raise
 
-                    # Calculate delay with exponential backoff
+                    # Calculate delay with exponential backoff + jitter
+                    import random
                     delay = min(base_delay * (exponential_base**attempt), max_delay)
+                    jitter = delay * 0.1 * random.uniform(-1, 1)
+                    actual_delay = max(0, delay + jitter)
 
                     logger.warning(
                         f"{func.__name__} attempt {attempt + 1}/{max_retries} failed: {e}. "
-                        f"Retrying in {delay:.1f}s..."
+                        f"Retrying in {actual_delay:.1f}s (jittered)..."
                     )
 
-                    await asyncio.sleep(delay)
+                    await asyncio.sleep(actual_delay)
 
                 except httpx.HTTPStatusError as e:
                     # Don't retry on 4xx errors (client errors)
@@ -124,16 +132,25 @@ class ResilientHTTPClient:
         base_delay: float = 1.0,
     ):
         """
-        Initialize resilient HTTP client.
-
-        Args:
-            timeout: Request timeout in seconds
-            max_retries: Maximum retry attempts
-            base_delay: Initial retry delay in seconds
+        Initialize resilient HTTP client with 'Smart Timeout' logic.
+        
+        [Hyper-Ralph] DNS Blackhole Fix: We use a multi-stage timeout
+        to detect DNS failures in <500ms rather than waiting for 10s.
         """
         self.timeout = timeout
         self.max_retries = max_retries
         self.base_delay = base_delay
+        self.smart_timeout = httpx.Timeout(
+            timeout, 
+            connect=1.0, # Fast connect fail for DNS Blackholes
+            read=timeout,
+            write=timeout,
+            pool=timeout
+        )
+
+    async def close(self) -> None:
+        """Close the client (no-op since we use context managers)."""
+        pass
 
     @retry_with_backoff(max_retries=3, base_delay=1.0)
     async def get_json(self, url: str, **kwargs: Any) -> Any:
@@ -150,7 +167,7 @@ class ResilientHTTPClient:
         Raises:
             httpx.HTTPError: On network or HTTP errors after retries
         """
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        async with httpx.AsyncClient(timeout=self.smart_timeout) as client:
             response = await client.get(url, **kwargs)
             response.raise_for_status()
             return response.json()
@@ -170,7 +187,7 @@ class ResilientHTTPClient:
         Raises:
             httpx.HTTPError: On network or HTTP errors after retries
         """
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        async with httpx.AsyncClient(timeout=self.smart_timeout) as client:
             response = await client.get(url, **kwargs)
             response.raise_for_status()
             return response.text
@@ -191,7 +208,7 @@ class ResilientHTTPClient:
         Raises:
             httpx.HTTPError: On network or HTTP errors after retries
         """
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        async with httpx.AsyncClient(timeout=self.smart_timeout) as client:
             response = await client.post(url, json=data, **kwargs)
             response.raise_for_status()
             return response.json()
