@@ -55,7 +55,7 @@ class ServiceManager:
         self._running = True
         self._status["started_at"] = datetime.now(timezone.utc).isoformat()
 
-        logger.info("Starting CSO.ai background services...")
+        logger.info("Starting sideMCP background services...")
 
         try:
             # Start file watcher
@@ -70,13 +70,22 @@ class ServiceManager:
             # Start cleanup scheduler
             await self._start_cleanup_scheduler()
 
+            # Start Supabase Sync
+            await self._start_supabase_sync()
+
+            # Start Telemetry
+            await self._start_telemetry()
+
             # Start health monitoring
             self._health_task = asyncio.create_task(self._health_monitor())
+
+            # [Hyper-Ralph] Start Service Reaper
+            self._reaper_task = asyncio.create_task(self._service_reaper())
 
             # Setup signal handlers for graceful shutdown
             self._setup_signal_handlers()
 
-            logger.info("✅ All services started successfully")
+            logger.info("✅ All services started successfully (Reaper active)")
 
         except Exception as e:
             logger.error(f"Failed to start services: {e}", exc_info=True)
@@ -88,9 +97,17 @@ class ServiceManager:
         if not self._running:
             return
 
-        logger.info("Stopping CSO.ai background services...")
+        logger.info("Stopping sideMCP background services...")
 
         self._running = False
+
+        # Stop reaper
+        if hasattr(self, "_reaper_task") and self._reaper_task:
+            self._reaper_task.cancel()
+            try:
+                await self._reaper_task
+            except asyncio.CancelledError:
+                pass
 
         # Stop health monitor
         if self._health_task:
@@ -106,6 +123,12 @@ class ServiceManager:
                 logger.info(f"Stopping {name}...")
                 if hasattr(service, "stop"):
                     await service.stop()
+                elif isinstance(service, asyncio.Task):
+                    service.cancel()
+                    try:
+                        await service
+                    except asyncio.CancelledError:
+                        pass
                 self._status["services"][name]["status"] = "stopped"
             except Exception as e:
                 logger.error(f"Error stopping {name}: {e}", exc_info=True)
@@ -174,13 +197,94 @@ class ServiceManager:
 
         logger.info("✅ Cache warmer started")
 
-    async def _on_files_changed(self, changed_files: set[Path]) -> None:
+    async def _start_cleanup_scheduler(self) -> None:
+        """Start cleanup scheduler service."""
+        logger.info("Starting cleanup scheduler...")
+
+        from cso_ai.services.cleanup_scheduler import CleanupScheduler
+        from cso_ai.storage.simple_db import SimplifiedDatabase
+
+        db = SimplifiedDatabase()
+        scheduler = CleanupScheduler(db)
+
+        await scheduler.start()
+
+        self._services["cleanup_scheduler"] = scheduler
+        self._status["services"]["cleanup_scheduler"] = {
+            "status": "running",
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "schedule": "Daily at 3 AM"
+        }
+
+        logger.info("✅ Cleanup scheduler started")
+
+    async def _start_supabase_sync(self) -> None:
+        """Start Supabase sync service."""
+        logger.info("Starting Supabase sync...")
+
+        from cso_ai.services.supabase_sync import SupabaseSyncService
+        from cso_ai.storage.simple_db import SimplifiedDatabase
+
+        # Initialize DB and Project ID
+        db = SimplifiedDatabase()
+        project_id = SimplifiedDatabase.get_project_id(self.project_path)
+
+        sync_service = SupabaseSyncService(db, project_id)
+        
+        # Start in background task since it runs forever
+        sync_task = asyncio.create_task(sync_service.run_forever(interval=300))
+        
+        self._services["supabase_sync"] = sync_task
+        self._status["services"]["supabase_sync"] = {
+            "status": "running",
+            "started_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        logger.info("✅ Supabase sync started")
+
+    async def _start_background_engines(self) -> None:
+        """Start all background engines (Telemetry, Supabase Sync, Context Tracker, Auditor, Reaper)."""
+        logger.info("Starting background engines...")
+
+        from cso_ai.services.telemetry import TelemetryService
+        from cso_ai.services.supabase_sync import SupabaseSyncService
+        from cso_ai.services.context_tracker import ContextTracker
+        from cso_ai.intel.auditor import AuditorService
+        from cso_ai.storage.simple_db import SimplifiedDatabase
+
+        self.tasks = [] # Initialize list to hold background tasks
+        self.db = SimplifiedDatabase() # Initialize DB for engines
+        project_id = SimplifiedDatabase.get_project_id(self.project_path)
+        
+        # 1. Telemetry (Anonymous Heartbeat)
+        self.telemetry = TelemetryService(project_id)
+        self.tasks.append(asyncio.create_task(self.telemetry.run_forever(interval=3600)))
+        
+        # 2. Supabase Sync
+        self.sync_service = SupabaseSyncService(self.db, project_id)
+        self.tasks.append(asyncio.create_task(self.sync_service.run_forever(interval=300)))
+        
+        # 3. Context Tracking
+        self.context_tracker = ContextTracker(self.db) # ContextTracker expects db, not project_path in init
+        self.tasks.append(asyncio.create_task(self.context_tracker.watch_forever(self.project_path)))
+
+        # 4. CSO Auditor (Daily Forensic Scan)
+        self.auditor_service = AuditorService(self.db, self.project_path)
+        self.tasks.append(asyncio.create_task(self.auditor_service.run_forever()))
+        
+        # 5. Service Reaper (Self-Healing)
+        # The reaper monitors 'self.tasks' and restarts them if they die.
+        self.tasks.append(asyncio.create_task(self._service_reaper()))
+        
+        logger.info("Service Manager started all background engines.")
+
+    async def _on_files_changed(self, files: List[Path]) -> None:
         """
         Callback when files change.
 
         Triggers knowledge sync and context update.
         """
-        logger.info(f"Files changed: {len(changed_files)} files")
+        logger.info(f"Files changed: {len(files)} files")
 
         # Update work context
         if "context_tracker" in self._services:
@@ -232,7 +336,40 @@ class ServiceManager:
                 break
             except Exception as e:
                 logger.error(f"Error in health monitor: {e}", exc_info=True)
-                await asyncio.sleep(60)
+    async def _service_reaper(self) -> None:
+        """
+        [Hyper-Ralph] The Service Reaper.
+        Periodically checks for 'Zombie' tasks (crashed services) and attempts to restart them.
+        """
+        while self._running:
+            try:
+                await asyncio.sleep(60) # Reap every 60s
+                
+                for name, service in list(self._services.items()):
+                    should_restart = False
+                    
+                    if isinstance(service, asyncio.Task):
+                        if service.done():
+                            if service.exception():
+                                logger.error(f"Service {name} crashed with exception: {service.exception()}")
+                                should_restart = True
+                            elif not self._running:
+                                pass # Shutting down
+                            else:
+                                logger.warning(f"Service {name} exited unexpectedly.")
+                                should_restart = True
+                    
+                    if should_restart:
+                        logger.info(f"Reaper: Restarting {name}...")
+                        if name == "supabase_sync": await self._start_supabase_sync()
+                        elif name == "telemetry": await self._start_telemetry()
+                        elif name == "cache_warmer": await self._start_cache_warmer()
+                        elif name == "cleanup_scheduler": await self._start_cleanup_scheduler()
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Error in service reaper: {e}", exc_info=True)
 
     def _setup_signal_handlers(self) -> None:
         """Setup signal handlers for graceful shutdown."""

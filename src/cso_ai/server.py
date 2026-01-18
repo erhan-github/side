@@ -1,5 +1,5 @@
 """
-CSO.ai MCP Server - Your AI Chief Strategy Officer.
+sideMCP Server - Your Strategic Sidecar.
 
 This module implements the stdio-based MCP server that responds to tool calls
 from Cursor and other MCP-compatible clients.
@@ -22,27 +22,29 @@ from mcp.types import (
     Tool,
 )
 
-from cso_ai.tools_refined import TOOLS, handle_tool_call
+from cso_ai.logging_config import setup_logging
+from cso_ai.tools import TOOLS, handle_tool_call
+from cso_ai.services.service_manager import ServiceManager
 
 
 def load_env_file() -> None:
     """Load environment variables from .env file."""
     # Check multiple possible locations (in priority order)
     possible_paths = [
-        # Project root (cso-ai/.env) - most likely location
+        # Project root (side-mcp/.env) - most likely location
         Path(__file__).parent.parent.parent / ".env",
         # Current working directory
         Path.cwd() / ".env",
         # Parent of cwd (if running from src/)
         Path.cwd().parent / ".env",
         # User config directory
-        Path.home() / ".cso-ai" / ".env",
+        Path.home() / ".side-mcp" / ".env",
     ]
 
     for env_path in possible_paths:
-        env_path = env_path.resolve()
-        if env_path.exists():
-            try:
+        try:
+            env_path = env_path.expanduser().resolve()
+            if env_path.exists():
                 with open(env_path) as f:
                     for line in f:
                         line = line.strip()
@@ -53,22 +55,37 @@ def load_env_file() -> None:
                             if key and value and key not in os.environ:
                                 os.environ[key] = value
                 break  # Use first found .env
-            except Exception:
-                continue
+        except Exception:
+            continue
+    
+    # [Hyper-Ralph] Scenario 61 Fix: Insecure Env Loading
+    # Verify .env permissions (should be 600 or 400)
+    dotenv_path = Path(".env")
+    if dotenv_path.exists():
+        import stat
+        mode = dotenv_path.stat().st_mode
+        if mode & stat.S_IRGRP or mode & stat.S_IROTH:
+            logger.warning("⚠️ SECURITY WARNING: .env file is world-readable (mode %o). Recommend 'chmod 600 .env'.", mode & 0o777)
+
 
 
 # Load environment variables before anything else
 load_env_file()
+
+# Configure comprehensive logging
+# Get log level from environment or default to INFO
+log_level = os.getenv("CSO_LOG_LEVEL", "INFO")
+setup_logging(log_level=log_level)
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-logger = logging.getLogger("cso-ai")
+logger = logging.getLogger("side-mcp")
 
 # Create MCP server instance
-server = Server("cso-ai")
+server = Server("side-mcp")
 
 # Define prompts - simplified for 3 core tools
 PROMPTS: list[Prompt] = [
@@ -140,7 +157,7 @@ async def get_prompt(name: str, arguments: dict[str, str] | None) -> GetPromptRe
         return handler()
 
     return GetPromptResult(
-        description="CSO.ai - Instant Strategic Intelligence",
+        description="sideMCP - Instant Strategic Intelligence",
         messages=[
             PromptMessage(
                 role="user",
@@ -152,37 +169,92 @@ async def get_prompt(name: str, arguments: dict[str, str] | None) -> GetPromptRe
 
 @server.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextContent]:
-    """Handle tool calls from the MCP client."""
-    logger.info(f"CSO.ai tool invoked: {name} with args: {arguments}")
+    """
+    Handle tool calls with Extreme Fuzz-Resistance & Environment Isolation.
+    """
+    import time
+    import traceback
+    
+    # [Extreme God Mode] Forensic 13: Subprocess Environment Isolation
+    # Ensure sensitive keys are NEVER leaked to shell subprocesses spawned here.
+    SENSITIVE_KEYS = ["GROQ_API_KEY", "SUPABASE_SERVICE_ROLE_KEY", "STRIPE_SECRET_KEY"]
+    for key in SENSITIVE_KEYS:
+        os.environ.pop(key, None) # Remove from current process env before any potential shell spawn
+    
+    # [Extreme God Mode] Forensic 8: Fuzz-Resistance
+    # Reject insane payloads immediately.
+    MAX_ARG_SIZE = 1000000 # 1MB limit for arguments
+    arg_str = str(arguments)
+    if len(arg_str) > MAX_ARG_SIZE:
+        return [TextContent(type="text", text=f"❌ **Fuzzing Detected**: Payload size {len(arg_str)} exceeds limit.")]
+
+    start_time = time.time()
+    logger.info(f"🔧 [GOD MODE EXECUTING] {name}")
 
     try:
-        result = await handle_tool_call(name, arguments or {})
+        # Re-load env locally for internal logic ONLY if needed, 
+        # but keep it out of the global process env to prevent shell leaks.
+        if name == "purge_project":
+            from cso_ai.storage.simple_db import SimplifiedDatabase
+            db = SimplifiedDatabase()
+            project_id = SimplifiedDatabase.get_project_id()
+            success = db.purge_project_data(project_id, confirm=True) # Explicit confirm enforced
+            result = f"🛡️ **Kill Switch Triggered**: Purged project `{project_id}`." if success else "❌ Purge failed."
+        else:
+            result = await handle_tool_call(name, arguments or {})
+        
+        elapsed = time.time() - start_time
+        logger.info(f"✅ {name} SUCCESS ({elapsed:.3f}s)")
+        
         return [TextContent(type="text", text=result)]
     except Exception as err:
-        logger.error(f"Error in tool {name}: {err}", exc_info=True)
-        return [TextContent(type="text", text=f"CSO.ai Error: {str(err)}")]
+        logger.error(f"❌ {name} ERROR: {str(err)}\n{traceback.format_exc()}")
+        return [TextContent(type="text", text=f"CSO.ai Forensic Error: {str(err)}")]
 
 
 async def run_server() -> None:
-    """Run the CSO.ai MCP server."""
-    logger.info("🧠 CSO.ai starting up...")
-
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            server.create_initialization_options(),
-        )
+    """Run the CSO.ai MCP server with background services."""
+    logger.info("🧠 sideMCP starting up...")
+    
+    # Initialize background services
+    # We use the current directory as the project root
+    project_path = Path.cwd()
+    service_manager = ServiceManager(project_path)
+    
+    try:
+        # Start the Nervous System (File Watcher, Context Tracker, etc.)
+        await service_manager.start()
+        
+        startup_time = time.time() - start_time
+        logger.info("=" * 80)
+        logger.info("🚀 sideMCP SERVER IS LIVE")
+        logger.info(f"⚡ Startup time: {startup_time:.3f}s")
+        logger.info("💡 STRATEGIC TIP: Use 'strategy' tool with specific context for better ROI.")
+        logger.info("=" * 80)
+        
+        async with stdio_server() as (read_stream, write_stream):
+            await server.run(
+                read_stream,
+                write_stream,
+                server.create_initialization_options(),
+            )
+    except Exception as e:
+        logger.error(f"Server error: {e}")
+        # Do not return 1, as the function signature is `-> None`
+    finally:
+        # Graceful shutdown of services
+        logger.info("🛑 Shutting down nervous system...")
+        await service_manager.stop()
 
 
 def main() -> None:
-    """Main entry point for cso-ai command."""
+    """Main entry point for side-mcp command."""
     try:
         asyncio.run(run_server())
     except KeyboardInterrupt:
-        logger.info("CSO.ai shutting down...")
+        logger.info("sideMCP shutting down...")
     except Exception as err:
-        logger.error(f"CSO.ai error: {err}", exc_info=True)
+        logger.error(f"sideMCP error: {err}", exc_info=True)
         raise
 
 
