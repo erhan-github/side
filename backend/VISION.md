@@ -156,13 +156,16 @@ But they're too busy building to do this well.
 
 ## 🛣️ Implementation Roadmap
 
-### Phase 1: Foundation (Current)
+### Phase 1: Foundation (COMPLETED)
 - **Local-First Shell**: SQLite storage with MCP protocol.
 - **Nervous System**: File watcher and context tracking.
+- **Swiss Bank Monetization**: Bank-safe token engine with "Hard Stop" logic.
+- **Forensic High-Performance**: Sub-1s scanning via single-pass AST visitor.
 
-### Phase 2: Intelligence & Sync
+### Phase 2: Intelligence & Auto-Remediation (In Progress)
+- **Modular Architecture**: Specialized analyzers for Python, TS, Git, and Deps.
 - **Strategic Guard**: Conflict detection for architectural drift.
-- **Supabase Bridge**: Real-time dashboard sync and token monetization.
+- **Auto-Fixer Expert**: LLM-driven automatic remediation of forensic findings.
 - **Market Intel**: Global feed ingestion for article scoring.
 
 ---

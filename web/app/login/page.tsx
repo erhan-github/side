@@ -68,15 +68,15 @@ export default function LoginPage() {
             <div className="max-w-md w-full">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2 justify-center mb-12">
-                    <div className="h-8 w-8 bg-white rounded-sm" />
-                    <span className="font-bold text-xl tracking-tight">CSO.ai</span>
+                    <div className="h-8 w-8 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-sm" />
+                    <span className="font-bold text-xl tracking-tight">Side</span>
                 </Link>
 
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
+                    <h1 className="text-3xl font-bold mb-2">Welcome to Side</h1>
                     <p className="text-zinc-400">
-                        Sign in to your strategic command center
+                        The Strategic Partner that thinks for you
                     </p>
                 </div>
 

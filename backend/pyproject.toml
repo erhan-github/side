@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cso-ai"
+name = "side-ai"
 version = "0.1.0"
 description = "Your AI Chief Strategy Officer - Strategic intelligence that understands your codebase, business, and market"
 readme = "README.md"
@@ -46,10 +46,10 @@ dev = [
 ]
 
 [project.scripts]
-cso-ai = "cso_ai.server:main"
+side = "side.server:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cso_ai"]
+packages = ["src/side"]
 
 [tool.ruff]
 line-length = 100

@@ -31,6 +31,20 @@ export async function GET(request: Request) {
                 );
                 return NextResponse.json(JSON.parse(result.stdout));
 
+            case 'activities':
+                // Get recent activities
+                result = await execAsync(
+                    `${pythonPath} -c "from cso_ai.storage.simple_db import SimplifiedDatabase; from pathlib import Path; import json; root = Path('${projectRoot}/../backend'); db = SimplifiedDatabase(str(root / '.cso' / 'local.db')); project_id = SimplifiedDatabase.get_project_id(root); logs = db.get_recent_activities(project_id, limit=30); print(json.dumps(logs))"`
+                );
+                return NextResponse.json(JSON.parse(result.stdout));
+
+            case 'profile':
+                // Get user profile (balance + tier)
+                result = await execAsync(
+                    `${pythonPath} -c "from cso_ai.storage.simple_db import SimplifiedDatabase; from pathlib import Path; import json; root = Path('${projectRoot}/../backend'); db = SimplifiedDatabase(str(root / '.cso' / 'local.db')); project_id = SimplifiedDatabase.get_project_id(root); profile = db.get_profile(project_id); balance = db.get_token_balance(); print(json.dumps({'tier': profile.get('tier', 'free') if profile else 'free', 'balance': balance}))"`
+                );
+                return NextResponse.json(JSON.parse(result.stdout));
+
             default:
                 return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
         }
