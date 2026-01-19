@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from cso_ai.intel.technical import TechnicalAnalyzer
+from side.intel.technical import TechnicalAnalyzer
 
 
 class TestTechnicalAnalyzer:

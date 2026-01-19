@@ -6,8 +6,8 @@ import pytest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from cso_ai.intel.market import Article
-from cso_ai.storage.simple_db import SimplifiedDatabase
+from side.intel.market import Article
+from side.storage.simple_db import SimplifiedDatabase
 
 
 @pytest.fixture

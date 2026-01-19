@@ -1,0 +1,23 @@
+
+--- Forensic Audit for: src/side ---
+Total Findings: 71
+- PERFORMANCE: 19
+- COMPLEXITY: 10
+- MONOLITH: 33
+- MISSING_TYPES: 9
+
+--- Critical Findings ---
+
+--- High Findings ---
+[COMPLEXITY] strategic_engine.py:None - File has 615 lines (threshold: 300).
+[COMPLEXITY] intel/forensic_engine.py:None - File has 391 lines (threshold: 300).
+[COMPLEXITY] intel/market.py:None - File has 337 lines (threshold: 300).
+[COMPLEXITY] intel/auto_intelligence.py:None - File has 603 lines (threshold: 300).
+[COMPLEXITY] intel/auditor.py:None - File has 341 lines (threshold: 300).
+[COMPLEXITY] intel/strategist.py:None - File has 587 lines (threshold: 300).
+[COMPLEXITY] tools/strategy.py:None - File has 310 lines (threshold: 300).
+[COMPLEXITY] tools/formatting.py:None - File has 432 lines (threshold: 300).
+[COMPLEXITY] storage/simple_db.py:None - File has 1684 lines (threshold: 300).
+[COMPLEXITY] services/service_manager.py:None - File has 428 lines (threshold: 300).
+
+Audit Complete.

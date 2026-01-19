@@ -5,7 +5,7 @@ Tests for auto_intelligence module.
 import pytest
 from pathlib import Path
 
-from cso_ai.intel.auto_intelligence import AutoIntelligence, QuickProfile
+from side.intel.auto_intelligence import AutoIntelligence, QuickProfile
 
 
 class TestQuickProfile:

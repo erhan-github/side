@@ -5,7 +5,7 @@ Tests for error handling utilities.
 import pytest
 import httpx
 
-from cso_ai.utils.errors import validate_url, validate_arguments, handle_tool_errors
+from side.utils.errors import validate_url, validate_arguments, handle_tool_errors
 
 
 class TestValidateUrl:

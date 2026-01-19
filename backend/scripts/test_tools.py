@@ -34,7 +34,7 @@ if env_path.exists():
 
 
 async def main():
-    from cso_ai.tools import handle_tool_call
+    from side.tools import handle_tool_call
 
     if len(sys.argv) < 2:
         print(__doc__)

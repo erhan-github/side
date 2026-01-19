@@ -6,7 +6,7 @@ import pytest
 from datetime import datetime, timezone
 from pathlib import Path
 
-from cso_ai.storage.simple_db import SimplifiedDatabase
+from side.storage.simple_db import SimplifiedDatabase
 
 
 @pytest.fixture

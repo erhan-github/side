@@ -10,7 +10,7 @@ Tests all decision types:
 
 import pytest
 
-from cso_ai.strategic_engine import (
+from side.strategic_engine import (
     ConfidenceLevel,
     DecisionType,
     StrategicContext,
