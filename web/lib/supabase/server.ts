@@ -14,9 +14,10 @@ export async function createClient() {
                 },
                 setAll(cookiesToSet) {
                     try {
-                        cookiesToSet.forEach(({ name, value, options }) =>
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            console.log(`[AUTH] Setting cookie: ${name} (Secure: ${options.secure}, Domain: ${options.domain})`);
                             cookieStore.set(name, value, options)
-                        )
+                        })
                         console.log(`[AUTH] Session Refresh: Successfully set ${cookiesToSet.length} cookies.`);
                     } catch (error) {
                         // This can consume the error if called from a Server Component
