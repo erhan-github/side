@@ -24,14 +24,14 @@ export async function GET(request: NextRequest) {
                 cookies: {
                     getAll() { return cookieStore.getAll() },
                     setAll(toSet) {
-                        toSet.forEach(({ name, value, options }) => {
-                            console.log(`[AUTH CALLBACK] Setting session cookie: ${name}`);
+                        toSet.forEach(({ name, value }) => {
+                            console.log(`[AUTH CALLBACK] Setting Host-Only cookie: ${name}`);
                             response.cookies.set(name, value, {
-                                ...options,
-                                domain: undefined, // Force Host-Only
                                 path: '/',
                                 sameSite: 'lax',
                                 secure: true,
+                                httpOnly: true,
+                                // EXPLICIT: Never set a domain attribute here
                             })
                         })
                     }

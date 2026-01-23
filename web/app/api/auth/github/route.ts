@@ -9,7 +9,6 @@ export async function GET(req: NextRequest) {
 
     let cookiesToSetDuringInitiation: any[] = [];
 
-    // 1. Create client
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -23,7 +22,6 @@ export async function GET(req: NextRequest) {
         }
     );
 
-    // 2. Trigger initiation (Single pass)
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
@@ -39,22 +37,21 @@ export async function GET(req: NextRequest) {
 
     const response = NextResponse.redirect(data.url);
 
-    // 3. NUCLEAR WIPE - Clear any ghost cookies
+    // NUCLEAR WIPE: Delete any possible shadowed cookies
     cookieStore.getAll().forEach(c => {
         if (c.name.includes('auth-token') || c.name.includes('code-verifier')) {
-            response.cookies.delete(c.name);
+            response.cookies.delete(c.name); // Delete host-only
         }
     });
 
-    // 4. Apply new verifier/cookies
-    cookiesToSetDuringInitiation.forEach(({ name, value, options }) => {
-        console.log(`[GITHUB AUTH] Setting initiation cookie: ${name}`);
+    // SET NAKED: Apply the code verifier as Host-Only
+    cookiesToSetDuringInitiation.forEach(({ name, value }) => {
+        console.log(`[GITHUB AUTH] Setting Host-Only initiation cookie: ${name}`);
         response.cookies.set(name, value, {
-            ...options,
-            domain: undefined, // Force Host-Only
             path: '/',
             sameSite: 'lax',
             secure: true,
+            httpOnly: true,
         });
     });
 
