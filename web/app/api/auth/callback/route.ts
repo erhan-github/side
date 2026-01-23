@@ -20,23 +20,18 @@ export async function GET(request: NextRequest) {
                     getAll() { return cookieStore.getAll() },
                     setAll(toSet) {
                         toSet.forEach(({ name, value, options }) => {
-                            console.log(`[AUTH CALLBACK] Direct injection: ${name}`);
-                            // We use BOTH the cookieStore (for server state) 
-                            // AND the response object (for the browser redirect)
-                            cookieStore.set(name, value, {
+                            console.log(`[AUTH CALLBACK] Setting SameSite=None cookie: ${name}`);
+                            const settings = {
                                 ...options,
                                 domain: undefined,
                                 path: '/',
-                                sameSite: 'lax',
+                                sameSite: 'none' as const, // CRITICAL
                                 secure: true,
-                            });
-                            response.cookies.set(name, value, {
-                                ...options,
-                                domain: undefined,
-                                path: '/',
-                                sameSite: 'lax',
-                                secure: true,
-                            });
+                            };
+
+                            // Dual Injection
+                            cookieStore.set(name, value, settings);
+                            response.cookies.set(name, value, settings);
                         })
                     }
                 }
@@ -46,7 +41,7 @@ export async function GET(request: NextRequest) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            console.log('[AUTH CALLBACK] Exchange successful. Force-redirecting to dashboard.');
+            console.log('[AUTH CALLBACK] Exchange successful.');
             return response;
         }
 

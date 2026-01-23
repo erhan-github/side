@@ -2,7 +2,6 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-    // 1. Initialize response
     let response = NextResponse.next({
         request: {
             headers: request.headers,
@@ -15,7 +14,6 @@ export async function middleware(request: NextRequest) {
         console.log(`[MIDDLEWARE] Incoming cookies (${allCookies.length}): ${allCookies.map(c => c.name).join(', ')}`);
     }
 
-    // 2. Create Supabase Client
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -25,32 +23,40 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    // Update request headers
+                    // Update request
                     cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
 
-                    // RE-Initialize response to carry the new request headers forward
-                    // IMPORTANT: We use the existing 'response' headers if possible, 
-                    // but Next.js middleware usually requires re-creating the response
-                    // to effectively pass headers to subsequent routes.
+                    // Update response
                     response = NextResponse.next({
                         request,
                     })
 
-                    // Manually re-apply EVERY cookie to the new response to prevent chunk loss
-                    // This is the absolute safest way to handle Supabase chunks in Middleware
-                    request.cookies.getAll().forEach((cookie) => {
-                        response.cookies.set(cookie.name, cookie.value, {
+                    // Inject with SameSite=None
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        response.cookies.set(name, value, {
+                            ...options,
+                            domain: undefined,
                             path: '/',
-                            sameSite: 'lax',
+                            sameSite: 'none', // Bypass
                             secure: true,
-                        });
+                        })
+                    })
+
+                    // SAFETY: Re-inject ALL existing cookies as SameSite=None to prevent chunk mismatch
+                    request.cookies.getAll().forEach((cookie) => {
+                        if (!cookiesToSet.find(c => c.name === cookie.name)) {
+                            response.cookies.set(cookie.name, cookie.value, {
+                                path: '/',
+                                sameSite: 'none',
+                                secure: true,
+                            });
+                        }
                     });
                 },
             },
         }
     )
 
-    // 3. Verify Session
     const { data: { user } } = await supabase.auth.getUser()
 
     if (request.nextUrl.pathname.startsWith('/dashboard')) {

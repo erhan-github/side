@@ -15,14 +15,13 @@ export async function createClient() {
                 setAll(cookiesToSet) {
                     try {
                         cookiesToSet.forEach(({ name, value, options }) => {
-                            // ENFORCE Host-Only Cookies (No Domain) for Railway consistency
+                            // STRATEGY: SameSite=None (Bypass Public Suffix Restrictions)
                             const cookieOptions = {
                                 ...options,
                                 domain: undefined,
                                 path: '/',
-                                sameSite: 'lax' as const,
+                                sameSite: 'none' as const, // CRITICAL CHANGE
                                 secure: true,
-                                httpOnly: options.httpOnly ?? name.includes('auth-token'),
                             };
                             console.log(`[AUTH CLIENT] Setting cookie: ${name}`);
                             cookieStore.set(name, value, cookieOptions)
