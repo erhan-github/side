@@ -17,10 +17,11 @@ export async function createClient() {
                         cookiesToSet.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, options)
                         )
-                    } catch {
-                        // The `setAll` method was called from a Server Component.
-                        // This can be ignored if you have middleware refreshing
-                        // user sessions.
+                        console.log(`[AUTH] Session Refresh: Successfully set ${cookiesToSet.length} cookies.`);
+                    } catch (error) {
+                        // This can consume the error if called from a Server Component
+                        // but we log it for forensics in the Railway panel.
+                        console.warn("[AUTH] Session Refresh Warning: Could not set cookies from Server Component.", error);
                     }
                 },
             },

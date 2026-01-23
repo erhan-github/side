@@ -9,11 +9,15 @@ export default async function DashboardPage() {
 
     const {
         data: { user },
+        error
     } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (error || !user) {
+        console.error("[DASHBOARD] Auth Failure: No valid session found. Redirecting to /login.", error?.message);
         return redirect("/login");
     }
+
+    console.log(`[DASHBOARD] Session Verified: User ID ${user.id} accessed telemetry.`);
 
     // Fetch Profile for API Key
     let { data: profile } = await supabase
