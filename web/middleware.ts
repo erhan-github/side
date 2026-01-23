@@ -8,12 +8,6 @@ export async function middleware(request: NextRequest) {
         },
     })
 
-    // Forensic Logging
-    const allCookies = request.cookies.getAll();
-    if (request.nextUrl.pathname.startsWith('/dashboard')) {
-        console.log(`[MIDDLEWARE] Incoming cookies (${allCookies.length}): ${allCookies.map(c => c.name).join(', ')}`);
-    }
-
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -23,45 +17,26 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    // Update request
                     cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-
-                    // Update response
-                    response = NextResponse.next({
-                        request,
-                    })
-
-                    // Inject with SameSite=None
+                    response = NextResponse.next({ request })
                     cookiesToSet.forEach(({ name, value, options }) => {
                         response.cookies.set(name, value, {
                             ...options,
-                            domain: undefined,
-                            path: '/',
-                            sameSite: 'none', // Bypass
-                            secure: true,
+                            domain: undefined, path: '/', sameSite: 'lax', secure: true
                         })
                     })
-
-                    // SAFETY: Re-inject ALL existing cookies as SameSite=None to prevent chunk mismatch
-                    request.cookies.getAll().forEach((cookie) => {
-                        if (!cookiesToSet.find(c => c.name === cookie.name)) {
-                            response.cookies.set(cookie.name, cookie.value, {
-                                path: '/',
-                                sameSite: 'none',
-                                secure: true,
-                            });
-                        }
-                    });
                 },
             },
         }
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
+    // IMPORTANT: We do NOT await getUser() here anymore.
+    // We let the Server Components handle the auth check.
+    // This prevents the middleware from being a "hard gate" that bounces users 
+    // just because the cookie hasn't arrived yet.
 
-    if (request.nextUrl.pathname.startsWith('/dashboard')) {
-        console.log(`[MIDDLEWARE] ${user ? '✅ AUTHENTICATED' : '❌ ANONYMOUS'} access to ${request.nextUrl.pathname}`);
-    }
+    // Refresh session if needed (quietly)
+    await supabase.auth.getUser()
 
     return response
 }

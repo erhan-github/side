@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Zap, Copy, Terminal, Key, Check } from "lucide-react";
 import Link from "next/link";
 import { CheckoutButton } from "@/components/dashboard/CheckoutButton";
+import { AuthSync } from "@/components/auth/AuthSync";
 
 export default async function DashboardPage() {
     const supabase = await createClient();
@@ -12,12 +13,22 @@ export default async function DashboardPage() {
         error
     } = await supabase.auth.getUser();
 
+    // SOFT GATE: If no user on server, return a "skeleton" or loading state
+    // The <AuthSync /> component in the root layout will force a refresh 
+    // once the client-side cookie is detected.
     if (error || !user) {
-        console.error("[DASHBOARD] Auth Failure: No valid session found. Redirecting to /login.", error?.message);
-        return redirect("/login");
+        console.warn("[DASHBOARD] Server-side auth missing. Waiting for client hydration...");
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-8 h-8 border-t-2 border-cyan-500 rounded-full animate-spin"></div>
+                    <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">Hydrating Secure Session...</p>
+                </div>
+            </div>
+        );
     }
 
-    console.log(`[DASHBOARD] Session Verified: User ID ${user.id} accessed telemetry.`);
+    console.log(`[DASHBOARD] Session Verified: User ID ${user.id}`);
 
     // Fetch Profile for API Key
     let { data: profile } = await supabase
