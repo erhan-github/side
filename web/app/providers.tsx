@@ -7,18 +7,22 @@ if (typeof window !== 'undefined') {
     const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
 
     if (api_key) {
-        console.log("Initializing PostHog with:", host);
-        posthog.init(api_key, {
-            api_host: host,
-            person_profiles: 'identified_only',
-            capture_pageview: false
-        })
+        try {
+            console.log("Initializing PostHog with:", host);
+            posthog.init(api_key, {
+                api_host: host,
+                person_profiles: 'identified_only',
+                capture_pageview: false,
+                persistence: 'localStorage',
+                autocapture: false
+            })
 
-        if (typeof window !== 'undefined') {
             posthog.register({
                 app: 'sidelith',
                 env: process.env.NODE_ENV
             })
+        } catch (e) {
+            console.warn("PostHog initialization failed:", e);
         }
     }
 }

@@ -16,16 +16,33 @@ export default async function DashboardPage() {
     }
 
     // Fetch Profile for API Key
-    const { data: profile } = await supabase
+    let { data: profile } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
 
-    // Fallback if profile doesn't exist yet (first login race condition handling could be better but this is MVP)
-    const apiKey = profile?.api_key || "sk_live_generating...";
+    // Auto-create profile if it doesn't exist (e.g., user signed up before trigger was live)
+    if (!profile) {
+        const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert({
+                id: user.id,
+                email: user.email,
+                api_key: `sk_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
+            })
+            .select()
+            .single();
+
+        if (!createError) {
+            profile = newProfile;
+        }
+    }
+
+    const apiKey = profile?.api_key || "Generating...";
     const tier = profile?.tier || "free";
     const tokens = profile?.tokens_monthly || 10000;
+    const tokensUsed = profile?.tokens_used || 0;
 
     return (
         <div className="min-h-screen bg-black text-white p-8">
@@ -86,7 +103,10 @@ export default async function DashboardPage() {
                                 <span className="font-mono text-white">{tokens.toLocaleString()} SUs</span>
                             </div>
                             <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
-                                <div className="h-full bg-cyan-500 w-[10%]" />
+                                <div
+                                    className="h-full bg-cyan-500 transition-all duration-1000"
+                                    style={{ width: `${Math.min(100, (tokensUsed / tokens) * 100)}%` }}
+                                />
                             </div>
                             <p className="text-[10px] text-zinc-500 mt-2 uppercase tracking-widest font-black">Capacity Resets Feb 1st</p>
                         </div>
