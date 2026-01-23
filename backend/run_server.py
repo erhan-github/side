@@ -16,8 +16,8 @@ if __name__ == "__main__":
     transport = os.getenv("MCP_TRANSPORT", "stdio") # DEFAULT to stdio for local use
     
     if transport == "sse" or os.getenv("RAILWAY_PUBLIC_DOMAIN"):
-        print(f"🚀 Starting Side Intelligence over SSE on port {port}...")
-        mcp.run(transport="sse", port=port)
+        print(f"🚀 Starting Side Intelligence over SSE on port {port} and binding to 0.0.0.0...")
+        mcp.run(transport="sse", port=port, host="0.0.0.0")
     else:
         # Default to stdio for local MCP use
         mcp.run(transport="stdio")
