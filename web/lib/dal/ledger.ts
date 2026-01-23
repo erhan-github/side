@@ -5,42 +5,42 @@ import { getAuthenticatedUser } from "./auth";
 export interface LedgerEntry {
     id: string;
     created_at: string;
-    operation: string; // e.g., 'inference', 'search'
-    tokens: number;
-    cost: number;
+    operation: string; // 'usage', 'refill', 'subscription_new'
+    description: string;
+    tokens: number; // Positive (Credit) or Negative (Usage)
+    balance_after: number | null;
     status: "success" | "failed";
 }
 
 /**
- * Fetches the forensic ledger (usage history).
+ * Fetches the forensic ledger (financial history).
  */
 export const getLedger = cache(async (): Promise<LedgerEntry[]> => {
     // 1. Auth Gate
     await getAuthenticatedUser();
 
-    // 2. Fetch from 'usage' table
+    // 2. Fetch from 'transaction_history' table
     const supabase = await createClient();
     const { data, error } = await supabase
-        .from("usage")
+        .from("transaction_history")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(100);
 
     if (error) {
+        // If table doesn't exist yet (migration pending), fall back gracefully or return empty
         console.error("[DAL] Failed to fetch ledger:", error);
         return [];
-        // Or throw new Error(error.message);
     }
 
-    // Map to interface (if table structure differs, adapt here)
-    // Assuming 'usage' has: id, created_at, action (operation), tokens, cost?
-    // If not, we might need to adapt.
+    // 3. Map to interface
     return data.map((d: any) => ({
         id: d.id,
         created_at: d.created_at,
-        operation: d.action || "unknown",
-        tokens: d.tokens || 0,
-        cost: d.cost || 0,
-        status: "success", // usage usually implies success unless we track failures
+        operation: d.type,
+        description: d.description || d.type,
+        tokens: d.amount,
+        balance_after: d.balance_after,
+        status: "success",
     }));
 });

@@ -9,6 +9,8 @@ export interface Profile {
     tier: "free" | "pro" | "enterprise";
     tokens_monthly: number;
     tokens_used: number;
+    billing_customer_id: string | null;
+    billing_subscription_id: string | null;
     created_at: string;
 }
 

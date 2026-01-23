@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import { crypto } from "next/dist/compiled/@edge-runtime/primitives";
 import { NextResponse } from "next/server";
 
 // Helper to get Supabase Admin client
@@ -26,6 +25,7 @@ export async function POST(request: Request) {
 
         // Verify signature
         const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET!;
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const hmac = require('crypto').createHmac('sha256', secret);
         const digest = hmac.update(body).digest('hex');
 
@@ -45,6 +45,7 @@ export async function POST(request: Request) {
 
         console.log(`Processing Lemon Squeezy event: ${eventName} for user: ${userId}`);
 
+        // 1. Handle Subscription Created / Updated
         if (eventName === "subscription_created" || eventName === "subscription_updated") {
             const variantId = String(payload.data.attributes.variant_id);
             let tier = "hobby";
@@ -58,11 +59,30 @@ export async function POST(request: Request) {
                 tokens = 2500;
             }
 
+            // Capture Billing IDs for Portal Access
+            const customerId = String(payload.data.attributes.customer_id);
+            const subscriptionId = String(payload.data.id);
+
+            // Log to Transaction Ledger (Reset Logic for now)
+            // Ideally we calculate diff, but for sub start/update we accept the reset.
+            // We log the *New Allowance*.
+            await supabaseAdmin.from("transaction_history").insert({
+                user_id: userId,
+                amount: tokens,
+                type: eventName === "subscription_created" ? 'subscription_new' : 'subscription_renewal',
+                description: `Tier Update: ${tier.toUpperCase()}`,
+                external_id: subscriptionId,
+                balance_after: tokens // Since we reset
+            });
+
             const { error } = await supabaseAdmin
                 .from("profiles")
                 .update({
                     tier,
                     tokens_monthly: tokens,
+                    tokens_used: 0, // Reset usage on upgrade/renewal? Typically yes for new cycle.
+                    billing_customer_id: customerId,
+                    billing_subscription_id: subscriptionId,
                     updated_at: new Date().toISOString()
                 })
                 .eq("id", userId);
@@ -70,23 +90,38 @@ export async function POST(request: Request) {
             if (error) throw error;
         }
 
+        // 2. Handle Refill (One-time Purchase)
         if (eventName === "order_created") {
             const variantId = String(payload.data.attributes.first_order_item.variant_id);
 
             // Handle Refill
             if (variantId === process.env.LEMONSQUEEZY_VARIANT_ID_REFILL) {
+                const refillAmount = 250;
+
                 const { data: profile } = await supabaseAdmin
                     .from("profiles")
-                    .select("tokens_monthly")
+                    .select("tokens_monthly, tokens_used")
                     .eq("id", userId)
                     .single();
 
-                const currentTokens = profile?.tokens_monthly || 0;
+                const currentLimit = profile?.tokens_monthly || 0;
+                const currentUsed = profile?.tokens_used || 0;
+                const newLimit = currentLimit + refillAmount;
+
+                // Log to Transaction Ledger
+                await supabaseAdmin.from("transaction_history").insert({
+                    user_id: userId,
+                    amount: refillAmount,
+                    type: 'refill',
+                    description: 'Refill Pack (+250)',
+                    external_id: String(payload.data.id),
+                    balance_after: newLimit - currentUsed
+                });
 
                 const { error } = await supabaseAdmin
                     .from("profiles")
                     .update({
-                        tokens_monthly: currentTokens + 250,
+                        tokens_monthly: newLimit,
                         updated_at: new Date().toISOString()
                     })
                     .eq("id", userId);

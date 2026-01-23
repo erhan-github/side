@@ -23,7 +23,7 @@ except ImportError:
 from side.intel.forensic_engine import ForensicEngine
 from side.intel.intelligence_store import IntelligenceStore
 from side.logging_config import setup_logging
-from side.telemetry import telemetry
+from side.telemetry import telemetry, init_telemetry
 
 # [DATABASE REF: SQLModel Migration]
 from side.storage.database import get_session, Project, Activity, Finding
@@ -31,6 +31,9 @@ from sqlmodel import select
 
 # Initialize Logging
 setup_logging(log_level=os.getenv("SIDE_LOG_LEVEL", "INFO"))
+
+# Initialize Telemetry (Sentry + PostHog)
+init_telemetry()
 
 # Initialize FastMCP
 mcp = FastMCP("Side Monolith")

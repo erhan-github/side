@@ -1,8 +1,7 @@
 import { getBillingStatus } from "@/lib/dal/billing";
 import { PageHeader } from "@/components/dashboard/shell/PageHeader";
-import { CreditCard, TrendingUp } from "lucide-react";
+import { CreditCard, ExternalLink, ShieldCheck } from "lucide-react";
 import { RefuelAction } from "@/components/dashboard/billing/RefuelAction";
-
 export default async function BillingPage() {
     const billing = await getBillingStatus();
 
@@ -68,32 +67,42 @@ export default async function BillingPage() {
                 </div>
             </div>
 
-            {/* Invoices */}
-            <div>
-                <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-zinc-500" /> Refuel History
-                </h3>
-                <div className="border border-white/10 rounded-xl overflow-hidden">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-zinc-900/50 text-zinc-500 font-mono uppercase text-xs">
-                            <tr>
-                                <th className="px-6 py-3 font-normal">Date</th>
-                                <th className="px-6 py-3 font-normal">Amount</th>
-                                <th className="px-6 py-3 font-normal text-right">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5 bg-[#0c0c0e]">
-                            {billing.invoices.map((inv) => (
-                                <tr key={inv.id}>
-                                    <td className="px-6 py-4 text-zinc-300 font-mono">{inv.date}</td>
-                                    <td className="px-6 py-4 text-right text-zinc-300">${inv.amount / 100}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <span className="text-emerald-400 text-xs bg-emerald-500/10 px-2 py-1 rounded uppercase">{inv.status}</span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            {/* Invoices & Subscription Management (Portal) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-[#0c0c0e] border border-white/10 rounded-xl p-6 flex flex-col justify-between">
+                    <div>
+                        <h3 className="text-white font-medium mb-2 flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                            Secure Billing
+                        </h3>
+                        <p className="text-sm text-zinc-500">
+                            We use LemonSqueezy as our Merchant of Record. They handle all tax compliance, invoicing, and secure payment processing.
+                        </p>
+                    </div>
+                </div>
+
+                <div className="bg-[#0c0c0e] border border-white/10 rounded-xl p-6 flex flex-col justify-between items-start">
+                    <div>
+                        <h3 className="text-white font-medium mb-2">Subscription & Invoices</h3>
+                        <p className="text-sm text-zinc-500 mb-4">
+                            View your full billing history, download official PDF invoices, and manage your payment methods.
+                        </p>
+                    </div>
+
+                    {billing.portalUrl ? (
+                        <a
+                            href={billing.portalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors"
+                        >
+                            Open Billing Portal <ExternalLink className="w-4 h-4" />
+                        </a>
+                    ) : (
+                        <div className="text-xs text-zinc-600 font-mono bg-zinc-900 px-3 py-2 rounded border border-zinc-800">
+                            No active billing account linked yet.
+                        </div>
+                    )}
                 </div>
             </div>
         </div >
