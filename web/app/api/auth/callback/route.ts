@@ -11,46 +11,37 @@ export async function GET(request: NextRequest) {
     if (code) {
         const cookieStore = await cookies()
         const redirectUrl = `${origin}${next}`;
-
-        // 1. Create the final redirect response first
         const response = NextResponse.redirect(redirectUrl);
 
-        // 2. Create the production-ready client that writes directly to the response
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
             {
                 cookies: {
-                    getAll() {
-                        return cookieStore.getAll()
-                    },
-                    setAll(cookiesToSet) {
-                        cookiesToSet.forEach(({ name, value, options }) => {
-                            const cookieOptions = {
+                    getAll() { return cookieStore.getAll() },
+                    setAll(toSet) {
+                        toSet.forEach(({ name, value, options }) => {
+                            response.cookies.set(name, value, {
                                 ...options,
                                 path: '/',
-                                sameSite: 'lax' as const,
+                                sameSite: 'lax',
                                 secure: true,
-                                httpOnly: true,
-                            };
-                            // Inject cookies directly into the outgoing redirect response
-                            response.cookies.set(name, value, cookieOptions);
-                        });
-                    },
-                },
+                            })
+                        })
+                    }
+                }
             }
         )
 
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            console.log('[AUTH CALLBACK] Session exchange successful. Redirecting with robust cookies.');
+            console.log('[AUTH CALLBACK] Session exchange successful.');
             return response;
         }
 
         console.error('[AUTH CALLBACK] Exchange failed:', error.message);
     }
 
-    // Redirect to login on error
     return NextResponse.redirect(`${origin}/login?error=auth`)
 }
