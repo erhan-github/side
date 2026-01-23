@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
@@ -15,15 +15,20 @@ export async function createClient() {
                 setAll(cookiesToSet) {
                     try {
                         cookiesToSet.forEach(({ name, value, options }) => {
-                            cookieStore.set(name, value, {
-                                ...options,
+                            // STRIP DOMAIN to prevent Railway hosting conflicts
+                            const { domain, ...otherOptions } = options;
+                            const cookieOptions = {
+                                ...otherOptions,
                                 path: '/',
-                                sameSite: 'lax',
+                                sameSite: 'lax' as const,
                                 secure: true,
-                            })
+                                httpOnly: options.httpOnly ?? name.includes('auth-token'),
+                            };
+                            console.log(`[AUTH] Setting cookie: ${name} (httpOnly: ${cookieOptions.httpOnly})`);
+                            cookieStore.set(name, value, cookieOptions)
                         })
                     } catch (error) {
-                        // Safe to ignore in Server Components
+                        console.warn("[AUTH] Cookie Sync Warning:", error);
                     }
                 },
             },

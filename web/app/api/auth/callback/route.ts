@@ -8,6 +8,10 @@ export async function GET(request: NextRequest) {
     const next = requestUrl.searchParams.get('next') ?? '/dashboard'
     const origin = (process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin)
 
+    // Forensic Logging
+    const allCookies = request.cookies.getAll();
+    console.log(`[AUTH CALLBACK] Incoming cookies (${allCookies.length}): ${allCookies.map(c => c.name).join(', ')}`);
+
     if (code) {
         const cookieStore = await cookies()
         const redirectUrl = `${origin}${next}`;
@@ -21,12 +25,15 @@ export async function GET(request: NextRequest) {
                     getAll() { return cookieStore.getAll() },
                     setAll(toSet) {
                         toSet.forEach(({ name, value, options }) => {
-                            response.cookies.set(name, value, {
+                            const cookieOptions = {
                                 ...options,
                                 path: '/',
-                                sameSite: 'lax',
+                                sameSite: 'lax' as const,
                                 secure: true,
-                            })
+                                httpOnly: true,
+                            };
+                            console.log(`[AUTH CALLBACK] Setting session cookie: ${name}`);
+                            response.cookies.set(name, value, cookieOptions);
                         })
                     }
                 }
@@ -36,7 +43,7 @@ export async function GET(request: NextRequest) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            console.log('[AUTH CALLBACK] Session exchange successful.');
+            console.log('[AUTH CALLBACK] Session exchange successful. Redirecting to dashboard.');
             return response;
         }
 

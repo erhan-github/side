@@ -37,14 +37,17 @@ export async function GET(req: NextRequest) {
 
     const response = NextResponse.redirect(data.url);
 
-    // Apply cookies from the initiation call
+    // 4. Manually apply the cookies from THAT SAME CALL to the response
     cookiesToSetDuringInitiation.forEach(({ name, value, options }) => {
-        response.cookies.set(name, value, {
+        const cookieOptions = {
             ...options,
             path: '/',
-            sameSite: 'lax',
+            sameSite: 'lax' as const,
             secure: true,
-        });
+            httpOnly: true,
+        };
+        console.log(`[GITHUB AUTH] Persisting verifier cookie: ${name}`);
+        response.cookies.set(name, value, cookieOptions);
     });
 
     return response;
