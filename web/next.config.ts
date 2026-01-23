@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Standard production build - compatible with Railway
+  // Minimal production config
+  reactStrictMode: true,
+  poweredByHeader: false,
 };
 
 export default nextConfig;

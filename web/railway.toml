@@ -1,5 +1,6 @@
+# Minimal Railway config for Next.js
 [build]
 builder = "nixpacks"
 
 [deploy]
-restartPolicyType = "ON_FAILURE"
+startCommand = "npm start"
