@@ -1,9 +1,9 @@
 -- ============================================================================
--- CSO.ai Tenant Isolation Migration
+-- Sidelith Tenant Isolation Migration
 -- ============================================================================
 -- This migration adds complete tenant isolation so that:
 -- - Each project/workspace has its own tenant_id
--- - User A's CSO.ai insights are NEVER visible to User B
+-- - User A's insights are NEVER visible to User B
 -- - Articles are shared (they're from public sources), but SCORES are isolated
 -- - Profiles, usage, and API keys are strictly isolated
 -- ============================================================================
@@ -366,7 +366,7 @@ LEFT JOIN tenant_context tc ON t.id = tc.tenant_id;
 -- ┌─────────────────────────────────────────────────────────────────────────┐
 -- │                         ISOLATED (Per Tenant)                           │
 -- │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐      │
--- │  │  CSO-AI Project  │  │  Turtle Project  │  │  User X Project  │      │
+-- │  │  Sidelith Project│  │  Turtle Project  │  │  User X Project  │      │
 -- │  │  tenant_id: A    │  │  tenant_id: B    │  │  tenant_id: C    │      │
 -- │  ├──────────────────┤  ├──────────────────┤  ├──────────────────┤      │
 -- │  │ article_scores   │  │ article_scores   │  │ article_scores   │      │
