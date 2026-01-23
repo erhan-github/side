@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Minimal production config
+  output: 'standalone',
   reactStrictMode: true,
   poweredByHeader: false,
 };
