@@ -23,9 +23,9 @@ export async function middleware(request: NextRequest) {
                             request,
                         })
                         cookiesToSet.forEach(({ name, value, options }) => {
-                            const { domain, ...otherOptions } = options;
                             response.cookies.set(name, value, {
-                                ...otherOptions,
+                                ...options,
+                                domain: undefined, // Force Host-Only
                                 path: '/',
                                 sameSite: 'lax',
                                 secure: true,

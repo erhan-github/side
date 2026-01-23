@@ -6,9 +6,11 @@ export async function GET(request: NextRequest) {
     const requestUrl = new URL(request.url)
     const code = requestUrl.searchParams.get('code')
     const next = requestUrl.searchParams.get('next') ?? '/dashboard'
+    const origin = (process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin)
 
-    let origin = process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin;
-    if (origin.endsWith('/')) origin = origin.slice(0, -1);
+    // Forensic Logging
+    const allCookies = request.cookies.getAll();
+    console.log(`[AUTH CALLBACK] Incoming cookies (${allCookies.length}): ${allCookies.map(c => c.name).join(', ')}`);
 
     if (code) {
         const cookieStore = await cookies()
@@ -23,9 +25,10 @@ export async function GET(request: NextRequest) {
                     getAll() { return cookieStore.getAll() },
                     setAll(toSet) {
                         toSet.forEach(({ name, value, options }) => {
+                            console.log(`[AUTH CALLBACK] Setting session cookie: ${name}`);
                             response.cookies.set(name, value, {
                                 ...options,
-                                domain: undefined, // Force domain-less
+                                domain: undefined, // Force Host-Only
                                 path: '/',
                                 sameSite: 'lax',
                                 secure: true,
@@ -39,7 +42,7 @@ export async function GET(request: NextRequest) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            console.log('[AUTH CALLBACK] Session exchange successful.');
+            console.log('[AUTH CALLBACK] Session exchange successful. Redirecting to dashboard.');
             return response;
         }
 

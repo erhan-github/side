@@ -5,20 +5,11 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
     const cookieStore = await cookies();
     const requestUrl = new URL(req.url);
-
-    // 1. Sanitize Origin (Important for PKCE consistency)
-    let origin = process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin;
-    if (origin.endsWith('/')) origin = origin.slice(0, -1);
-
-    // 2. Clear Any Conflict Cookies (Ghost State Prevention)
-    cookieStore.getAll().forEach(c => {
-        if (c.name.includes('auth-token') || c.name.includes('code-verifier')) {
-            try { cookieStore.delete(c.name); } catch (e) { }
-        }
-    });
+    const origin = process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin;
 
     let cookiesToSetDuringInitiation: any[] = [];
 
+    // 1. Create client
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -32,7 +23,7 @@ export async function GET(req: NextRequest) {
         }
     );
 
-    // 3. Single Initiation Call
+    // 2. Trigger initiation (Single pass)
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
@@ -48,11 +39,19 @@ export async function GET(req: NextRequest) {
 
     const response = NextResponse.redirect(data.url);
 
-    // 4. Perfect Cookie Application
+    // 3. NUCLEAR WIPE - Clear any ghost cookies
+    cookieStore.getAll().forEach(c => {
+        if (c.name.includes('auth-token') || c.name.includes('code-verifier')) {
+            response.cookies.delete(c.name);
+        }
+    });
+
+    // 4. Apply new verifier/cookies
     cookiesToSetDuringInitiation.forEach(({ name, value, options }) => {
+        console.log(`[GITHUB AUTH] Setting initiation cookie: ${name}`);
         response.cookies.set(name, value, {
             ...options,
-            domain: undefined, // Force domain-less for Railway
+            domain: undefined, // Force Host-Only
             path: '/',
             sameSite: 'lax',
             secure: true,
