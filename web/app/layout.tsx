@@ -42,6 +42,7 @@ export const metadata: Metadata = {
 };
 
 import { CSPostHogProvider } from "./providers";
+import { GlobalErrorBoundary } from "@/components/observability/GlobalErrorBoundary";
 
 export default function RootLayout({
   children,
@@ -53,9 +54,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <CSPostHogProvider>
-          {children}
-        </CSPostHogProvider>
+        <GlobalErrorBoundary>
+          <CSPostHogProvider>
+            {children}
+          </CSPostHogProvider>
+        </GlobalErrorBoundary>
       </body>
     </html>
   );
