@@ -1,7 +1,8 @@
 [build]
+builder = "nixpacks"
 
 [deploy]
-startCommand = "npm run start"
+startCommand = "npm start -- -p $PORT"
 healthcheckPath = "/"
 healthcheckTimeout = 100
-restartPolicyType = "on_failure"
+restartPolicyType = "ON_FAILURE"

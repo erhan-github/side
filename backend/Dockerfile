@@ -19,6 +19,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Install curl for healthchecks
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy wheels from builder
 COPY --from=builder /app/wheels /wheels
 COPY --from=builder /app/requirements.txt .
