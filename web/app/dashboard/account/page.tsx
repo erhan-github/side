@@ -1,48 +1,53 @@
-"use client";
+import { getProfile } from "@/lib/dal/profile";
+import { PageHeader } from "@/components/dashboard/shell/PageHeader";
+import { SectionShell } from "@/components/dashboard/shell/SectionShell";
+import { Shield, Key, User } from "lucide-react";
 
-import { Settings, Shield, Key, User } from "lucide-react";
+export default async function AccountPage() {
+    // 1. Fetch Data (Server-Side)
+    const profile = await getProfile();
 
-export default function AccountPage() {
     return (
         <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen flex flex-col gap-8">
-            <div>
-                <h1 className="text-3xl font-bold text-white tracking-tight mb-2 flex items-center gap-3">
-                    <User className="w-8 h-8 text-blue-400" />
-                    Account Control
-                </h1>
-                <p className="text-zinc-500">
-                    Manage your Sidelith identity and system access.
-                </p>
-            </div>
+            <PageHeader
+                title="Account Control"
+                description="Manage your Sidelith identity and system access."
+                icon={User}
+                iconColor="text-blue-400"
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-[#0c0c0e] border border-white/10 rounded-xl p-6">
-                    <h3 className="text-white font-medium mb-4 flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-zinc-400" /> Profile Verification
-                    </h3>
+                <SectionShell
+                    title="Profile Verification"
+                    icon={Shield}
+                >
                     <div className="space-y-4">
                         <div className="flex justify-between items-center py-2 border-b border-white/5">
                             <span className="text-xs text-zinc-500 uppercase tracking-tighter">Status</span>
                             <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold uppercase tracking-widest">Active</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-white/5">
-                            <span className="text-xs text-zinc-500 uppercase tracking-tighter">Identity</span>
-                            <span className="text-xs text-white font-mono">Judicial Egress Confirmed</span>
+                            <span className="text-xs text-zinc-500 uppercase tracking-tighter">Identity (Email)</span>
+                            <span className="text-xs text-white font-mono">{profile.email}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-white/5">
+                            <span className="text-xs text-zinc-500 uppercase tracking-tighter">Sovereign Tier</span>
+                            <span className="text-xs text-white font-bold uppercase">{profile.tier}</span>
                         </div>
                     </div>
-                </div>
+                </SectionShell>
 
-                <div className="bg-[#0c0c0e] border border-white/10 rounded-xl p-6">
-                    <h3 className="text-white font-medium mb-4 flex items-center gap-2">
-                        <Key className="w-4 h-4 text-zinc-400" /> Security Keys
-                    </h3>
+                <SectionShell
+                    title="Security Keys"
+                    icon={Key}
+                >
                     <p className="text-xs text-zinc-500 mb-6">
-                        Personal access tokens are currently managed via the main Registry dashboard.
+                        Primary API Key ID: <span className="font-mono text-white">{profile.api_key ? profile.api_key.substring(0, 8) + '...' : 'Not Generated'}</span>
                     </p>
                     <button className="w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg border border-white/10 text-xs font-bold uppercase tracking-widest transition-colors">
                         Rotate All Secrets
                     </button>
-                </div>
+                </SectionShell>
             </div>
         </div>
     );
