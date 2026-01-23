@@ -1,20 +1,22 @@
-FROM node:20-slim AS base
+FROM node:20 AS base
 
 # Install dependencies only when needed
-FROM base AS deps
+# Use full node image for building as it contains necessary tools
+FROM node:20 AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
 # Rebuild the source code only when needed
-FROM base AS builder
+FROM node:20 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
 # Production image, copy all the files and run next
-FROM base AS runner
+# Use slim for the runner to keep image size down
+FROM node:20-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
