@@ -5,7 +5,17 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
     const cookieStore = await cookies();
     const requestUrl = new URL(req.url);
-    const origin = process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin;
+
+    // 1. Sanitize Origin (Important for PKCE consistency)
+    let origin = process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin;
+    if (origin.endsWith('/')) origin = origin.slice(0, -1);
+
+    // 2. Clear Any Conflict Cookies (Ghost State Prevention)
+    cookieStore.getAll().forEach(c => {
+        if (c.name.includes('auth-token') || c.name.includes('code-verifier')) {
+            try { cookieStore.delete(c.name); } catch (e) { }
+        }
+    });
 
     let cookiesToSetDuringInitiation: any[] = [];
 
@@ -22,6 +32,7 @@ export async function GET(req: NextRequest) {
         }
     );
 
+    // 3. Single Initiation Call
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
@@ -37,17 +48,15 @@ export async function GET(req: NextRequest) {
 
     const response = NextResponse.redirect(data.url);
 
-    // 4. Manually apply the cookies from THAT SAME CALL to the response
+    // 4. Perfect Cookie Application
     cookiesToSetDuringInitiation.forEach(({ name, value, options }) => {
-        const cookieOptions = {
+        response.cookies.set(name, value, {
             ...options,
+            domain: undefined, // Force domain-less for Railway
             path: '/',
-            sameSite: 'lax' as const,
+            sameSite: 'lax',
             secure: true,
-            httpOnly: true,
-        };
-        console.log(`[GITHUB AUTH] Persisting verifier cookie: ${name}`);
-        response.cookies.set(name, value, cookieOptions);
+        });
     });
 
     return response;

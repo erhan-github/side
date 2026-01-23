@@ -22,14 +22,15 @@ export async function middleware(request: NextRequest) {
                         response = NextResponse.next({
                             request,
                         })
-                        cookiesToSet.forEach(({ name, value, options }) =>
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            const { domain, ...otherOptions } = options;
                             response.cookies.set(name, value, {
-                                ...options,
+                                ...otherOptions,
                                 path: '/',
                                 sameSite: 'lax',
                                 secure: true,
                             })
-                        )
+                        })
                     }
                 },
             },
