@@ -17,22 +17,21 @@ export async function middleware(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => {
-                        const cookieOptions = {
-                            ...options,
-                            path: '/',
-                            sameSite: 'lax' as const,
-                            secure: true,
-                            httpOnly: options.httpOnly ?? name.includes('auth-token'),
-                        };
-                        request.cookies.set(name, value);
+                    if (cookiesToSet.length > 0) {
+                        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
                         response = NextResponse.next({
-                            request: {
-                                headers: request.headers,
-                            },
-                        });
-                        response.cookies.set(name, value, cookieOptions);
-                    });
+                            request,
+                        })
+                        cookiesToSet.forEach(({ name, value, options }) =>
+                            response.cookies.set(name, value, {
+                                ...options,
+                                path: '/',
+                                sameSite: 'lax',
+                                secure: true,
+                                httpOnly: options.httpOnly ?? name.includes('auth-token'),
+                            })
+                        )
+                    }
                 },
             },
         }

@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const requestUrl = new URL(req.url);
     const origin = process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin;
 
-    // 1. Create a temporary client just to get the OAuth URL
+    // 1. Create a dummy client just to get the OAuth URL
     const tempClient = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     // 2. Create the final redirect response
     const response = NextResponse.redirect(githubUrl);
 
-    // 3. Create the "Response-Aware" client to set cookies on BOTH cookieStore and response
+    // 3. Create a production-ready client that writes directly to the redirection response
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -42,10 +42,10 @@ export async function GET(req: NextRequest) {
                             ...options,
                             path: '/',
                             sameSite: 'lax' as const,
-                            secure: true, // Always true for GitHub OAuth on Railway
+                            secure: true,
                             httpOnly: true,
                         };
-                        cookieStore.set(name, value, cookieOptions);
+                        // Note: We only set on response because NextResponse.redirect is a clean slate
                         response.cookies.set(name, value, cookieOptions);
                     });
                 },
@@ -53,12 +53,12 @@ export async function GET(req: NextRequest) {
         }
     );
 
-    // 4. Trigger the actual OAuth initiation (which sets the code_verifier on our response)
+    // 4. Trigger the actual OAuth initiation to generate and save the PKCE verifier
     await supabase.auth.signInWithOAuth({
         provider: "github",
         options: { redirectTo: `${origin}/api/auth/callback` },
     });
 
-    console.log("[GITHUB AUTH] Redirecting to GitHub with robust cookies");
+    console.log("[GITHUB AUTH] Redirecting to GitHub with Palantir-level cookie security");
     return response;
 }

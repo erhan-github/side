@@ -12,10 +12,10 @@ export async function GET(request: NextRequest) {
         const cookieStore = await cookies()
         const redirectUrl = `${origin}${next}`;
 
-        // 1. Create the final redirect response
+        // 1. Create the final redirect response first
         const response = NextResponse.redirect(redirectUrl);
 
-        // 2. Create the "Response-Aware" client to set cookies on BOTH cookieStore and response
+        // 2. Create the production-ready client that writes directly to the response
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
                                 secure: true,
                                 httpOnly: true,
                             };
-                            cookieStore.set(name, value, cookieOptions);
+                            // Inject cookies directly into the outgoing redirect response
                             response.cookies.set(name, value, cookieOptions);
                         });
                     },
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            console.log('[AUTH CALLBACK] Session exchange successful. Redirecting with robust cookies.');
+            console.log('[AUTH CALLBACK] Session exchange successful. Redirecting with Palantir-level security.');
             return response;
         }
 

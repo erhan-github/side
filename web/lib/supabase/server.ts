@@ -15,19 +15,16 @@ export async function createClient() {
                 setAll(cookiesToSet) {
                     try {
                         cookiesToSet.forEach(({ name, value, options }) => {
-                            // Ensure robust cookie attributes for cross-origin/proxy environments
-                            const cookieOptions = {
+                            cookieStore.set(name, value, {
                                 ...options,
-                                path: options.path || '/',
-                                sameSite: options.sameSite || 'lax',
-                                secure: options.secure || process.env.NEXT_PUBLIC_APP_URL?.trim().startsWith('https://'),
+                                path: '/',
+                                sameSite: 'lax',
+                                secure: true,
                                 httpOnly: options.httpOnly ?? name.includes('auth-token'),
-                            };
-
-                            cookieStore.set(name, value, cookieOptions)
+                            })
                         })
                     } catch (error) {
-                        // Logging for forensics
+                        // This can consume the error if called from a Server Component
                         console.warn("[AUTH] Cookie Sync Warning:", error);
                     }
                 },
