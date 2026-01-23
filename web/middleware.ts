@@ -30,13 +30,21 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    // IMPORTANT: We do NOT await getUser() here anymore.
-    // We let the Server Components handle the auth check.
-    // This prevents the middleware from being a "hard gate" that bounces users 
-    // just because the cookie hasn't arrived yet.
+    // IMPORTANT: Check user status and handle redirections
+    const { data: { user } } = await supabase.auth.getUser()
 
-    // Refresh session if needed (quietly)
-    await supabase.auth.getUser()
+    // Redirect to dashboard if logged in at root
+    if (user && request.nextUrl.pathname === '/') {
+        const url = new URL('/dashboard', request.url)
+        const redirectResponse = NextResponse.redirect(url)
+
+        // Copy cookies to the new redirect response
+        response.cookies.getAll().forEach((cookie) => {
+            redirectResponse.cookies.set(cookie.name, cookie.value)
+        })
+
+        return redirectResponse
+    }
 
     return response
 }
