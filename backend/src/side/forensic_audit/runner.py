@@ -571,174 +571,115 @@ class ForensicAuditRunner:
     def _generate_monolith_view(self, summary: AuditSummary) -> str:
         """
         Generate the 'Sweet & Simple' Command Center view for MONOLITH.md.
-        Matches Dashboard terminology and aesthetics.
+        Focuses purely on Forensic Prompting and Deep Intelligence.
         """
-        # 1. Header & Vital Signs
-        # -----------------------
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
         
-        # 2. Forensic Opportunities (The Addiction Engine)
-        # ------------------------------------------------
-        # Strategy: Find specific, "juicy" targets to provoke action.
+        # 1. Forensic Opportunities (Actionable Prompts)
         opportunities = []
         
-        # Helper to extract context
         def get_target_file(r):
             if r.evidence and r.evidence[0].file_path:
                 return Path(r.evidence[0].file_path).name
             return "the codebase"
 
-        # A. Hunt for N+1 Queries (High Reward)
+        # A. Security Criticals (Prioritize Protection)
+        sec_fails = [r for r in summary.results_by_dimension.get("Security", []) if r.status == AuditStatus.FAIL]
+        if sec_fails:
+             count = len(sec_fails)
+             target = get_target_file(sec_fails[0])
+             opportunities.append({
+                "emoji": "🛑", 
+                "title": f"Patch {count} Vulnerabilities",
+                "why": "Your security score is sub-optimal. Unprotected endpoints or exposed secrets create a vector for lateral movement.",
+                "prompt": f'"Hey Side, analyze `{target}` and provide a secure hardening patch for the issues found in the audit."'
+            })
+
+        # B. Performance: N+1 Queries
         n1_fails = [r for r in summary.results_by_dimension.get("Performance", []) if r.check_id == "PERF-001" and r.status == AuditStatus.FAIL]
         if n1_fails:
-            target = get_target_file(n1_fails[0]) # Pick the first/worst one
+            target = get_target_file(n1_fails[0])
             opportunities.append({
                 "emoji": "🏎️", 
                 "title": f"Kill N+1 Query in `{target}`",
-                "prompt": f'"Hey Side, I see an N+1 query loop in `{target}`. Rewrite it to use batching or prefetching."'
+                "why": "Loop-based database queries cause linear performance degradation as your dataset Grows.",
+                "prompt": f'"Hey Side, optimize the query logic in `{target}` to use batching or prefetching."'
             })
 
-        # B. Hunt for God Objects (High Satisfaction)
+        # C. Code Quality: God Objects
         bloat_fails = [r for r in summary.results_by_dimension.get("Code Quality", []) if r.check_id == "CQ-004" and r.status == AuditStatus.WARN]
         if bloat_fails:
             target = get_target_file(bloat_fails[0])
             opportunities.append({
                 "emoji": "✂️", 
                 "title": f"Split God Object `{target}`",
-                "prompt": f'"Hey Side, `{target}` is too large and complex. Refactor it into smaller, focused modules."'
+                "why": "Large files increase cognitive load and make testing nearly impossible. High inheritance risk.",
+                "prompt": f'"Hey Side, refactor `{target}` into smaller, single-responsibility modules."'
             })
 
-        # C. Hunt for Sloppy Error Handling (Quick Win)
-        bare_excepts = [r for r in summary.results_by_dimension.get("Code Quality", []) if r.check_id == "CQ-001" and r.status == AuditStatus.FAIL]
-        if bare_excepts:
-            target = get_target_file(bare_excepts[0])
+        # D. Hygiene: Junk Files
+        hyg_fails = [r for r in summary.results_by_dimension.get("Hygiene", []) if r.status == AuditStatus.WARN]
+        if hyg_fails:
             opportunities.append({
-                "emoji": "🛡️", 
-                "title": f"Fix Silent Failures in `{target}`",
-                "prompt": f'"Hey Side, replace the bare `except:` clauses in `{target}` with specific error handling so we don\'t miss bugs."'
+                "emoji": "🧹", 
+                "title": "Clean Workspace Junk",
+                "why": "Unused logs, temp files, and root-level clutter distract both humans and LLM context indexers.",
+                "prompt": '"Hey Side, identify and safely remove all temporary or misplaced files in the root directory."'
             })
 
-        # D. Security Criticals (The Fear Factor)
-        sec_fails = [r for r in summary.results_by_dimension.get("Security", []) if r.status == AuditStatus.FAIL]
-        if sec_fails:
-             count = len(sec_fails)
-             opportunities.insert(0, { # Prioritize fear
-                "emoji": "🛑", 
-                "title": f"Patch {count} Critical Vulnerabilities",
-                "prompt": '"Hey Side, we have critical security holes. List them and give me a fix for the most dangerous one immediately."'
-            })
-
-        # Feature / Expansion (The Dream) - Only if we are doing okay
-        if summary.grade not in ["F", "D"] and len(opportunities) < 3:
-             opportunities.append({
-                "emoji": "🚀", 
-                "title": "Launch New Feature",
-                "prompt": '"Hey Side, read the `task.md` and propose the implementation plan for the next feature."'
-            })
-
-        # F. Fallback: The Pivot (If we are completely stuck or clean)
+        # Fallback
         if not opportunities:
              opportunities.append({
                 "emoji": "🧭", 
-                "title": "Strategic Pivot",
-                "prompt": '"Hey Side, the system is clean. Review `strategic_engine.py` and suggest a new direction for the product."'
+                "title": "Strategic Roadmap Check",
+                "why": "The system is clean. It's time to align the implementation with the high-level roadmap in `task.md`.",
+                "prompt": '"Hey Side, review our current progress and suggest the next high-leverage feature implementation."'
             })
             
-        # Select Top 3 Unique
-        selected_opps = opportunities[:3]
-        
         opp_section = ""
-        for opp in selected_opps:
-            opp_section += f"> {opp['emoji']} **{opp['title']}**\n> `{opp['prompt']}`\n>\n"
+        for opp in opportunities[:3]:  # Top 3
+            opp_section += f"### {opp['emoji']} {opp['title']}\n"
+            opp_section += f"* **Why**: {opp['why']}\n"
+            opp_section += f"* **Action**: `{opp['prompt']}`\n\n"
 
-        # 3. Forensic Ledger (Simplified)
-        # -------------------------------
-        def get_simple_stats(dim_name, icon=""):
-            results = summary.results_by_dimension.get(dim_name, [])
-            total = len(results)
-            passed = sum(1 for r in results if r.status == AuditStatus.PASS)
-            score = int((passed / total * 100)) if total > 0 else 0
-            
-            # Simple bar: [████░░]
-            bar_len = 5
-            filled = int((score / 100) * bar_len)
-            bar = "█" * filled + "░" * (bar_len - filled)
-            
-            status_text = "ALL GOOD"
-            if score < 60: status_text = "NEEDS ATTENTION"
-            if score < 40: status_text = "CRITICAL"
-            
-            return f"[{bar}] {score}% // {status_text}"
-
-        sec_stats = get_simple_stats("Security")
-        perf_stats = get_simple_stats("Performance")
-        qual_stats = get_simple_stats("Code Quality")
-        
-        # 4. Value Vault / Credits
-        # ------------------------
-        try:
-            db = SimplifiedDatabase()
-            profile = db.get_profile(self.project_id)
-            if profile:
-                balance = profile.get("token_balance", 0)
-                tier = profile.get("tier", "FREE").upper()
-                credits = f"{balance} SUs"
-                plan = tier
-            else:
-                credits = "0 SUs (No Profile)"
-                plan = "FREE"
-        except Exception as e:
-            credits = "0 SUs (DB Error)"
-            plan = "UNKNOWN"
+        # 2. Intelligence Output (Deep Scan results if available)
+        intel_section = ""
+        deep_results = [r for dim in summary.results_by_dimension.values() for r in dim if r.check_id.startswith("DEEP-")]
+        if deep_results:
+            intel_section = "## 🧠 DEEP INTELLIGENCE (Groq/Llama)\n"
+            for res in deep_results:
+                intel_section += f"> **{res.check_name}**: {res.notes or 'Analysis complete.'}\n"
+            intel_section += "\n---\n"
 
         template = f"""<!-- 🔐 MONOLITH_SIG: {self.project_id} // COMMAND_CENTER // DO_NOT_EDIT -->
 
 # ⬛ COMMAND CENTER
 > **Asset ID**: `{self.project_id}`
+> **Grade**: **{summary.grade} ({int(summary.score_percentage)}%)**
 > **Last Sync**: {timestamp}
-> **System Grade**: **{summary.grade} ({int(summary.score_percentage)}%)**
+
 ---
 
-## ✍️ FORENSIC OPPORTUNITIES
+## ✍️ FORENSIC PROMPTING
 {opp_section}
-## ❤️ VITAL SIGNS
-*   **Security**:    `{sec_stats}`
-*   **Performance**: `{perf_stats}`
-*   **Quality**:     `{qual_stats}`
-
-## 💎 VALUE VAULT
-> **Current Plan**: {plan}
-> **Capacity**: {credits}
-
-## 📉 FORENSIC LEDGER
-**Activity Log**:
+{intel_section}
+---
+*Generated by Side Forensic Engine // {timestamp}*
 """
-        # Add simpler recent activity
-        template += f"`{timestamp.split(' ')[1]}` **AUDIT** // System Check Complete\n"
-        template += "`12:15` **USAGE** // 500 CP Consumed (Claude-3.5)\n"
-        template += "`09:00` **SYSTEM** // Daily Limit Reset\n"
-
         return template
 
     def update_monolith_file(self, summary: AuditSummary):
-        """Update the physical MONOLITH.md file."""
+        """Update the physical MONOLITH.md file in the .side/ directory."""
         try:
             content = self._generate_monolith_view(summary)
-            # Try .side location first
             side_dir = self.project_root / ".side"
-            target_file = self.project_root / "MONOLITH.md"
             
-            if side_dir.exists():
-                try:
-                    (side_dir / "MONOLITH.md").write_text(content)
-                    print("✅ MONOLITH.md updated in .side/")
-                    return
-                except Exception as e:
-                    print(f"⚠️ Failed to write to .side/MONOLITH.md: {e}. Falling back to root.")
+            # Ensure .side directory exists
+            side_dir.mkdir(exist_ok=True)
             
-            # Fallback to root
+            target_file = side_dir / "MONOLITH.md"
             target_file.write_text(content)
-            print("✅ MONOLITH.md updated in root.")
+            print(f"✅ MONOLITH.md updated in .side/: {target_file.absolute()}")
         except Exception as e:
             print(f"⚠️ Failed to update MONOLITH.md: {e}")
             
