@@ -32,10 +32,26 @@ export async function GET(request: NextRequest) {
 
         if (!error) {
             console.log('[AUTH CALLBACK] Session exchange successful');
-            // Create redirect response and manually add all cookies
+
+            // Create the redirect response
             const redirectUrl = `${origin}${next}`;
-            console.log('[AUTH CALLBACK] Redirecting to:', redirectUrl);
-            return NextResponse.redirect(redirectUrl)
+            const response = NextResponse.redirect(redirectUrl);
+
+            // CRITICAL: Manually copy all cookies from the store to the response
+            // This is necessary because cookies().set() doesn't automatically
+            // propagate to NextResponse.redirect() in App Router
+            const allCookies = cookieStore.getAll();
+            allCookies.forEach(cookie => {
+                response.cookies.set(cookie.name, cookie.value, {
+                    path: '/',
+                    httpOnly: true,
+                    sameSite: 'lax',
+                    secure: true,
+                });
+            });
+
+            console.log('[AUTH CALLBACK] Redirecting with', allCookies.length, 'cookies to:', redirectUrl);
+            return response;
         }
 
         console.error('[AUTH CALLBACK] Exchange failed:', error.message);
