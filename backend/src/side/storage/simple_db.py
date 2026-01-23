@@ -491,7 +491,6 @@ class SimplifiedDatabase:
                     project_id TEXT PRIMARY KEY,
                     total_xp INTEGER DEFAULT 0,
                     level INTEGER DEFAULT 1,
-                    current_streak INTEGER DEFAULT 0,
                     last_action_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)

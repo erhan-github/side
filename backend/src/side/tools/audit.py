@@ -211,12 +211,11 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
             lines.append("")
         
         # XP Footer
+        # XP Footer
         xp = g.get("xp_gained", 0)
-        streak = g.get("streak", 0)
+        # Legacy streak removed per serious gamification strategy
         
         footer_parts = [f"✨ +{xp} XP"]
-        if streak > 0:
-            footer_parts.append(f"🔥 {streak}-Run Streak")
             
         # Economy Display
         su_grant = g.get("su_grant", 0)
@@ -229,10 +228,7 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
         if total_sus > 0:
             footer_parts.append(f"💰 +{total_sus} SUs")
         
-        # Badges
-        for badge in g.get("unlocked_badges", []):
-            bounty_str = f" (+{badge['bounty']} SUs)" if badge.get('bounty') else ""
-            lines.append(f"🏆 ACHIEVEMENT UNLOCKED: {badge['icon']} {badge['name']} - {badge['desc']}{bounty_str}")
+        # Badges removed per Serious Intelligence strategy (No streaks/badges)
             
         lines.append(" | ".join(footer_parts))
         lines.append("")
