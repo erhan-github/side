@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
+import type { CookieOptions } from '@supabase/ssr'
 
 export async function GET(request: NextRequest) {
     const requestUrl = new URL(request.url)
@@ -10,6 +11,10 @@ export async function GET(request: NextRequest) {
 
     if (code) {
         const cookieStore = await cookies()
+
+        // Track cookies that Supabase sets during the exchange
+        const cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }> = []
+
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -18,9 +23,11 @@ export async function GET(request: NextRequest) {
                     getAll() {
                         return cookieStore.getAll()
                     },
-                    setAll(cookiesToSet) {
-                        // Set cookies in the cookie store
-                        cookiesToSet.forEach(({ name, value, options }) =>
+                    setAll(newCookies) {
+                        // Capture the cookies Supabase wants to set
+                        cookiesToSet.push(...newCookies)
+                        // Also set them in the cookie store
+                        newCookies.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, options)
                         )
                     },
@@ -32,25 +39,17 @@ export async function GET(request: NextRequest) {
 
         if (!error) {
             console.log('[AUTH CALLBACK] Session exchange successful');
+            console.log('[AUTH CALLBACK] Supabase set', cookiesToSet.length, 'cookies');
 
             // Create the redirect response
             const redirectUrl = `${origin}${next}`;
             const response = NextResponse.redirect(redirectUrl);
 
-            // CRITICAL: Manually copy all cookies from the store to the response
-            // Get all cookies including the ones just set by Supabase
-            const allCookies = cookieStore.getAll();
-            console.log('[AUTH CALLBACK] Found', allCookies.length, 'cookies to copy');
-
-            allCookies.forEach(cookie => {
-                response.cookies.set({
-                    name: cookie.name,
-                    value: cookie.value,
-                    path: '/',
-                    httpOnly: cookie.name.includes('auth-token'), // Only auth tokens should be httpOnly
-                    sameSite: 'lax',
+            // Copy the cookies that Supabase set to the response
+            cookiesToSet.forEach(({ name, value, options }) => {
+                response.cookies.set(name, value, {
+                    ...options,
                     secure: process.env.NODE_ENV === 'production',
-                    maxAge: 60 * 60 * 24 * 7, // 7 days
                 });
             });
 
