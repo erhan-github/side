@@ -49,6 +49,7 @@ from .probes import (
 from side.llm.client import LLMClient
 from side.instrumentation.engine import InstrumentationEngine
 from side.storage.simple_db import SimplifiedDatabase
+from side.storage.simple_db import SimplifiedDatabase
 
 
 class ForensicAuditRunner:
@@ -675,9 +676,20 @@ class ForensicAuditRunner:
         
         # 4. Value Vault / Credits
         # ------------------------
-        # Hardcoded for now, would come from context in real app
-        credits = "0 SUs" 
-        plan = "FREE"
+        try:
+            db = SimplifiedDatabase()
+            profile = db.get_profile(self.project_id)
+            if profile:
+                balance = profile.get("token_balance", 0)
+                tier = profile.get("tier", "FREE").upper()
+                credits = f"{balance} SUs"
+                plan = tier
+            else:
+                credits = "0 SUs (No Profile)"
+                plan = "FREE"
+        except Exception as e:
+            credits = "0 SUs (DB Error)"
+            plan = "UNKNOWN"
 
         template = f"""<!-- 🔐 MONOLITH_SIG: {self.project_id} // COMMAND_CENTER // DO_NOT_EDIT -->
 
