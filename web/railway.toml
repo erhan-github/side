@@ -1,4 +1,6 @@
 [deploy]
-startCommand = "npx next start -p $PORT"
-restartPolicyType = "ON_FAILURE"
+startCommand = "node .next/standalone/server.js"
+healthcheckPath = "/api/health"
 healthcheckTimeout = 120
+healthcheckStartPeriod = 90
+restartPolicyType = "ON_FAILURE"
