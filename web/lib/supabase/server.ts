@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
@@ -20,12 +20,10 @@ export async function createClient() {
                                 path: '/',
                                 sameSite: 'lax',
                                 secure: true,
-                                httpOnly: options.httpOnly ?? name.includes('auth-token'),
                             })
                         })
                     } catch (error) {
-                        // This can consume the error if called from a Server Component
-                        console.warn("[AUTH] Cookie Sync Warning:", error);
+                        // Safe to ignore in Server Components
                     }
                 },
             },

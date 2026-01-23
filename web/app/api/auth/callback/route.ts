@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            console.log('[AUTH CALLBACK] Session exchange successful. Redirecting with Palantir-level security.');
+            console.log('[AUTH CALLBACK] Session exchange successful. Redirecting with robust cookies.');
             return response;
         }
 

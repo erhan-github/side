@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from "next/server";
 
@@ -7,58 +7,52 @@ export async function GET(req: NextRequest) {
     const requestUrl = new URL(req.url);
     const origin = process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin;
 
-    // 1. Create a dummy client just to get the OAuth URL
-    const tempClient = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        { cookies: { getAll() { return cookieStore.getAll() }, setAll() { } } }
-    );
+    let redirectUrl = "";
+    const cookiesToSetDuringInitiation: any[] = [];
 
-    const { data: { url: githubUrl }, error: initiationError } = await tempClient.auth.signInWithOAuth({
-        provider: "github",
-        options: { redirectTo: `${origin}/api/auth/callback`, skipBrowserRedirect: true },
-    });
-
-    if (initiationError || !githubUrl) {
-        console.error("[GITHUB AUTH] Failed to get OAuth URL:", initiationError);
-        return NextResponse.redirect(new URL("/login?error=oauth_failed", req.url));
-    }
-
-    // 2. Create the final redirect response
-    const response = NextResponse.redirect(githubUrl);
-
-    // 3. Create a production-ready client that writes directly to the redirection response
+    // 1. Create a specialized client to capture the single initiation call
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
-                getAll() {
-                    return cookieStore.getAll();
-                },
-                setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => {
-                        const cookieOptions = {
-                            ...options,
-                            path: '/',
-                            sameSite: 'lax' as const,
-                            secure: true,
-                            httpOnly: true,
-                        };
-                        // Note: We only set on response because NextResponse.redirect is a clean slate
-                        response.cookies.set(name, value, cookieOptions);
-                    });
-                },
-            },
+                getAll() { return cookieStore.getAll() },
+                setAll(toSet) {
+                    toSet.forEach(c => cookiesToSetDuringInitiation.push(c));
+                    // Also update cookieStore for internal consistency
+                    toSet.forEach(c => cookieStore.set(c.name, c.value, { ...c.options, path: '/' }));
+                }
+            }
         }
     );
 
-    // 4. Trigger the actual OAuth initiation to generate and save the PKCE verifier
-    await supabase.auth.signInWithOAuth({
+    // 2. TRIGGER INITIATION EXACTLY ONCE
+    const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "github",
-        options: { redirectTo: `${origin}/api/auth/callback` },
+        options: {
+            redirectTo: `${origin}/api/auth/callback`,
+            skipBrowserRedirect: true // Get the URL so we can construct the response ourselves
+        },
     });
 
-    console.log("[GITHUB AUTH] Redirecting to GitHub with Palantir-level cookie security");
+    if (error || !data.url) {
+        console.error("[GITHUB AUTH] Initiation failed:", error);
+        return NextResponse.redirect(new URL("/login?error=oauth_failed", req.url));
+    }
+
+    // 3. Create the redirect response with the URL from that SINGLE initiation call
+    const response = NextResponse.redirect(data.url);
+
+    // 4. Manually apply the cookies from THAT SAME CALL to the response
+    cookiesToSetDuringInitiation.forEach(({ name, value, options }) => {
+        response.cookies.set(name, value, {
+            ...options,
+            path: '/',
+            sameSite: 'lax',
+            secure: true,
+        });
+    });
+
+    console.log("[GITHUB AUTH] Redirecting with SINGLE-PASS synchronized cookies");
     return response;
 }
