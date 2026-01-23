@@ -2,7 +2,8 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "npm start -- -p $PORT"
-healthcheckPath = "/"
-healthcheckTimeout = 100
+startCommand = "npm start -- -p $PORT -H 0.0.0.0"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 120
+healthcheckStartPeriod = 30
 restartPolicyType = "ON_FAILURE"
