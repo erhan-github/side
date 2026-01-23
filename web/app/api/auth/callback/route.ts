@@ -38,19 +38,23 @@ export async function GET(request: NextRequest) {
             const response = NextResponse.redirect(redirectUrl);
 
             // CRITICAL: Manually copy all cookies from the store to the response
-            // This is necessary because cookies().set() doesn't automatically
-            // propagate to NextResponse.redirect() in App Router
+            // Get all cookies including the ones just set by Supabase
             const allCookies = cookieStore.getAll();
+            console.log('[AUTH CALLBACK] Found', allCookies.length, 'cookies to copy');
+
             allCookies.forEach(cookie => {
-                response.cookies.set(cookie.name, cookie.value, {
+                response.cookies.set({
+                    name: cookie.name,
+                    value: cookie.value,
                     path: '/',
-                    httpOnly: true,
+                    httpOnly: cookie.name.includes('auth-token'), // Only auth tokens should be httpOnly
                     sameSite: 'lax',
-                    secure: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    maxAge: 60 * 60 * 24 * 7, // 7 days
                 });
             });
 
-            console.log('[AUTH CALLBACK] Redirecting with', allCookies.length, 'cookies to:', redirectUrl);
+            console.log('[AUTH CALLBACK] Redirecting to:', redirectUrl);
             return response;
         }
 
