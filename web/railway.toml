@@ -3,6 +3,6 @@ builder = "nixpacks"
 
 [deploy]
 healthcheckPath = "/api/health"
-healthcheckTimeout = 100
-healthcheckStartPeriod = 40
+healthcheckTimeout = 10
+healthcheckStartPeriod = 60
 restartPolicyType = "ON_FAILURE"
