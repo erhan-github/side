@@ -13,6 +13,7 @@ In 2026, velocity is no longer the bottleneck—**understanding** is. As AI agen
 | **Heritage Search** | 3D visual reconstruction of logic evolution. | Instant onboarding; 100% tribal knowledge retention. |
 | **Sovereign Privacy** | Local-first "Judicial Scrubber" for PII/Secrets. | Enterprise-grade IP protection (SOC2 ready). |
 | **Intent Mapping** | Physical links between code (AST) and Business Why. | Automatic drift detection; architectural circuit breaker. |
+| **Deployment Intel** | Pre-flight checks for platform-specific "gotchas". | Prevents "it works on my machine" production failures. |
 | **SU Economy** | Pay for "Expert Reasoning" (Strategic Units), not CPU. | High-leverage economics for engineering audits. |
 
 ---

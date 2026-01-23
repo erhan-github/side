@@ -49,7 +49,9 @@ class ForensicEngine:
         try:
             from side.forensic_audit.runner import ForensicAuditRunner
             from side.forensic_audit.core import AuditStatus
+            from side.forensic_audit.deployment_gotchas import DeploymentGotchaDetector
             
+            # 1. Run Standard Audits
             runner = ForensicAuditRunner(str(self.project_root))
             audit_summary = await runner.run() # Async run
             
@@ -67,6 +69,21 @@ class ForensicEngine:
                             action=res.recommendation or "Review finding",
                             metadata={"check_id": res.check_id, "dimension": res.dimension}
                         ))
+
+            # 2. Run Deployment Gotcha Detector
+            deploy_detector = DeploymentGotchaDetector(str(self.project_root))
+            deploy_issues = deploy_detector.scan()
+            
+            for issue in deploy_issues:
+                mapped_findings.append(Finding(
+                    type=issue["type"],
+                    severity=issue["severity"],
+                    file=issue["file"],
+                    line=issue.get("line", 1),
+                    message=issue["message"],
+                    action=issue["action"],
+                    metadata={"reference": issue.get("reference")}
+                ))
                         
             # Merge findings
             self.findings.extend(mapped_findings)
