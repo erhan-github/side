@@ -8,21 +8,14 @@ export async function GET(request: NextRequest) {
     const next = requestUrl.searchParams.get('next') ?? '/dashboard'
     const origin = (process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin)
 
-    // Diagnostic Logging
-    const allIncomingCookies = request.cookies.getAll();
-    console.log(`[AUTH CALLBACK] Incoming cookies: ${allIncomingCookies.length}`);
-    allIncomingCookies.forEach(c => {
-        if (c.name.includes('auth') || c.name.includes('code-verifier')) {
-            console.log(`  - ${c.name}: ${c.value.substring(0, 5)}...`);
-        }
-    });
-
     if (code) {
         const cookieStore = await cookies()
+        const redirectUrl = `${origin}${next}`;
 
-        // 1. Create a dummy response to capture cookies
-        let captureResponse = NextResponse.next();
+        // 1. Create the final redirect response
+        const response = NextResponse.redirect(redirectUrl);
 
+        // 2. Create the "Response-Aware" client to set cookies on BOTH cookieStore and response
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -33,11 +26,15 @@ export async function GET(request: NextRequest) {
                     },
                     setAll(cookiesToSet) {
                         cookiesToSet.forEach(({ name, value, options }) => {
-                            cookieStore.set(name, value, options)
-                        });
-                        captureResponse = NextResponse.next();
-                        cookiesToSet.forEach(({ name, value, options }) => {
-                            captureResponse.cookies.set(name, value, options)
+                            const cookieOptions = {
+                                ...options,
+                                path: '/',
+                                sameSite: 'lax' as const,
+                                secure: true,
+                                httpOnly: true,
+                            };
+                            cookieStore.set(name, value, cookieOptions);
+                            response.cookies.set(name, value, cookieOptions);
                         });
                     },
                 },
@@ -47,20 +44,8 @@ export async function GET(request: NextRequest) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            console.log('[AUTH CALLBACK] Session exchange successful');
-            const redirectUrl = `${origin}${next}`;
-            console.log('[AUTH CALLBACK] Redirecting to:', redirectUrl);
-
-            // 2. Create the final redirect response
-            const finalResponse = NextResponse.redirect(redirectUrl);
-
-            // 3. Explicitly copy ALL cookies captured during the exchange
-            captureResponse.cookies.getAll().forEach((cookie) => {
-                console.log(`[AUTH CALLBACK] Propagating cookie to redirect: ${cookie.name}`);
-                finalResponse.cookies.set(cookie.name, cookie.value);
-            });
-
-            return finalResponse;
+            console.log('[AUTH CALLBACK] Session exchange successful. Redirecting with robust cookies.');
+            return response;
         }
 
         console.error('[AUTH CALLBACK] Exchange failed:', error.message);

@@ -7,9 +7,27 @@ export async function GET(req: NextRequest) {
     const requestUrl = new URL(req.url);
     const origin = process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin;
 
-    // 1. Create a dummy response to capture cookies
-    let response = NextResponse.next();
+    // 1. Create a temporary client just to get the OAuth URL
+    const tempClient = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { cookies: { getAll() { return cookieStore.getAll() }, setAll() { } } }
+    );
 
+    const { data: { url: githubUrl }, error: initiationError } = await tempClient.auth.signInWithOAuth({
+        provider: "github",
+        options: { redirectTo: `${origin}/api/auth/callback`, skipBrowserRedirect: true },
+    });
+
+    if (initiationError || !githubUrl) {
+        console.error("[GITHUB AUTH] Failed to get OAuth URL:", initiationError);
+        return NextResponse.redirect(new URL("/login?error=oauth_failed", req.url));
+    }
+
+    // 2. Create the final redirect response
+    const response = NextResponse.redirect(githubUrl);
+
+    // 3. Create the "Response-Aware" client to set cookies on BOTH cookieStore and response
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -20,38 +38,27 @@ export async function GET(req: NextRequest) {
                 },
                 setAll(cookiesToSet) {
                     cookiesToSet.forEach(({ name, value, options }) => {
-                        cookieStore.set(name, value, options);
-                    });
-                    response = NextResponse.next();
-                    cookiesToSet.forEach(({ name, value, options }) => {
-                        response.cookies.set(name, value, options);
+                        const cookieOptions = {
+                            ...options,
+                            path: '/',
+                            sameSite: 'lax' as const,
+                            secure: true, // Always true for GitHub OAuth on Railway
+                            httpOnly: true,
+                        };
+                        cookieStore.set(name, value, cookieOptions);
+                        response.cookies.set(name, value, cookieOptions);
                     });
                 },
             },
         }
     );
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    // 4. Trigger the actual OAuth initiation (which sets the code_verifier on our response)
+    await supabase.auth.signInWithOAuth({
         provider: "github",
-        options: {
-            redirectTo: `${origin}/api/auth/callback`,
-        },
+        options: { redirectTo: `${origin}/api/auth/callback` },
     });
 
-    if (error || !data.url) {
-        console.error("[GITHUB AUTH] OAuth initiation failed:", error);
-        return NextResponse.redirect(new URL("/login?error=oauth_failed", req.url));
-    }
-
-    console.log("[GITHUB AUTH] Redirecting to GitHub OAuth");
-
-    // 2. Create the final redirect response
-    const redirectResponse = NextResponse.redirect(data.url);
-
-    // 3. Copy cookies from our capture response to the redirect response
-    response.cookies.getAll().forEach((cookie) => {
-        redirectResponse.cookies.set(cookie.name, cookie.value);
-    });
-
-    return redirectResponse;
+    console.log("[GITHUB AUTH] Redirecting to GitHub with robust cookies");
+    return response;
 }

@@ -15,14 +15,20 @@ export async function createClient() {
                 setAll(cookiesToSet) {
                     try {
                         cookiesToSet.forEach(({ name, value, options }) => {
-                            console.log(`[AUTH] Setting cookie: ${name} (Secure: ${options.secure}, Domain: ${options.domain})`);
-                            cookieStore.set(name, value, options)
+                            // Ensure robust cookie attributes for cross-origin/proxy environments
+                            const cookieOptions = {
+                                ...options,
+                                path: options.path || '/',
+                                sameSite: options.sameSite || 'lax',
+                                secure: options.secure || process.env.NEXT_PUBLIC_APP_URL?.trim().startsWith('https://'),
+                                httpOnly: options.httpOnly ?? name.includes('auth-token'),
+                            };
+
+                            cookieStore.set(name, value, cookieOptions)
                         })
-                        console.log(`[AUTH] Session Refresh: Successfully set ${cookiesToSet.length} cookies.`);
                     } catch (error) {
-                        // This can consume the error if called from a Server Component
-                        // but we log it for forensics in the Railway panel.
-                        console.warn("[AUTH] Session Refresh Warning: Could not set cookies from Server Component.", error);
+                        // Logging for forensics
+                        console.warn("[AUTH] Cookie Sync Warning:", error);
                     }
                 },
             },
