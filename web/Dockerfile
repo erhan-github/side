@@ -5,7 +5,7 @@ FROM node:20 AS base
 FROM node:20 AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm install
 
 # Rebuild the source code only when needed
 FROM node:20 AS builder
