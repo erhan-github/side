@@ -44,8 +44,11 @@ ENV PORT=8000
 RUN useradd -m sideuser && chown -R sideuser:sideuser /app
 USER sideuser
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:$PORT/sse || exit 1
+# Healthcheck - Railway assigns port 8080 by default
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:8080/sse || exit 1
+
+# Graceful shutdown signal
+STOPSIGNAL SIGTERM
 
 CMD ["python", "run_server.py"]

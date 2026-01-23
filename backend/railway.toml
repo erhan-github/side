@@ -6,7 +6,8 @@ dockerfilePath = "Dockerfile"
 startCommand = "python run_server.py"
 healthcheckPath = "/sse"
 healthcheckTimeout = 100
-restartPolicyType = "on_failure"
+healthcheckStartPeriod = 40
+restartPolicyType = "ON_FAILURE"
 
 [deploy.environments.production]
 MCP_TRANSPORT = "sse"

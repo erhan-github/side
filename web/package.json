@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev --port 3999",
-    "build": "next build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
+    "build": "next build && mkdir -p .next/standalone/public && (cp -r public/* .next/standalone/public/ 2>/dev/null || true) && cp -r .next/static .next/standalone/.next/",
     "start": "next start",
     "lint": "eslint"
   },
