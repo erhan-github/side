@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const requestUrl = new URL(request.url)
     const code = requestUrl.searchParams.get('code')
     const next = requestUrl.searchParams.get('next') ?? '/dashboard'
-    const origin = process.env.NEXT_PUBLIC_APP_URL || requestUrl.origin
+    const origin = (process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin)
 
     if (code) {
         const cookieStore = await cookies()
@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
                         newCookies.forEach(({ name, value, options }) =>
                             cookieStore.set(name, value, {
                                 ...options,
-                                domain: new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname,
+                                domain: new URL(process.env.NEXT_PUBLIC_APP_URL!.trim()).hostname,
                                 sameSite: 'lax',
-                                secure: process.env.NEXT_PUBLIC_APP_URL!.startsWith('https://'),
+                                secure: process.env.NEXT_PUBLIC_APP_URL!.trim().startsWith('https://'),
                                 path: '/',
                             })
                         )
@@ -55,9 +55,9 @@ export async function GET(request: NextRequest) {
             cookiesToSet.forEach(({ name, value, options }) => {
                 response.cookies.set(name, value, {
                     ...options,
-                    domain: new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname,
+                    domain: new URL(process.env.NEXT_PUBLIC_APP_URL!.trim()).hostname,
                     sameSite: 'lax',
-                    secure: process.env.NEXT_PUBLIC_APP_URL!.startsWith('https://'),
+                    secure: process.env.NEXT_PUBLIC_APP_URL!.trim().startsWith('https://'),
                     path: '/',
                 });
             });

@@ -17,9 +17,9 @@ export async function GET(req: NextRequest) {
                     cookiesToSet.forEach(({ name, value, options }) =>
                         cookieStore.set(name, value, {
                             ...options,
-                            domain: new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname,
+                            domain: new URL(process.env.NEXT_PUBLIC_APP_URL!.trim()).hostname,
                             sameSite: 'lax',
-                            secure: process.env.NEXT_PUBLIC_APP_URL!.startsWith('https://'),
+                            secure: process.env.NEXT_PUBLIC_APP_URL!.trim().startsWith('https://'),
                             path: '/',
                         })
                     );
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "github",
         options: {
-            redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback`,
+            redirectTo: `${process.env.NEXT_PUBLIC_APP_URL?.trim()}/api/auth/callback`,
         },
     });
 
