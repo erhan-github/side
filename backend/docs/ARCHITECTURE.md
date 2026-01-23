@@ -74,8 +74,8 @@ flowchart LR
 ## Core Components
 
 ### ForensicEngine (`intel/forensic_engine.py`)
-- **Purpose**: AST-based code analysis for architectural violations
-- **Detections**: Stale docs, complexity, security holes, over-engineering
+- **Purpose**: AST-based code analysis for architectural violations & deployment risks
+- **Detections**: Stale docs, complexity, security holes, over-engineering, **Deployment Gotchas**
 - **Output**: Structured `Finding` objects
 
 ### IntelligenceStore (`intel/intelligence_store.py`)

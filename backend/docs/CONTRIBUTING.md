@@ -155,11 +155,11 @@ perf: optimize database queries
 side/
 ├── src/side/             # Source code
 │   ├── server.py         # MCP server entry point
-│   ├── tools_refined.py  # Core tools
-│   ├── intel/            # Intelligence modules
-│   ├── storage/          # Database layer
-│   ├── services/         # Background services
-│   ├── sources/          # Article sources
+│   ├── tools/            # Modular tool definitions
+│   ├── intel/            # Intelligence modules (Forensics, Scoring)
+│   ├── storage/          # Database layer (SQLite)
+│   ├── services/         # Background services (Monolith, Watchers)
+│   ├── sources/          # Data sources (RSS, Git)
 │   └── utils/            # Utilities
 ├── tests/                # Test suite
 ├── docs/                 # Documentation
@@ -169,29 +169,21 @@ side/
 ### Key Modules
 
 **Core**:
-- `tools_refined.py`: 3 main tools (read, analyze, strategy)
+- `tools/`: Modular tool implementations (audit, planning, strategy)
 - `server.py`: MCP server implementation
 
 **Intelligence**:
-- `auto_intelligence.py`: Zero-setup stack detection
-- `market.py`: Article fetching & scoring
-- `strategist.py`: LLM-powered advice
-- `technical.py`: Codebase analysis
+- `intel/forensic_engine.py`: AST-based code forensics & deployment checks
+- `intel/intelligence_store.py`: Central finding persistence
+- `intel/strategist.py`: LLM-powered strategic reasoning
+- `intel/auto_intelligence.py`: Zero-setup stack detection
 
 **Storage**:
-- `simple_db.py`: Local SQLite database (4 tables)
+- `storage/simple_db.py`: Local SQLite database (Profile, Activities, Findings)
 
 **Services**:
-- `file_watcher.py`: File change monitoring
-- `context_tracker.py`: Work focus detection
-- `service_manager.py`: Service lifecycle
-- `cleanup_scheduler.py`: Auto-cleanup
-
-**Utils**:
-- `retry.py`: Exponential backoff retry logic
-- `errors.py`: User-friendly error handling
-- `performance.py`: Metrics tracking
-- `cache_warmer.py`: Background cache refresh
+- `services/monolith.py`: Generates the `.side/MONOLITH.md` dashboard
+- `services/file_watcher.py`: File change monitoring
 
 ---
 

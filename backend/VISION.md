@@ -1,196 +1,100 @@
-# Side Vision
+# Sidelith Vision 🏛️
 
-> **Your AI Chief Strategy Officer** - Strategic intelligence that understands your codebase, business, and market without being asked.
+> **The System of Record for Engineering Intelligence**
 
-## The Problem
+## The Problem: Architectural Amnesia
 
-Founders and technical leaders are drowning in information while starving for insight. They need to:
-- Stay current with technology trends
-- Understand their competitive landscape
-- Make strategic decisions about their product
-- Manage technical debt and architecture
-- Plan fundraising and business development
-- Navigate legal and compliance requirements
+Technical leaders and solo founders suffer from **Codebase Alzheimer's**.
+- "Why did we choose MongoDB?"
+- "Is this deployment configuration secure?"
+- "What was the intent behind this weird `auth.ts` logic?"
 
-But they're too busy building to do this well.
+Context is lost in Slack threads, mental notes, and fleeting chat logs with AI assistants.
 
-## The Solution
+## The Solution: Sidelith (Side)
 
-**Side** is an AI Chief Strategy Officer that:
+**Side** is not a chatbot. It is a **Forensic Intelligence Layer** that treats your codebase as a crime scene of intent.
 
-1. **Listens** continuously to your codebase, documents, and data
-2. **Understands** deeply your technical stack, business model, and market position
-3. **Anticipates** what you need before you ask
-4. **Advises** proactively with relevant insights, warnings, and opportunities
+It operates on one core principle: **Sovereign Observability**.
+1.  **Forensic Scanning**: It reads the AST (Abstract Syntax Tree), not just the text.
+2.  **Intent Mapping**: It links "Business Goals" to "Code Functions".
+3.  **The Monolith**: It maintains a *single*, persistent dashboard (`.side/MONOLITH.md`) that acts as the "Black Box" flight recorder for your project.
+
+---
 
 ## Core Principles
 
-### 1. Palantir-Level Simplicity
-- Complex analysis, simple interface
-- One question should unlock deep insight
-- No setup, no configuration - just understanding
+### 1. Serious Intelligence (No Fluff)
+*   **Old World**: "Hey! You have a 7-day streak! Good job!" 🤮
+*   **Sidelith World**: "Warning: `auth.ts` has 3 critical vulnerabilities and 1 deployment blocker. Fix proposed." 🛑
 
-### 2. Always One Step Ahead
-- Don't wait to be asked
-- Surface insights when they matter
-- Connect dots across domains
+### 2. The Value Vault
+*   We do not track "Time Spent".
+*   We track **Strategic Units (SUs)**: A measure of *Leverage*.
+    *   Did you remove 500 lines of dead code? **+100 SUs**.
+    *   Did you ship a feature with 0 tests? **-50 SUs**.
 
-### 3. Full-Spectrum Intelligence
-- Technical (code, architecture, tech debt)
-- Business (model, metrics, growth)
-- Market (competitors, trends, opportunities)
-- Financial (runway, economics, fundraising)
-- Legal (compliance, IP, risks)
+### 3. Sovereign Privacy
+*   **Local-First**: Your strategy lives in `.side/local.db`.
+*   **Zero Leak**: We verify your code without sending your secrets to a cloud training cluster.
 
-## Architecture
+---
 
+## Architecture: The Forensic Loop
+
+```mermaid
+graph TB
+    Codebase[Your Project] -->|File Watcher| Side[Sidelith Engine]
+    Side -->|AST Analysis| Forensics[Forensic Findings]
+    Forensics -->|Aggregation| Monolith[.side/MONOLITH.md]
+    
+    Monolith -->|Strategic Intel| Agents[AI Agents (Cursor/Windsurf)]
+    Agents -->|Contextual Action| Codebase
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Side AI BRAIN                           │
-│                                                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │   LISTENER   │  │  UNDERSTANDER│  │  ANTICIPATOR │          │
-│  │              │  │              │  │              │          │
-│  │ • Codebase   │  │ • Tech Intel │  │ • Patterns   │          │
-│  │ • Documents  │──│ • Biz Intel  │──│ • Predictions│          │
-│  │ • Database   │  │ • Market Intel│ │ • Risks      │          │
-│  │ • Git History│  │ • Stage      │  │ • Opportunities│        │
-│  │ • Team       │  │ • Priorities │  │              │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│                            │                                    │
-│                            ▼                                    │
-│                   ┌──────────────────┐                         │
-│                   │     ADVISOR      │                         │
-│                   │                  │                         │
-│                   │ • Proactive Tips │                         │
-│                   │ • Relevant Intel │                         │
-│                   │ • Strategic Recs │                         │
-│                   │ • Risk Warnings  │                         │
-│                   └──────────────────┘                         │
-└─────────────────────────────────────────────────────────────────┘
-```
+
+### The "Sovereign Tools"
+1.  **`run_audit`**: The Crime Scene Investigator. Finds security holes and "Deployment Gotchas" (e.g. Railway port mismatches).
+2.  **`architectural_decision`**: The Judge. Renders verdicts on high-stakes technical choices.
+3.  **`simulate`**: The Jury. Tests features against virtual user personas (e.g. "Tina the Teacher").
+4.  **`verify_fix`**: The Executioner. Confirms if a patch *actually* solved the problem.
+
+---
 
 ## Intelligence Domains
 
-### Technical Intelligence
-- Languages, frameworks, dependencies
-- Architecture patterns and anti-patterns
-- Technical debt signals
-- Test coverage and code health
-- Security vulnerabilities
-- Performance bottlenecks
+### 🔒 Security Forensics
+*   Hardcoded secrets detection.
+*   Auth flow validation (Next.js/Supabase quirks).
+*   Dependency risk warnings.
 
-### Business Intelligence
-- Product type and stage
-- Business model signals
-- User/customer indicators
-- Growth metrics hints
-- Monetization patterns
-- Integration landscape
+### 🏗️ Deployment Intelligence
+*   *Pre-Flight Checks*: "This `Dockerfile` exposes port 3000, but Railway expects $PORT. You will crash."
+*   *Cookie Logic*: "You are setting a cookie but redirecting immediately. Next.js will drop this."
 
-### Market Intelligence
-- Competitor tracking
-- Technology trends
-- Industry news
-- Regulatory changes
-- Partnership opportunities
-
-### Financial Intelligence
-- Runway indicators
-- Pricing signals
-- Unit economics hints
-- Fundraising timing
-- Cost optimization opportunities
-
-### Legal/Compliance Intelligence
-- Data privacy requirements
-- Licensing issues
-- Regulatory compliance
-- IP considerations
-
-### Documentation Intelligence (The "Truth Hierarchy")
-- **Foundational Truth** (README, ARCHITECTURE): Trusted for months.
-- **Strategic Truth** (VISION): Trusted for weeks.
-- **Volatile Truth** (Roadmaps, TODOs): Trusted for days.
-- **Active Gardening**: Proactively identifies stale documentation and pushes you to keep it aligned with reality ("Your roadmap is writing checks your git history can't cash").
-
-## How CSO.ai Thinks
-
-```
-        ┌─────────┐
-        │ LISTEN  │ ← Continuous observation
-        └────┬────┘
-             │
-        ┌────▼────┐
-        │UNDERSTAND│ ← Build mental model
-        └────┬────┘
-             │
-        ┌────▼────┐
-        │ANTICIPATE│ ← Pattern matching + prediction
-        └────┬────┘
-             │
-        ┌────▼────┐
-        │ ADVISE  │ ← Proactive insights
-        └────┬────┘
-             │
-             ▼
-      Surface to User
-      (when relevant)
-```
-
-## User Interaction Examples
-
-### Natural Queries
-- "Hey Side, what should I focus on?"
-- "What's our strategic position?"
-- "Any risks I should know about?"
-- "What's happening in our space?"
-- "Should I read this article?"
-- "Are we ready to fundraise?"
-
-### Proactive Insights (Future)
-- "I noticed you added Lemon Squeezy - here's what you need for PCI compliance"
-- "Your test coverage dropped 20% this month - technical debt is growing"
-- "Competitor X just raised $10M and is hiring aggressively"
-- "Based on your commit patterns, you might want to consider a refactor"
-
-## 🛣️ Implementation Roadmap
-
-### Phase 1: Foundation (COMPLETED)
-- **Local-First Shell**: SQLite storage with MCP protocol.
-- **Nervous System**: File watcher and context tracking.
-- **Swiss Bank Monetization**: Bank-safe token engine with "Hard Stop" logic.
-- **Forensic High-Performance**: Sub-1s scanning via single-pass AST visitor.
-
-### Phase 2: Intelligence & Auto-Remediation (In Progress)
-- **Modular Architecture**: Specialized analyzers for Python, TS, Git, and Deps.
-- **Strategic Guard**: Conflict detection for architectural drift.
-- **Auto-Fixer Expert**: LLM-driven automatic remediation of forensic findings.
-- **Market Intel**: Global feed ingestion for article scoring.
+### 📉 Strategic Debt
+*   Identifying "God Objects" (files > 500 lines).
+*   Spotting "Orphaned Features" (code with no tests or active usage).
+*   Calculating **Strategic IQ** (0-160 Health Score).
 
 ---
 
-## 🔐 Privacy & Trust
-Side AI operates on a **Zero-Knowledge Architecture** for your code.
-- **Code Indexing**: Stays 100% local.
-- **Strategic Logic**: Runs locally on your machine.
-- **Sync**: Only anonymized metadata (project_hash, decision_id) is synced to the cloud.
+## The Monolith
+
+The `.side/MONOLITH.md` file is our masterpiece. It is:
+*   **Not a Log**: It is a *Dashboard*.
+*   **Not Generated Once**: It is *Live*.
+*   **Not Private**: It is meant to be checked into Git as the **System of Record**.
+
+When a new developer (or AI Agent) joins the team, they just read the Monolith to understand *everything*.
 
 ---
 
-## 🚀 The Future
-We are building the first **Recursive Strategy Engine**—an AI that doesn't just write code, but predicts the market viability of every line you commit.
+## The Future: Recursive Strategy
 
-## Success Metrics
+We are building towards **Recursive Intent Verification**.
+*   **Today**: "You have a security bug."
+*   **Tomorrow**: "You are writing code that contradicts the Business Goal you set 3 weeks ago."
 
-1. **Zero Setup Time** - Works immediately on any codebase
-2. **Accuracy** - 8/10 insights are actionable
-3. **Proactive Value** - Surfaces things you didn't know you needed
-4. **Natural Interaction** - Feels like talking to a strategic advisor
-5. **Time Saved** - Replaces hours of research with instant insight
+Side will be the "Circuit Breaker" that prevents AI Agents from drifting off-mission.
 
-## Philosophy
-
-> "The best CSO doesn't wait to be asked. They see what's coming and prepare you for it."
-
-Side AI embodies this philosophy. It's not a search engine or a chatbot. It's a strategic intelligence system that knows your business as well as you do - maybe better - and helps you navigate what's ahead.
+> **"We remember why you built it, so you don't have to."** 🏛️

@@ -17,7 +17,7 @@ In 2026, the world has hit a crisis point. AI agents write 80% of code, but no o
 | **Sovereign Privacy** | Local-first "Judicial Scrubber" for PII/Secrets. | **The Trust Mirror**: We see the logic, but never your secrets. |
 | **Intent Mapping** | Physical links between AST-level code and Business Why. | **The Circuit Breaker**: Prevents AI agents from violating core intent. |
 | **Cognitive Inference** | Detecting strategic shifts from workspace-level deltas. | **The Oracle Moat**: Like an agent, Side "notices" the why behind your setup changes. |
-| **SU Economy** | Monetization via "Strategic Units" (Reasoning Outcomes). | **Surgical Value**: Charge for intelligence, not computation. |
+| **Serious Intelligence** | **NO streaks/badges**. Only Grades, Leverage & ROI. | **Professional Ledger**: We track *Value Created*, not "days visited". |
 
 ---
 
