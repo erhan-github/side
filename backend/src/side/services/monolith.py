@@ -277,6 +277,30 @@ async def generate_monolith(db: Any) -> str | None:
         except Exception:
             pass
 
+        # 06_DEPLOYMENT_HEALTH (New Section)
+        try:
+            # Fetch active deployment findings from IntelStore/DB
+            # We filter for 'DEPLOYMENT_GOTCHA' type which we just added
+            if hasattr(db, 'get_findings_by_type'):
+                deploy_issues = db.get_findings_by_type('DEPLOYMENT_GOTCHA')
+                if deploy_issues:
+                    lines.extend([
+                        "## 06_DEPLOYMENT_HEALTH",
+                        "> ⚠️ **Pre-Flight Checks Failed**",
+                        ""
+                    ])
+                    for issue in deploy_issues:
+                        lines.append(f"### 🔴 {issue.get('message', 'Deployment Issue')}")
+                        lines.append(f"- **File**: `{issue.get('file')}`")
+                        lines.append(f"- **Fix**: {issue.get('action')}")
+                        if issue.get('metadata') and issue['metadata'].get('reference'):
+                             lines.append(f"- **Docs**: {issue['metadata']['reference']}")
+                        lines.append("")
+                    lines.append("> *Run `side audit` to re-scan.*")
+                    lines.append("")
+        except Exception as e:
+            logger.warning(f"Failed to render deployment health: {e}")
+
         # ACTIVITY LOG
         lines.extend([
             "---",
