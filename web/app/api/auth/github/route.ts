@@ -40,16 +40,17 @@ export async function GET(req: NextRequest) {
     // NUCLEAR WIPE: Delete any possible shadowed cookies
     cookieStore.getAll().forEach(c => {
         if (c.name.includes('auth-token') || c.name.includes('code-verifier')) {
-            response.cookies.delete(c.name); // Delete host-only
+            response.cookies.delete(c.name);
         }
     });
 
-    // SET NAKED: Apply the code verifier as Host-Only
-    cookiesToSetDuringInitiation.forEach(({ name, value }) => {
-        console.log(`[GITHUB AUTH] Setting Host-Only initiation cookie: ${name}`);
+    // SET NAKED: Apply the code verifier as Samesite=None (Synchronized)
+    cookiesToSetDuringInitiation.forEach(({ name, value, options }) => {
+        console.log(`[GITHUB AUTH] Setting SameSite=None initiation cookie: ${name}`);
         response.cookies.set(name, value, {
+            ...options,
             path: '/',
-            sameSite: 'lax',
+            sameSite: 'none', // synchronized
             secure: true,
             httpOnly: true,
         });
