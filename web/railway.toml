@@ -4,3 +4,4 @@ builder = "NIXPACKS"
 [deploy]
 healthcheckPath = "/"
 healthcheckTimeout = 300
+restartPolicyType = "NEVER"
