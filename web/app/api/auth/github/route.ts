@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
                             ...options,
                             domain: new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname,
                             sameSite: 'lax',
-                            secure: process.env.NODE_ENV === 'production',
+                            secure: process.env.NEXT_PUBLIC_APP_URL!.startsWith('https://'),
                             path: '/',
                         })
                     );

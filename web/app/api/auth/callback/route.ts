@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
                                 ...options,
                                 domain: new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname,
                                 sameSite: 'lax',
-                                secure: process.env.NODE_ENV === 'production',
+                                secure: process.env.NEXT_PUBLIC_APP_URL!.startsWith('https://'),
                                 path: '/',
                             })
                         )
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
                     ...options,
                     domain: new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname,
                     sameSite: 'lax',
-                    secure: process.env.NODE_ENV === 'production',
+                    secure: process.env.NEXT_PUBLIC_APP_URL!.startsWith('https://'),
                     path: '/',
                 });
             });
