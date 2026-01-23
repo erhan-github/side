@@ -1,3 +1,8 @@
+[build]
+builder = "nixpacks"
+watchPatterns = ["web/**"]
+
 [deploy]
 healthcheckPath = "/"
 healthcheckTimeout = 300
+restartPolicyType = "NEVER"
