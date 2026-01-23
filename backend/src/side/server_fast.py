@@ -117,6 +117,13 @@ async def scan_project() -> str:
     return f"✅ Scan complete. Found {len(findings)} issues ({new_count} new)."
 
 
+@mcp.tool()
+async def trigger_sentry_error() -> str:
+    """Trigger a deliberate error to verify Sentry reporting."""
+    division_by_zero = 1 / 0
+    return str(division_by_zero)
+
+
 # -----------------------------------------------------------------------------
 # Resources (Data) via SQLModel
 # -----------------------------------------------------------------------------
