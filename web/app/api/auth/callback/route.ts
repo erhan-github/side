@@ -26,9 +26,15 @@ export async function GET(request: NextRequest) {
                     setAll(newCookies) {
                         // Capture the cookies Supabase wants to set
                         cookiesToSet.push(...newCookies)
-                        // Also set them in the cookie store
+                        // Also set them in the cookie store with explicit configuration
                         newCookies.forEach(({ name, value, options }) =>
-                            cookieStore.set(name, value, options)
+                            cookieStore.set(name, value, {
+                                ...options,
+                                domain: new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname,
+                                sameSite: 'lax',
+                                secure: process.env.NODE_ENV === 'production',
+                                path: '/',
+                            })
                         )
                     },
                 },
@@ -49,7 +55,10 @@ export async function GET(request: NextRequest) {
             cookiesToSet.forEach(({ name, value, options }) => {
                 response.cookies.set(name, value, {
                     ...options,
+                    domain: new URL(process.env.NEXT_PUBLIC_APP_URL!).hostname,
+                    sameSite: 'lax',
                     secure: process.env.NODE_ENV === 'production',
+                    path: '/',
                 });
             });
 
