@@ -9,6 +9,12 @@ export async function middleware(request: NextRequest) {
         },
     })
 
+    // [DIAGNOSTIC] Log incoming state
+    const cookieNames = request.cookies.getAll().map(c => c.name).join(', ');
+    console.log(`[MIDDLEWARE] INCOMING (${request.nextUrl.pathname})`);
+    console.log(`[MIDDLEWARE] Cookies: [${cookieNames}]`);
+    console.log(`[MIDDLEWARE] Headers: host=${request.headers.get('host')}, x-forwarded-proto=${request.headers.get('x-forwarded-proto')}, referer=${request.headers.get('referer')}`);
+
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

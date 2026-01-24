@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
                     },
                     setAll(cookiesToSet) {
                         try {
+                            console.log(`[CALLBACK] setAll called with ${cookiesToSet.length} cookies.`);
                             cookiesToSet.forEach(({ name, value, options }) => {
                                 // STRATEGY: Enforce consistent cookie attributes for Railway/Prod
                                 const cookieOptions = {
@@ -30,12 +31,11 @@ export async function GET(request: NextRequest) {
                                     sameSite: 'lax' as const,
                                     secure: true,
                                 };
+                                console.log(`[CALLBACK] Setting cookie: ${name}, Options: ${JSON.stringify(cookieOptions)}`);
                                 response.cookies.set(name, value, cookieOptions)
                             })
                         } catch (error) {
-                            // The `setAll` method was called from a Server Component.
-                            // This can be ignored if you have middleware refreshing
-                            // user sessions.
+                            console.error('[CALLBACK] Error in setAll:', error);
                         }
                     },
                 },
