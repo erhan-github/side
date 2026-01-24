@@ -19,3 +19,8 @@ archive/
 
 # Side AI
 .side/
+
+# Local Data
+*.sqlite
+*.db
+backend/task.md
