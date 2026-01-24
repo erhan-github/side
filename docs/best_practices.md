@@ -52,6 +52,29 @@ We treat data as sovereign. Sidelith operates with **sanitized structural data**
 - **Best Practice**: Never send PII or actual customer data to the Registry.
 - **Our Monolith**: We only sync *schemas*, *file paths*, and *function signatures*. The actual row data (e.g., user emails) never leaves the `side-production` database.
 
+### 4. Real-World "Wow" Findings (Forensic Wins)
+These are actual examples from the "Side" monolith where Sidelith's forensic approach solved critical issues that traditional debugging missed.
+
+#### Win #1: The "Hidden RLS" Blocker
+**Symptom**: New users were stuck on "Generating API Key..." indefinitely. No errors on the frontend.
+**Traditional Debugging**: Checked frontend API calls (200 OK), checked backend logs (nothing obvious).
+**Sidelith Forensics**:
+1.  **Registry check**: "Who owns the `profiles` table?" -> DatabaseModule.
+2.  **Policy Audit**: "Show me the `INSERT` policy for `profiles`."
+3.  **Result**: `NULL`. (Missing!). The schema had `users can view own profile`, but **no policy** allowed them to create one.
+4.  **Fix**: Added `005_fix_profile_perms.sql`. Immediate resolution.
+*Lesson*: The Registry reveals the *absence* of architecture (missing policies) just as well as the presence of errors.
+
+#### Win #2: The "Proxy vs. Code" Verdict
+**Symptom**: Authentication loop. Cookie setting failed silently.
+**The "Drift"**: We wrote complex "Client-Side Hydration" scripts to force cookies, thinking our code was broken.
+**Sidelith Forensics**:
+1.  **Architecture Map**: "What sits between the User and the Next.js Server?" -> Railway Proxy (Ingress).
+2.  **Constraint Analysis**: Proxies often have strict Header Size limits (e.g., 8KB). Our hydration headers were ~12KB.
+3.  **The Verdict**: The code wasn't buggy; it was **too heavy** for the infrastructure.
+4.  **Action**: Instead of adding more code (complexity), we **removed** it (Standard Implementation). Simplicity restored reliability.
+*Lesson*: Sometimes the "Wow" is realizing you don't need the code at all.
+
 ---
 
 ## The "Side" Toolchain
