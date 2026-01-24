@@ -1,116 +1,30 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
+// The client you created from the Server-Side Auth instructions
+import { createClient } from '@/lib/supabase/server'
 
-export async function GET(request: NextRequest) {
-    const requestUrl = new URL(request.url)
-    const code = requestUrl.searchParams.get('code')
-    const next = requestUrl.searchParams.get('next') ?? '/dashboard'
-    const origin = (process.env.NEXT_PUBLIC_APP_URL?.trim() || requestUrl.origin)
+export async function GET(request: Request) {
+    const { searchParams, origin } = new URL(request.url)
+    const code = searchParams.get('code')
+    // if "next" is in param, use it as the redirect URL
+    const next = searchParams.get('next') ?? '/dashboard'
 
     if (code) {
-        const cookieStore = await cookies()
-
-        // CONTAINER: Capture cookies here instead of setting on response headers
-        // This avoids the "Header Overflow" issue on Railway/Proxies
-        const cookiesToHydrate: any[] = [];
-
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookies: {
-                    getAll() {
-                        return cookieStore.getAll()
-                    },
-                    setAll(cookiesToSet) {
-                        // Capture cookies for client-side hydration
-                        console.log(`[CALLBACK] Capturing ${cookiesToSet.length} cookies for client hydration.`);
-                        cookiesToSet.forEach((c) => {
-                            cookiesToHydrate.push({
-                                ...c,
-                                options: {
-                                    ...c.options,
-                                    path: '/', // Force root path
-                                    sameSite: 'lax', // Force lax
-                                    secure: true, // Force secure
-                                    httpOnly: false, // Force JS accessible (critical for document.cookie)
-                                }
-                            })
-                        });
-                    },
-                },
-            }
-        )
-
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-
+        const supabase = await createClient()
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
-            console.log(`[AUTH CALLBACK] Exchange successful for User ID: ${data.user?.id}. Hydrating client...`);
-
-            // Generate safe JSON payload
-            const cookiePayload = JSON.stringify(cookiesToHydrate).replace(/</g, '\\u003c');
-            const targetUrl = `${origin}${next}`;
-
-            const html = `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Authenticating...</title>
-    <meta charset="utf-8">
-    <style>
-        body { background: #000; color: #333; font-family: monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .loader { width: 24px; height: 24px; border: 2px solid #333; border-top-color: #00bcd4; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        p { color: #666; font-size: 12px; }
-    </style>
-</head>
-<body>
-    <div class="loader"></div>
-    <p>Hydrating Secure Session...</p>
-    <script>
-        try {
-            const cookies = ${cookiePayload};
-            cookies.forEach(({ name, value, options }) => {
-                // STRATEGY: Do NOT encode value. Supabase tokens are "chunked" to fit ~4KB. 
-                // Encoding (e.g. % instead of +) mimics 3x inflation, breaking the limit.
-                // Auth tokens are typically Base64/JWT and safe for cookie values (no ; or ,).
-                let cookieString = \`\${encodeURIComponent(name)}=\${value}\`;
-                
-                // Map options to cookie string format
-                if (options.path) cookieString += \`; path=\${options.path}\`;
-                
-                // FIX: partial '0' checks being falsy
-                if (options.maxAge !== undefined) cookieString += \`; max-age=\${options.maxAge}\`;
-                
-                // STRATEGY: Omit domain to force "HostOnly". 
-                // if (options.domain) cookieString += \`; domain=\${options.domain}\`;
-                
-                if (options.secure) cookieString += \`; secure\`;
-                if (options.sameSite) cookieString += \`; samesite=\${options.sameSite}\`;
-                
-                console.log('Hydrating:', name, 'Size:', value.length); 
-                document.cookie = cookieString;
-            });
-            
-            // Redirect immediately after hydration
-            window.location.href = "${targetUrl}";
-        } catch (e) {
-            console.error("Hydration failed", e);
-            document.body.innerHTML = "<p style='color:red'>Authentication Error. Please refresh.</p>";
+            const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
+            const isLocalEnv = process.env.NODE_ENV === 'development'
+            if (isLocalEnv) {
+                // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
+                return NextResponse.redirect(`${origin}${next}`)
+            } else if (forwardedHost) {
+                return NextResponse.redirect(`https://${forwardedHost}${next}`)
+            } else {
+                return NextResponse.redirect(`${origin}${next}`)
+            }
         }
-    </script>
-</body>
-</html>`;
-
-            return new NextResponse(html, {
-                status: 200,
-                headers: { 'Content-Type': 'text/html' }
-            });
-        }
-
-        console.error('[AUTH CALLBACK] Exchange error:', error.message);
     }
 
-    return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`)
+    // return the user to an error page with instructions
+    return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }
