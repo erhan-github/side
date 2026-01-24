@@ -11,8 +11,10 @@ export async function middleware(request: NextRequest) {
 
     // [DIAGNOSTIC] Log incoming state
     const cookieNames = request.cookies.getAll().map(c => c.name).join(', ');
+    const debugCookie = request.cookies.get('debug-header-test');
     console.log(`[MIDDLEWARE] INCOMING (${request.nextUrl.pathname})`);
     console.log(`[MIDDLEWARE] Cookies: [${cookieNames}]`);
+    console.log(`[MIDDLEWARE] Debug Probe: ${debugCookie ? 'RECEIVED' : 'LOST'}`);
     console.log(`[MIDDLEWARE] Headers: host=${request.headers.get('host')}, x-forwarded-proto=${request.headers.get('x-forwarded-proto')}, referer=${request.headers.get('referer')}`);
 
     const supabase = createServerClient(
