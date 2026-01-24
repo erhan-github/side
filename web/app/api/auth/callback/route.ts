@@ -70,9 +70,6 @@ export async function GET(request: NextRequest) {
     <script>
         try {
             const cookies = ${cookiePayload};
-    <script>
-        try {
-            const cookies = ${cookiePayload};
             cookies.forEach(({ name, value, options }) => {
                 // STRATEGY: Do NOT encode value. Supabase tokens are "chunked" to fit ~4KB. 
                 // Encoding (e.g. % instead of +) mimics 3x inflation, breaking the limit.
