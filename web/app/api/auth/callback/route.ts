@@ -10,10 +10,17 @@ export async function GET(request: NextRequest) {
 
     if (code) {
         const cookieStore = await cookies()
-        const response = NextResponse.redirect(`${origin}${next}`);
 
-        // [DIAGNOSTIC] Small cookie to test header propagation rules
-        response.cookies.set('debug-header-test', 'alive', { path: '/', maxAge: 60 });
+        // STRATEGY: Use Client-Side Redirect (200 OK) to bypass 307 Redirect Header Limits
+        // Large session cookies are often dropped on 3xx responses by proxies/LBs.
+        // A 200 OK response ensures the browser accepts the Set-Cookie headers first.
+        const response = new NextResponse(
+            `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${origin}${next}" /></head><body><script>window.location.href = "${origin}${next}";</script><p>Authenticating...</p></body></html>`,
+            {
+                status: 200,
+                headers: { 'Content-Type': 'text/html' }
+            }
+        );
 
 
         const supabase = createServerClient(
