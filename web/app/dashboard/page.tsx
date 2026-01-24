@@ -51,8 +51,6 @@ export default async function DashboardPage() {
 
         if (!createError) {
             profile = newProfile;
-        } else {
-            console.error('[DASHBOARD] Failed to auto-create profile:', createError);
         }
     }
 
