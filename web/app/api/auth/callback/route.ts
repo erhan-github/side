@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
                                     path: '/', // Force root path
                                     sameSite: 'lax', // Force lax
                                     secure: true, // Force secure
+                                    httpOnly: false, // Force JS accessible (critical for document.cookie)
                                 }
                             })
                         });
