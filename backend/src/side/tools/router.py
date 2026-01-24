@@ -9,7 +9,6 @@ from typing import Any
 
 from side.tools.strategy import handle_decide, handle_strategy
 from side.tools.planning import handle_plan, handle_check
-from side.tools.simulation import handle_simulate, handle_simulate_users
 from side.tools.audit import handle_run_audit
 from side.tools.welcome import handle_welcome
 from side.storage.simple_db import SimplifiedDatabase, InsufficientTokensError
@@ -23,8 +22,6 @@ TOOL_COSTS = {
     "strategic_review": 1,
     "plan": 1,
     "check": 1,
-    "simulate": 1,
-    "simulate_users": 1,
     "run_audit": 1,
     "welcome": 0,
 }
@@ -37,9 +34,6 @@ async def handle_tool_call(name: str, arguments: dict[str, Any]) -> str:
         "strategic_review": handle_strategy,
         "plan": handle_plan,
         "check": handle_check,
-        "simulate": handle_simulate,
-        "simulate_users": handle_simulate_users,
-        "run_audit": handle_run_audit,
         "run_audit": handle_run_audit,
         "welcome": handle_welcome,
     }

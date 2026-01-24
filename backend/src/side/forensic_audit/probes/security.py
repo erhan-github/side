@@ -358,7 +358,7 @@ class SecurityProbe:
                                 description=f"Potential {secret_type} detected",
                                 file_path=str(path),
                                 line_number=line_idx,
-                                context=line.strip()[:80] + "...",
+                                context=line.strip()[:200] + "...",
                                 suggested_fix=f"Move {secret_type} to environment variable"
                             ))
             except Exception:

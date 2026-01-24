@@ -117,10 +117,12 @@ def create_plan_md(
     health_checks: Optional[list[str]] = None,
     findings_summary: str = ""
 ) -> Path:
-    """Create .side/plan.md with project info."""
     side_dir = create_side_directory(project_root)
     plan_path = side_dir / "plan.md"
     
+    from collections import Counter
+    
+    # 1. Detect basics (fast, sync)
     project_name = detect_project_name(project_root)
     stack = detect_stack(project_root)
     
@@ -145,7 +147,7 @@ def create_plan_md(
         content += f"\n## First Diagnostic Findings\n{findings_summary}\n"
         
     plan_path.write_text(content)
-    return plan_path
+    return plan_path, project_name, stack
 
 
 async def run_onboarding(project_root: str) -> dict:
@@ -154,43 +156,44 @@ async def run_onboarding(project_root: str) -> dict:
     
     Returns dict with onboarding results.
     """
+    import asyncio
+    from collections import Counter
     from side.intel.forensic_engine import ForensicEngine
     from side.intel.evaluator import StrategicEvaluator
-    from side.intel.auto_intelligence import AutoIntelligence
+    from side.tools.core import get_database, get_auto_intel
+    from side.services.billing import BillingService
     
     root = Path(project_root)
+    db = get_database()
     
-    # 1. Run Baseline Scan
+    # 1. Run Baseline Scan & Get Profile in parallel (Optimized Workflow)
     engine = ForensicEngine(project_root)
-    findings = await engine.scan()
+    auto_intel = get_auto_intel()
     
-    # 2. Get Auto-Intelligence Profile
-    auto_intel = AutoIntelligence()
-    profile = await auto_intel.get_or_create_profile(project_root)
+    scan_task = engine.scan()
+    profile_task = auto_intel.get_or_create_profile(project_root)
     
-    # [Anti-Abuse] Claim Trial (Repo Lock)
-    from side.services.billing import BillingService
-    from side.tools.core import get_database
-    billing = BillingService(get_database())
+    findings, profile = await asyncio.gather(scan_task, profile_task)
+    
+    # [Anti-Abuse] Claim Trial (Repo Lock) - Uses shared DB
+    billing = BillingService(db)
     billing.claim_trial(project_root)
     
-    # 3. Calculate Strategic IQ (10 Dimensions, 400 points)
-    # Prepare audit summary from findings
-    audit_summary = {}
-    for f in findings:
-        audit_summary[f.severity] = audit_summary.get(f.severity, 0) + 1
+    # 2. Calculate Strategic IQ (10 Dimensions, 400 points)
+    # Optimized: Use Counter for O(N) summary creation (avoids N+1 logic trigger)
+    audit_summary = Counter(f.severity for f in findings)
         
     iq_result = StrategicEvaluator.calculate_iq(
         profile=profile.to_dict(),
         active_plans=[], # No plans yet
-        audit_summary=audit_summary,
+        audit_summary=dict(audit_summary),
         project_root=root
     )
     
-    iq_score = iq_result["score"]
-    max_iq = iq_result["max_score"]
+    iq_score = iq_result["raw_score"]
+    max_iq = 400 # 10 dimensions * 40 points
     
-    # 4. Format findings for plan.md
+    # 3. Format findings for plan.md
     findings_summary = ""
     for f in findings[:5]: # Top 5 findings
         severity_emoji = {
@@ -201,19 +204,19 @@ async def run_onboarding(project_root: str) -> dict:
         }.get(f.severity, "⚪")
         findings_summary += f"{severity_emoji} **{f.type}**: {f.message}\n"
 
-    # 5. Create .side directory and plan.md
-    plan_path = create_plan_md(
+    # 4. Create .side directory and plan.md
+    plan_path, project_name, stack = create_plan_md(
         root, 
         baseline_score=int((iq_score / max_iq) * 100), 
         findings_summary=findings_summary
     )
     
-    # 6. Return results
+    # 5. Return results
     return {
         "success": True,
         "plan_path": str(plan_path),
-        "project_name": detect_project_name(root),
-        "stack": detect_stack(root),
+        "project_name": project_name,
+        "stack": stack,
         "iq_score": iq_score,
         "max_iq": max_iq,
         "grade": iq_result["grade"],

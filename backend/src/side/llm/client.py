@@ -12,6 +12,7 @@ import os
 import logging
 from typing import List, Dict, Optional
 from enum import Enum
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -30,29 +31,26 @@ PROVIDER_MODELS = {
 }
 
 
+from .managed_pool import ManagedCreditPool
+
+from .managed_pool import ManagedCreditPool
+
 class LLMClient:
     """
     Unified client for LLM interactions.
-    Supports multiple providers with auto-detection.
+    V1: Stable single-key mode.
+    V2 (Next Week): Managed Credit Pool activation.
     """
     
     def __init__(self, preferred_provider: Optional[str] = None):
-        """
-        Initialize the LLM client.
-        
-        Args:
-            preferred_provider: Force a specific provider ("groq", "openai", "anthropic").
-                               If None, auto-detects based on available env vars.
-        """
         self.provider: Optional[LLMProvider] = None
         self.client = None
         self.async_client = None
         self.model: Optional[str] = None
+        self.pool: Optional[ManagedCreditPool] = None
         
-        # Load .env if available (ensures keys are present even if not in environment yet)
         self._load_dotenv()
         
-        # Try to initialize in priority order (or use preferred)
         if preferred_provider:
             self._init_provider(preferred_provider)
         else:
@@ -60,19 +58,29 @@ class LLMClient:
             
         if not self.client:
             logger.warning("⚠️ No LLM API key found. Expert agents will not function.")
-            logger.warning("   Set one of: GROQ_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY")
+            
+    def _init_provider(self, provider_name: str) -> bool:
+        # Initialize Pool first
+        try:
+            self.pool = ManagedCreditPool(provider=provider_name)
+        except Exception:
+            self.pool = None
+
+        try:
+            api_key = os.getenv(f"{provider_name.upper()}_API_KEY")
+            # If no single key, check if pool has keys (Side Proxy Mode)
+            if not api_key and self.pool and self.pool.is_healthy:
+                api_key = self.pool.get_next_key()
+                logger.info(f"Using Managed Pool Key for {provider_name}")
+
+            if not api_key:
+                return False
+                
+        except Exception as e:
+            logger.debug(f"Provider {provider_name} init failed: {e}")
+        return False
 
     def _load_dotenv(self):
-        """
-        Load environment variables from .env file if it exists.
-        
-        STRICT MODE: Only loads SIDE_CLOUD_KEY or SIDE_PROJECT_ID.
-        We do NOT load OPENAI_API_KEY/GROQ_API_KEY from user files anymore.
-        All intelligence must be routed through Side Cloud or Trial Credits.
-        """
-        from pathlib import Path
-        
-        # Find backend root (where .env typically lives)
         this_file = Path(__file__).resolve()
         backend_dir = this_file.parent.parent.parent.parent
         project_root = backend_dir.parent
@@ -83,8 +91,7 @@ class LLMClient:
             Path.cwd() / ".env",
         ]
         
-        # Only allow specific keys for Managed Access
-        ALLOWED_KEYS = ["SIDE_API_KEY", "SIDE_PROJECT_ID", "GROQ_API_KEY"]
+        ALLOWED_KEYS = ["SIDE_API_KEY", "SIDE_PROJECT_ID", "GROQ_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
         
         for env_path in possible_paths:
             if env_path.exists():
@@ -94,165 +101,131 @@ class LLMClient:
                             line = line.strip()
                             if line and not line.startswith('#') and '=' in line:
                                 key, value = line.split('=', 1)
-                                key = key.strip()
-                                value = value.strip().strip('"').strip("'")
-                                
-                                if key in ALLOWED_KEYS and value:
-                                     os.environ[key] = value
+                                if key.strip() in ALLOWED_KEYS:
+                                     os.environ[key.strip()] = value.strip().strip('"').strip("'")
                     break
                 except Exception:
                     pass
 
-            
     def _auto_detect(self):
-        """Try providers in order until one works."""
-        # Priority: Groq (fast) > OpenAI (popular) > Anthropic (smart)
         for provider in ["groq", "openai", "anthropic"]:
             if self._init_provider(provider):
                 break
                 
     def _init_provider(self, provider_name: str) -> bool:
-        """Initialize a specific provider. Returns True on success."""
         try:
+            api_key = os.getenv(f"{provider_name.upper()}_API_KEY")
+            if not api_key:
+                return False
+
             if provider_name == "groq":
-                api_key = os.getenv("GROQ_API_KEY")
-                if api_key:
-                    from groq import Groq, AsyncGroq
-                    self.client = Groq(api_key=api_key)
-                    self.async_client = AsyncGroq(api_key=api_key)
-                    self.provider = LLMProvider.GROQ
-                    self.model = PROVIDER_MODELS[LLMProvider.GROQ]
-                    logger.info(f"✅ LLM: Groq ({self.model})")
-                    return True
+                from groq import Groq, AsyncGroq
+                self.client = Groq(api_key=api_key)
+                self.async_client = AsyncGroq(api_key=api_key)
+                self.provider = LLMProvider.GROQ
+                self.model = PROVIDER_MODELS[LLMProvider.GROQ]
+                logger.info(f"✅ LLM: Side Intelligence ({self.model})")
+                return True
                     
             elif provider_name == "openai":
-                api_key = os.getenv("OPENAI_API_KEY")
-                if api_key:
-                    from openai import OpenAI, AsyncOpenAI
-                    self.client = OpenAI(api_key=api_key)
-                    self.async_client = AsyncOpenAI(api_key=api_key)
-                    self.provider = LLMProvider.OPENAI
-                    self.model = PROVIDER_MODELS[LLMProvider.OPENAI]
-                    logger.info(f"✅ LLM: OpenAI ({self.model})")
-                    return True
-                    
+                from openai import OpenAI, AsyncOpenAI
+                self.client = OpenAI(api_key=api_key)
+                self.async_client = AsyncOpenAI(api_key=api_key)
+                self.provider = LLMProvider.OPENAI
+                self.model = PROVIDER_MODELS[LLMProvider.OPENAI]
+                logger.info(f"✅ LLM: OpenAI ({self.model})")
+                return True
+
             elif provider_name == "anthropic":
-                api_key = os.getenv("ANTHROPIC_API_KEY")
-                if api_key:
-                    from anthropic import Anthropic, AsyncAnthropic
-                    self.client = Anthropic(api_key=api_key)
-                    self.async_client = AsyncAnthropic(api_key=api_key)
-                    self.provider = LLMProvider.ANTHROPIC
-                    self.model = PROVIDER_MODELS[LLMProvider.ANTHROPIC]
-                    logger.info(f"✅ LLM: Anthropic ({self.model})")
-                    return True
+                from anthropic import Anthropic, AsyncAnthropic
+                self.client = Anthropic(api_key=api_key)
+                self.async_client = AsyncAnthropic(api_key=api_key)
+                self.provider = LLMProvider.ANTHROPIC
+                self.model = PROVIDER_MODELS[LLMProvider.ANTHROPIC]
+                logger.info(f"✅ LLM: Anthropic ({self.model})")
+                return True
                     
-        except ImportError as e:
-            logger.debug(f"Provider {provider_name} not installed: {e}")
         except Exception as e:
             logger.debug(f"Provider {provider_name} init failed: {e}")
-            
         return False
-    
+
     def is_available(self) -> bool:
         """Check if LLM is configured and available."""
         return self.client is not None
-        
-    def complete(
-        self, 
-        messages: List[Dict[str, str]], 
-        system_prompt: str,
-        temperature: float = 0.0,
-        max_tokens: int = 4096
-    ) -> str:
-        """
-        Get a completion from the LLM.
-        Unified interface across all providers.
-        """
-        if not self.client:
-            raise RuntimeError("LLM Client not initialized. Missing API Key.")
-            
-        # Safety: Truncate extremely large prompts
-        if len(system_prompt) + sum(len(m['content']) for m in messages) > 40000:
-            logger.warning("Extremely large prompt detected. Truncating for economy.")
-            # Simple truncation of the last message content if needed
-            if messages:
-                last_msg = messages[-1]
-                last_msg['content'] = last_msg['content'][:30000] + "\n[CONTEXT TRUNCATED]"
-        
-        logger.info(f"🧠 Invoking {self.provider.value}/{self.model}...")
-        
+
+    def complete(self, messages, system_prompt, temperature=0.0, max_tokens=4096):
         try:
             if self.provider == LLMProvider.ANTHROPIC:
-                # Anthropic has different API
                 response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    system=system_prompt,
-                    messages=messages
+                    model=self.model, max_tokens=max_tokens, temperature=temperature,
+                    system=system_prompt, messages=messages
                 )
                 return response.content[0].text
-                
             else:
-                # OpenAI and Groq share the same API format
                 all_messages = [{"role": "system", "content": system_prompt}] + messages
-                
                 response = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=all_messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
+                    model=self.model, messages=all_messages,
+                    temperature=temperature, max_tokens=max_tokens,
                 )
                 return response.choices[0].message.content
-                
         except Exception as e:
             logger.error(f"❌ {self.provider.value} API Error: {e}")
-            raise
+            raise e
 
-    async def complete_async(
-        self, 
-        messages: List[Dict[str, str]], 
-        system_prompt: str,
-        temperature: float = 0.0,
-        max_tokens: int = 4096,
-        model_override: Optional[str] = None
-    ) -> str:
+            raise e
+
+    async def complete_async(self, messages, system_prompt, temperature=0.0, max_tokens=4096, model_override=None):
         """
-        Get an asynchronous completion from the LLM.
+        Execute completion with Managed Credit Pool rotation and Circuit Breaking.
         """
-        if not self.async_client:
-            raise RuntimeError("Async LLM Client not initialized.")
-            
-        # Safety: Truncate extremely large prompts
-        if len(system_prompt) + sum(len(m['content']) for m in messages) > 40000:
-            logger.warning("Extremely large prompt detected (Async). Truncating for economy.")
-            if messages:
-                last_msg = messages[-1]
-                last_msg['content'] = last_msg['content'][:30000] + "\n[CONTEXT TRUNCATED]"
+        if not self.client:
+            raise RuntimeError("LLM Client not initialized.")
 
         actual_model = model_override or self.model
-        logger.info(f"🧠 Invoking (Async) {self.provider.value}/{actual_model}...")
+        
+        # [Phase 3] Managed Credit Pool Logic
+        current_api_key = None
+        if self.pool and self.pool.is_healthy:
+            current_api_key = self.pool.get_next_key()
+            if current_api_key:
+                # Dynamically update the client's key for this request
+                # Note: This is client-specific. For Groq/OpenAI, we might need to re-instantiate or set .api_key
+                if self.provider == LLMProvider.GROQ:
+                    self.async_client.api_key = current_api_key
+                elif self.provider == LLMProvider.OPENAI:
+                    self.async_client.api_key = current_api_key
+                elif self.provider == LLMProvider.ANTHROPIC:
+                    self.async_client.api_key = current_api_key
         
         try:
             if self.provider == LLMProvider.ANTHROPIC:
                 response = await self.async_client.messages.create(
-                    model=actual_model,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    system=system_prompt,
-                    messages=messages
+                    model=actual_model, max_tokens=max_tokens, temperature=temperature,
+                    system=system_prompt, messages=messages
                 )
                 return response.content[0].text
             else:
                 all_messages = [{"role": "system", "content": system_prompt}] + messages
                 response = await self.async_client.chat.completions.create(
-                    model=actual_model,
-                    messages=all_messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
+                    model=actual_model, messages=all_messages,
+                    temperature=temperature, max_tokens=max_tokens,
                 )
                 return response.choices[0].message.content
+                
         except Exception as e:
-            logger.error(f"❌ {self.provider.value} Async API Error: {e}")
-            raise
+            error_str = str(e).lower()
+            # [Phase 3] Circuit Breaker
+            if "429" in error_str or "rate limit" in error_str or "quota" in error_str:
+                logger.warning(f"⚠️ RATE LIMIT HIT ({self.provider.value}). Cooling key...")
+                
+                if self.pool and current_api_key:
+                    self.pool.mark_as_cooling(current_api_key)
+                    # Retry immediately with next key
+                    logger.info("🔄 Rotating to next enterprise key...")
+                    return await self.complete_async(messages, system_prompt, temperature, max_tokens, model_override)
+                else:
+                    logger.error("❌ Rate limit hit and no backup keys available.")
+                    raise e
+            else:
+                logger.error(f"❌ {self.provider.value} Async API Error: {e}")
+                raise e

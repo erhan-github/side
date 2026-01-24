@@ -32,66 +32,42 @@ class ForensicEngine:
         self.findings: List[Finding] = []
 
     async def scan(self) -> List[Finding]:
-        """Execute full forensic scan via unified architecture with caching."""
+        """
+        Unified Forensic Scan [Absolute DRY].
+        Delegates all logic to ForensicAuditRunner.
+        """
+        from side.forensic_audit.runner import ForensicAuditRunner
+        from side.forensic_audit.core import AuditStatus
+        
         # Check cache first
         cache_key = self._get_cache_key()
         if cache_key in _FORENSIC_CACHE:
-            # Cache hit - instant return
             self.findings = _FORENSIC_CACHE[cache_key]
             return self.findings
-        
-        # Cache miss - perform scan
-        intel = await self.analyzer.analyze(self.project_root)
-        self.findings = intel.findings
-        
-        # --- BRIDGE: Integrate ForensicAuditRunner ---
-        # Run the new audit runner and convert results to legacy Finding format
-        try:
-            from side.forensic_audit.runner import ForensicAuditRunner
-            from side.forensic_audit.core import AuditStatus
-            from side.forensic_audit.deployment_gotchas import DeploymentGotchaDetector
-            
-            # 1. Run Standard Audits
-            runner = ForensicAuditRunner(str(self.project_root))
-            audit_summary = await runner.run() # Async run
-            
-            mapped_findings = []
-            for dim_results in audit_summary.results_by_dimension.values():
-                for res in dim_results:
-                    if res.status in [AuditStatus.FAIL, AuditStatus.WARN]:
-                        # Map AuditResult -> Finding
-                        mapped_findings.append(Finding(
-                            type=res.check_name,
-                            severity=res.severity.value.upper(),
-                            file=res.evidence[0].file_path if res.evidence and res.evidence[0].file_path else "Project",
-                            line=res.evidence[0].line_number if res.evidence and hasattr(res.evidence[0], 'line_number') else 0,
-                            message=f"{res.notes}. {res.recommendation or ''}",
-                            action=res.recommendation or "Review finding",
-                            metadata={"check_id": res.check_id, "dimension": res.dimension}
-                        ))
 
-            # 2. Run Deployment Gotcha Detector
-            deploy_detector = DeploymentGotchaDetector(str(self.project_root))
-            deploy_issues = deploy_detector.scan()
-            
-            for issue in deploy_issues:
-                mapped_findings.append(Finding(
-                    type=issue["type"],
-                    severity=issue["severity"],
-                    file=issue["file"],
-                    line=issue.get("line", 1),
-                    message=issue["message"],
-                    action=issue["action"],
-                    metadata={"reference": issue.get("reference")}
-                ))
-                        
-            # Merge findings
-            self.findings.extend(mapped_findings)
-            
-        except Exception as e:
-            # Fallback if runner fails, don't crash the legacy engine
-            logging.getLogger(__name__).error(f"Forensic Runner failed: {e}")
-        # ---------------------------------------------
+        # Execute Unified Audit
+        runner = ForensicAuditRunner(str(self.project_root))
+        summary = await runner.run()
+        
+        # Map AuditResults back to legacy Finding format for backward compatibility
+        self.findings = []
+        for dim, results in summary.results_by_dimension.items():
+            for res in results:
+                if res.status in [AuditStatus.FAIL, AuditStatus.WARN]:
+                    # Map to legacy format
+                    self.findings.append(Finding(
+                        type=res.check_name,
+                        severity=res.severity.value.upper(),
+                        file=res.evidence[0].file_path if res.evidence and res.evidence[0].file_path else "Project",
+                        line=res.evidence[0].line_number if res.evidence and hasattr(res.evidence[0], 'line_number') else 0,
+                        message=f"{res.notes}. {res.recommendation or ''}",
+                        action=res.recommendation or "Review finding",
+                        metadata={
+                            "check_id": res.check_id, 
+                            "dimension": res.dimension,
+                            "evidence": [e.description for e in res.evidence] if res.evidence else []
+                        }
+                    ))
         
         # Store in cache
         _FORENSIC_CACHE[cache_key] = self.findings

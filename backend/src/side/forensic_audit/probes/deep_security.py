@@ -1,7 +1,7 @@
 """
 Deep Security Probe - LLM-powered security analysis.
 
-Uses Groq to find business logic vulnerabilities that static analysis misses.
+Uses Side Intelligence to find business logic vulnerabilities that static analysis misses.
 """
 
 from typing import List
@@ -94,7 +94,7 @@ class DeepSecurityProbe:
                     evidence.append(AuditEvidence(
                         description=f"Potential Logic Vulnerability in {Path(file_path).name}",
                         file_path=file_path,
-                        context=response[:300] + "...",
+                        context=response[:500] + "...",
                         suggested_fix="Manual Security Review"
                     ))
                     
@@ -109,6 +109,6 @@ class DeepSecurityProbe:
             status=AuditStatus.PASS if not evidence else AuditStatus.WARN,
             severity=Severity.CRITICAL,
             evidence=evidence,
-            notes=f"Scanned {len(candidates)} high-risk files with Groq",
+            notes=f"Scanned {len(candidates)} high-risk files with Side Intelligence",
             recommendation="Conduct manual pentest on flagged files"
         )

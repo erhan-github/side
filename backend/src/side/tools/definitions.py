@@ -66,44 +66,6 @@ Speed: < 2 seconds""",
         },
     ),
     Tool(
-        name="simulate",
-        description="""Run your idea past Virtual Users (Personas).
-
-CRITICAL: Use ONLY when a specific feature or idea is proposed. Do NOT use for general chat.
-
-Triggers:
-- "Side, test this idea"
-- "What would users think of X?"
-- "Would developers like this?"
-- "Focus group for my landing page"
-
-Returns: Unfiltered feedback from 3 domain-specific personas (e.g. Teacher, Developer).
-Speed: < 3 seconds""",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "feature": {
-                    "type": "string",
-                    "description": "The feature or idea to simulate",
-                },
-                "target_audience": {
-                    "type": "string",
-                    "enum": ["teachers", "developers", "general", "designers"],
-                    "description": "Who are we testing with? (default: general)",
-                },
-                "content": {
-                    "type": "string",
-                    "description": "The text content to test (Landing Page, Feature, Idea)",
-                },
-                "content_type": {
-                    "type": "string",
-                    "description": "What is this? (e.g. 'Landing Page', 'Email Subject')",
-                },
-            },
-            "required": [],
-        },
-    ),
-    Tool(
         name="plan",
         description="""Create or view your strategic directives.
 

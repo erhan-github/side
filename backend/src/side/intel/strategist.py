@@ -1,7 +1,7 @@
 """
 Side Strategist - The LLM-powered strategic advisor.
 
-Uses Groq for fast, intelligent inference (January 2026 models):
+Uses Side Intelligence for fast, intelligent inference (January 2026 models):
 - llama-3.1-8b-instant: Fast scoring (277 tok/s, 140ms TTFT)
 - llama-3.3-70b-versatile: Deep strategic reasoning (218 tok/s, 110ms TTFT)
 - gemma2-9b-it: Lightweight fallback (814 tok/s, very cheap)
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class Strategist:
     """
-    LLM-powered strategic advisor using Groq.
+    LLM-powered strategic advisor using Side Intelligence.
 
     Model selection (January 2026 benchmarks):
     - FAST_MODEL: For high-volume tasks like scoring articles
@@ -33,7 +33,7 @@ class Strategist:
 
     GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-    # Model selection based on task complexity (2026 Groq offerings)
+    # Model selection based on task complexity (2026 Side Intelligence offerings)
     FAST_MODEL = "llama-3.1-8b-instant"      # 277 tok/s, 140ms TTFT - scoring
     SMART_MODEL = "llama-3.3-70b-versatile"  # 218 tok/s, 110ms TTFT - strategy
     LITE_MODEL = "llama3-8b-8192"            # Faster, modern fallback
@@ -156,6 +156,10 @@ Respond with ONLY valid JSON:
         self.compressor = ContextCompressor()
         self.allow_fallbacks = allow_fallbacks
         self.memory = memory_retrieval
+        
+        # [Grand Unification] Connect Instrumentation for Adaptive AI
+        from side.instrumentation.engine import InstrumentationEngine
+        self.instrumentation = InstrumentationEngine(self.db) if self.db else None
 
     @property
     def is_available(self) -> bool:
@@ -235,7 +239,7 @@ Respond with ONLY valid JSON:
             recent_deltas: Optional recent deltas/changes detected
 
         Returns:
-            Strategic advice from Groq
+            Strategic advice from Side Intelligence
         """
         if not self.is_available:
             if not self.allow_fallbacks:
@@ -388,6 +392,24 @@ Respond with ONLY valid JSON:
         alignment_note = profile.get("alignment_note")
         if alignment_note:
             lines.append(f"\n⚠️ STRATEGIC ALIGNMENT WARNING: {alignment_note}")
+
+        # [Grand Unification] Adaptive Feedback Loop
+        if self.instrumentation:
+            try:
+                status = self.instrumentation.get_status(self.project_id)
+                leverage = status.get("leverage_factor", 1.0)
+                
+                lines.append("\n## Instrumentation Signal")
+                lines.append(f"Leverage Ratio: {leverage}x")
+                
+                if leverage < 2.0:
+                    lines.append("MODE: COACH. User is struggling or new. Be explicit, encouraging, and concrete.")
+                elif leverage > 5.0:
+                    lines.append("MODE: PARTNER. User is high-velocity. Be strategic, concise, and assume competence.")
+                else:
+                    lines.append("MODE: ASSISTANT. Balanced support.")
+            except Exception:
+                pass
 
         return "\n".join(lines) if lines else "General software project"
 
@@ -551,8 +573,8 @@ We don't build MVPs; we build the future. Ask me again!"""
             if not response:
                 logger.warning("No response from Strategist (LLM unavailable).")
                 return {
-                    "insight": "Strategic synthesis offline. LLM unavailable.",
-                    "actions": ["Set GROQ_API_KEY to enable insights."]
+                    "insight": "Strategic synthesis unavailable. Insufficient evidence or LLM offline.",
+                    "actions": ["Run 'side audit' to generate high-fidelity ground truth."]
                 }
 
             # Extract JSON from response
@@ -561,14 +583,14 @@ We don't build MVPs; we build the future. Ask me again!"""
             if json_match:
                 return json.loads(json_match.group())
             return {
-                "insight": f"Strategic pulse stable. Focus area: {top_focus}.",
-                "actions": ["Run a full system audit.", "Analyze current velocity."]
+                "insight": "Strategic pulse currently static. Standing by for code-level evidence.",
+                "actions": ["Execute a deep forensic scan to populate the Monolith."]
             }
         except Exception as e:
             logger.error(f"Failed to evolve monolith narrative: {e}")
             return {
-                "insight": "Strategic synthesis offline. Falling back to heuristic mode.",
-                "actions": ["Check system logs.", "Run diagnostics."]
+                "insight": "Synthesis Error. Integrity prioritized over speculation.",
+                "actions": ["Check local database state.", "Verify API connectivity."]
             }
 
     async def check_decision_conflict(

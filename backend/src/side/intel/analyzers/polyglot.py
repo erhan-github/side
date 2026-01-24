@@ -3,7 +3,13 @@ from pathlib import Path
 from typing import Any, Dict, List
 from .base import BaseAnalyzer, CodeNode, Finding
 from tree_sitter_languages import get_language, get_parser
-from side.intelligence.graph_kernel import GraphKernel, GraphObject
+
+# [Cleanup] Stubbed out Zombie Deps
+class GraphKernel:
+    def ingest_symbol(self, path, name, type, props): return "stub"
+    def link(self, s, t, r): pass
+
+class GraphObject: pass
 
 logger = logging.getLogger(__name__)
 

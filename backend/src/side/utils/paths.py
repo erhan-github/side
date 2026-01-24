@@ -30,3 +30,30 @@ def get_side_dir(current_path: Path | str | None = None) -> Path:
     side_dir = root / ".side"
     side_dir.mkdir(exist_ok=True)
     return side_dir
+
+def mask_path(absolute_path: str | Path | None, human: bool = False) -> str:
+    """
+    Mask absolute system paths for privacy.
+    - if human=True: /Users/.../side -> ./ (Root)
+    - if human=False: /Users/.../side -> @.
+    """
+    is_root = absolute_path is None or str(absolute_path).lower() in ["project", "project root", ".", "./"]
+    
+    if is_root:
+        return "./ (Root)" if human else "@."
+        
+    path_obj = Path(absolute_path)
+    if not path_obj.is_absolute():
+        return f"@{absolute_path}" if not human else str(absolute_path)
+        
+    try:
+        repo_root = get_repo_root()
+        if path_obj.is_relative_to(repo_root):
+            rel = str(path_obj.relative_to(repo_root))
+            return f"@{rel}" if not human else rel
+            
+        # Fallback: Just return the filename if it's outside repo
+        return f"@{path_obj.name}" if not human else path_obj.name
+    except Exception:
+        name = str(path_obj.name)
+        return f"@{name}" if not human else name

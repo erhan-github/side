@@ -118,7 +118,7 @@ class CodeQualityProbe:
     def _check_function_length(self, context: ProbeContext) -> AuditResult:
         """Check for overly long functions."""
         evidence = []
-        max_lines = 100
+        max_lines = 250 # Threshold increased to avoid noise
         
         for file_path in context.files:
             if not file_path.endswith('.py'):
@@ -153,10 +153,14 @@ class CodeQualityProbe:
         )
     
     def _check_file_length(self, context: ProbeContext) -> AuditResult:
-        """Check for overly long files."""
+        """Check for overly long files (Structural Debt)."""
         evidence = []
-        max_lines = 500
+        warn_threshold = 1000
+        crit_threshold = 2000
         
+        severity = Severity.INFO
+        status = AuditStatus.PASS
+
         for file_path in context.files:
             if not file_path.endswith('.py'):
                 continue
@@ -164,12 +168,27 @@ class CodeQualityProbe:
             try:
                 content = Path(file_path).read_text()
                 lines = len(content.splitlines())
-                if lines > max_lines:
+                
+                if lines > warn_threshold:
+                    if lines > crit_threshold:
+                        current_severity = Severity.CRITICAL
+                    else:
+                        current_severity = Severity.MEDIUM # WARN level in UI
+                    
                     evidence.append(AuditEvidence(
-                        description=f"File is {lines} lines (max: {max_lines})",
+                        description=f"File is {lines} lines (threshold: {warn_threshold})",
                         file_path=file_path,
                         suggested_fix="Split into multiple modules"
                     ))
+                    
+                    # Update overall status/severity
+                    if current_severity == Severity.CRITICAL:
+                        severity = Severity.CRITICAL
+                        status = AuditStatus.FAIL
+                    elif status != AuditStatus.FAIL:
+                        severity = Severity.MEDIUM
+                        status = AuditStatus.WARN
+
             except Exception:
                 continue
         
@@ -177,10 +196,10 @@ class CodeQualityProbe:
             check_id="CQ-004",
             check_name="File Length Limits",
             dimension=self.dimension,
-            status=AuditStatus.PASS if not evidence else AuditStatus.WARN,
-            severity=Severity.LOW,
+            status=status,
+            severity=severity,
             evidence=evidence[:10],
-            recommendation=f"Keep files under {max_lines} lines"
+            recommendation=f"Review files exceeding {warn_threshold} lines for extraction opportunities."
         )
     
     def _check_docstring_coverage(self, context: ProbeContext) -> AuditResult:

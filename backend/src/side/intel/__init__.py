@@ -11,7 +11,6 @@ from side.intel.technical import TechnicalAnalyzer, TechnicalIntel
 __all__ = [
     "AutoIntelligence",
     "QuickProfile",
-    "Article",
     "Strategist",
     "TechnicalAnalyzer",
     "TechnicalIntel",

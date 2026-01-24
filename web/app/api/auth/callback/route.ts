@@ -17,24 +17,21 @@ export async function GET(request: NextRequest) {
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
             {
                 cookies: {
-                    getAll() { return cookieStore.getAll() },
-                    setAll(toSet) {
-                        toSet.forEach(({ name, value, options }) => {
-                            console.log(`[AUTH CALLBACK] Setting SameSite=None cookie: ${name}`);
-                            const settings = {
-                                ...options,
-                                domain: undefined,
-                                path: '/',
-                                sameSite: 'none' as const, // CRITICAL
-                                secure: true,
-                            };
-
-                            // Dual Injection
-                            cookieStore.set(name, value, settings);
-                            response.cookies.set(name, value, settings);
-                        })
-                    }
-                }
+                    getAll() {
+                        return cookieStore.getAll()
+                    },
+                    setAll(cookiesToSet) {
+                        try {
+                            cookiesToSet.forEach(({ name, value, options }) => {
+                                response.cookies.set(name, value, options)
+                            })
+                        } catch (error) {
+                            // The `setAll` method was called from a Server Component.
+                            // This can be ignored if you have middleware refreshing
+                            // user sessions.
+                        }
+                    },
+                },
             }
         )
 

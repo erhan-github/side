@@ -57,25 +57,26 @@ class IntelligenceStore:
         Store findings for a project.
         Returns number of new findings stored.
         """
+        if not findings:
+            return 0
+            
         stored_count = 0
+        now_iso = datetime.now(timezone.utc).isoformat()
         
         with self.db._connection() as conn:
+            # 1. Fetch all unresolved finding IDs for this project to check existence in bulk
+            rows = conn.execute(
+                "SELECT id FROM findings WHERE project_id = ? AND resolved_at IS NULL",
+                (project_id,)
+            ).fetchall()
+            existing_ids = {row['id'] for row in rows}
+            
+            # 2. Filter out findings that already exist and are unresolved
+            new_findings_data = []
             for finding in findings:
-                # Generate deterministic ID based on content
                 finding_id = self._generate_finding_id(project_id, finding)
-                
-                # Check if finding already exists and is unresolved
-                existing = conn.execute(
-                    "SELECT id FROM findings WHERE id = ? AND resolved_at IS NULL",
-                    (finding_id,)
-                ).fetchone()
-                
-                if not existing:
-                    conn.execute("""
-                        INSERT OR REPLACE INTO findings 
-                        (id, project_id, type, severity, file, line, message, action, metadata, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
+                if finding_id not in existing_ids:
+                    new_findings_data.append((
                         finding_id,
                         project_id,
                         finding.type,
@@ -85,9 +86,17 @@ class IntelligenceStore:
                         finding.message,
                         finding.action,
                         json.dumps(finding.metadata),
-                        datetime.now(timezone.utc).isoformat()
+                        now_iso
                     ))
-                    stored_count += 1
+            
+            # 3. Batch insert new findings
+            if new_findings_data:
+                conn.executemany("""
+                    INSERT OR REPLACE INTO findings 
+                    (id, project_id, type, severity, file, line, message, action, metadata, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, new_findings_data)
+                stored_count = len(new_findings_data)
             
             conn.commit()
         
@@ -98,28 +107,69 @@ class IntelligenceStore:
         Store results from ForensicAuditRunner summary.
         Maps AuditResult -> Finding.
         """
+        from side.utils.soul import StrategicSoul
         findings = []
         for dim_results in summary.results_by_dimension.values():
             for res in dim_results:
                 if res.status in [AuditStatus.FAIL, AuditStatus.WARN]:
+                    why, action, friendly, fusion = StrategicSoul.format_combined(res)
                     # Map AuditResult -> Finding
                     finding = Finding(
                         type=res.check_name,
                         severity=res.severity.value.upper(), # Normalize to UPPERCASE
                         file=res.evidence[0].file_path if res.evidence and res.evidence[0].file_path else "Project",
                         line=res.evidence[0].line_number if res.evidence and res.evidence[0].line_number else 0,
-                        message=f"{res.notes}. {res.recommendation or ''}",
-                        action=res.recommendation or "Review finding",
+                        message=fusion,
+                        action=action, # Keep raw action for other integrations
                         metadata={
                             'check_id': res.check_id,
                             'dimension': res.dimension,
                             'status': res.status.value,
-                            'fix_risk': res.fix_risk.value
+                            'fix_risk': res.fix_risk.value,
+                            'friendly': friendly,
+                            'why_clean': why,
+                            'evidence': [e.description for e in res.evidence] if res.evidence else []
                         }
                     )
                     findings.append(finding)
         
-        return self.store_findings(project_id, findings)
+        # 1. Store NEW findings
+        count = self.store_findings(project_id, findings)
+        
+        # 2. PURGE Logic: Resolve findings that are NOT in the current summary
+        # If a finding was in the DB but is not in the clean 'findings' list, it means:
+        # a) It was fixed
+        # b) It was filtered out by SmartExclusion
+        # In either case, it should be marked resolved/removed from active view.
+        
+        current_finding_ids = {self._generate_finding_id(project_id, f) for f in findings}
+        
+        with self.db._connection() as conn:
+            # Get all currently active findings in DB
+            rows = conn.execute(
+                "SELECT id FROM findings WHERE project_id = ? AND resolved_at IS NULL",
+                (project_id,)
+            ).fetchall()
+            db_active_ids = {row['id'] for row in rows}
+            
+            # Identify IDs to purge (In DB but not in Current Run)
+            ids_to_resolve = db_active_ids - current_finding_ids
+            
+            if ids_to_resolve:
+                now_iso = datetime.now(timezone.utc).isoformat()
+                # Bulk resolve
+                # SQLite doesn't support list parameters well for IN clause with many items, loop is safer for small sets
+                # or construct dynamic query. Let's do dynamic for efficiency.
+                id_list = list(ids_to_resolve)
+                placeholders = ','.join('?' * len(id_list))
+                conn.execute(
+                    f"UPDATE findings SET resolved_at = ? WHERE id IN ({placeholders})",
+                    [now_iso] + id_list
+                )
+                conn.commit()
+                print(f"DEBUG: Purged {len(id_list)} stale findings.")
+        
+        return count
 
     def get_active_findings(self, project_id: str, severity: Optional[str] = None) -> List[dict]:
         """Get all unresolved findings for a project."""
@@ -162,9 +212,63 @@ class IntelligenceStore:
                 (datetime.now(timezone.utc).isoformat(), finding_id)
             )
             conn.commit()
+            conn.commit()
             return cursor.rowcount > 0
 
-    def get_strategic_iq(self, project_id: str) -> int:
+    def promote_finding_to_plan(self, project_id: str, finding_id: str, plan_type: str = "task") -> str | None:
+        """
+        [Strategic Learning] Promote a Finding into a Plan.
+        
+        This closes the loop: Forensics -> Strategy.
+        returns: The new Plan ID.
+        """
+        import uuid
+        
+        with self.db._connection() as conn:
+            # 1. Get Finding
+            row = conn.execute(
+                "SELECT * FROM findings WHERE id = ? AND project_id = ?", 
+                (finding_id, project_id)
+            ).fetchone()
+            
+            if not row:
+                return None
+                
+            # 2. Create Plan
+            new_plan_id = f"plan_{uuid.uuid4().hex[:8]}"
+            title = f"Fix: {row['type']}"
+            description = f"Originated from Forensic Finding {finding_id}.\n\nMessage: {row['message']}\nFile: {row['file']}:{row['line']}\n\nAction: {row['action']}"
+            
+            conn.execute(
+                """
+                INSERT INTO plans (id, project_id, title, description, type, status, priority)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    new_plan_id, 
+                    project_id, 
+                    title, 
+                    description, 
+                    plan_type, 
+                    "active", 
+                    10 if row['severity'] == 'CRITICAL' else 5
+                )
+            )
+            
+            # 3. Link Finding to Plan (Update Metadata)
+            # We append the plan_id to the finding's metadata so we know it's being addressed
+            try:
+                meta = json.loads(row['metadata']) if row['metadata'] else {}
+                meta['linked_plan_id'] = new_plan_id
+                conn.execute(
+                    "UPDATE findings SET metadata = ? WHERE id = ?",
+                    (json.dumps(meta), finding_id)
+                )
+            except Exception:
+                pass # Non-critical
+                
+            conn.commit()
+            return new_plan_id
         """
         Calculate Strategic Health Score (0-100 scale).
         
@@ -253,6 +357,11 @@ class IntelligenceStore:
         """Generate deterministic ID for a finding."""
         import hashlib
         
-        # Create hash from key attributes
-        content = f"{project_id}:{finding.type}:{finding.file}:{finding.line}:{finding.message}"
+        # Use check_id from metadata if available, otherwise use finding.type
+        # check_id is the most stable identifier across runs
+        check_id = finding.metadata.get('check_id', finding.type) if finding.metadata else finding.type
+        
+        # Create stable hash from key structural attributes
+        # We exclude 'message' to prevent duplicate findings when AI descriptions change slightly
+        content = f"{project_id}:{check_id}:{finding.file}:{finding.line}"
         return hashlib.sha256(content.encode()).hexdigest()[:16]

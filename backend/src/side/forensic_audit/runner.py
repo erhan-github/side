@@ -33,9 +33,6 @@ from .probes import (
     FrontendProbe,
     CrawlerProbe,
     ReadinessProbe,
-    ReadinessProbe,
-    HygieneProbe,
-    ReadinessProbe,
     HygieneProbe,
     StrategyProbe,
     DeepLogicProbe,
@@ -49,7 +46,7 @@ from .probes import (
 from side.llm.client import LLMClient
 from side.instrumentation.engine import InstrumentationEngine
 from side.storage.simple_db import SimplifiedDatabase
-from side.storage.simple_db import SimplifiedDatabase
+from side.utils.labels import ForensicLabel
 
 
 class ForensicAuditRunner:
@@ -60,7 +57,7 @@ class ForensicAuditRunner:
     """
     
     def __init__(self, project_root: str):
-        self.project_root = Path(project_root)
+        self.project_root = Path(project_root).resolve()
         
         # Initialize all probes
         self.probes = [
@@ -95,9 +92,12 @@ class ForensicAuditRunner:
         self.project_id = "UNKNOWN_ASSET"
         try:
             from side.intel.intelligence_store import IntelligenceStore
+            from side.utils.paths import get_repo_root
             self.db = SimplifiedDatabase()
             self.store = IntelligenceStore(self.db)
-            self.project_id = self.db.get_project_id(project_root)
+            # Always use repo root for project_id to avoid siloing findings
+            repo_root = get_repo_root(self.project_root)
+            self.project_id = self.db.get_project_id(repo_root)
         except Exception as e:
             print(f"⚠️ Failed to connect to Monolith: {e}")
             self.store = None
@@ -218,11 +218,15 @@ class ForensicAuditRunner:
              
         summary = await self._run_probes(selected_probes, context)
         
+        # PERSISTENCE: Store results in Monolith
+        if self.store:
+            self.store.store_audit_summary(self.project_id, summary)
+
         # Instrumentation Trigger
         if self.instrumentation:
             self._process_instrumentation(summary, tier_run="DEEP" if not only_fast else "FAST")
             
-        self.update_monolith_file(summary)
+        await self.update_monolith_file(summary)
         return summary
     
     async def _run_probes(self, probes: list, context: ProbeContext) -> AuditSummary:
@@ -244,8 +248,70 @@ class ForensicAuditRunner:
                 import logging
                 print(f"❌ ERROR RUNNING PROBE {getattr(probe, 'name', 'Unknown Probe')}: {e}")
                 logging.getLogger(__name__).error(f"Error running {getattr(probe, 'name', 'Unknown Probe')}: {e}")
+                logging.getLogger(__name__).error(f"Error running {getattr(probe, 'name', 'Unknown Probe')}: {e}")
         
-        # Calculate summary
+        # ---------------------------------------------------------
+        # PHASE 1.4: FORENSIC NOISE REDUCTION (Smart Exclusion)
+        # ---------------------------------------------------------
+        # Filter "Technically Correct but Pragmatically Wrong" findings
+        
+        filtered_results = []
+        for res in all_results:
+            if res.status != AuditStatus.FAIL and res.status != AuditStatus.WARN:
+                filtered_results.append(res)
+                continue
+            
+            # Contextual Signals
+            file_path = res.evidence[0].file_path if res.evidence and res.evidence[0].file_path else ""
+            is_test = "test_" in file_path or "tests/" in file_path
+            is_config = any(x in file_path for x in [".env", ".json", ".yaml", ".yml"])
+            is_debug = "debug_" in file_path
+            is_doc = file_path.endswith(".md")
+            
+            # Rule 1: Allow "Bad Performance" in Tests (Stress Testing)
+            if is_test and (res.dimension == "Performance" or "Performance" in res.check_name):
+                continue # Skip
+                
+            # Rule 2: Allow "Missing HTTPS" in Tests (Mocks)
+            if is_test and "HTTPS" in res.check_name.upper():
+                continue # Skip
+                
+            # Rule 3: Allow Secrets in Local Configs (if typically gitignored)
+            # We assume user handles gitignore. If file exists locally, it might be flagged.
+            # But specific .env.local is usually safe to ignore for "Hardcoded Secrets" if we trust gitignore.
+            # Let's filter typical local envy files.
+            if is_config and "Secret" in res.check_name and ".env.local" in file_path:
+                continue # Skip
+                
+            # Rule 4: Allow Architecture violations in Debug scripts
+            if is_debug and res.dimension == "Architecture":
+                continue # Skip
+
+            # Rule 5: Ignore Code Quality in Docs
+            if is_doc and res.dimension == "Code Quality":
+                continue
+                
+            filtered_results.append(res)
+            
+        all_results = filtered_results
+        
+        # ---------------------------------------------------------
+        # PHASE 1.5: TRUST ENFORCEMENT (Confidence Threshold)
+        # ---------------------------------------------------------
+        # Enforce "Almost 100% Confident" rule. 
+        # Only findings with >= 0.9 confidence reach the Monolith.
+        all_results = [res for res in all_results if res.confidence >= 0.9]
+        # ---------------------------------------------------------
+        
+        # Recalculate dimensions based on filtered results
+        results_by_dimension = {}
+        for res in all_results:
+            if res.dimension not in results_by_dimension:
+                results_by_dimension[res.dimension] = []
+            results_by_dimension[res.dimension].append(res)
+            
+        # ---------------------------------------------------------
+
         total = len(all_results)
         passed = sum(1 for r in all_results if r.status == AuditStatus.PASS)
         failed = sum(1 for r in all_results if r.status == AuditStatus.FAIL)
@@ -291,10 +357,15 @@ class ForensicAuditRunner:
         files = []
         ignored_dirs = {'.git', 'node_modules', '.venv', 'venv', '__pycache__', 'dist', 'build', '.next'}
         
-        for p in self.project_root.rglob("*"):
-            if p.is_file():
-                if not any(part in ignored_dirs for part in p.parts):
-                    files.append(str(p))
+        # Efficient walk: Skip ignored directories at the top level to avoid deep walking
+        import os
+        for root, dirs, filenames in os.walk(str(self.project_root)):
+            # Prune ignored dirs in-place
+            dirs[:] = [d for d in dirs if d not in ignored_dirs]
+            
+            for filename in filenames:
+                file_path = Path(root) / filename
+                files.append(str(file_path))
         
         # Parse Strategic Context (task.md)
         strategic_context = {
@@ -568,117 +639,14 @@ class ForensicAuditRunner:
             import logging
             logging.getLogger(__name__).error(f"Instrumentation Error: {e}")
 
-    def _generate_monolith_view(self, summary: AuditSummary) -> str:
-        """
-        Generate the 'Sweet & Simple' Command Center view for MONOLITH.md.
-        Focuses purely on Forensic Prompting and Deep Intelligence.
-        """
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        
-        # 1. Forensic Opportunities (Actionable Prompts)
-        opportunities = []
-        
-        def get_target_file(r):
-            if r.evidence and r.evidence[0].file_path:
-                return Path(r.evidence[0].file_path).name
-            return "the codebase"
-
-        # A. Security Criticals (Prioritize Protection)
-        sec_fails = [r for r in summary.results_by_dimension.get("Security", []) if r.status == AuditStatus.FAIL]
-        if sec_fails:
-             count = len(sec_fails)
-             target = get_target_file(sec_fails[0])
-             opportunities.append({
-                "emoji": "🛑", 
-                "title": f"Patch {count} Vulnerabilities",
-                "why": "Your security score is sub-optimal. Unprotected endpoints or exposed secrets create a vector for lateral movement.",
-                "prompt": f'"Hey Side, analyze `{target}` and provide a secure hardening patch for the issues found in the audit."'
-            })
-
-        # B. Performance: N+1 Queries
-        n1_fails = [r for r in summary.results_by_dimension.get("Performance", []) if r.check_id == "PERF-001" and r.status == AuditStatus.FAIL]
-        if n1_fails:
-            target = get_target_file(n1_fails[0])
-            opportunities.append({
-                "emoji": "🏎️", 
-                "title": f"Kill N+1 Query in `{target}`",
-                "why": "Loop-based database queries cause linear performance degradation as your dataset Grows.",
-                "prompt": f'"Hey Side, optimize the query logic in `{target}` to use batching or prefetching."'
-            })
-
-        # C. Code Quality: God Objects
-        bloat_fails = [r for r in summary.results_by_dimension.get("Code Quality", []) if r.check_id == "CQ-004" and r.status == AuditStatus.WARN]
-        if bloat_fails:
-            target = get_target_file(bloat_fails[0])
-            opportunities.append({
-                "emoji": "✂️", 
-                "title": f"Split God Object `{target}`",
-                "why": "Large files increase cognitive load and make testing nearly impossible. High inheritance risk.",
-                "prompt": f'"Hey Side, refactor `{target}` into smaller, single-responsibility modules."'
-            })
-
-        # D. Hygiene: Junk Files
-        hyg_fails = [r for r in summary.results_by_dimension.get("Hygiene", []) if r.status == AuditStatus.WARN]
-        if hyg_fails:
-            opportunities.append({
-                "emoji": "🧹", 
-                "title": "Clean Workspace Junk",
-                "why": "Unused logs, temp files, and root-level clutter distract both humans and LLM context indexers.",
-                "prompt": '"Hey Side, identify and safely remove all temporary or misplaced files in the root directory."'
-            })
-
-        # Fallback
-        if not opportunities:
-             opportunities.append({
-                "emoji": "🧭", 
-                "title": "Strategic Roadmap Check",
-                "why": "The system is clean. It's time to align the implementation with the high-level roadmap in `task.md`.",
-                "prompt": '"Hey Side, review our current progress and suggest the next high-leverage feature implementation."'
-            })
-            
-        opp_section = ""
-        for opp in opportunities[:3]:  # Top 3
-            opp_section += f"### {opp['emoji']} {opp['title']}\n"
-            opp_section += f"* **Why**: {opp['why']}\n"
-            opp_section += f"* **Action**: `{opp['prompt']}`\n\n"
-
-        # 2. Intelligence Output (Deep Scan results if available)
-        intel_section = ""
-        deep_results = [r for dim in summary.results_by_dimension.values() for r in dim if r.check_id.startswith("DEEP-")]
-        if deep_results:
-            intel_section = "## 🧠 DEEP INTELLIGENCE (Groq/Llama)\n"
-            for res in deep_results:
-                intel_section += f"> **{res.check_name}**: {res.notes or 'Analysis complete.'}\n"
-            intel_section += "\n---\n"
-
-        template = f"""<!-- 🔐 MONOLITH_SIG: {self.project_id} // COMMAND_CENTER // DO_NOT_EDIT -->
-
-# ⬛ COMMAND CENTER
-> **Asset ID**: `{self.project_id}`
-> **Grade**: **{summary.grade} ({int(summary.score_percentage)}%)**
-> **Last Sync**: {timestamp}
-
----
-
-## ✍️ FORENSIC PROMPTING
-{opp_section}
-{intel_section}
----
-*Generated by Side Forensic Engine // {timestamp}*
-"""
-        return template
-
-    def update_monolith_file(self, summary: AuditSummary):
-        """Update the physical MONOLITH.md file in the .side/ directory."""
+    async def update_monolith_file(self, summary: AuditSummary):
+        """Standardize the MONOLITH.md via the central MonolithService."""
         try:
-            content = self._generate_monolith_view(summary)
+            from side.services.monolith import generate_monolith
+            # Delegate to the comprehensive service that handles DB findings
+            await generate_monolith(self.db)
             side_dir = self.project_root / ".side"
-            
-            # Ensure .side directory exists
-            side_dir.mkdir(exist_ok=True)
-            
             target_file = side_dir / "MONOLITH.md"
-            target_file.write_text(content)
             print(f"✅ MONOLITH.md updated in .side/: {target_file.absolute()}")
         except Exception as e:
             print(f"⚠️ Failed to update MONOLITH.md: {e}")

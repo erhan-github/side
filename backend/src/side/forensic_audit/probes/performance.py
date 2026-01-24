@@ -44,7 +44,7 @@ class PerformanceProbe:
             (r"for\s+\w+\s+in\s+.*:\s*\n\s*.*\.query\(", "Query inside loop"),
             (r"for\s+\w+\s+in\s+.*:\s*\n\s*.*\.execute\(", "Execute inside loop"),
             (r"for\s+\w+\s+in\s+.*:\s*\n\s*.*\.find\(", "Find inside loop"),
-            (r"for\s+\w+\s+in\s+.*:\s*\n\s*.*\.get\(", "Get inside loop (potential N+1)"),
+            (r"(?<!\w)(?:db|session|model|objects|items)\.[a-zA-Z0-9_]+\.get\(", "Get inside loop (potential N+1)"),
         ]
         
         for file_path in context.files:

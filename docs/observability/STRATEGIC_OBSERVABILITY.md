@@ -27,7 +27,20 @@ This document defines the "Truth Engine" observability standards for a CTO-level
 - [ ] Refactor `logging_config.py` for JSON production logs.
 - [ ] Add a `@telemetry` decorator to `server_fast.py`.
 
-### Web
-- [ ] Install `posthog-js` and `@sentry/nextjs`.
-- [ ] Implement `ErrorBoundary` around the dashboard.
-- [ ] Add `middleware.ts` tracking for API latency.
+## 4. The Unified Feedback Loop (Implemented)
+
+The `InstrumentationEngine` now drives the "Brain".
+
+### Leverage Ratio Calculation
+> **Formula**: `(Strategic Decisions + Plans Completed) / (Hours Spent)` (Simplified)
+
+### Adaptive Modes
+The `Strategist` reads the Leverage Ratio on every prompt:
+1.  **Coach Mode (< 2.0x)**: User is exploring or stuck.
+    *   *AI Persona*: Explicit, verbose, teaching-oriented.
+    *   *Goal*: Unblock and educate.
+2.  **Partner Mode (> 5.0x)**: User is executing at speed.
+    *   *AI Persona*: Concise, strategic, assumption-heavy.
+    *   *Goal*: Maintain velocity, don't explain basics.
+
+This closes the loop: **Better Observability -> Better AI Assistance.**

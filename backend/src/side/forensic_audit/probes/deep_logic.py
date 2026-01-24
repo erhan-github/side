@@ -1,7 +1,7 @@
 """
 Deep Logic Probe - LLM-powered logic verification.
 
-Uses Groq (Llama 3) to understand code intent and find subtle bugs.
+Uses Side Intelligence (Llama 3) to understand code intent and find subtle bugs.
 """
 
 from typing import List, Tuple
@@ -133,6 +133,6 @@ class DeepLogicProbe:
             status=AuditStatus.PASS if not evidence else AuditStatus.WARN,
             severity=Severity.HIGH,
             evidence=evidence,
-            notes=f"Scanned {len(candidates)} complex functions with Groq",
+            notes=f"Scanned {len(candidates)} complex functions with Side Intelligence",
             recommendation="Review functions flagged by Deep Logic Audit"
         )

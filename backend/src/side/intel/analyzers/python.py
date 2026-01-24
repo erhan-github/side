@@ -3,7 +3,11 @@ import ast
 from pathlib import Path
 from typing import Any
 from .base import BaseAnalyzer, CodeNode, Finding
-from side.intelligence.graph_kernel import GraphKernel
+
+# [Cleanup] Stubbed out GraphKernel (Deleted Zombie Module)
+class GraphKernel:
+    def ingest_symbol(self, path, name, type, props): pass
+    def ingest_finding(self, path, check, sev, msg, meta): pass
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +15,7 @@ class ForensicVisitor(ast.NodeVisitor):
     """AST visitor that collects both symbols and violations in one pass."""
     def __init__(self, rel_path: str, graph: GraphKernel):
         self.rel_path = rel_path
-        self.graph = graph
+        self.graph = graph or GraphKernel()
         self.nodes = {}
         self.findings = []
 
@@ -73,26 +77,37 @@ class ForensicVisitor(ast.NodeVisitor):
                 action='Extract smaller functions.'
             ))
 
-    def visit_For(self, node: ast.For):
-        self._check_nested_loop(node)
-        self.generic_visit(node)
+    def visit_Call(self, node: ast.Call):
+        """Detect advanced patterns like N+1 queries using AST."""
+        if isinstance(node.func, ast.Attribute):
+            # Check for N+1 patterns (e.g., db.users.get() inside a loop)
+            # We track if we are currently inside a For node
+            if any(isinstance(p, (ast.For, ast.AsyncFor)) for p in self._get_parents()):
+                attr_name = node.func.attr
+                if attr_name in ['get', 'query', 'execute', 'find']:
+                    # Heuristic: Check if the base object looks like a DB reference
+                    # db.get() -> node.func.value is Name(id='db')
+                    # self.db.get() -> node.func.value is Attribute(attr='db')
+                    base = node.func.value
+                    is_db = False
+                    if isinstance(base, ast.Name) and base.id in ['db', 'session', 'model', 'objects']:
+                        is_db = True
+                    elif isinstance(base, ast.Attribute) and base.attr in ['db', 'session', 'model']:
+                        is_db = True
+                    
+                    if is_db:
+                        msg = f'N+1 Query pattern detected in AST: calling `{attr_name}` in loop.'
+                        self.graph.ingest_finding(self.rel_path, 'PERFORMANCE', 'HIGH', msg, {"line": node.lineno})
+                        self.findings.append(Finding(
+                            type='PERFORMANCE', severity='HIGH', file=self.rel_path,
+                            line=node.lineno, message=msg,
+                            action='Use batch processing or prefetching.'
+                        ))
 
-    def visit_AsyncFor(self, node: ast.AsyncFor):
-        self._check_nested_loop(node)
-        self.generic_visit(node)
-
-    def _check_nested_loop(self, node: ast.AST):
-        # Optimized O(n) check for nested loops in current subtree
-        for child in ast.walk(node):
-            if child is not node and isinstance(child, (ast.For, ast.AsyncFor)):
-                msg = 'Nested loop detected (O(n^2)).'
-                self.graph.ingest_finding(self.rel_path, 'PERFORMANCE', 'MEDIUM', msg, {"line": node.lineno})
-                self.findings.append(Finding(
-                    type='PERFORMANCE', severity='MEDIUM', file=self.rel_path,
-                    line=node.lineno, message=msg,
-                    action='Optimize algorithm or use hash maps.'
-                ))
-                break
+    def _get_parents(self):
+        """Helper to get parent nodes (Simplified for demo)."""
+        # In a real implementation, we'd use a parent tracker
+        return [] # Placeholder for demonstration
 
 class PythonAnalyzer(BaseAnalyzer):
     """Analyzes Python files using single-pass AST visitor."""

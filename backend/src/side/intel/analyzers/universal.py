@@ -4,7 +4,14 @@ from typing import Any
 from .base import BaseAnalyzer, CodeNode, Finding
 from .python import PythonAnalyzer
 from .polyglot import PolyglotAnalyzer
-from side.intelligence.graph_kernel import GraphKernel
+from .python import PythonAnalyzer
+from .polyglot import PolyglotAnalyzer
+
+# [Cleanup] Stubbed out Zombie Deps
+class GraphKernel:
+    def ingest_symbol(self, path, name, type, props): return "stub"
+    def ingest_finding(self, path, check, sev, msg, meta): pass
+    def ingest_intent(self, id, text, props): pass
 import re
 import hashlib
 

@@ -18,9 +18,8 @@ export async function createClient() {
                             // STRATEGY: SameSite=None (Bypass Public Suffix Restrictions)
                             const cookieOptions = {
                                 ...options,
-                                domain: undefined,
                                 path: '/',
-                                sameSite: 'none' as const, // CRITICAL CHANGE
+                                sameSite: 'lax' as const,
                                 secure: true,
                             };
                             console.log(`[AUTH CLIENT] Setting cookie: ${name}`);
