@@ -70,9 +70,14 @@ export async function GET(request: NextRequest) {
     <script>
         try {
             const cookies = ${cookiePayload};
+    <script>
+        try {
+            const cookies = ${cookiePayload};
             cookies.forEach(({ name, value, options }) => {
-                // FIX: Encode critical parts to avoid syntax errors
-                let cookieString = \`\${encodeURIComponent(name)}=\${encodeURIComponent(value)}\`;
+                // STRATEGY: Do NOT encode value. Supabase tokens are "chunked" to fit ~4KB. 
+                // Encoding (e.g. % instead of +) mimics 3x inflation, breaking the limit.
+                // Auth tokens are typically Base64/JWT and safe for cookie values (no ; or ,).
+                let cookieString = \`\${encodeURIComponent(name)}=\${value}\`;
                 
                 // Map options to cookie string format
                 if (options.path) cookieString += \`; path=\${options.path}\`;
@@ -81,13 +86,12 @@ export async function GET(request: NextRequest) {
                 if (options.maxAge !== undefined) cookieString += \`; max-age=\${options.maxAge}\`;
                 
                 // STRATEGY: Omit domain to force "HostOnly". 
-                // This avoids mismatches on subdomains (e.g. railway.app vs custom domain)
                 // if (options.domain) cookieString += \`; domain=\${options.domain}\`;
                 
                 if (options.secure) cookieString += \`; secure\`;
                 if (options.sameSite) cookieString += \`; samesite=\${options.sameSite}\`;
                 
-                // console.log('Hydrating:', name, options); // Debug
+                console.log('Hydrating:', name, 'Size:', value.length); 
                 document.cookie = cookieString;
             });
             
