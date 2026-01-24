@@ -71,15 +71,23 @@ export async function GET(request: NextRequest) {
         try {
             const cookies = ${cookiePayload};
             cookies.forEach(({ name, value, options }) => {
-                let cookieString = \`\${name}=\${value}\`;
+                // FIX: Encode critical parts to avoid syntax errors
+                let cookieString = \`\${encodeURIComponent(name)}=\${encodeURIComponent(value)}\`;
                 
                 // Map options to cookie string format
                 if (options.path) cookieString += \`; path=\${options.path}\`;
-                if (options.maxAge) cookieString += \`; max-age=\${options.maxAge}\`;
-                if (options.domain) cookieString += \`; domain=\${options.domain}\`;
+                
+                // FIX: partial '0' checks being falsy
+                if (options.maxAge !== undefined) cookieString += \`; max-age=\${options.maxAge}\`;
+                
+                // STRATEGY: Omit domain to force "HostOnly". 
+                // This avoids mismatches on subdomains (e.g. railway.app vs custom domain)
+                // if (options.domain) cookieString += \`; domain=\${options.domain}\`;
+                
                 if (options.secure) cookieString += \`; secure\`;
                 if (options.sameSite) cookieString += \`; samesite=\${options.sameSite}\`;
                 
+                // console.log('Hydrating:', name, options); // Debug
                 document.cookie = cookieString;
             });
             
