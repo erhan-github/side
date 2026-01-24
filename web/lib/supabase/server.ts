@@ -22,7 +22,7 @@ export async function createClient() {
                                 sameSite: 'lax' as const,
                                 secure: true,
                             };
-                            console.log(`[AUTH CLIENT] Setting cookie: ${name}`);
+                            console.log(`[AUTH CLIENT] Setting cookie: ${name} (Length: ${value.length})`);
                             cookieStore.set(name, value, cookieOptions)
                         })
                     } catch (error) {

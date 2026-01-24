@@ -23,7 +23,14 @@ export async function GET(request: NextRequest) {
                     setAll(cookiesToSet) {
                         try {
                             cookiesToSet.forEach(({ name, value, options }) => {
-                                response.cookies.set(name, value, options)
+                                // STRATEGY: Enforce consistent cookie attributes for Railway/Prod
+                                const cookieOptions = {
+                                    ...options,
+                                    path: '/',
+                                    sameSite: 'lax' as const,
+                                    secure: true,
+                                };
+                                response.cookies.set(name, value, cookieOptions)
                             })
                         } catch (error) {
                             // The `setAll` method was called from a Server Component.
@@ -35,10 +42,10 @@ export async function GET(request: NextRequest) {
             }
         )
 
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            console.log('[AUTH CALLBACK] Exchange successful.');
+            console.log(`[AUTH CALLBACK] Exchange successful for User ID: ${data.user?.id}. Session established.`);
             return response;
         }
 

@@ -20,15 +20,22 @@ export async function middleware(request: NextRequest) {
                 setAll(cookiesToSet) {
                     // Update request cookies so subsequent logic sees the new session
                     cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-                    
+
                     // Re-create response to include the new request state
                     response = NextResponse.next({
                         request,
                     })
-                    
+
                     // Persist cookies to the browser
                     cookiesToSet.forEach(({ name, value, options }) => {
-                        response.cookies.set(name, value, options)
+                        // STRATEGY: Enforce consistent cookie attributes for Railway/Prod
+                        const cookieOptions = {
+                            ...options,
+                            path: '/',
+                            sameSite: 'lax' as const,
+                            secure: true,
+                        };
+                        response.cookies.set(name, value, cookieOptions)
                     })
                 },
             },
@@ -36,11 +43,16 @@ export async function middleware(request: NextRequest) {
     )
 
     // 2. Refresh session if expired
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error } = await supabase.auth.getUser()
+
+    if (request.nextUrl.pathname.startsWith('/dashboard')) {
+        console.log(`[MIDDLEWARE] Checking session for ${request.nextUrl.pathname}. User: ${user?.id || 'NONE'}. Error: ${error?.message || 'None'}`);
+    }
 
     // 3. Protected Route Logic
     // Redirect to dashboard if logged in at root
     if (user && request.nextUrl.pathname === '/') {
+        console.log(`[MIDDLEWARE] User ${user.id} at root, redirecting to /dashboard`);
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 

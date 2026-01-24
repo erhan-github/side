@@ -17,7 +17,7 @@ export default async function DashboardPage() {
     // The <AuthSync /> component in the root layout will force a refresh 
     // once the client-side cookie is detected.
     if (error || !user) {
-        console.warn("[DASHBOARD] Server-side auth missing. Waiting for client hydration...");
+        console.warn(`[DASHBOARD] Server-side auth missing. User: ${user ? 'FOUND' : 'MISSING'}. Error: ${error?.message || 'None'}`);
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
