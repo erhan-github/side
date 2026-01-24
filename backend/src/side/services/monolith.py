@@ -20,6 +20,29 @@ from side.intel.evaluator import StrategicEvaluator
 from side.intel.intelligence_store import IntelligenceStore
 from side.intel.strategist import Strategist
 from side.instrumentation.engine import InstrumentationEngine
+from side.utils.labels import ForensicLabel
+
+# Strategic Weighting Dossier [Palantir-Level]
+DIMENSION_WEIGHTS = {
+    "security": 100,
+    "law": 95,
+    "logic": 80,
+    "resilience": 70,
+    "marketfit": 60,
+    "performance": 50,
+    "velocity": 40,
+    "docs": 30,
+    "architecture": 20,
+    "system": 10,
+}
+
+SEVERITY_MULTIPLIERS = {
+    "CRITICAL": 5,
+    "HIGH": 3,
+    "MEDIUM": 2,
+    "LOW": 1,
+    "INFO": 0,
+}
 
 logger = logging.getLogger(__name__)
 
@@ -116,203 +139,163 @@ async def generate_monolith(db: Any) -> str | None:
             active_plans=all_plans
         )
         
-        # 3. Render Monolith 2.0 Dashboard
+        # 3. Render Monolith Dashboard (Pure Evidence)
+        seen_finding_ids = set()
+        
+        # Gather Strategic Findings from Store (Restored)
+        findings_data = []
+        try:
+            findings_data = store.get_active_findings(project_id)
+        except Exception as e:
+            logger.debug(f"Failed to fetch strategic findings: {e}")
+
+        # Strategic Prioritization Logic
+        def strategic_sort_key(f):
+            dim = f.get('metadata', {}).get('dimension', 'system').lower()
+            sev = f.get('severity', 'LOW').upper()
+            weight = DIMENSION_WEIGHTS.get(dim, 10)
+            multiplier = SEVERITY_MULTIPLIERS.get(sev, 1)
+            return -(weight * multiplier) # Negative for descending order
+
+        findings_data.sort(key=strategic_sort_key)
+
         lines = [
             f"<!-- 🔐 MONOLITH_SIG: {project_id[:8]} // PROVOCATION_ENGINE // DO_NOT_EDIT -->",
             "",
-            "# ⬛ PROJECT STATUS",
-            f"> **Asset ID**: `{project_id[:8]}`",
-            f"> **Last Sync**: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}",
-            f"> **Grade**: **{eval_result['grade']} ({eval_result['raw_score']}/400)**",
-            f"> **Pillar Overview**: `Forensic: {eval_result['forensic_grade']} ({eval_result['forensic_score']}/100)` // `Strategic: {eval_result['strategic_grade']} ({eval_result['strategic_score']}/100)`",
+            f"Grade: {eval_result['grade']} ({eval_result['raw_score']}/400)",
+            f"Last Sync: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}",
+            "",
+            "   ┌── ⚡ SIGNAL READY ──┐",
+            "   │  → EXECUTE IN IDE  │",
+            "   └────────────────────┘",
+            "",
             "---",
             "",
         ]
 
-        # 🛑 SMART ALERTS
-        # Condition 1: Critical Vulnerabilities
-        crit_count = audit_summary.get('CRITICAL', 0)
-        if crit_count > 0:
-            lines.extend([
-                f"> 🛑 **Action Required**: {crit_count} Critical Vulnerabilities detected.",
-                "> Run `/fix-security-critical` immediately to secure the asset.",
-                ""
-            ])
-
-        # Condition 2: Low Capacity
-        bal = profile.get("token_balance", 0)
-        if bal < 100:
-             lines.extend([
-                f"> ⚠️ **Low Capacity**: {bal} SUs remaining.",
-                "> Allocation will be adjusted based on outcome leverage.",
-                ""
-             ])
-
-        # 00_INSTRUMENTATION (Factual Observability)
-        try:
-             ie_check = InstrumentationEngine(db)
-             status = ie_check.get_status(project_id)
-             lines.extend([
-                 "## 00_INSTRUMENTATION",
-                 f"> **Operating Mode**: {status['operating_mode']}",
-                 f"> **Leverage Factor**: {status['leverage_factor']} (Outcome/Action)",
-                 f"> **Recent Outcomes**: {', '.join(status['recent_outcomes'][:3])}",
-                 ""
-             ])
-        except Exception as e:
-            logger.error(f"Failed to render instrumentation: {e}")
-
-        lines.append("## 01_VITAL_SIGNS")
-        
-        # VITAL SIGNS: Top 3 Critical Dimensions only
-        sorted_dims = sorted(eval_result['dimensions'].items(), key=lambda x: x[1])
-        top_3 = sorted_dims[:3]
-        
-        for k, v in top_3:
-            # Normalized to 10 blocks (v is out of 40) -> v/4
-            # If v < 28 (70%), it's critical
-            status = "! ISSUE" if v < 28 else "✓ GOOD"
-            bars = "█" * (v // 4) + "░" * (10 - (v // 4))
-            lines.append(f"[{k:12}] {bars} {status}")
-
-        lines.append("")
-
-        # STRATEGIC INSIGHT (Provocation)
+        # DEEP INTELLIGENCE (Priority: TOP)
         lines.extend([
-            "## 02_BRIEFING",
-            f"**Focus**: {eval_result['top_focus']}",
-            f"**Alert**: {eval_result['grade']} Grade ({eval_result['label']})",
+            "DEEP INTELLIGENCE SUGGESTIONS",
             "",
-            "> 💡 **STRATEGIC INSIGHT**:",
-            f"> \"{insight.get('insight', 'System stable. No immediate threats detected.')}\"",
-            ">",
-            "> **YOU CAN ASK YOUR LLM**:",
         ])
         
-        actions = insight.get('actions', [])
-        if actions:
-            for action in actions:
-                lines.append(f"> - \"{action}\"")
-        else:
-             lines.append("> - \"Check system health.\"")
-        lines.append("")
+        # 1. Semantic Security Scan (Strategic Overwatch)
+        crit_finds = []
+        try:
+            crit_finds = store.get_active_findings(project_id, severity='CRITICAL')
+        except Exception as e:
+            logger.debug(f"Failed to fetch critical findings: {e}")
 
-        # DEEP DIVE (Matrices)
-        lines.append("## 03_DEEP_DIVE")
-        
-        # Forensic Pillar
-        lines.append(f"### 🛡️ FORENSIC HEALTH ({eval_result['forensic_grade']} - {eval_result['forensic_score']}/100)")
-        
-        # 1. Security
         crit = audit_summary.get('CRITICAL', 0)
         high = audit_summary.get('HIGH', 0)
-        sec_alert = f"! {crit} CRITICAL" if crit > 0 else (f"! {high} HIGH" if high > 0 else "✓ SECURE")
-        lines.append(f"[Security    ] {sec_alert}")
+        
+        from side.utils.soul import StrategicSoul
+        
         if crit > 0 or high > 0:
-            lines.append(f"> 🔴 **Action Available**: Run `/fix-security-critical` to resolve {crit+high} issues.")
-            lines.append(f"> \"Hey Side, list all critical/high security issues and give me a fix plan.\"")
-        
-        # 2. Velocity
-        try:
-            import subprocess
-            result = subprocess.run(
-                ["git", "log", "--oneline", "-n", "100", "--since=7 days ago"],
-                capture_output=True, text=True, cwd=str(repo_root), timeout=5
-            )
-            commit_count = len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
-            vel_status = "✓ STRONG" if commit_count > 10 else "! STALLED"
-        except:
-            vel_status = "? UNKNOWN"
-        lines.append(f"[Velocity    ] {vel_status} ({commit_count if 'commit_count' in locals() else 0} commits/7d)")
-        
-        # 3. Architecture
-        has_src = (repo_root / "src").exists()
-        has_tests = (repo_root / "tests").exists()
-        arch_status = "✓ STRUCTURED" if has_src and has_tests else "! UNSTRUCTURED"
-        lines.append(f"[Architecture] {arch_status}")
-        lines.append("")
-
-        # Strategic Pillar
-        lines.append(f"### 🧠 STRATEGIC VIABILITY ({eval_result['strategic_grade']} - {eval_result['strategic_score']}/100)")
-        
-        # 1. MarketFit (Simulations)
-        sims = [a for a in activities if a.get("tool") == "simulate"]
-        sim_status = "✓ VALIDATED" if len(sims) > 5 else "! UNTESTED"
-        lines.append(f"[MarketFit   ] {sim_status} ({len(sims)} simulations)")
-        
-        # 2. Investor
-        has_vis = (repo_root / "VISION.md").exists()
-        has_rdm = (repo_root / "ROADMAP.md").exists()
-        inv_status = "✓ READY" if has_vis and has_rdm else "! INCOMPLETE"
-        lines.append(f"[Investor    ] {inv_status}")
-        if inv_status == "! INCOMPLETE":
-            lines.append("> 🔴 \"Hey Side, help me draft a Vision and Roadmap to make this investor-ready.\"")
-        lines.append("")
-        
-        # DIRECTIVES
-        lines.append("## 04_ACTIVE_DIRECTIVES")
-        active_count = len([p for p in all_plans if p.get("status") != "done"])
-        if active_count == 0:
-            lines.append("No active directives. Ask me to 'Add a task' to get started.")
-        else:
-             for p in all_plans:
-                 if p.get("status") != "done":
-                     lines.append(f"- [{p.get('type','task')[0].upper()}] {p['title']}")
-        lines.append("")
-
-        # 05_CREDITS (Real Ledger)
-        try:
-            tokens_monthly = profile.get("tokens_monthly", 50)
-            tokens_used = profile.get("tokens_used", 0)
-            balance = profile.get("token_balance", tokens_monthly - tokens_used)
-            tier = profile.get("tier", "hobby").upper()
+            target_criticals = crit_finds[:3]
             
-            lines.extend([
-                "## 05_CREDITS",
-                f"**Balance**: 💰 {balance} SUs",
-                f"**Usage**: `{tokens_used}` / `{tokens_monthly}` SUs this period",
-                f"**Layer**: {tier}",
-                ""
-            ])
+        if crit > 0 or high > 0:
+            target_criticals = crit_finds[:3]
+            
+            # 1. Render Specific Critical Findings directly
+            if target_criticals:
+                for cf in target_criticals:
+                    lines.extend([
+                        f"{ForensicLabel.format_title('security', cf['type']).upper()}",
+                        f"{StrategicSoul.inject_fusion(cf)}",
+                        "",
+                        "---",
+                        ""
+                    ])
+                    seen_finding_ids.add(cf['id'])
+            
+            # 2. Render Backlog Summary if exists
+            total_backlog = len(crit_finds) + high - len(target_criticals)
+            
+            if total_backlog > 0:
+                 overwatch_body = f"Detected {total_backlog} additional technical anomalies awaiting resolution."
+                 overwatch_action = "List remaining security vulnerabilities and prepare a technical patch plan for immediate resolution."
+                 lines.extend([
+                    f"{ForensicLabel.format_title('security', 'SECURITY BACKLOG').upper()}",
+                    f"{StrategicSoul.fusion_literal('🛡️', 'Security', overwatch_body, overwatch_action)}",
+                    "",
+                    "---",
+                    ""
+                 ])
+
+        # 2. Logic Consistency (Brain)
+        logic_matches = []
+        try:
+            # Broaden matching for 'Logic' findings
+            logic_matches = [f for f in findings_data if 
+                             f.get('metadata', {}).get('dimension', '').lower() in ['logic', 'code quality'] or 
+                             "Bare Except" in f['type']]
         except Exception:
             pass
 
-        # 06_DEPLOYMENT_HEALTH (New Section)
-        try:
-            # Fetch active deployment findings from IntelStore/DB
-            # We filter for 'DEPLOYMENT_GOTCHA' type which we just added
-            if hasattr(db, 'get_findings_by_type'):
-                deploy_issues = db.get_findings_by_type('DEPLOYMENT_GOTCHA')
-                if deploy_issues:
-                    lines.extend([
-                        "## 06_DEPLOYMENT_HEALTH",
-                        "> ⚠️ **Pre-Flight Checks Failed**",
-                        ""
-                    ])
-                    for issue in deploy_issues:
-                        lines.append(f"### 🔴 {issue.get('message', 'Deployment Issue')}")
-                        lines.append(f"- **File**: `{issue.get('file')}`")
-                        lines.append(f"- **Fix**: {issue.get('action')}")
-                        if issue.get('metadata') and issue['metadata'].get('reference'):
-                             lines.append(f"- **Docs**: {issue['metadata']['reference']}")
-                        lines.append("")
-                    lines.append("> *Run `side audit` to re-scan.*")
-                    lines.append("")
-        except Exception as e:
-            logger.warning(f"Failed to render deployment health: {e}")
+        if logic_matches:
+            for lf in logic_matches[:2]:
+                lines.extend([
+                    f"{ForensicLabel.format_title('logic', lf['type']).upper()}",
+                    f"{StrategicSoul.inject_fusion(lf)}",
+                    "",
+                    "---",
+                    ""
+                ])
+                # Add to seen so they don't appear in general list
+                seen_finding_ids.add(lf['id'])
+        else:
+            logic_nom_prompt = '"Hey Side, run a deep logic audit to maintain this state."'
+            lines.extend([
+                f"{ForensicLabel.format_title('logic', 'LOGIC CONSISTENCY: NOMINAL').upper()}",
+                f"{StrategicSoul.fusion_literal('🧩', 'Logic', 'Logic gates verified. (0 Logical anomalies detected).', logic_nom_prompt)}",
+                "",
+                "---",
+                ""
+            ])
 
-        # ACTIVITY LOG
+        # FORENSIC FINDINGS (General List)
         lines.extend([
-            "---",
-            "## 07_ACTIVITY_LOG",
+            "FORENSIC PROMPTING SUGGESTIONS",
+            "",
         ])
-        activities = db.get_recent_activities(project_id, limit=15)
-        for a in activities:
-            # Simple time: HH:MM
-            dt = datetime.fromisoformat(a['created_at'].replace('Z', '+00:00'))
-            ts = dt.strftime('%H:%M')
-            lines.append(f"`{ts}` **{a['tool'].upper()}** // {a['action']}")
-        
+
+        # Render Top Findings (Conversational IDE-Optimized)
+        count = 0
+        for f in findings_data:
+            if count >= 10: break
+            if f['id'] in seen_finding_ids: continue
+            
+            seen_finding_ids.add(f['id'])
+            dim = f.get('metadata', {}).get('dimension', 'system')
+            
+            lines.extend([
+                f"{ForensicLabel.format_title(dim, f['type']).upper()}",
+                f"{StrategicSoul.inject_fusion(f)}",
+                "",
+                "---",
+                ""
+            ])
+            count += 1
+            
+        if count == 0:
+            sys_nom_prompt = '"Check system health."'
+            lines.extend([
+                f"{ForensicLabel.format_title('system', 'FORENSIC PROMPTING: NOMINAL').upper()}",
+                f"{StrategicSoul.fusion_literal('⬛', 'System', 'Strategic signals are nominal. (0 detections).', sys_nom_prompt)}",
+                "",
+                "---",
+                ""
+            ])
+
+        # 4. Global Action Prompt (If total is 0)
+        total_findings = len(findings_data) + len(crit_finds)
+        if total_findings == 0:
+            lines.append("HEY SIDE! NO ACTIVE FINDINGS DETECTED. RUN 'SIDE SCAN' TO POPULATE THE COMMAND CENTER.")
+            lines.append("")
+
+
+
         monolith_path.write_text("\n".join(lines))
         
         # 4. Seal the Monolith
@@ -322,4 +305,4 @@ async def generate_monolith(db: Any) -> str | None:
         
     except Exception as e:
         logger.warning(f"Monolith Evolution Failed: {e}")
-        return None
+        raise e
