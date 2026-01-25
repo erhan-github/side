@@ -30,6 +30,7 @@ class DatabaseProbe:
             self._check_indexes(context),
             self._check_timestamps(context),
             self._check_constraints(context),
+            self._check_rls(context),
             self._check_migrations(context),
             self._check_backup_strategy(context),
         ]
@@ -136,6 +137,47 @@ class DatabaseProbe:
             recommendation="Add created_at and updated_at to all tables"
         )
     
+    def _check_rls(self, context: ProbeContext) -> AuditResult:
+        """Check for Row Level Security (RLS) usage."""
+        tables_found = 0
+        rls_enabled_count = 0
+        
+        for file_path in context.files:
+            if not any(file_path.endswith(ext) for ext in ['.py', '.sql']):
+                continue
+            
+            try:
+                content = Path(file_path).read_text()
+                # Simple check for table creation
+                tables = re.findall(r'CREATE\s+TABLE\s+(\w+)', content, re.IGNORECASE)
+                tables_found += len(tables)
+                
+                # Check for ENABLE ROW LEVEL SECURITY
+                rls = re.findall(r'ALTER\s+TABLE\s+\w+\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY', content, re.IGNORECASE)
+                rls_enabled_count += len(rls)
+            except Exception:
+                continue
+        
+        if tables_found == 0:
+            return AuditResult(
+                check_id="DB-007",
+                check_name="Row Level Security",
+                dimension=self.dimension,
+                status=AuditStatus.SKIP,
+                severity=Severity.HIGH,
+                notes="No table definitions found to check RLS"
+            )
+            
+        return AuditResult(
+            check_id="DB-007",
+            check_name="Row Level Security",
+            dimension=self.dimension,
+            status=AuditStatus.PASS if rls_enabled_count >= tables_found else AuditStatus.WARN,
+            severity=Severity.HIGH,
+            notes=f"Found {rls_enabled_count}/{tables_found} tables with RLS enabled",
+            recommendation="Enable RLS on all tables containing sensitive user data"
+        )
+
     def _check_constraints(self, context: ProbeContext) -> AuditResult:
         """Check for constraint definitions."""
         constraints_found = 0

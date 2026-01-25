@@ -14,7 +14,7 @@ import ast
 from pathlib import Path
 from typing import List
 from ..core import AuditResult, AuditStatus, AuditEvidence, ProbeContext, Severity, Tier, AuditFixRisk
-
+from ...utils import fast_ast
 
 class CodeQualityProbe:
     """Forensic-level code quality audit probe."""
@@ -25,7 +25,7 @@ class CodeQualityProbe:
     dimension = "Code Quality"
     
     async def run(self, context: ProbeContext) -> List[AuditResult]:
-        """Run all code quality checks."""
+        # ... (skipping)
         return [
             self._check_bare_except(context),
             self._check_try_except_coverage(context),
@@ -53,7 +53,7 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
+                content = fast_ast.get_content(file_path)
                 for line_idx, line in enumerate(content.splitlines(), 1):
                     stripped = line.strip()
                     if stripped == 'except:' or stripped.startswith('except: '):
@@ -89,8 +89,7 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
-                tree = ast.parse(content)
+                tree = fast_ast.get_ast(file_path)
                 
                 for node in ast.walk(tree):
                     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -125,8 +124,7 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
-                tree = ast.parse(content)
+                tree = fast_ast.get_ast(file_path)
                 
                 for node in ast.walk(tree):
                     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -166,7 +164,7 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
+                content = fast_ast.get_content(file_path)
                 lines = len(content.splitlines())
                 
                 if lines > warn_threshold:
@@ -214,8 +212,7 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
-                tree = ast.parse(content)
+                tree = fast_ast.get_ast(file_path)
                 
                 for node in ast.walk(tree):
                     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -249,8 +246,7 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
-                tree = ast.parse(content)
+                tree = fast_ast.get_ast(file_path)
                 
                 for node in ast.walk(tree):
                     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -283,8 +279,7 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
-                tree = ast.parse(content)
+                tree = fast_ast.get_ast(file_path)
                 
                 for node in ast.walk(tree):
                     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -322,27 +317,20 @@ class CodeQualityProbe:
         Unlike Cyclomatic (branches), this penalizes deep nesting.
         """
         evidence = []
-        max_cognitive = 15
+        max_cognitive = 8 # Sentinel Standard: Strict limit
         
         for file_path in context.files:
             if not file_path.endswith('.py'):
                 continue
                 
             try:
-                content = Path(file_path).read_text()
-                tree = ast.parse(content)
+                content = fast_ast.get_content(file_path)
+                # Sentinel Rule: Normalize whitespace
+                content = content.replace('\t', '    ')
+                tree = fast_ast.get_ast(file_path)
                 
                 for node in ast.walk(tree):
                     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        # Calculate nesting score
-                        score = 0
-                        # visitor pattern to track depth
-                        for child in ast.walk(node):
-                            # Simplification: Count indentation of 'if', 'for', 'while' lines?
-                            # AST approach needs a custom visitor. 
-                            # Let's use a heuristic: deeply nested nodes get penalized.
-                            pass
-                        
                         # Better Heuristic: Regex Indentation Check within function body
                         # Find the lines of this function
                         func_lines = content.splitlines()[node.lineno-1:getattr(node, 'end_lineno', node.lineno)]
@@ -406,7 +394,7 @@ class CodeQualityProbe:
                 continue
                 
             try:
-                content = Path(file_path).read_text()
+                content = fast_ast.get_content(file_path)
                 loc = len([l for l in content.splitlines() if l.strip()])
                 if loc == 0: continue
                 
@@ -469,7 +457,7 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
+                content = fast_ast.get_content(file_path)
                 for line_idx, line in enumerate(content.splitlines(), 1):
                     for pattern, desc in patterns:
                         if re.search(pattern, line, re.IGNORECASE):
@@ -508,8 +496,8 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
-                tree = ast.parse(content)
+                content = fast_ast.get_content(file_path)
+                tree = fast_ast.get_ast(file_path)
                 
                 for node in ast.walk(tree):
                     if isinstance(node, ast.If):
@@ -653,13 +641,13 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
+                content = fast_ast.get_content(file_path)
                 lines = len(content.splitlines())
                 
                 if lines <= max_lines:
                     continue
                 
-                tree = ast.parse(content)
+                tree = fast_ast.get_ast(file_path)
                 
                 # Group functions by prefix
                 function_groups = defaultdict(list)
@@ -722,7 +710,7 @@ class CodeQualityProbe:
                 continue
             
             try:
-                content = Path(file_path).read_text()
+                content = fast_ast.get_content(file_path)
                 for line_idx, line in enumerate(content.splitlines(), 1):
                     for pattern, name in helper_patterns:
                         if re.search(pattern, line):

@@ -22,7 +22,44 @@ class StrategyProbe:
             self._check_stray_code(context),
             self._check_priority_misalignment(context),
             self._check_recurring_failures(context),
+            self._check_missing_strategy_docs(context),
         ]
+
+    def _check_missing_strategy_docs(self, context: ProbeContext) -> AuditResult:
+        """
+        Check for existence of key strategic documents.
+        """
+        root = Path(context.project_root)
+        missing_docs = []
+        
+        # Core Strategic Documents
+        required_docs = {
+            "VISION.md": "Defines the long-term North Star.",
+            "ROADMAP.md": "Defines the execution path.",
+            "ARCHITECTURE.md": "Defines the system design boundaries."
+        }
+        
+        evidence = []
+        
+        for doc, purpose in required_docs.items():
+            # Check root and docs/ folder
+            if not (root / doc).exists() and not (root / "docs" / doc).exists():
+                evidence.append(AuditEvidence(
+                    description=f"Missing Strategic Document: {doc}",
+                    file_path=doc,
+                    context=purpose,
+                    suggested_fix=f"Create {doc} to define project intent."
+                ))
+        
+        return AuditResult(
+            check_id="STRAT-004",
+            check_name="Missing Strategic Context",
+            dimension=self.dimension,
+            status=AuditStatus.WARN if evidence else AuditStatus.PASS,
+            severity=Severity.HIGH,
+            evidence=evidence,
+            recommendation="Create missing strategic documents to guide the AI."
+        )
 
     def _get_changed_files(self, project_root: str) -> Set[str]:
         """Get list of changed files (staged + unstaged) using git."""

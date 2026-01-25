@@ -129,7 +129,7 @@ class DeadCodeProbe:
             check_name="Dead Code (Unused Locals)",
             dimension=self.dimension,
             status=AuditStatus.PASS if not evidence else AuditStatus.WARN,
-            severity=Severity.LOW, # Low severity because it's just cleanup
-            # evidence=evidence[:10], # Limit evidence # Unused
+            severity=Severity.LOW, 
+            evidence=evidence[:10],
             recommendation="Remove unused local variables to clean up code"
         )

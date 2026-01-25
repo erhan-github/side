@@ -31,6 +31,7 @@ class InfrastructureProbe:
             self._check_resource_limits(context),
             self._check_k8s_basics(context),
             self._check_terraform_security(context),
+            self._check_proxy_constraints(context),
         ]
     
     def _check_dockerfile_security(self, context: ProbeContext) -> AuditResult:
@@ -288,4 +289,38 @@ class InfrastructureProbe:
             severity=Severity.HIGH,
             evidence=evidence[:5],
             recommendation="Restrict Security Groups and S3 ACLs"
+        )
+
+    def _check_proxy_constraints(self, context: ProbeContext) -> AuditResult:
+        """Check for proxy-level constraints (e.g., header size limits)."""
+        evidence = []
+        
+        # Look for railway.toml or docker-compose.yml for proxy config
+        for file_path in context.files:
+            if not any(file_path.endswith(ext) for ext in ['.toml', '.yml', '.yaml']):
+                continue
+                
+            try:
+                content = Path(file_path).read_text()
+                
+                # Heuristic: Check for large header proxies or lack of config
+                # Standard proxies like Nginx/Railway often have 8KB limits.
+                if 'proxy' in content.lower() or 'ingress' in content.lower():
+                    if 'header_size' not in content.lower() and 'buffer_size' not in content.lower():
+                         evidence.append(AuditEvidence(
+                            description="Invisible Proxy Constraint: Default header limits (8KB) may apply",
+                            file_path=file_path,
+                            suggested_fix="Define explicit proxy_buffer_size or optimize auth header size"
+                        ))
+            except Exception:
+                continue
+                
+        return AuditResult(
+            check_id="INFRA-008",
+            check_name="Proxy Constraints",
+            dimension=self.dimension,
+            status=AuditStatus.PASS if not evidence else AuditStatus.WARN,
+            severity=Severity.MEDIUM,
+            evidence=evidence[:3],
+            recommendation="Verify upstream proxy header limits to prevent silent auth failures"
         )

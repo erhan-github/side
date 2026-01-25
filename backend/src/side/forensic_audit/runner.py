@@ -56,7 +56,7 @@ class ForensicAuditRunner:
     Runs all 14 dimension probes (80+ checks total).
     """
     
-    def __init__(self, project_root: str):
+    def __init__(self, project_root: str, db: Optional[SimplifiedDatabase] = None):
         self.project_root = Path(project_root).resolve()
         
         # Initialize all probes
@@ -88,12 +88,15 @@ class ForensicAuditRunner:
         ]
         
         # Initialize Monolith (Persistent Memory)
-        self.db = None
+        self.db = db
         self.project_id = "UNKNOWN_ASSET"
         try:
             from side.intel.intelligence_store import IntelligenceStore
             from side.utils.paths import get_repo_root
-            self.db = SimplifiedDatabase()
+            
+            if not self.db:
+                self.db = SimplifiedDatabase()
+                
             self.store = IntelligenceStore(self.db)
             # Always use repo root for project_id to avoid siloing findings
             repo_root = get_repo_root(self.project_root)
