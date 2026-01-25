@@ -2,7 +2,7 @@ import logging
 import json
 import sqlite3
 from typing import List, Dict, Any
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -10,6 +10,7 @@ from pathlib import Path
 
 from side.storage.simple_db import SimplifiedDatabase
 from side.intel.intelligence_store import IntelligenceStore
+from side.auth.fastapi_deps import get_current_user
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -31,7 +32,7 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 async def read_dashboard(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/api/graph")
+@app.get("/api/graph", dependencies=[Depends(get_current_user)])
 async def get_graph():
     """Returns the LIVE graph from local.db."""
     nodes = []
@@ -134,7 +135,7 @@ async def get_graph():
 
     return {"nodes": nodes, "links": links}
 
-@app.get("/api/stats")
+@app.get("/api/stats", dependencies=[Depends(get_current_user)])
 async def get_stats():
     """Returns high-level forensic metrics from Real DB."""
     project_id = db.get_project_id()

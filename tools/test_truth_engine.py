@@ -22,14 +22,16 @@ async def test_truth():
         # print(msg)
         
         if "MISSION.md" in msg or "VISION.md" in msg or "README.md" in msg:
-             print("\n✅ SUCCESS: Documentation context detected.")
-        else:
-             # It might be empty if files don't exist in the current mock setup, 
-             # but the prompt should still have the preamble.
-             if "Reality Check" in msg:
-                 print("\n✅ SUCCESS: Prompt template is correct.")
-             else:
-                 print("\n❌ FAILURE: Prompt content is unexpected.")
+            print("\n✅ SUCCESS: Documentation context detected.")
+            return
+
+        # It might be empty if files don't exist in the current mock setup, 
+        # but the prompt should still have the preamble.
+        if "Reality Check" in msg:
+            print("\n✅ SUCCESS: Prompt template is correct.")
+            return
+
+        print("\n❌ FAILURE: Prompt content is unexpected.")
             
     except Exception as e:
         print(f"\n❌ ERROR: {e}")
