@@ -210,7 +210,12 @@ export default function Home() {
                 <div className="flex-1 p-12 overflow-y-auto space-y-12 leading-relaxed bg-black">
                   <div className="space-y-4">
                     <h4 className="text-emerald-truth font-black uppercase italic tracking-tighter text-xl">PRIME_REGISTRY // V4.2</h4>
-                    <p className="text-zinc-500">"Logic thread auth_sync suffering from context fragmentation. Flatten logic chain now or risk hydration debt in Q3."</p>
+                    <p className={simulationActive ? "text-emerald-truth font-bold" : "text-zinc-500"}>
+                      {simulationActive
+                        ? "ALERT: Logic thread auth_sync drift NEUTRALIZED. Hydration-lock enforced at Node 14M."
+                        : "Logic thread auth_sync suffering from context fragmentation. Flatten logic chain now or risk hydration debt in Q3."
+                      }
+                    </p>
                   </div>
 
                   {/* Tactical Simulation Trigger */}
@@ -240,9 +245,9 @@ export default function Home() {
                     <div className="space-y-4">
                       <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">01_VITAL_FORENSICS</div>
                       <div className="space-y-2">
-                        <div className="flex justify-between"><span>Semantic Depth</span><span className="text-emerald-truth">94%</span></div>
-                        <div className="flex justify-between"><span>Logic Velocity</span><span className="text-emerald-truth">STABLE</span></div>
-                        <div className="flex justify-between text-red-500"><span>Context Drift</span><span>CRITICAL</span></div>
+                        <div className="flex justify-between"><span>Semantic Depth</span><span className="text-emerald-truth">{simulationActive ? "99%" : "94%"}</span></div>
+                        <div className="flex justify-between"><span>Logic Velocity</span><span className="text-emerald-truth">{simulationActive ? "PEAK" : "STABLE"}</span></div>
+                        <div className="flex justify-between text-red-500"><span>Context Drift</span><span className={simulationActive ? "text-emerald-truth" : "text-red-500"}>{simulationActive ? "RESOLVED" : "CRITICAL"}</span></div>
                       </div>
                     </div>
                     <div className="space-y-4">
@@ -250,7 +255,7 @@ export default function Home() {
                       <div className="space-y-2">
                         <div className="flex gap-3"><span>T1</span><span className="text-zinc-400">Optimization: rust_macros</span></div>
                         <div className="flex gap-3"><span>T2</span><span className="text-zinc-400">Scrub: payment_webhooks</span></div>
-                        <div className="flex gap-3"><span>T3</span><span className="text-white italic">Fix: state_sync</span></div>
+                        <div className="flex gap-3"><span>T3</span><span className={simulationActive ? "text-emerald-truth font-bold" : "text-white italic"}>{simulationActive ? "FIXED: state_sync" : "Fix: state_sync"}</span></div>
                       </div>
                     </div>
                   </div>
