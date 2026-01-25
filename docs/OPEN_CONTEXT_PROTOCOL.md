@@ -1,53 +1,70 @@
-# The Open Context Protocol (OCP): 2030 Vision
+# Open Context Protocol (OCP) v0.1
 
-> **The Theory**: Code without context is just text. To build the "Self-Aware Commit," we must standardize how Intent is embedded in Source.
+> "Code without context is legacy the moment it is written."
 
-## 1. The Problem: "Context Loss"
-Today, when a developer writes code, 90% of the "Why" is lost.
-- **Git Commit**: "Fix auth bug" (Weak)
-- **PR Description**: "Updated middleware" (Transient)
-- **Slack Message**: "We need to ship this for the IPO" (Lost forever)
+## 1. The Philosophy
+OCP is a standard for exchanging **Strategic Context** between Development Environments (IDEs), Agents (AI), and Humans.
+It rejects the "Files-only" view of software development.
+It asserts that **Decisions, Intent, and History** are first-class citizens.
 
-## 2. The Solution: "Machine-Readable Intent"
-We propose a standard taxonomy of **Strategic Annotations** that `Side` (and future AI agents) can parsers.
+## 2. The Data Model: The Context Graph
+The world is represented as a directed graph $G = (V, E)$.
 
-### The Taxonomy
-| Annotation | Example | AI Interpretation |
+### 2.1 Nodes ($V$)
+Every entity is a Node with a globally unique URI (`side://<project>/<type>/<id>`).
+
+| Type | URI Schema | Description |
 | :--- | :--- | :--- |
-| **@Strategic** | `// @Strategic(Goal="IPO_Readiness"): Enforce strict audit logging` | "This code is critical. Block any changes that weaken logging." |
-| **@Vision** | `// @Vision: Eventually, this should support multi-tenancy` | "When refactoring, suggest multi-tenant patterns." |
-| **@Zombie** | `// @Zombie: Deprecated in v2.0, kill after 2026-06` | "If today > 2026-06, auto-suggest deletion." |
-| **@Debt** | `// @Debt(Risk="High"): This is an N+1 query` | "Flag this in the Monolith as a 'High Risk' item." |
-| **@Moat** | `// @Moat: Proprietary algo - do not outsource` | "If user tries to use Copilot here, warn them about IP leak." |
+| **Asset** | `asset/file/<path>` | A physical file or directory. |
+| **Concept** | `concept/auth/logic` | An abstract architectural concept. |
+| **Plan** | `plan/<id>` | A task, goal, or objective (from `task.md` or DB). |
+| **Decision** | `decision/<id>` | A recorded choice (e.g., "Use SQLite"). |
+| **Person** | `agent/<id>` | A human or AI contributor. |
 
-## 3. Integration with Side Moats
-How this integrates with our existing Unified Architecture:
+### 2.2 Edges ($E$)
+Relationships define the meaning.
 
-1.  **Forensics (The Scanner)**:
-    *   The `Side.cli audit` tool scans for these `@Tags`.
-    *   It builds a "Strategic Map" of the codebase, not just a dependency graph.
+| Relationship | Direction | Meaning |
+| :--- | :--- | :--- |
+| `IMPLEMENTS` | Asset -> Plan | This file exists to fulfill this plan. |
+| `ENFORCES` | Asset -> Concept | This test ensures this concept works. |
+| `AUTHORED` | Person -> Decision | Who made the call. |
+| `MODIFIED` | Event -> Asset | Temporal causality. |
 
-2.  **Monolith (The Visualization)**:
-    *   The Dashboard renders a "Strategic Alignment" score.
-    *   "You have 12 files marked `@Strategic` but 3 of them contain `@Debt`." -> **Conflict Alert**.
+## 3. The Event Clock: Temporal Stream
+Context is not static. It is a stream of **Events**.
+Each event is an immutable record in the `events` ledger.
 
-3.  **Memory (The History)**:
-    *   `IntelligenceStore` persists these tags over time.
-    *   We can replay the "Strategic Evolution" of a file.
+```json
+{
+  "id": "evt_12345",
+  "timestamp": "2026-01-25T10:00:00Z",
+  "actor": "user_erhan",
+  "type": "CODE_MODIFICATION",
+  "payload": {
+    "file": "auth.py",
+    "diff_summary": "+50 lines"
+  },
+  "outcome": {
+    "status": "VIOLATION",
+    "rule": "no_arrow_pattern"
+  }
+}
+```
 
-4.  **MCP (The Bridge)**:
-    *   We publish `side-mcp-server` that exposes these tags to Cursor/Windsurf.
-    *   When the user opens a file, Cursor says: *"Warning: You are editing a `@Moat` file. Be careful."*
+## 4. The Interface: MCP (Model Context Protocol)
+Side implements OCP via the **Model Context Protocol**.
 
-## 4. The Industry Standard (2030)
-We don't just build this for Side. We publish the **OCP Spec**.
-*   **Repo**: `open-context-protocol`
-*   **Goal**: Make `@Strategic` as standard as `TODO`.
+### 4.1 Resources
+- `side://graph/summary`: Current high-level status.
+- `side://graph/node/{uri}`: Detailed context for a specific node.
+- `side://stream/recent`: Last 50 events.
 
-## 5. Execution: The "Side Context" Plugin
-*   **Phase 1**: Support parsing these tags in `ForensicEngine`.
-*   **Phase 2**: Create a VS Code extension that highlights them (Gold for Strategic, Red for Debt).
-*   **Phase 3**: Release the MCP Server to feed this data to Claude/GPT-5.
+### 4.2 Prompts
+- `query_context(query: str)`: Semantic search over the Monolith.
+- `get_decision_history(file: str)`: Why did this file change?
 
----
-**Why this wins**: It turns "Comments" from passive text into **Active Guardrails**.
+## 5. Implementation Strategy
+1.  **Store**: SQLite (`SimpleDB`) holds the Graph and Events.
+2.  **Server**: `side-mcp` exposes SQLite via MCP.
+3.  **Client**: Cursor/Windsurf connects to `side-mcp`.
