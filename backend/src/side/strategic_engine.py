@@ -56,6 +56,7 @@ class StrategicContext:
     focus_area: str | None  # "auth", "api", "frontend", etc.
     recent_commits: int
     open_issues: int
+    project_path: str | None = None  # Path to the project root
     
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -183,7 +184,7 @@ class StrategicDecisionEngine:
             clean_response = response.replace("```json", "").replace("```", "").strip()
             data = json.loads(clean_response)
             
-            return StrategicRecommendation(
+            rec = StrategicRecommendation(
                 decision_type=decision_type,
                 recommendation=data.get("recommendation", "Analysis"),
                 confidence=ConfidenceLevel.HIGH,
@@ -198,8 +199,57 @@ class StrategicDecisionEngine:
                 }
             )
             
+            # [PERSISTENCE] Save decision to Brain
+            self._persist_decision(rec, question, context)
+            
+            return rec
+            
         except Exception:
             return self._generic_tech_decision(question, context)
+
+    def _persist_decision(self, rec: StrategicRecommendation, question: str, context: StrategicContext) -> None:
+        """
+        [Brain Logic] Write the decision to the Sovereign Ledger (SQLite).
+        """
+        try:
+            from side.storage.simple_db import SimplifiedDatabase
+            import uuid
+            import json
+            
+            db = SimplifiedDatabase()
+            
+            # 1. Get Project ID
+            # Use context.project_path if available to ensure alignment with caller
+            import os
+            target_path = context.project_path if context.project_path else os.getcwd()
+            project_id = db.get_project_id(target_path)
+            
+            with db._connection() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO decisions (
+                        id, project_id, question, answer, reasoning, category, 
+                        confidence, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    """,
+                    (
+                        f"dec_{uuid.uuid4().hex[:8]}",
+                        project_id,
+                        question,
+                        rec.recommendation,
+                        json.dumps(rec.reasoning),
+                        rec.decision_type.value,
+                        {"very_high": 9, "high": 7, "medium": 5, "low": 3}.get(rec.confidence.value, 5)
+                    )
+                )
+                conn.commit()
+                # self.decision_history is RAM cache, keep using it?
+                # Yes, but strictly speaking we should rely on DB.
+                self.decision_history.append(rec)
+                
+        except Exception as e:
+            # Fallback: Don't crash the user response if DB fails
+            print(f"Warning: Failed to persist decision: {e}")
 
     def analyze_tech_stack_decision(
         self,
@@ -290,7 +340,7 @@ class StrategicDecisionEngine:
                 "Add indexes for performance",
             ]
         
-        return StrategicRecommendation(
+        rec = StrategicRecommendation(
             decision_type=DecisionType.TECH_STACK,
             recommendation=recommendation,
             confidence=confidence,
@@ -307,6 +357,8 @@ class StrategicDecisionEngine:
                 }
             }
         )
+        self._persist_decision(rec, "PostgreSQL vs MongoDB", context)
+        return rec
     
     def _generic_tech_decision(
         self,
@@ -411,7 +463,7 @@ class StrategicDecisionEngine:
                 "Plan deployment strategy (containers)",
             ]
         
-        return StrategicRecommendation(
+        rec = StrategicRecommendation(
             decision_type=DecisionType.ARCHITECTURE,
             recommendation=recommendation,
             confidence=confidence,
@@ -428,6 +480,8 @@ class StrategicDecisionEngine:
                 }
             }
         )
+        self._persist_decision(rec, "Monolith vs Microservices", context)
+        return rec
     
     def _generic_architecture_decision(
         self,
@@ -521,7 +575,7 @@ class StrategicDecisionEngine:
             
             alternatives = []
         
-        return StrategicRecommendation(
+        rec = StrategicRecommendation(
             decision_type=DecisionType.GROWTH,
             recommendation=recommendation,
             confidence=ConfidenceLevel.HIGH,
@@ -538,6 +592,8 @@ class StrategicDecisionEngine:
                 }
             }
         )
+        self._persist_decision(rec, "Best Growth Channels", context)
+        return rec
     
     def _generic_growth_decision(
         self,
@@ -621,7 +677,7 @@ class StrategicDecisionEngine:
                 "Then consider fundraising",
             ]
         
-        return StrategicRecommendation(
+        rec = StrategicRecommendation(
             decision_type=DecisionType.FUNDRAISING,
             recommendation=recommendation,
             confidence=ConfidenceLevel.HIGH,
@@ -638,6 +694,8 @@ class StrategicDecisionEngine:
                 }
             }
         )
+        self._persist_decision(rec, "Should I raise?", context)
+        return rec
     
     def analyze_prioritization(
         self,

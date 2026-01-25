@@ -44,13 +44,58 @@ class IntelligenceStore:
                 )
             """)
             
-            # Index for common queries
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_findings_project_severity 
                 ON findings(project_id, severity, resolved_at)
             """)
             
+            # THE EVENT CLOCK SCHEMA
+            # Records temporal decision traces and observations
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    project_id TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    context TEXT,
+                    outcome TEXT,
+                    timestamp TEXT NOT NULL
+                )
+            """)
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_events_project_timestamp 
+                ON events(project_id, timestamp DESC)
+            """)
+            
+            # [Optimization] Cover Telemetry queries (WHERE type LIKE 'OP_%')
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_events_type_timestamp
+                ON events(type, timestamp DESC)
+            """)
+            
             conn.commit()
+
+    def record_event(self, project_id: str, event_type: str, context: dict, outcome: Optional[str] = None) -> int:
+        """
+        Record a temporal event (The Event Clock).
+        Args:
+            project_id: The asset scope.
+            event_type: e.g., 'CODE_MODIFICATION', 'AUDIT_RUN', 'STRATEGY_UPDATE'.
+            context: Detailed dict about the event (diff, triggers, etc).
+            outcome: Optional result summary (e.g., 'PASS', 'FAIL: Arrow Pattern').
+        Returns:
+            Event ID (int)
+        """
+        now_iso = datetime.now(timezone.utc).isoformat()
+        context_json = json.dumps(context)
+        
+        with self.db._connection() as conn:
+            cursor = conn.execute("""
+                INSERT INTO events (project_id, type, context, outcome, timestamp)
+                VALUES (?, ?, ?, ?, ?)
+            """, (project_id, event_type, context_json, outcome, now_iso))
+            conn.commit()
+            return cursor.lastrowid
+
 
     def store_findings(self, project_id: str, findings: List[Finding]) -> int:
         """

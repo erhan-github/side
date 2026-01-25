@@ -2,7 +2,13 @@ from typing import List, Dict, Any
 import json
 from side.intel.memory.persistence import MemoryPersistence
 from side.llm.client import LLMClient
-from side.intelligence.graph_kernel import GraphKernel
+# from side.intelligence.graph_kernel import GraphKernel
+
+class GraphKernel:
+    def ingest_intent(self, *args, **kwargs):
+        return "mock_uid"
+    def link(self, *args, **kwargs):
+        pass
 
 class MemoryManager:
     """

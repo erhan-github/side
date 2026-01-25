@@ -156,13 +156,13 @@ def get_api_key_from_header(authorization: Optional[str]) -> Optional[str]:
 def validate_api_key(api_key: Optional[str]) -> UserInfo:
     """Validate an API key and return user info."""
     if not api_key:
-        return UserInfo(user_id="", email=None, api_key="", tokens_monthly=0, tokens_used=0, valid=False)
+        return UserInfo(user_id="", email=None, api_key="", tier="hobby", tokens_monthly=0, tokens_used=0, valid=False)
         
     user = get_user_by_api_key(api_key)
     if user:
         return user
         
-    return UserInfo(user_id="", email=None, api_key="", tokens_monthly=0, tokens_used=0, valid=False)
+    return UserInfo(user_id="", email=None, api_key="", tier="hobby", tokens_monthly=0, tokens_used=0, valid=False)
 
 
 def get_cloud_balance(api_key: str) -> Optional[int]:

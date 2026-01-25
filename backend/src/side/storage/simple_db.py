@@ -643,11 +643,18 @@ class SimplifiedDatabase:
                 """
                 INSERT INTO profile (
                     id, name, company, domain, stage, business_model, 
-                    target_raise, tech_stack, tier, tokens_monthly, tokens_used, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    target_raise, tech_stack, tier, token_balance, tokens_monthly, tokens_used, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
+                    name = COALESCE(excluded.name, name),
+                    company = COALESCE(excluded.company, company),
+                    domain = COALESCE(excluded.domain, domain),
+                    stage = COALESCE(excluded.stage, stage),
+                    business_model = COALESCE(excluded.business_model, business_model),
+                    target_raise = COALESCE(excluded.target_raise, target_raise),
                     tech_stack = COALESCE(excluded.tech_stack, tech_stack),
                     tier = COALESCE(excluded.tier, tier),
+                    token_balance = COALESCE(excluded.token_balance, token_balance),
                     tokens_monthly = COALESCE(excluded.tokens_monthly, tokens_monthly),
                     tokens_used = COALESCE(excluded.tokens_used, tokens_used),
                     updated_at = excluded.updated_at
@@ -662,6 +669,7 @@ class SimplifiedDatabase:
                     profile_data.get("target_raise"),
                     json.dumps(tech_stack) if tech_stack else None,
                     profile_data.get("tier"),
+                    profile_data.get("token_balance"),
                     profile_data.get("tokens_monthly"),
                     profile_data.get("tokens_used"),
                     datetime.now(timezone.utc).isoformat()

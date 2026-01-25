@@ -20,7 +20,12 @@ if __name__ == "__main__":
     
     if transport == "sse" or is_railway:
         print(f"🚀 Starting Side Intelligence over SSE on port {port} and binding to 0.0.0.0...")
-        mcp.run(transport="sse", port=port, host="0.0.0.0")
+        mcp.run(
+            transport="sse", 
+            port=port, 
+            host="0.0.0.0",
+            uvicorn_config={"timeout_graceful_shutdown": 30}
+        )
     else:
         # Default to stdio for local MCP use
         mcp.run(transport="stdio")
