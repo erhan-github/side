@@ -58,6 +58,7 @@ const CAPABILITY_SPECS: Record<string, CapabilitySpec> = {
 
 export default function Home() {
   const [activeCase, setActiveCase] = useState("auth");
+  const [simulationActive, setSimulationActive] = useState(false);
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -141,7 +142,7 @@ export default function Home() {
         </section>
 
         {/* Section 2: The Logic Guard (Deterministic Knowledge) */}
-        <section className="py-[30vh] border-t border-white/5">
+        <section id="logic" className="py-[30vh] border-t border-white/5">
           <div className="max-w-5xl mx-auto space-y-20">
             <header className="space-y-6">
               <h2 className="text-[var(--text-h2)]">
@@ -177,8 +178,182 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Section 2.5: The Registry Ledger (MONOLITH.md Visual) */}
+        <section className="py-[30vh] border-t border-white/5 bg-zinc-900/5">
+          <div className="max-w-5xl mx-auto space-y-24">
+            <div className="text-center space-y-6">
+              <h2 className="text-[var(--text-h2)]">Deterministic <br />Architecture.</h2>
+              <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.5em]">Side maintains Ground-Truth in a local <code className="text-emerald-truth">MONOLITH.md</code>.</p>
+            </div>
+
+            <div className="border border-white/10 bg-black overflow-hidden flex flex-col h-[600px] shadow-2xl">
+              <div className="h-12 bg-zinc-900/50 flex items-center justify-between px-6 border-b border-white/5">
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-white/10" />
+                  <div className="w-3 h-3 rounded-full bg-white/10" />
+                  <div className="w-3 h-3 rounded-full bg-white/10" />
+                </div>
+                <div className="text-[10px] font-mono text-zinc-500">.side/MONOLITH.md — SYSTEM_LEDGER</div>
+                <div className="text-[10px] font-mono text-emerald-truth">SEALED_NODE</div>
+              </div>
+
+              <div className="flex-1 flex font-mono text-xs">
+                <div className="w-48 border-r border-white/5 bg-zinc-950 p-6 space-y-4 text-zinc-600">
+                  <div className="font-black text-[10px] text-zinc-400">EXPLORER</div>
+                  <div className="space-y-2">
+                    <div className="text-white">SIREN-LEDGER</div>
+                    <div className="pl-4">src</div>
+                    <div className="pl-4">tests</div>
+                    <div className="pl-4 text-emerald-truth">MONOLITH.md</div>
+                  </div>
+                </div>
+                <div className="flex-1 p-12 overflow-y-auto space-y-12 leading-relaxed bg-black">
+                  <div className="space-y-4">
+                    <h4 className="text-emerald-truth font-black uppercase italic tracking-tighter text-xl">PRIME_REGISTRY // V4.2</h4>
+                    <p className="text-zinc-500">"Logic thread auth_sync suffering from context fragmentation. Flatten logic chain now or risk hydration debt in Q3."</p>
+                  </div>
+
+                  {/* Tactical Simulation Trigger */}
+                  <div
+                    onClick={() => setSimulationActive(!simulationActive)}
+                    className="p-8 border border-white/10 bg-zinc-900/40 space-y-6 cursor-pointer hover:border-emerald-truth transition-all group"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600 group-hover:text-emerald-truth transition-colors">Siren Simulation</span>
+                      {simulationActive ? (
+                        <span className="text-[10px] font-mono text-emerald-truth animate-pulse">PROBE_COMPLETE</span>
+                      ) : (
+                        <span className="text-[10px] font-mono text-zinc-700">READY_FOR_PROBE</span>
+                      )}
+                    </div>
+                    <div className="space-y-4">
+                      <p className="text-xs text-zinc-400">"Hey Side, {simulationActive ? "audit trajectory drift on auth_node_9." : "initiate forensic probe."}"</p>
+                      {simulationActive && (
+                        <div className="bg-black p-4 border border-emerald-truth/20 font-mono text-[11px] text-emerald-truth animate-in fade-in slide-in-from-bottom-2">
+                          TRACE_RESULT: Divergence found in ServerAction. Hydration-lock applied.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-12 pt-12 border-t border-white/10">
+                    <div className="space-y-4">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">01_VITAL_FORENSICS</div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between"><span>Semantic Depth</span><span className="text-emerald-truth">94%</span></div>
+                        <div className="flex justify-between"><span>Logic Velocity</span><span className="text-emerald-truth">STABLE</span></div>
+                        <div className="flex justify-between text-red-500"><span>Context Drift</span><span>CRITICAL</span></div>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-zinc-600">02_FORENSIC_THREADS</div>
+                      <div className="space-y-2">
+                        <div className="flex gap-3"><span>T1</span><span className="text-zinc-400">Optimization: rust_macros</span></div>
+                        <div className="flex gap-3"><span>T2</span><span className="text-zinc-400">Scrub: payment_webhooks</span></div>
+                        <div className="flex gap-3"><span>T3</span><span className="text-white italic">Fix: state_sync</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2.7: Forensic Evidence (Interactive Case Logs) */}
+        <section id="evidence" className="py-[30vh] border-t border-white/5">
+          <div className="max-w-6xl mx-auto space-y-24">
+            <header className="text-center space-y-6">
+              <h2 className="text-[var(--text-h2)]">Forensic <br />Evidence.</h2>
+              <p className="text-[var(--text-body)] text-zinc-500 uppercase tracking-[0.4em] font-black">When Side saves you from a 2-week mistake, it pays for itself forever.</p>
+            </header>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-24">
+              {/* Massive Trigger Grid */}
+              <div className="grid grid-cols-2 gap-6">
+                {[
+                  { id: "auth", label: "Isomorphic Drift", save: "Fixed Hydration" },
+                  { id: "research", label: "Cost Forensics", save: "- $4.2k/mo" },
+                  { id: "fork", label: "Recursive Macros", save: "AST Precise" },
+                  { id: "sec", label: "Judicial Scrub", save: "PII Secured" }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveCase(tab.id)}
+                    className={`p-8 text-left border transition-all flex flex-col justify-between h-48 ${activeCase === tab.id
+                      ? "bg-white text-black border-white"
+                      : "bg-black text-zinc-500 border-white/10 hover:border-white/30"
+                      }`}
+                  >
+                    <span className="text-[10px] font-black uppercase tracking-widest">{tab.save}</span>
+                    <span className="text-xl font-black uppercase italic leading-none">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Result Panel */}
+              <div className="border border-white/10 p-16 space-y-12 bg-zinc-900/20 relative">
+                <header className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.4em] text-emerald-truth">
+                  <span>Forensic Thread: T3_SYNC</span>
+                  <span>100% Integrity</span>
+                </header>
+
+                <div className="space-y-8">
+                  <p className="text-2xl font-black italic text-white leading-tight">
+                    {activeCase === 'auth' && "Logic thread Jan14 flagged for hydration drift. Side detected SSR/HMR cache mismatch."}
+                    {activeCase === 'research' && "LLM Cost Forecast: Reasoning threads on 70B yielding <30% accuracy. Recommend escalation."}
+                    {activeCase === 'fork' && "Multi-pass analysis stalling at depth 4 in Rust macros. Recursive scan required."}
+                    {activeCase === 'sec' && "Registry Scan: Found raw PII in webhook debug logs. Enable forensic masking?"}
+                  </p>
+
+                  <div className="font-mono text-xs text-zinc-500 border-l border-white/10 pl-8 space-y-4">
+                    {activeCase === 'auth' && (
+                      <>
+                        <p>"Correction Applied: force-dynamic enforced. Trajectory drift neutralized."</p>
+                        <div className="text-emerald-truth font-black">SYSTEM IQ: +12 Points</div>
+                      </>
+                    )}
+                    {activeCase === 'sec' && (
+                      <>
+                        <p>"Action: Judicial Masking applied to 12 PII nodes. Integrity preserved."</p>
+                        <div className="text-emerald-truth font-black">REGISTRY: SEALED</div>
+                      </>
+                    )}
+                    {(activeCase !== 'auth' && activeCase !== 'sec') && (
+                      <p>"Registry maintaining 100% integrity across this strategic bridge."</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2.9: The Sovereign Trust Protocol */}
+        <section id="trust" className="py-[30vh] border-t border-white/5 bg-black">
+          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-24 items-center">
+            <header className="space-y-12">
+              <h2 className="text-[var(--text-h2)]">The Sovereign<br />Trust Protocol.</h2>
+              <p className="text-[var(--text-body)] text-zinc-500">Side is built on deterministic truth. We don't ask for your trust; we prove it through architectural transparency.</p>
+            </header>
+
+            <div className="space-y-16">
+              {[
+                { title: "Zero-Keylogging", desc: "We monitor filesystem events, not keystrokes. Side only hears what you commit to disk." },
+                { title: "Manual Trigger", desc: "No autonomous mutation. Every fix requires a deliberate user action and explicit approval." },
+                { title: "Local Sovereignty", desc: "100% of code parsing happens on your machine. We sync metadata, never your source code." }
+              ].map((item, i) => (
+                <div key={i} className="space-y-4">
+                  <h3 className="text-2xl font-black uppercase italic text-white">{item.title}</h3>
+                  <p className="text-zinc-500 text-sm font-medium leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Section 3: System of Record (The Immutable Ledger) */}
-        <section className="py-[30vh] border-t border-white/5">
+        <section id="record" className="py-[30vh] border-t border-white/5">
           <div className="max-w-5xl mx-auto space-y-20">
             <header className="space-y-6">
               <h2 className="text-[var(--text-h2)]">
