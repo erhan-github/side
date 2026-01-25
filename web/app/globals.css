@@ -16,6 +16,23 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Fluid Typography (800px to 1600px) */
+  --text-hero: clamp(4rem, 12vw, 10rem);
+  --text-h1: clamp(2.5rem, 5vw, 5rem);
+  --text-h2: clamp(2rem, 4vw, 4rem);
+  --text-body: clamp(1rem, 1.2vw, 1.25rem);
+
+  /* Spacing Scale (8px) */
+  --space-unit: 8px;
+  --space-sm: calc(var(--space-unit) * 1);
+  /* 8px */
+  --space-md: calc(var(--space-unit) * 3);
+  /* 24px */
+  --space-lg: calc(var(--space-unit) * 6);
+  /* 48px */
+  --space-xl: calc(var(--space-unit) * 12);
+  /* 96px */
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -126,6 +143,21 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans selection:bg-emerald-500/30 antialiased;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-heading {
+    @apply font-heading tracking-tighter;
+    line-height: 0.9;
+  }
+
+  p {
+    @apply opacity-80;
+    line-height: 1.6;
   }
 }
