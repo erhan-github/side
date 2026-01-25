@@ -70,7 +70,26 @@ export default function Home() {
 
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-white/20">
+    <div className="min-h-screen bg-black text-white selection:bg-emerald-500/30 font-sans">
+      {/* Search Engine Dominance: JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Side",
+            "operatingSystem": "Universal",
+            "applicationCategory": "DeveloperApplication",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "Deterministic System of Record for modern software engineering teams."
+          })
+        }}
+      />
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
@@ -79,8 +98,8 @@ export default function Home() {
             <span className="font-black tracking-tighter text-xl uppercase italic text-white underline decoration-white/20 underline-offset-4">Sidelith</span>
           </Link>
           <div className="flex items-center gap-6 text-sm font-medium text-zinc-300">
-            <Link href="#forensics" className="hover:text-white transition-colors">Forensics & Strategy</Link>
-            <Link href="#caselogs" className="hover:text-white transition-colors">Case Logs</Link>
+            <Link href="#forensics" className="hover:text-white transition-colors">Forensics</Link>
+            <Link href="#trust" className="hover:text-white transition-colors">Trust Protocol</Link>
             <Link href="#install" className="hover:text-white transition-colors">Install</Link>
             <Link href="/pricing" className="hover:text-white transition-colors">Infrastructure</Link>
             <Link href="/login" className="flex items-center gap-2 text-white bg-white/10 px-5 py-2 rounded-full hover:bg-white/20 transition-all font-bold border border-white/5 uppercase tracking-widest text-[10px]">
@@ -98,17 +117,19 @@ export default function Home() {
             <span>The Strategic Kernel • Works alongside Cursor, Windsurf, Claude</span>
           </div>
 
-          <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-6 uppercase italic leading-[0.9] max-w-4xl">
-            The Only Tool<br />
-            That <span className="text-white">Remembers</span>.
+          <h1 className="text-7xl md:text-[10rem] font-black tracking-tighter mb-8 uppercase italic leading-[0.8] max-w-6xl font-heading text-white">
+            Absolute<br />
+            Integrity.
           </h1>
-          <p className="text-xl md:text-2xl text-zinc-300 mb-10 max-w-2xl mx-auto leading-relaxed font-medium">
-            Cursor writes code. Sidelith preserves the <span className="text-white border-b-2 border-white/20">why</span>.
-            Secure your project trajectory with a sovereign System of Record.
+          <p className="text-2xl md:text-3xl text-zinc-400 mb-12 max-w-3xl mx-auto leading-tight font-medium font-sans">
+            The professional <span className="text-white">System of Record</span> for modern engineering teams.
+            Side protects your project trajectory where standard agents fail.
           </p>
-          <p className="text-sm text-zinc-400 mb-12 -mt-6 uppercase tracking-[0.3em] font-black opacity-60">
-            The Sovereign Layer between IDE and Excellence.
-          </p>
+          <div className="flex items-center justify-center gap-12 text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60 mb-16">
+            <span>Local-First</span>
+            <span>Zero-Keylogging</span>
+            <span>Sovereign Storage</span>
+          </div>
 
           <div className="flex flex-col items-center gap-8">
             <div className="flex flex-col md:flex-row items-center gap-6">
@@ -116,17 +137,17 @@ export default function Home() {
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
                 <button
                   onClick={handleCopy}
-                  className="relative h-16 pl-8 pr-6 rounded-full bg-white text-black font-black hover:bg-zinc-100 transition-all flex items-center gap-3 text-lg uppercase italic tracking-tighter"
+                  className="relative h-16 pl-8 pr-6 rounded-full bg-emerald-500 text-black font-black hover:bg-emerald-400 transition-all flex items-center gap-3 text-lg uppercase italic tracking-tighter font-heading shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                 >
-                  <Terminal className="w-5 h-5 text-zinc-600" />
+                  <Terminal className="w-5 h-5 text-black" />
                   <span className="font-mono tracking-tight mr-2">pip install sidelith</span>
                   {copied ? (
-                    <div className="bg-emerald-500 text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1 animate-in fade-in slide-in-from-left-2 uppercase font-black">
+                    <div className="bg-white text-black text-[10px] px-2 py-1 rounded-full flex items-center gap-1 animate-in fade-in slide-in-from-left-2 uppercase font-black">
                       <Check className="w-3 h-3" /> Initialized
                     </div>
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors">
-                      <Copy className="w-4 h-4 text-zinc-400" />
+                    <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center group-hover:bg-black/20 transition-colors">
+                      <Copy className="w-4 h-4 text-black" />
                     </div>
                   )}
                 </button>
@@ -134,9 +155,9 @@ export default function Home() {
 
               <Link
                 href="/login"
-                className="h-16 px-10 rounded-full border border-white/10 bg-black flex items-center justify-center font-black hover:bg-white hover:text-black transition-all group uppercase tracking-widest text-sm italic"
+                className="h-16 px-10 rounded-full border border-white/10 bg-black flex items-center justify-center font-black hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-400 transition-all group uppercase tracking-widest text-sm italic font-heading"
               >
-                Launch Intelligence Registry <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                Authenticate Protocol <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
@@ -184,10 +205,89 @@ export default function Home() {
 
 
 
+        {/* The Sovereign Trust Protocol */}
+        <section id="trust" className="py-32 px-6 border-y border-white/5 bg-zinc-900/[0.15]">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-24 items-center">
+            <div className="space-y-8">
+              <h2 className="text-5xl font-black tracking-tighter uppercase italic leading-none font-heading text-white">
+                The Sovereign<br />Trust Protocol.
+              </h2>
+              <p className="text-xl text-zinc-400 leading-relaxed font-sans">
+                Side is built on deterministic truth. We don&apos;t ask for your trust; we prove it through architectural transparency.
+              </p>
+              <div className="space-y-6 pt-4">
+                {[
+                  { title: "Zero-Keylogging", desc: "We monitor filesystem events, not keystrokes. Side only hears what you commit to disk.", icon: Shield },
+                  { title: "Manual Trigger", desc: "No autonomous code mutation. Every fix requires a deliberate user action and explicit approval.", icon: Lock },
+                  { title: "Local Sovereignty", desc: "100% of code parsing happens on your machine. We sync structural metadata, never your source code.", icon: Globe }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4 group">
+                    <div className="mt-1 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/10 transition-colors">
+                      <item.icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold uppercase tracking-tight text-sm mb-1">{item.title}</h3>
+                      <p className="text-zinc-500 text-sm leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-emerald-500/5 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity" />
+              <div className="relative p-12 rounded-[2rem] bg-zinc-900/50 border border-white/5 backdrop-blur-3xl">
+                <div className="space-y-6 font-mono text-xs">
+                  <div className="flex items-center justify-between text-emerald-500/40 uppercase tracking-widest font-black">
+                    <span>Protocol Status</span>
+                    <span>v1.0.4</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-zinc-500">
+                      <span>Filesystem Monitor</span>
+                      <span className="text-emerald-500">ACTIVE</span>
+                    </div>
+                    <div className="flex justify-between text-zinc-500">
+                      <span>AES-256 Encryption</span>
+                      <span className="text-emerald-500">ENFORCED</span>
+                    </div>
+                    <div className="flex justify-between text-zinc-500">
+                      <span>Cloud PII Scrubbing</span>
+                      <span className="text-emerald-500">MANDATORY</span>
+                    </div>
+                  </div>
+                  <div className="h-px bg-white/5" />
+                  <div className="text-[10px] text-zinc-600 italic leading-relaxed">
+                    &quot;The user remains the final authority. Logic drift is flagged, never autonomous.&quot;
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* The Sovereign Tease */}
+        <section className="py-32 px-6 bg-black relative overflow-hidden">
+          <div className="absolute inset-x-0 h-px top-0 bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
+          <div className="max-w-4xl mx-auto text-center space-y-10">
+            <h2 className="text-5xl md:text-7xl font-black tracking-tighter uppercase italic leading-[0.9] font-heading">
+              &quot;I already saw you<br />nesting those if-statements.&quot;
+            </h2>
+            <p className="text-2xl text-zinc-400 font-medium max-w-2xl mx-auto leading-snug font-sans">
+              Side doesn&apos;t wait for help tickets. It detected your <span className="text-emerald-400">Logic Anomaly</span> 400ms after save.
+              The refactor is ready when you are.
+            </p>
+            <div className="pt-8 flex justify-center gap-16 text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">
+              <span className="flex items-center gap-2 border-b border-white/5 pb-2 hover:text-emerald-500 transition-colors cursor-default"><Eye className="w-3 h-3" /> Passive Observation</span>
+              <span className="flex items-center gap-2 border-b border-white/5 pb-2 hover:text-emerald-500 transition-colors cursor-default"><Shield className="w-3 h-3" /> Zero Distraction</span>
+              <span className="flex items-center gap-2 border-b border-white/5 pb-2 hover:text-emerald-500 transition-colors cursor-default"><Zap className="w-3 h-3" /> Instant Memory</span>
+            </div>
+          </div>
+        </section>
+
         {/* The Forensics (Formerly Difference) */}
         <section id="forensics" className="py-20 px-6 border-t border-white/10">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-4xl font-black tracking-tighter text-center mb-12 uppercase italic">Structural Intelligence</h2>
+            <h2 className="text-4xl font-black tracking-tighter text-center mb-12 uppercase italic">Deterministic Dominance</h2>
 
             <div className="flex flex-wrap justify-center gap-4 mb-16">
               {[
@@ -209,9 +309,9 @@ export default function Home() {
                   <tr className="border-b border-white/10">
                     <th className="py-4 px-6 text-zinc-400 font-medium tracking-wide text-sm uppercase">Capability</th>
                     <th className="py-4 px-6 text-center">
-                      <span className="text-white font-bold tracking-tight">Sidelith (Structure)</span>
+                      <span className="text-emerald-400 font-bold tracking-tight">The Sovereign Brain</span>
                     </th>
-                    <th className="py-4 px-6 text-center font-medium">Agents & IDEs (Execution)</th>
+                    <th className="py-4 px-6 text-center font-medium">Standard LLMs / IDEs</th>
                   </tr>
                 </thead>
                 <tbody className="text-base text-sm">
@@ -222,10 +322,10 @@ export default function Home() {
                     <td className="py-4 px-6 group-hover:pl-8 transition-all duration-300">
                       <div className="flex items-center gap-2">
                         <div>
-                          <p className="font-medium text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">
-                            The Strategic Registry <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <p className="font-medium text-white group-hover:text-emerald-400 transition-colors flex items-center gap-2">
+                            The Sovereign Vault <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </p>
-                          <p className="text-sm text-zinc-500">Immutable System of Record (SoR)</p>
+                          <p className="text-sm text-zinc-500">Immutable Strategic Registry</p>
                         </div>
                       </div>
                     </td>
@@ -734,9 +834,9 @@ export default function Home() {
         <section className="py-24 px-4 md:px-6 border-t border-white/10 bg-[#0c0c0e] relative overflow-hidden">
           <div className="max-w-[1200px] mx-auto relative z-10">
             <div className="text-center mb-10">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 text-white uppercase italic">The Lith of Your Project.</h2>
-              <p className="text-lg text-zinc-400 max-w-2xl mx-auto uppercase tracking-widest text-[10px] font-black">
-                Sidelith maintains a living <code className="text-zinc-300 bg-white/5 px-2 py-0.5 rounded border border-white/10 font-bold lowercase">MONOLITH.md</code> in your repo.
+              <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-white uppercase italic font-heading">Deterministic Architecture.</h2>
+              <p className="text-xl text-zinc-400 max-w-2xl mx-auto uppercase tracking-[0.2em] text-[10px] font-black font-sans">
+                Side maintains the ground-truth in a local <code className="text-emerald-400 bg-white/5 px-2 py-0.5 rounded border border-emerald-500/10 font-bold lowercase">MONOLITH.md</code>.
               </p>
             </div>
 
@@ -999,8 +1099,8 @@ export default function Home() {
         <section className="py-24 px-6 bg-zinc-900/20 border-t border-white/5">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-20">
-              <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4 uppercase italic">Sovereign Moats</h2>
-              <p className="text-zinc-400 max-w-2xl mx-auto uppercase tracking-widest text-[10px] font-black">Technical superiority is our only marketing strategy.</p>
+              <h2 className="text-5xl md:text-6xl font-black tracking-tighter mb-4 uppercase italic font-heading">Sovereign Moats.</h2>
+              <p className="text-zinc-500 max-w-2xl mx-auto uppercase tracking-[0.4em] text-[10px] font-black">Engineering excellence is the only marketing strategy.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

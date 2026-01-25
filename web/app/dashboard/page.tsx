@@ -66,10 +66,10 @@ export default async function DashboardPage() {
                 <div className="flex justify-between items-end border-b border-white/10 pb-6">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="w-3 h-3 bg-cyan-500 rounded-sm animate-pulse" />
-                            <span className="text-xs uppercase tracking-[0.3em] text-zinc-500 font-bold">System of Record</span>
+                            <div className="w-3 h-3 bg-emerald-500 rounded-sm animate-pulse" />
+                            <span className="text-xs uppercase tracking-[0.3em] text-zinc-500 font-bold">The Sovereign Intelligence</span>
                         </div>
-                        <h1 className="text-4xl font-bold tracking-tighter">Sidelith <span className="text-zinc-500 font-light text-2xl ml-2">Registry</span></h1>
+                        <h1 className="text-4xl font-bold tracking-tighter">Sidelith <span className="text-zinc-500 font-light text-2xl ml-2">Vault</span></h1>
                         <p className="text-zinc-400 mt-2 italic">Welcome back, {user.user_metadata.full_name || user.email}</p>
                     </div>
                     <div className="text-right">
@@ -84,8 +84,8 @@ export default async function DashboardPage() {
                         <Key className="w-32 h-32" />
                     </div>
                     <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <Terminal className="w-5 h-5 text-cyan-400" />
-                        Registry Credentials
+                        <Terminal className="w-5 h-5 text-emerald-400" />
+                        Sovereign Gateway
                     </h2>
                     <div className="space-y-3 mb-8 text-sm text-zinc-300 font-medium">
                         <p className="flex items-center gap-2 text-white">
@@ -111,11 +111,11 @@ export default async function DashboardPage() {
                 {/* Usage & Billing */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-zinc-900 border border-white/10 rounded-xl p-6">
-                        <h3 className="text-lg font-semibold mb-2">Registry Capacity</h3>
+                        <h3 className="text-lg font-semibold mb-2">Intelligence Throughput</h3>
                         <div className="mt-4">
                             <div className="flex justify-between text-sm mb-2 font-bold uppercase tracking-tighter">
-                                <span className="text-zinc-400">Registry Throughput</span>
-                                <span className="font-mono text-white">{tokens.toLocaleString()} SUs</span>
+                                <span className="text-zinc-400">Allocated Strategic Units</span>
+                                <span className="font-mono text-white">{tokens.toLocaleString()} SU</span>
                             </div>
                             <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
                                 <div
