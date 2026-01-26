@@ -76,6 +76,8 @@ Side follows the **"Local-First"** doctrine.
 *   All intelligence data is stored in `~/.side/local.db`.
 *   You own your data. You can purge it anytime.
 
+> **Note:** The `side sync` command currently simulates a connection to the 'Strategic Mesh' for demonstration purposes. No actual data is transmitted.
+
 ---
 
 *Built with extensive caffeine and ocean breeze at Arugam Bay.* 🌊
