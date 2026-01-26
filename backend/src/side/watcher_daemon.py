@@ -11,8 +11,8 @@ from watchdog.events import FileSystemEventHandler, FileSystemEvent
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(project_root))
 
-from side.forensic_audit.runner import ForensicAuditRunner
-from side.intel.intelligence_store import IntelligenceStore
+# from side.forensic_audit.runner import ForensicAuditRunner (DELETED)
+# from side.intel.intelligence_store import IntelligenceStore (DELETED)
 from side.storage.simple_db import SimplifiedDatabase
 from side.common.telemetry import monitor
 
@@ -70,11 +70,12 @@ class SidelithEventHandler(FileSystemEventHandler):
             print(f"\n⏳ [SILENT RESONANCE]: Discovering intent from outcomes...")
             # In a real implementation, we'd call a Heavy LLM here to analyze 
             # the diffs and commit messages from the last hour.
+            # Simplified for now:
             self.db.log_activity(
                 project_id=self.project_id,
-                type="SILENT_RESONANCE",
-                cost=50,
-                outcome="SUCCESS"
+                tool="watcher",
+                action="SILENT_RESONANCE",
+                cost=0
             )
             self.db.optimize()
         except Exception as e:
@@ -114,9 +115,10 @@ class SidelithEventHandler(FileSystemEventHandler):
             # Pulse check costs 5 SU
             self.db.log_activity(
                 project_id=self.project_id,
-                type=f"FILE_MOD:{rel_path}",
-                cost=5,
-                outcome=outcome_status
+                tool="watcher",
+                action=f"FILE_MOD:{rel_path}",
+                cost=0,
+                payload={"outcome": outcome_status}
             )
             
             # 3. Console Feedback
