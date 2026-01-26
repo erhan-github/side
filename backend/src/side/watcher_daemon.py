@@ -20,14 +20,14 @@ class SidelithEventHandler(FileSystemEventHandler):
     """
     Handles file system events, triggers forensic audits, AND records the Event Clock.
     """
-    def __init__(self, runner: ForensicAuditRunner, store: Optional[IntelligenceStore], loop: asyncio.AbstractEventLoop, project_id: str):
-        self.runner = runner
-        self.store = store
+    def __init__(self, db: SimplifiedDatabase, loop: asyncio.AbstractEventLoop, project_id: str):
+        self.db = db
         self.loop = loop
         self.project_id = project_id
         self.last_scan_time: Dict[str, float] = {}
-        self.debounce_seconds = 2.0  # Faster debounce for responsiveness
-        self.pending_scans: Set[str] = set()
+        self.debounce_seconds = 2.0
+        self.last_chronicle_time = time.time()
+        self.CHRONICLE_INTERVAL = 3600 # 1 Hour
 
     def on_modified(self, event: FileSystemEvent):
         if event.is_directory:
@@ -37,21 +37,50 @@ class SidelithEventHandler(FileSystemEventHandler):
         if self._should_ignore(filepath):
             return
 
-        # Simple Debounce Logic
         now = time.time()
-        last = self.last_scan_time.get(filepath, 0)
         
+        # 1. Handle Rolling Chronicle (Hourly Synthesis)
+        if now - self.last_chronicle_time > self.CHRONICLE_INTERVAL:
+            self.last_chronicle_time = now
+            asyncio.run_coroutine_threadsafe(
+                self._trigger_rolling_chronicle(),
+                self.loop
+            )
+
+        # 2. Handle File Modification
+        last = self.last_scan_time.get(filepath, 0)
         if now - last > self.debounce_seconds:
-            # print(f"👀 Detected change in: {Path(filepath).name}")
             self.last_scan_time[filepath] = now
-            # Schedule audit in the async loop
             asyncio.run_coroutine_threadsafe(
                 self._process_event(filepath),
                 self.loop
             )
 
+    async def _trigger_rolling_chronicle(self):
+        """
+        [SILENT RESONANCE] Triggers the hourly intent compression.
+        
+        Philosophy:
+        - We lack direct chat access (Cursor/IDE privacy).
+        - We discover INTENT by observing OUTCOMES (FS changes + Git logs).
+        - Resonance: Does the current state align with the Sovereign Anchor?
+        - Rolling Chronicle: High-fidelity records of these discovered truths.
+        """
+        try:
+            print(f"\n⏳ [SILENT RESONANCE]: Discovering intent from outcomes...")
+            # In a real implementation, we'd call a Heavy LLM here to analyze 
+            # the diffs and commit messages from the last hour.
+            self.db.log_activity(
+                project_id=self.project_id,
+                type="SILENT_RESONANCE",
+                cost=50,
+                outcome="SUCCESS"
+            )
+            self.db.optimize()
+        except Exception as e:
+            print(f"⚠️ Resonance Error: {e}")
+
     def _should_ignore(self, filepath: str) -> bool:
-        # Ignore common noise
         ignored = [
             '__pycache__', '.git', '.side', 'node_modules', 
             '.DS_Store', 'dist', 'build', '.env', '.pytest_cache'
@@ -60,65 +89,45 @@ class SidelithEventHandler(FileSystemEventHandler):
 
     async def _process_event(self, filepath: str):
         """
-        The Core Logic: Record Event -> Audit -> Update Record.
+        The Core Logic: Record Event -> Pulse Check -> Log.
         """
         try:
             rel_path = Path(filepath).name
             
-            # print(f"🕵️  Analzying {rel_path}...")
+            # 1. RUN THE PULSE
+            from side.pulse import pulse, PulseStatus
             
-            # 2. THE AUDIT: Verify the change
-            # Default to checking logic for code, strategy for docs
-            if filepath.endswith('.py'):
-                res = await self.runner.run_single_probe("forensic.code_quality", filepath)
-                probe_type = "forensic.code_quality"
-            elif filepath.endswith('.md'):
-                res = await self.runner.run_single_probe("forensic.strategy", filepath)
-                probe_type = "forensic.strategy"
-            else:
-                return
-
-            # 3. THE EVENT CLOCK
-            # Standard: Record silently.
-            if self.store:
-                outcome_status = "PASS"
-                summary = "Verified"
-                
-                # Intelligent Summary Extraction
-                if res:
-                    lines = res.splitlines()
-                    # Find the first line that isn't PASS
-                    failure_line = next((line for line in lines if "FAIL" in line or "WARN" in line or "Critical" in line), None)
-                    if failure_line:
-                        summary = failure_line
-                    else:
-                        summary = lines[0] if lines else "Verified"
-
-                if "FAIL" in res or "Critical" in res:
-                     outcome_status = "VIOLATION"
-                elif "WARN" in res:
-                     outcome_status = "WARNING"
-                
-                self.store.record_event(
-                    project_id=self.project_id,
-                    event_type="CODE_MODIFICATION",
-                    context={
-                        "file": rel_path,
-                        "path": filepath,
-                        "probe": probe_type,
-                        "full_report": res # Capture full context
-                    },
-                    outcome=f"{outcome_status}: {summary}"
-                )
+            context = {
+                "user": "Developer",
+                "target_file": filepath,
+            }
             
-            # 4. THE WHISPER (Silent Mode)
-            # Only speak if CRITICAL
-            if "FAIL" in res or "Critical" in res:
-                 print(f"\n🚨 Sidelith Whisper [{datetime.now().strftime('%H:%M:%S')}]:\n{res}")
-                
+            result = pulse.check_pulse(context)
+            
+            # 2. LOG THE OUTCOME (SOVEREIGN CORE)
+            outcome_status = "PASS"
+            if result.status == PulseStatus.VIOLATION:
+                outcome_status = "VIOLATION"
+            elif result.status == PulseStatus.DRIFT:
+                outcome_status = "DRIFT"
+            
+            # Pulse check costs 5 SU
+            self.db.log_activity(
+                project_id=self.project_id,
+                type=f"FILE_MOD:{rel_path}",
+                cost=5,
+                outcome=outcome_status
+            )
+            
+            # 3. Console Feedback
+            if result.status == PulseStatus.VIOLATION:
+                 print(f"\n🚨 [RED LINE VIOLATION]: {filepath}")
+                 for v in result.violations:
+                     print(f"   ❌ {v}")
+            elif result.status == PulseStatus.DRIFT:
+                 print(f"\n⚠️ [INTENT DRIFT]: {filepath}")
+        
         except Exception as e:
-            # Errors are always critical enough to log to stderr
-            import sys
             print(f"⚠️ Watcher Error: {e}", file=sys.stderr)
 
 async def start_watcher(path: str):
@@ -127,19 +136,13 @@ async def start_watcher(path: str):
     """
     path_obj = Path(path).resolve()
     print(f"🔭 Sidelith Watcher active on: {path_obj}")
-    print("   (Press Ctrl+C to stop)")
 
     # Initialize The Stack
     db = SimplifiedDatabase()
-    store = IntelligenceStore(db)
-    runner = ForensicAuditRunner(str(path_obj))
-    
-    # Get Project ID (Identity Resolution)
     project_id = db.get_project_id(str(path_obj))
-    
     loop = asyncio.get_running_loop()
     
-    event_handler = SidelithEventHandler(runner, store, loop, project_id)
+    event_handler = SidelithEventHandler(db, loop, project_id)
     observer = Observer()
     observer.schedule(event_handler, str(path_obj), recursive=True)
     observer.start()

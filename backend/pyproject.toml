@@ -45,6 +45,7 @@ dependencies = [
     "supabase>=2.4.0",
     "sentry-sdk[fastapi]>=2.0.0",
     "posthog-python>=3.5.0",
+    "openai>=1.0.0",
 ]
 
 [project.optional-dependencies]

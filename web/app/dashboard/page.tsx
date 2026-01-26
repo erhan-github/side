@@ -1,23 +1,62 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { Zap, Copy, Terminal, Key, Check } from "lucide-react";
-import Link from "next/link";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Zap, Activity, Clock, ShieldCheck } from "lucide-react";
 import { CheckoutButton } from "@/components/dashboard/CheckoutButton";
-import { AuthSync } from "@/components/auth/AuthSync";
+import { createClient } from "@/lib/supabase/client";
 
-export default async function DashboardPage() {
-    const supabase = await createClient();
+interface LedgerEntry {
+    type: string;
+    outcome: string;
+    timestamp: string;
+}
 
-    const {
-        data: { user },
-        error
-    } = await supabase.auth.getUser();
+interface Stats {
+    tokens_available: number;
+    tokens_used: number;
+    tier: string;
+}
 
-    // SOFT GATE: If no user on server, return a "skeleton" or loading state
-    // The <AuthSync /> component in the root layout will force a refresh 
-    // once the client-side cookie is detected.
-    if (error || !user) {
-        console.warn(`[DASHBOARD] Server-side auth missing. User: ${user ? 'FOUND' : 'MISSING'}. Error: ${error?.message || 'None'}`);
+export default function DashboardPage() {
+    const [ledger, setLedger] = useState<LedgerEntry[]>([]);
+    const [stats, setStats] = useState<Stats | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+
+    const supabase = createClient();
+
+    useEffect(() => {
+        async function fetchData() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) setUserEmail(user.email ?? null);
+
+            try {
+                // In production, these should be environment variables
+                const API_BASE = "http://localhost:8080/api";
+
+                const [ledgerRes, statsRes] = await Promise.all([
+                    fetch(`${API_BASE}/ledger`),
+                    fetch(`${API_BASE}/stats`)
+                ]);
+
+                if (ledgerRes.ok && statsRes.ok) {
+                    setLedger(await ledgerRes.json());
+                    setStats(await statsRes.json());
+                }
+            } catch (err) {
+                console.error("Failed to fetch Sovereign Ledger:", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchData();
+        // Poll every 30 seconds for live updates
+        const interval = setInterval(fetchData, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    if (loading) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
@@ -28,37 +67,6 @@ export default async function DashboardPage() {
         );
     }
 
-    console.log(`[DASHBOARD] Session Verified: User ID ${user.id}`);
-
-    // Fetch Profile for API Key
-    let { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-    // Auto-create profile if it doesn't exist (e.g., user signed up before trigger was live)
-    if (!profile) {
-        const { data: newProfile, error: createError } = await supabase
-            .from("profiles")
-            .insert({
-                id: user.id,
-                email: user.email,
-                api_key: `sk_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
-            })
-            .select()
-            .single();
-
-        if (!createError) {
-            profile = newProfile;
-        }
-    }
-
-    const apiKey = profile?.api_key || "Generating...";
-    const tier = profile?.tier || "free";
-    const tokens = profile?.tokens_monthly || 10000;
-    const tokensUsed = profile?.tokens_used || 0;
-
     return (
         <div className="min-h-screen bg-black text-white p-8">
             <div className="max-w-4xl mx-auto space-y-8">
@@ -66,82 +74,95 @@ export default async function DashboardPage() {
                 <div className="flex justify-between items-end border-b border-white/10 pb-6">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="w-3 h-3 bg-emerald-500 rounded-sm animate-pulse" />
-                            <span className="text-xs uppercase tracking-[0.3em] text-zinc-500 font-bold">The Sovereign Intelligence</span>
+                            <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
+                            <span className="text-xs uppercase tracking-[0.3em] text-zinc-500 font-bold">Sidelith Core</span>
                         </div>
-                        <h1 className="text-4xl font-bold tracking-tighter">Sidelith <span className="text-zinc-500 font-light text-2xl ml-2">Vault</span></h1>
-                        <p className="text-zinc-400 mt-2 italic">Welcome back, {user.user_metadata.full_name || user.email}</p>
-                    </div>
-                    <div className="text-right">
-                        <span className="text-xs uppercase tracking-[0.2em] text-zinc-400 font-black">Infrastructure Tier</span>
-                        <p className="font-black text-2xl uppercase tracking-tighter text-white">{tier}</p>
+                        <h1 className="text-4xl font-bold tracking-tighter">Strategic <span className="text-zinc-500 font-light text-2xl ml-2">Ledger</span></h1>
+                        <p className="text-zinc-400 mt-2 italic text-sm">User: {userEmail}</p>
                     </div>
                 </div>
 
-                {/* API Key Section */}
-                <div className="bg-zinc-900 border border-white/10 rounded-xl p-8 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                        <Key className="w-32 h-32" />
-                    </div>
-                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <Terminal className="w-5 h-5 text-emerald-400" />
-                        Sovereign Gateway
-                    </h2>
-                    <div className="space-y-3 mb-8 text-sm text-zinc-300 font-medium">
-                        <p className="flex items-center gap-2 text-white">
-                            <Check className="w-4 h-4 text-green-400" /> 100% Judicial Sync (Sanitized)
-                        </p>
-                        <p className="flex items-center gap-2">
-                            <Check className="w-4 h-4 text-green-400" /> Bidirectional Monolith Updates
-                        </p>
-                        <p className="flex items-center gap-2">
-                            <Check className="w-4 h-4 text-green-400" /> Sovereign Egress (GDPR Compliant)
-                        </p>
-                    </div>
-
-                    <div className="bg-black/50 border border-white/5 rounded-lg p-5 flex items-center justify-between font-mono text-sm group-hover:border-cyan-500/30 transition-colors">
-                        <div className="flex flex-col">
-                            <span className="text-xs text-zinc-600 mb-1 uppercase tracking-tighter">Secret ID</span>
-                            <span className="text-green-400 truncate mr-4 text-base">{apiKey}</span>
-                        </div>
-                        <div className="text-[10px] text-zinc-700 uppercase tracking-widest font-bold border border-zinc-800 px-2 py-1 rounded">Read Only</div>
-                    </div>
-                </div>
-
-                {/* Usage & Billing */}
+                {/* Main Utility Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-zinc-900 border border-white/10 rounded-xl p-6">
-                        <h3 className="text-lg font-semibold mb-2">Intelligence Throughput</h3>
-                        <div className="mt-4">
-                            <div className="flex justify-between text-sm mb-2 font-bold uppercase tracking-tighter">
-                                <span className="text-zinc-400">Allocated Strategic Units</span>
-                                <span className="font-mono text-white">{tokens.toLocaleString()} SU</span>
+                    {/* SU BALANCE CARD */}
+                    <div className="bg-zinc-900 border border-white/10 rounded-xl p-8 flex flex-col justify-between h-full">
+                        <div>
+                            <h3 className="text-xs uppercase tracking-widest text-zinc-500 font-black mb-4">Strategic Throughput</h3>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-6xl font-black tracking-tighter text-cyan-400">
+                                    {stats?.tokens_available.toLocaleString() ?? "---"}
+                                </span>
+                                <span className="text-zinc-600 font-bold uppercase tracking-tighter">SU</span>
                             </div>
-                            <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
+                            <p className="text-[10px] text-zinc-500 mt-2 uppercase tracking-widest font-bold">Available Strategic Units</p>
+                        </div>
+
+                        <div className="mt-8">
+                            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-cyan-500 transition-all duration-1000"
-                                    style={{ width: `${Math.min(100, (tokensUsed / tokens) * 100)}%` }}
+                                    style={{
+                                        width: `${Math.min(100, ((stats?.tokens_used ?? 0) / ((stats?.tokens_available ?? 1) + (stats?.tokens_used ?? 0))) * 100)}%`
+                                    }}
                                 />
                             </div>
-                            <p className="text-[10px] text-zinc-500 mt-2 uppercase tracking-widest font-black">Capacity Resets Feb 1st</p>
+                            <div className="flex justify-between mt-2 text-[10px] uppercase font-bold text-zinc-600">
+                                <span>{stats?.tokens_used.toLocaleString()} Used</span>
+                                <span>{stats?.tier ?? "Free"}</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 flex flex-col justify-center items-center text-center group">
+                    {/* UPGRADE CARD */}
+                    <div className="bg-zinc-900 border border-white/10 rounded-xl p-8 flex flex-col justify-center items-center text-center group">
                         <div className="w-12 h-12 bg-cyan-500/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-cyan-500/20 transition-all">
                             <Zap className="w-6 h-6 text-cyan-500" />
                         </div>
                         <h3 className="font-bold text-lg mb-4 uppercase tracking-tighter italic">Evolve to Pro</h3>
-                        <div className="space-y-2 mb-6 text-xs text-zinc-500">
-                            <p>• 5,000 SUs Monthly</p>
-                            <p>• Architectural Forensics</p>
-                            <p>• Priority Infrastructure</p>
-                        </div>
-
+                        <p className="text-xs text-zinc-500 mb-6">Unlimited Sovereign Watchers + Priority Forensic Compute.</p>
                         <CheckoutButton
-                            variantId={process.env.LEMONSQUEEZY_VARIANT_ID_PRO!}
+                            variantId={process.env.NEXT_PUBLIC_VARIANT_ID_PRO || ""}
                             label="EVOLVE NOW ($20)"
                         />
+                    </div>
+                </div>
+
+                {/* TRANSACTION LEDGER */}
+                <div className="bg-zinc-900 border border-white/10 rounded-xl p-8">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xs uppercase tracking-widest text-zinc-500 font-black">Execution Log</h3>
+                        <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-bold tracking-widest">
+                            <Clock className="w-3 h-3" /> LIVE PULSE
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        {ledger.length > 0 ? (
+                            ledger.map((tx, i) => (
+                                <div key={i} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0 hover:bg-white/[0.02] -mx-4 px-4 rounded-lg transition-colors">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-2 h-2 rounded-full ${tx.outcome === "PASS" ? "bg-emerald-500" : "bg-red-500"}`} />
+                                        <div>
+                                            <p className="text-sm font-bold text-white uppercase tracking-tighter">{tx.type}</p>
+                                            <p className="text-[10px] text-zinc-500 uppercase">
+                                                {new Date(tx.timestamp).toLocaleTimeString()} · {new Date(tx.timestamp).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm font-mono text-zinc-400">-5 SU</p>
+                                        <p className={`text-[10px] uppercase font-black ${tx.outcome === "PASS" ? "text-emerald-400" : "text-red-400"}`}>
+                                            {tx.outcome}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="py-12 text-center">
+                                <Activity className="w-8 h-8 text-zinc-800 mx-auto mb-4" />
+                                <p className="text-xs text-zinc-600 uppercase tracking-widest font-bold">No pulse events detected</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

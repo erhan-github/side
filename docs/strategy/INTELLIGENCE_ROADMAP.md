@@ -1,6 +1,6 @@
-# Self-Healing Intelligence Roadmap: The Path to Level 5
+# Strategic Intelligence Roadmap: The Path to the Sovereign Brain 🏛️
 
-> **Objective**: Advance the Side Intelligence Engine from a "Passive Auditor" to a "Sovereign Remediation Engine."
+> **Objective**: Advance the Side Intelligence Engine from a "Passive Observability Layer" to a "Sovereign Remediation Engine."
 
 ## 1. Evolution Levels (The IQ Scale)
 
@@ -8,9 +8,9 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **Level 1** | **Static Audit** | Basic regex/AST checks for syntax errors. | **The Eyes** (Sensing) | ✅ DONE |
 | **Level 2** | **Tactical Logic** | High-fidelity forensics + semantic drift. | **The Brain** (Cognition) | ✅ DONE |
-| **Level 3** | **Integrated Loop** | Strategy connected to Monolith & Memory. | **The Nervous System** | 🟡 ACTIVE |
-| **Level 4** | **Feedback-Driven** | Learning from user behavior/choices. | **The Soul** (Value/ROI) | 🚀 NEXT |
-| **Level 5** | **Self-Healing** | Autonomous remediation & self-correction. | **The Hands** (Execution)| 🔮 VISION |
+| **Level 3** | **System of Record** | Strategy connected to Monolith & Memory. | **The Nervous System** | 🟢 ACTIVE |
+| **Level 4** | **Feedback-Driven** | Learning from user behavior/choices. | **The Soul** (Alignment) | 🚀 Q2 2026 |
+| **Level 5** | **Autonomous** | Autonomous remediation & self-correction. | **The Hands** (Execution)| 🔮 VISION |
 
 ---
 

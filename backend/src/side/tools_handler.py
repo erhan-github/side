@@ -11,8 +11,6 @@ from typing import Any
 
 from mcp.types import TextContent
 
-from side.storage.simple_db import SimplifiedDatabase
-from side.services.billing import BillingService, SystemAction
 from side.tools import handle_tool_call
 
 logger = logging.getLogger("side-mcp")
@@ -38,44 +36,12 @@ async def call_tool_handler(server, name: str, arguments: dict[str, Any] | None,
     start_time = time.time()
     logger.info(f"🔧 [GOD MODE EXECUTING] {name}")
     
-    # [Billing] Calculate Cost
-    TOOL_COST_MAP = {
-        "architectural_decision": SystemAction.STRATEGY_CHAT,
-        "strategic_review": SystemAction.SCAN_DEEP,
-        "simulate": SystemAction.SCAN_DEEP,
-        "audit_deep": SystemAction.SCAN_DEEP,
-    }
-    
-    project_id = SimplifiedDatabase.get_project_id()
-    billing = BillingService(SimplifiedDatabase()) # Lightweight init
-    action = TOOL_COST_MAP.get(name)
-
-    if action:
-        # [Traffic Cop] Rate Limiting (Leaky Bucket)
-        # Prevent runaway scripts from draining user balance in seconds.
-        # Limit: 1 request per 2 seconds for expensive tools.
-        if not hasattr(server, "_last_action_time"):
-            server._last_action_time = 0
-            
-        now = time.time()
-        if now - server._last_action_time < 2.0:
-            return [TextContent(type="text", text="⏳ **Traffic Cop**: Slow down! Strategic analysis takes time. (Rate Limit: 1 req/2s)")]
-        
-        server._last_action_time = now
-
-        if not billing.can_afford(project_id, action):
-             cost = billing.get_cost(action)
-             balance = billing.db.get_token_balance(project_id)
-             return [TextContent(type="text", text=f"❌ **Insufficient Strategic Units**: '{name}' costs {cost} SUs. You have {balance['balance']}. Upgrade to Pro for more.")]
-
+    # Billing logic removed (Sidelith Prime is Free/Open Core)
     try:
         # Re-load env locally for internal logic ONLY if needed, 
         # but keep it out of the global process env to prevent shell leaks.
-        if name == "purge_project":
-            db = SimplifiedDatabase()
-            success = db.purge_project_data(project_id, confirm=True) # Explicit confirm enforced
-            result = f"🛡️ **Kill Switch Triggered**: Purged project `{project_id}`." if success else "❌ Purge failed."
-        elif name == "audit_deep":
+    try:
+        if name == "audit_deep":
              # Execute global forensics tool
              query = arguments.get("query", "general audit") if arguments else "general audit"
              report = await _forensics_tool.scan_codebase(query)
@@ -90,24 +56,14 @@ async def call_tool_handler(server, name: str, arguments: dict[str, Any] | None,
         except Exception as mem_err:
              logger.warning(f"Memory Intercept Failed: {mem_err}")
 
-        # [Billing] Charge if successful
-        if action:
-            new_balance = billing.charge(project_id, action, name, arguments)
-            logger.info(f"💰 Charged {billing.get_cost(action)} SUs. New Balance: {new_balance}")
-
+        # Billing charge removed
         elapsed = time.time() - start_time
         logger.info(f"✅ {name} SUCCESS ({elapsed:.3f}s)")
         
         # [The Live Wire]
         # Notify Client that Monolith and Activity Log have changed.
         try:
-             if hasattr(server, "request_context"):
-                 await server.request_context.session.send_resource_updated("side://monolith")
-                 await server.request_context.session.send_resource_updated("side://activity")
-                 await server.request_context.session.send_resource_updated("side://profile")
-        except Exception:
-            pass # Fail silently if notifications not supported yet
-
+        # Monolith notification removed
         return [TextContent(type="text", text=result)]
     except Exception as err:
         logger.error(f"❌ {name} ERROR: {str(err)}\n{traceback.format_exc()}")

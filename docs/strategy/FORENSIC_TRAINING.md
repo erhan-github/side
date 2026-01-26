@@ -1,6 +1,6 @@
-# Training Guide: Forensic Accuracy
+# Training Guide: Forensic Fidelity 🏛️
 
-To "train" the Side Forensic Engine and eliminate false positives, we follow a three-level strategy. This moves the tool from simple pattern matching to deep logic awareness.
+To ensure Sidelith remains the **System of Record** for your project, the Forensic Engine must prioritize accuracy over volume. This guide explains how to eliminate "Speculative Noise" and move from pattern matching to **Deterministic Analysis**.
 
 ## Level 1: Heuristic Refinement (Regex)
 The fastest way to train the tool is to refine the regex patterns in `forensic_audit/probes/`.
@@ -8,11 +8,11 @@ The fastest way to train the tool is to refine the regex patterns in `forensic_a
 - **Action**: Update regex to be more specific (e.g., matching prefixes like `db.` or `session.`).
 - **Example**: I just updated `PERF-001` to ignore standard dictionary `.get()` calls by requiring specific precursors (`db.`, `session.`, etc.).
 
-## Level 2: Semantic Awareness (AST)
-For high accuracy, we "train" the tool to use the Abstract Syntax Tree (AST). This allows the tool to understand the *intent* and *context* of code rather than just its text.
+## Level 2: Semantic Awareness (The Context Graph)
+For high fidelity, the tool uses the Abstract Syntax Tree (AST) to understand the *logical topology* of the project. This allows the system to distinguish between generic code and **Business Intent**.
 
-- **Action**: Add logic to `side.intel.analyzers.python.PythonAnalyzer` (or other language analyzers).
-- **Benefit**: Distinguishes between `my_dict.get()` (Safe) and `db.users.get()` (Risky N+1) by inspecting the object type.
+- **Action**: Add logic to `side.intel.analyzers.python.PythonAnalyzer`.
+- **Benefit**: Distinguishes between `my_dict.get()` (Safe) and `db.users.get()` (Architectural Risk) by inspecting the object type and cross-referencing with the **Sovereign Context Graph**.
 
 ## Level 3: Regression Testing (The "Training Set")
 The most powerful way to train the engine is to build a "Training Set" of positive and negative examples.

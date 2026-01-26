@@ -24,3 +24,8 @@ archive/
 *.sqlite
 *.db
 backend/task.md
+
+# Classified Strategy (Sovereign Level)
+private/
+docs/strategy/
+docs/SOVEREIGN_*

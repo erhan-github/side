@@ -1,2 +1,4 @@
-fastmcp
-sqlmodel
+fastapi==0.100.0
+redis==5.0.0
+pytest
+uvicorn
