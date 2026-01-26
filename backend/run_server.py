@@ -8,7 +8,8 @@ src_path = str(Path(__file__).parent / "src")
 if src_path not in sys.path:
     sys.path.append(src_path)
 
-from side.server_fast import mcp
+# FIXED: Pointing to Sidelith Prime MCP Server
+from side.mcp_server import mcp
 
 if __name__ == "__main__":
     # Get deployment configuration
