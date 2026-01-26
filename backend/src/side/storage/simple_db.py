@@ -1686,6 +1686,48 @@ class SimplifiedDatabase:
 
             return stats
 
+    def discover_sovereign_nodes(self) -> List[Path]:
+        """
+        [Unicorn Strategy] Find all Sovereign nodes on the local machine.
+        """
+        side_root = Path.home() / ".side"
+        return list(side_root.glob("*.db"))
+
+    def get_global_stats(self) -> Dict[str, Any]:
+        """
+        Aggregate stats across all discovered nodes.
+        """
+        nodes = self.discover_sovereign_nodes()
+        total_size = 0
+        total_profiles = 0
+        node_details = []
+        
+        for node in nodes:
+            try:
+                # Basic size check first
+                size = node.stat().st_size
+                total_size += size
+                
+                # Check profile count if possible
+                with sqlite3.connect(node) as conn:
+                    conn.row_factory = sqlite3.Row
+                    count = conn.execute("SELECT COUNT(*) FROM profiles").fetchone()[0]
+                    total_profiles += count
+                    node_details.append({
+                        "name": node.name,
+                        "size_mb": size / (1024 * 1024),
+                        "profiles": count
+                    })
+            except Exception:
+                continue
+                
+        return {
+            "total_nodes": len(nodes),
+            "total_size_mb": total_size / (1024 * 1024),
+            "total_profiles": total_profiles,
+            "nodes": node_details
+        }
+
     # =========================================================================
     # PRIVACY CONTROLS - User data ownership
     # =========================================================================
