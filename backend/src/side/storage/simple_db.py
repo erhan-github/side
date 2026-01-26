@@ -16,7 +16,27 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Generator, Optional, List
+from dataclasses import dataclass, field
+
+@dataclass
+class Article:
+    """
+    Article/Intelligence Item.
+    Replaces legacy IntelligenceItem.
+    """
+    id: str
+    title: str
+    url: str
+    source: str
+    fetched_at: datetime
+    description: Optional[str] = None
+    author: Optional[str] = None
+    published_at: Optional[datetime] = None
+    tags: List[str] = field(default_factory=list)
+    domain: Optional[str] = None
+    meta: dict = field(default_factory=dict)
+
 
 
 from side.utils.helpers import safe_get
@@ -1455,14 +1475,14 @@ class SimplifiedDatabase:
         with self._connection() as conn:
             conn.execute(
                 """
-                INSERT INTO goals (id, title, description, due_date, parent_id, priority, goal_type)
+                INSERT INTO plans (id, title, description, due_date, parent_id, priority, type)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     title = excluded.title,
                     description = excluded.description,
                     due_date = excluded.due_date,
                     priority = excluded.priority,
-                    goal_type = excluded.goal_type
+                    type = excluded.type
                 """,
                 (goal_id, title, description, due_date, parent_id, priority, goal_type),
             )
@@ -1514,13 +1534,14 @@ class SimplifiedDatabase:
                 (cutoff,)
             ).fetchall()
             return [dict(row) for row in rows]
+            return [dict(row) for row in rows]
         with self._connection() as conn:
-            # Goals that are pending and created more than X days ago
-            # In future: track last_activity timestamp
+            # Goals that are pending and created more than X days ago (mapped to plans table where type='goal')
             rows = conn.execute(
                 """
-                SELECT * FROM goals 
-                WHERE status = 'pending' 
+                SELECT * FROM plans 
+                WHERE type = 'goal' 
+                AND status NOT IN ('done', 'completed') 
                 AND created_at < ?
                 ORDER BY created_at
                 """,
@@ -1534,7 +1555,7 @@ class SimplifiedDatabase:
         # In future: add last_activity column
         with self._connection() as conn:
             cursor = conn.execute(
-                "UPDATE goals SET created_at = ? WHERE id = ?",
+                "UPDATE plans SET created_at = ? WHERE id = ? AND type = 'goal'",
                 (datetime.now(timezone.utc).isoformat(), goal_id),
             )
             conn.commit()
@@ -1572,9 +1593,9 @@ class SimplifiedDatabase:
             rows = conn.execute(
                 """
                 SELECT c.*, g.title as goal_title FROM checkpoints c
-                JOIN goals g ON c.goal_id = g.id
+                JOIN plans g ON c.goal_id = g.id
                 WHERE c.enabled = 1 
-                AND g.status = 'pending'
+                AND g.status NOT IN ('done', 'completed')
                 AND (c.last_asked IS NULL OR 
                      (c.frequency = 'daily' AND c.last_asked < date('now', '-1 day')) OR
                      (c.frequency = 'weekly' AND c.last_asked < date('now', '-7 days')))
@@ -1596,7 +1617,7 @@ class SimplifiedDatabase:
         """List goals filtered by type (dream/milestone/goal/task)."""
         with self._connection() as conn:
             rows = conn.execute(
-                "SELECT * FROM goals WHERE goal_type = ? ORDER BY created_at",
+                "SELECT * FROM plans WHERE type = ? ORDER BY created_at",
                 (goal_type,)
             ).fetchall()
             return [dict(row) for row in rows]
