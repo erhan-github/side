@@ -36,35 +36,29 @@ async def call_tool_handler(server, name: str, arguments: dict[str, Any] | None,
     start_time = time.time()
     logger.info(f"🔧 [GOD MODE EXECUTING] {name}")
     
-    # Billing logic removed (Sidelith Prime is Free/Open Core)
     try:
-        # Re-load env locally for internal logic ONLY if needed, 
-        # but keep it out of the global process env to prevent shell leaks.
-    try:
+        # Billing logic removed (Sidelith Prime is Free/Open Core)
         if name == "audit_deep":
-             # Execute global forensics tool
-             query = arguments.get("query", "general audit") if arguments else "general audit"
-             report = await _forensics_tool.scan_codebase(query)
-             result = report
+            # Execute global forensics tool
+            query = arguments.get("query", "general audit") if arguments else "general audit"
+            report = await _forensics_tool.scan_codebase(query)
+            result = report
         else:
             result = await handle_tool_call(name, arguments or {})
         
         # [Memory] Intercept and Memorize (Fire-and-Forget)
         try:
-             # Use the global interceptor initialized at module level
-             asyncio.create_task(_memory_interceptor.intercept(name, arguments, project_id, result))
+            # Note: project_id should be extracted from arguments if available
+            project_id = arguments.get("project_id", "default") if arguments else "default"
+            asyncio.create_task(_memory_interceptor.intercept(name, arguments, project_id, result))
         except Exception as mem_err:
-             logger.warning(f"Memory Intercept Failed: {mem_err}")
+            logger.warning(f"Memory Intercept Failed: {mem_err}")
 
-        # Billing charge removed
         elapsed = time.time() - start_time
         logger.info(f"✅ {name} SUCCESS ({elapsed:.3f}s)")
         
-        # [The Live Wire]
-        # Notify Client that Monolith and Activity Log have changed.
-        try:
-        # Monolith notification removed
         return [TextContent(type="text", text=result)]
+
     except Exception as err:
         logger.error(f"❌ {name} ERROR: {str(err)}\n{traceback.format_exc()}")
         return [TextContent(type="text", text=f"Side Forensic Error: {str(err)}")]

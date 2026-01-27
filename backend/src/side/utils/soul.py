@@ -58,11 +58,17 @@ class StrategicSoul:
             "cq": " This introduces technical debt and reduces the long-term maintainability of the codebase.",
             "logic": " This introduces unpredictable state transitions and degrades system reliability.",
             "arch": " This violates structural constraints and complicates future system scaling.",
-            "system": " This degrades system consistency and impacts long-term reliability."
+            "cq": " This introduces technical debt and reduces the long-term maintainability of the codebase.",
+            "logic": " This introduces unpredictable state transitions and degrades system reliability.",
+            "arch": " This violates structural constraints and complicates future system scaling.",
+            "system": " This degrades system consistency and impacts long-term reliability.",
+            "term": " This indicates runtime instability and disrupts the local development inner-loop."
         }
         impact = impacts.get(dim_key, impacts["system"])
         if "CQ-" in result.check_id:
              impact = impacts["cq"]
+        if "TERM-" in result.check_id:
+             impact = impacts["term"]
 
         return f"{prefix}{body}{impact}"
 
@@ -91,6 +97,8 @@ class StrategicSoul:
              return "I've detected a sovereignty risk."
         if "CQ-" in result.check_id or "Logic" in result.check_id:
              return "I've identified a logic refinement."
+        if "TERM-" in result.check_id or "Terminal" in result.check_name:
+             return "I've analyzed your runtime velocity."
         return "I've detected a technical improvement."
 
     @staticmethod

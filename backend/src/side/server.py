@@ -6,6 +6,10 @@ Agents to interact with the Sidelith Sovereign Core.
 
 Compliance: Model Context Protocol (MCP) standards.
 Philosophy: Natural platform integration over custom extensions.
+
+HANDOVER NOTE: Resource URIs use the 'side://' scheme.
+- side://ledger/recent: Tail of the Sovereign Ledger.
+- side://profile/status: Current project technical identity.
 """
 
 from typing import List, Optional
@@ -51,13 +55,13 @@ def record_strategic_intent(project_id: str, type: str, outcome: str = "PASS", c
     Record a strategic intent or action into the Sovereign Ledger.
     
     Args:
-        project_id: The ID of the current project.
-        type: The type of event (e.g. 'DOC_REFINE', 'AUTH_SHIFT').
-        outcome: The outcome status ('PASS', 'VIOLATION', 'DRIFT').
-        cost: The SU cost for this action.
+        project_id: The unique ID of the current project context.
+        type: Strategic event category (e.g., 'CORE_REFACT', 'AUTH_SHIFT').
+        outcome: Strategic result ('PASS', 'VIOLATION', 'DRIFT').
+        cost: Strategic Unit (SU) cost weight.
     """
     try:
-        db.log_activity(project_id=project_id, type=type, cost=cost, outcome=outcome)
+        db.log_activity(project_id=project_id, tool=type, action="record_intent", cost=cost, payload={"outcome": outcome})
         return f"Sovereign intent recorded: {type} -> {outcome}"
     except Exception as e:
         return f"Failed to record intent: {e}"

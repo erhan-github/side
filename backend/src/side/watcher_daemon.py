@@ -14,7 +14,7 @@ sys.path.append(str(project_root))
 # from side.forensic_audit.runner import ForensicAuditRunner (DELETED)
 # from side.intel.intelligence_store import IntelligenceStore (DELETED)
 from side.storage.simple_db import SimplifiedDatabase
-from side.common.telemetry import monitor
+# from side.common.telemetry import monitor (DELETED)
 
 class SidelithEventHandler(FileSystemEventHandler):
     """
@@ -103,6 +103,13 @@ class SidelithEventHandler(FileSystemEventHandler):
                 "target_file": filepath,
             }
             
+            # 1.1 Read file content for pulse check
+            try:
+                content = Path(filepath).read_text()
+                context["file_content"] = content
+            except Exception:
+                pass
+
             result = pulse.check_pulse(context)
             
             # 2. LOG THE OUTCOME (SOVEREIGN CORE)
@@ -148,6 +155,11 @@ async def start_watcher(path: str):
     observer = Observer()
     observer.schedule(event_handler, str(path_obj), recursive=True)
     observer.start()
+
+    # 3. START TERMINAL MONITOR
+    from side.terminal.monitor import TerminalMonitor
+    term_monitor = TerminalMonitor()
+    asyncio.create_task(term_monitor.start())
 
     try:
         while True:

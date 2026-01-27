@@ -67,10 +67,11 @@ class CleanupScheduler:
 
         try:
             deleted = self.db.cleanup_expired_data()
+            pruned_activities = self.db.prune_activities(days=30)
 
             total = sum(deleted.values())
             logger.info(
-                f"Cleanup complete: {total} records deleted "
+                f"Cleanup complete: {total} records expired, {pruned_activities} activities pruned. "
                 f"(work_context: {deleted.get('work_context', 0)}, "
                 f"query_cache: {deleted.get('query_cache', 0)}, "
                 f"articles: {deleted.get('articles', 0)})"

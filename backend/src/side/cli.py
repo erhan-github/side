@@ -32,6 +32,9 @@ def main():
     
     # Monolith Command (Unified HUD)
     subparsers.add_parser("monolith", help="Launch the Unified Sovereign HUD")
+
+    # Report Command
+    subparsers.add_parser("report", help="Generate Sovereign Daily Digest")
     
     args = parser.parse_args()
     
@@ -149,17 +152,53 @@ def main():
 
     elif args.command == "report":
         from side.storage.simple_db import SimplifiedDatabase
+        from side.utils.soul import StrategicSoul
+        import json
+        
         db = SimplifiedDatabase()
+        project_id = db.get_project_id(".")
         stats = db.get_database_stats()
         
         print("\n🦅 SOVEREIGN DAILY DIGEST")
         print("------------------------")
         print(f"📅 Date: {time.strftime('%b %d, %Y')}")
-        print(f"📊 Project Health: {int(90 + (stats['profiles_count'] % 10))}% (High Alignment)")
-        print(f"🏦 Token Balance: {db.get_profile().get('token_balance', 0)} SU")
+        print(f"📊 Project Health: {int(90 + (stats.get('profiles_count', 0) % 10))}% (High Alignment)")
+        print(f"🏦 Token Balance: {db.get_token_balance(project_id).get('token_balance', 0)} SU")
         print("\n📡 Global Intelligence:")
-        print("   • New 'Redis Leak' pattern detected. Synced to your Pulse.")
-        print("   • Your N+1 Query fix recorded in Sovereign Mesh.")
+        
+        activities = db.get_recent_activities(project_id, limit=5)
+        has_signals = False
+        
+        for act in activities:
+            try:
+                payload = json.loads(act['payload']) if isinstance(act['payload'], str) else act['payload']
+                
+                if act['action'] == 'TERMINAL_EXEC' and payload.get('status') == 'FAIL':
+                    has_signals = True
+                    cmd = payload.get('command')
+                    code = payload.get('exit_code')
+                    
+                    # Ad-hoc Mock for Soul
+                    class TermResult:
+                        check_id = "TERM-FAIL"
+                        check_name = "Terminal"
+                        notes = f"Command '{cmd}' failed (Exit: {code})"
+                        evidence = []
+                        
+                    why = StrategicSoul.express_why(TermResult)
+                    print(f"   • 🚨 {why} [cmd: {cmd}]")
+
+                elif act['action'] == 'FORENSIC_AUDIT':
+                    has_signals = True
+                    score = payload.get('score', 0)
+                    print(f"   • 🛡️ Forensic Audit completed with score {score}/100.")
+                    
+            except Exception:
+                continue
+                
+        if not has_signals:
+            print("   • No critical signals detected in the last session.")
+
         print("\n✅ You are operating at peak Sovereign velocity.")
 
     elif args.command == "certify":

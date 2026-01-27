@@ -1,13 +1,13 @@
 """
-Formatting utilities for Side tool output.
+Sidelith UX Core - The "Killer Features" Formatting Hub.
 
-Implements the "Killer Features UX Strategy" patterns:
-- Box-drawing templates
-- Confidence scores
-- Follow-up hooks
-- Curiosity gap presentation
+Implements the professional branding and presentation patterns for tool outputs:
+- Strategic Box-Drawing: Consistent framing for all diagnostic reports.
+- Confidence Scoring: Visual probability and risk metrics.
+- Strategy Hooks: Dynamic follow-up prompts for continuous engagement.
+- Curiosity Gap: Strategic info-density management.
 
-Marketing Terminology:
+Branding Terminology:
 - Strategic Verdict (decide tool)
 - Strategic IQ Check (strategy tool)
 - Mission Control (plan tool)
@@ -232,7 +232,6 @@ def format_strategy(
     dimensions: dict,
     top_focus: str,
     llm_context: str = "",
-    articles: Optional[list] = None,
     elapsed: float = 0.0,
     follow_up: str = "Run full forensic audit?"
 ) -> str:
@@ -244,7 +243,6 @@ def format_strategy(
         dimensions: Dict of dimension scores
         top_focus: Main focus area
         llm_context: Deep strategic insight from LLM
-        articles: Relevant signals
         elapsed: Response time
         follow_up: Next step prompt
     """
@@ -275,17 +273,6 @@ def format_strategy(
         output += box_line("⚡ THE STRATEGIC VIBE:")
         for line in llm_context.split("\n")[:3]:
             output += box_line(f"  {line.strip()}")
-    
-    # Articles if available
-    if articles and len(articles) > 0:
-        output += box_empty()
-        output += box_line("📖 DOMAIN SIGNALS:")
-        for i, article in enumerate(articles[:2], 1):
-            if isinstance(article, dict):
-                title = article.get("title", "Untitled")[:35]
-            else:
-                title = getattr(article, "title", str(article))[:35]
-            output += box_line(f"  {i}. {title}...")
     
     output += box_line("📎 Strategy saved to strategic_ledger.md")
     if elapsed > 0:

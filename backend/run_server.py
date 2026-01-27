@@ -16,11 +16,12 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     transport = os.getenv("MCP_TRANSPORT", "stdio")
     
-    # [SCENARIO 77] Force SSE on Railway to ensure port binding
+    # [Deployment] Railway Detection
+    # Force SSE transport on Railway to ensure proper port binding and health checks.
     is_railway = any(os.getenv(k) for k in ["RAILWAY_ENVIRONMENT_NAME", "RAILWAY_STATIC_URL", "RAILWAY_PUBLIC_DOMAIN"])
     
     if transport == "sse" or is_railway:
-        print(f"🚀 Starting Side Intelligence over SSE on port {port} and binding to 0.0.0.0...")
+        print(f"🚀 Starting Sidelith over SSE on port {port}...")
         mcp.run(
             transport="sse", 
             port=port, 
@@ -28,5 +29,5 @@ if __name__ == "__main__":
             uvicorn_config={"timeout_graceful_shutdown": 30}
         )
     else:
-        # Default to stdio for local MCP use
+        # Default to stdio for local MCP integration (Cursor/VSCode)
         mcp.run(transport="stdio")

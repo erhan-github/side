@@ -1,7 +1,7 @@
 """
-sideMCP Configuration.
+Sidelith Configuration Engine.
 
-Central configuration for the sideMCP system.
+Centralized configuration for the Sidelith Sovereign SDK.
 """
 
 import os
@@ -25,10 +25,6 @@ class SideConfig:
     supabase_anon_key: str | None = None
     supabase_service_role_key: str | None = None
 
-    # Article fetching
-    articles_per_source: int = 50  # How many articles to fetch per source
-    fetch_interval_hours: int = 6  # How often to fetch new articles
-    keep_articles_days: int = 30  # How long to keep articles
 
     # LLM Configuration - Using Groq for fast, free inference (January 2026)
     llm_provider: str = "groq"
@@ -41,9 +37,6 @@ class SideConfig:
     llm_lite_model: str = "llama3-8b-8192"
     llm_api_key: str | None = None  # Set via GROQ_API_KEY env var
 
-    # Scoring
-    min_relevance_score: float = 40.0  # Minimum score to consider relevant
-    use_llm_for_scoring: bool = True  # Use LLM for scoring (vs heuristics)
 
     # Sources
     enabled_sources: list[str] = field(
