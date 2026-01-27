@@ -44,19 +44,6 @@ class OperationalStore:
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_query_cache_expires ON query_cache(expires_at)")
 
-        # ─────────────────────────────────────────────────────────────
-        # OPERATIONAL TABLE: XP_LEDGER
-        # ─────────────────────────────────────────────────────────────
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS xp_ledger (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                project_id TEXT,
-                action_type TEXT,
-                xp_amount INTEGER,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_xp_project ON xp_ledger(project_id)")
 
     def get_version(self) -> float:
         """Get current database version."""

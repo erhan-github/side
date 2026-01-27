@@ -72,8 +72,8 @@ Write a SELF-CONTAINED Python script (using pytest) that attempts to REPRODUCE t
         logger.info(f"🧬 Generating Red Test for {issue_type}...")
         response = await self.llm.complete_async(
             messages=[{"role": "user", "content": prompt}],
-            system_prompt="You are a QA automation expert. Output only valid Python code.",
-            temperature=0.2
+            system_prompt="You are a Forensic Code Auditor. Your output must be a strictly compliant, standalone Python reproduction script. No chatter.",
+            temperature=0.1
         )
         
         return self._clean_code(response)

@@ -50,33 +50,10 @@ class IdentityStore:
                 external_apis INTEGER DEFAULT 0,
                 git_monitoring INTEGER DEFAULT 1,
                 first_run_complete INTEGER DEFAULT 0,
-                gamification_enabled INTEGER DEFAULT 1,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # ─────────────────────────────────────────────────────────────
-        # GAMIFICATION LAYER - Identity Persistence
-        # ─────────────────────────────────────────────────────────────
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS user_stats (
-                project_id TEXT PRIMARY KEY,
-                total_xp INTEGER DEFAULT 0,
-                level INTEGER DEFAULT 1,
-                last_action_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS achievements (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                project_id TEXT NOT NULL,
-                badge_id TEXT NOT NULL,
-                unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                metadata JSON,
-                UNIQUE(project_id, badge_id)
-            )
-        """)
 
     def update_profile(self, project_id: str, profile_data: dict[str, Any]) -> None:
         """Update the Sovereign Identity Profile."""
