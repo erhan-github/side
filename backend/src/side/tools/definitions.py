@@ -166,6 +166,27 @@ Speed: < 5 seconds""",
             "required": ["finding_type"]
         },
     ),
+    Tool(
+        name="generate_repro",
+        description="""Generates a reproduction test case (Red Test) for a specific finding.
+        
+        Triggers:
+        - "Generate a repro for this issue"
+        - "Prove this bug exists"
+        - "Write a test for finding X"
+        
+        Returns: Path to the generated pytest file.""",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "finding": {
+                    "type": "object",
+                    "description": "The full finding object/dict to generate a test for.",
+                }
+            },
+            "required": ["finding"],
+        },
+    ),
     # Note: simulate_users is now an alias for simulate. Only expose one tool.
     Tool(
         name="welcome",

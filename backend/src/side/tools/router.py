@@ -43,6 +43,12 @@ async def handle_tool_call(name: str, arguments: dict[str, Any]) -> str:
         tool = VerificationTool()
         result = await tool.run(arguments)
         return result.content
+        
+    if name == "generate_repro":
+        from side.tools.verification import VerificationTool
+        tool = VerificationTool()
+        result = await tool.generate_repro(arguments)
+        return result.content
 
 
     handler = handlers.get(name)
