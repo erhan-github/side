@@ -22,6 +22,26 @@ if __name__ == "__main__":
     
     if transport == "sse" or is_railway:
         print(f"🚀 Starting Sidelith over SSE on port {port}...")
+        
+        # [Railway Fix] Inject /health endpoint for deployment stability
+        try:
+            # Access underlying FastAPI app
+            app = getattr(mcp, "_fastapi_app", getattr(mcp, "fastapi_app", None))
+            if app:
+                from datetime import datetime
+                @app.get("/health")
+                async def health_check():
+                    return {"status": "ok", "timestamp": str(datetime.now())}
+                
+                @app.get("/")
+                async def root_health():
+                    return {"status": "ok", "service": "Sidelith Sovereign"}
+                print("✅ Injected /health and / endpoints for Railway.")
+            else:
+                print("⚠️ Could not find underlying FastAPI app to inject health checks.")
+        except Exception as e:
+            print(f"⚠️ Health check injection failed: {e}")
+
         mcp.run(
             transport="sse", 
             port=port, 
