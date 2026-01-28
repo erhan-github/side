@@ -50,19 +50,13 @@ class FileWatcher:
         self._last_commit_hash: str | None = None
         self._debounce_task: asyncio.Task | None = None
 
-        # Files/dirs to ignore
-        self._ignore_patterns = {
-            ".git",
-            "__pycache__",
-            "node_modules",
-            ".venv",
-            "venv",
-            ".pytest_cache",
-            ".mypy_cache",
-            "dist",
-            "build",
-            ".DS_Store",
-        }
+        self._last_commit_hash: str | None = None
+        self._debounce_task: asyncio.Task | None = None
+        
+        # Use Sovereign Ignore Service
+        from side.services.ignore import SovereignIgnore
+        self._ignore_service = SovereignIgnore(Path(root_path))
+
 
     async def start(self) -> None:
         """Start watching for changes."""
@@ -161,19 +155,23 @@ class FileWatcher:
         files = []
 
         for root, dirs, filenames in os.walk(self.project_path):
+            root_path = Path(root)
+            
             # Filter out ignored directories
-            dirs[:] = [d for d in dirs if d not in self._ignore_patterns]
+            # We must modify dirs in-place to prune valid subtrees
+            dirs[:] = [d for d in dirs if not self._ignore_service.should_ignore(root_path / d)]
 
             for filename in filenames:
-                # Skip ignored files
-                if filename in self._ignore_patterns:
+                file_path = root_path / filename
+                
+                # Check if file should be ignored
+                if self._ignore_service.should_ignore(file_path):
                     continue
 
                 # Skip hidden files
-                if filename.startswith("."):
+                if filename.startswith(".") and filename != ".env":
                     continue
 
-                file_path = Path(root) / filename
                 files.append(file_path)
 
         return files
