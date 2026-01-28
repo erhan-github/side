@@ -42,6 +42,8 @@ def main():
     # Feed Command (Build Context)
     feed_parser = subparsers.add_parser("feed", help="Ingest codebase and build Sovereign Identity (sovereign.json)")
     feed_parser.add_argument("path", nargs="?", default=".", help="Project path to feed")
+    feed_parser.add_argument("--historic", action="store_true", help="Mine Git history for Strategic Wisdom (V2.1)")
+    feed_parser.add_argument("--months", type=int, default=12, help="Months of history to mine (default: 12)")
 
     # Strategy Command (Ask the Brain)
     strat_parser = subparsers.add_parser("strategy", help="Ask a strategic question using the Sovereign Context")
@@ -308,11 +310,15 @@ def main():
         intel = AutoIntelligence(Path(args.path))
         
         # Run Async Feed
-        graph = asyncio.run(intel.feed())
+        if args.historic:
+            fragments = asyncio.run(intel.historic_feed(months=args.months))
+            print(f"✅ [HISTORIC FEED]: Processed {len(fragments)} high-entropy commits.")
+        else:
+            graph = asyncio.run(intel.feed())
+            stats = graph['stats']
+            print(f"✅ [FEED COMPLETE]: Indexed {stats['nodes']} files.")
         
-        stats = graph['stats']
-        print(f"✅ [FEED COMPLETE]: Indexed {stats['nodes']} files ({stats.get('total_lines', 'N/A')} lines).")
-        print(f"   Identity rewritten to: .side/sovereign.json")
+        print(f"   Identity successfully projected to: .side/sovereign.json")
 
     elif args.command == "strategy":
         print(f"🤔 [Sovereign Strategy]: Thinking about '{args.question}'...")

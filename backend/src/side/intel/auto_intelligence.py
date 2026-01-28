@@ -57,7 +57,8 @@ class AutoIntelligence:
                 "mode": "Distributed"
             },
             "nodes": [], # Legacy nodes empty, tools must learn Protocol v3 walk
-            "fractal_root": local_data
+            "fractal_root": local_data,
+            "history_fragments": []
         }
         
         # 4. Persist Master Index (ENCRYPTED)
@@ -67,6 +68,75 @@ class AutoIntelligence:
         
         logger.info(f"🧠 [BRAIN]: Fractal Feed complete. Root Checksum: {local_data.get('checksum')}")
         return sovereign_graph
+
+    async def historic_feed(self, months: int = 12) -> List[Dict[str, Any]]:
+        """
+        Phased Git Analysis: Extracts 'Historical Wisdom' from commits.
+        Uses LLMClient to convert 'Raw Diffs' into 'Strategic Decisions'.
+        """
+        import subprocess
+        from side.llm.client import LLMClient
+        
+        logger.info(f"🕰️ [TIME TRAVEL]: Mining last {months} months of repository soul...")
+        
+        # 1. Get High-Entropy Commits (feat, fix, refactor, breaking)
+        cmd = [
+            "git", "log", 
+            f"--since={months} months ago",
+            "--pretty=format:%H|%an|%ad|%s",
+            "--grep=feat\\|fix\\|refactor\\|breaking\\|chore(deps)",
+            "--no-merges",
+            "-n", "50" # Cap for Alpha
+        ]
+        
+        try:
+            result = subprocess.run(cmd, cwd=self.project_path, capture_output=True, text=True)
+            commits = result.stdout.splitlines()
+        except Exception as e:
+            logger.error(f"Git log failed: {e}")
+            return []
+
+        llm = LLMClient()
+        fragments = []
+        
+        for line in commits:
+            try:
+                h, author, date, msg = line.split("|", 3)
+                
+                # Get the diff for this commit
+                diff_cmd = ["git", "show", "--pretty=format:", h]
+                diff_res = subprocess.run(diff_cmd, cwd=self.project_path, capture_output=True, text=True)
+                diff_content = diff_res.stdout[:4000] # Cap diff size for context efficiency
+                
+                # 2. Extract 'The Why' using LLM
+                prompt = [
+                    {"role": "user", "content": f"Commit: {msg}\nDiff:\n{diff_content}"}
+                ]
+                system = "Extract the 'Strategic Why' from this commit. Be concise. What architectural decision was made? Format: 'Decision: [Why we did it]'. Ignore trivialities."
+                
+                wisdom = await llm.complete_async(prompt, system, max_tokens=150)
+                
+                fragments.append({
+                    "hash": h[:8],
+                    "date": date,
+                    "summary": msg,
+                    "wisdom": wisdom.strip()
+                })
+                logger.info(f"✨ [MINED]: {h[:8]} - {msg[:30]}...")
+            except Exception as e:
+                logger.debug(f"Failed to mine commit: {e}")
+                continue
+
+        # 3. Update sovereign.json with fragments
+        sovereign_file = self.project_path / ".side" / "sovereign.json"
+        if sovereign_file.exists():
+            import json
+            raw = shield.unseal_file(sovereign_file)
+            data = json.loads(raw)
+            data["history_fragments"] = fragments
+            shield.seal_file(sovereign_file, json.dumps(data, indent=2))
+            
+        return fragments
 
     def gather_context(self, active_file: str = None, topic: str = None) -> str:
         """
