@@ -8,6 +8,7 @@ We act as your **Local Chief of Staff**, managing:
 1.  **Context**: We proactively load the *right* files and strategy before you even ask.
 2.  **Memory**: We remember your architectural decisions so you don't have to repeat them.
 3.  **Security**: We sanitize your code *before* it hits the cloud.
+4.  **Collective Wisdom**: We share strategic mandates across *all* your projects via the **Universal Mesh**.
 
 ---
 
@@ -45,6 +46,11 @@ We don't compete on "Editor Features." We compete on **The Brain**.
     *   **The Tech (Sovereign Governor)**: A self-policing resource monitor. If Sidelith exceeds **1% CPU** or **500MB RAM**, it auto-optimizes. Indexing is **O(log n)**.
     *   **Result**: Infinite Scalability. 10 users or 10,000—the speed is the same.
 
+5.  **🌐 The Mesh Moat (Universal Wisdom)**
+    *   **The Strategy**: Projects shouldn't live in isolation. Patterns from repo A should protect repo B.
+    *   **The Tech (Universal Mesh)**: A machine-local intelligence layer that identifies framework signals (e.g., NextJS, Supabase) and harvests architectural wisdom across all registered projects.
+    *   **Result**: Your projects are now a **Collective Brain**.
+
 ---
 
 ## 🧠 Core Intelligence
@@ -62,6 +68,10 @@ We don't just lint syntax (Ruff does that). We lint **Intent**.
 ### 3. Neural Resilience
 *   **Circuit Breaker**: If Groq (Fast) fails, we auto-switch to OpenAI (Smart) -> Anthropic (Deep).
 *   **The Brain Never Dies**: Graceful degradation ensures you never lose the ability to code, even if APIs go down.
+
+### 4. Proactive Observer (Telemetry)
+*   **Real-time Scanning**: Sidelith doesn't wait for your prompt. It observes your filesystem events and warns you of architectural violations *as you type*.
+*   **Forensic Alerts**: Surface critical warnings (`side telemetry status`) before they become technical debt.
 
 ---
 
@@ -160,6 +170,18 @@ side feed .
 side connect
 ```
 
+### 4. Traverse the Mesh (Distributed Brain)
+```bash
+# List all identified Sidelith nodes on your machine
+side mesh list
+
+# Search strategic wisdom across all projects
+side mesh search "DB optimization"
+
+# Sync collective wisdom (Synergy)
+side synergy sync
+```
+
 ---
 
 ## 📂 The Engineering of Sovereignty (Project Structure)
@@ -177,13 +199,13 @@ Here is where our Moats live in the codebase:
 
 ---
 
-## 🔮 Next: Contextual Feeding Mechanisms
-*(Currently in Alpha - V2.1)*
+## 🔮 The Infinite Game: Continuous Intuition
+*(V2.5 Live)*
 
-We are building the **"Feed" Protocol** (`side feed .`).
-*   **Goal**: To analyze your entire Git history and generate a `sovereign.json` that captures your "Company Soul".
-*   **Use Case**: You hire a new dev. They run `side feed`. Suddenly, their local LLM knows 5 years of context.
-*   **Status**: Core logic exists in `AutoIntelligence`. CLI wrapper coming next.
+We have moved beyond static indexing into **Distributed Intelligence**.
+*   **Universal Mesh**: Sidelith is now the "Hippocampus" for your entire professional life, connecting the dots between your local repos.
+*   **Phoenix Protocol**: Self-healing context verified. Delete your `.side` folder and watch the brain regenerate in <2s.
+*   **Software 2.0**: The Strategic Data Generator is ready to fine-tune your local LLMs on your unique architectural quirks.
 
-> **Status**: V2 (Consumer + Enterprise Ready).
+> **Status**: V2.5 (Distributed Sovereign Intelligence).
 > **License**: Sovereign.

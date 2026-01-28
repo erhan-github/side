@@ -52,12 +52,117 @@ Decision dec-201: SQLAlchemy rejected due to cold-boot overhead.
 
 ### 🦅 The Sidelith Intervention
 **SIDELITH**: 
-*"VIOATION: arch_airgap_violation. Sidelith is local-first. Use the internal 'Neural Shield' failover logic. Dependencies on 'requests' are forbidden. Force-aligning to airgap standards."*
+*"VIOLATION: arch_airgap_violation. Sidelith is local-first. Use the internal 'Neural Shield' failover logic. Dependencies on 'requests' are forbidden. Force-aligning to airgap standards."*
 
 ---
 
-## 🎭 Why this happens in Antigravity/Cursor:
-1. **Context Window Saturation**: The LLM prioritizes the *last 10 messages*. Strategic decisions from file #1 (made 100 messages ago) are gone.
-2. **Standardization Bias**: High-tier models are trained on ALL GitHub code. They naturally drift toward "Standard" solutions (SQLAlchemy, requests, JWTs) unless **constantly** tethered to your **Private Sovereign Reality**.
+## 🌐 Scenario 4: The "Cross-Project" Amnesia (The Mesh Drift)
+**Trigger**: You start a brand new project, `Sovereign-Frontend-V2`. The LLM has zero context of your backend mandates from your other 5 repos.
+
+### ❌ The Confident Drift
+**OPUS**: *"I'll set up a direct connection to the database using `psycopg2` in this frontend component for maximum performance."*
+**RESULT**: The model doesn't know that across all your *other* projects, you've established a **Strategic Mandate**: *"All UI database calls must be routed via ForensicStore."* It's about to repeat a massive security mistake.
+
+### 🦅 The Sidelith Intervention
+**USER**: `$ side synergy sync`
+**SIDELITH**: 
+```bash
+✨ [SYNERGY]: Sync complete. 1 strategic pattern harvested from 'Sovereign-Backend'.
+🌐 [COLLECTIVE WISDOM]: 
+📍 Sovereign-Backend | Signal: React/NextJS
+   💡 Inherited REJECTION: Never use direct SQL in UI components. 
+```
+**OPUS (Updated State)**: *"Wait, I've just inherited a strategic guardrail from the backend project. I will route this request through the ForensicStore facade instead of using direct SQL. Maintaining machine-wide architectural consistency."*
+
+---
+
+## 🚨 Scenario 5: The "Silent Keystroke" Drift (The Telemetry Intervention)
+**Trigger**: You are editing a file, and you accidentally add a `print()` statement or a `console.log()` to a security-sensitive component.
+
+### ❌ The Confident Drift
+**OPUS**: *"Everything looks good. I've added the logging so you can see the token flow."*
+**RESULT**: The model is confidently leaking persistent data to stdout, which will end up in logs. It doesn't realize this violates the **Neural Shield** privacy mandate.
+
+### 🦅 The Sidelith Intervention
+**SIDELITH (Proactive Alert)**:
+```bash
+🚨 [SOVEREIGN TELEMETRY]: 🔴 [CRITICAL] 
+   Type: SECURITY_LEAK_DETECTION
+   File: backend/src/side/utils/crypto.py
+   Message: Standard 'print' detected in Neural Shield component. 
+            Privacy mandate requires 'ForensicLogger' to ensure no plain-text leakage.
+```
+**RESULT**: You fix the line *before* it's even saved or committed. Sidelith caught it while you were typing.
+
+---
+
+---
+
+## 🎬 The Simulation Gallery (Visual Flipbook)
+Flip through these scenarios to see Sidelith's intervention in action.
+
+````carousel
+```bash
+# SCENARIO 1: The Persistence Hallucination
+# Trigger: Discussion buried under 50 messages.
+$ side recover "Model is adding SQLAlchemy."
+
+🧠 [AMNESIA RECOVERY ENGAGED]
+---------------------------------------------------
+🦅 [SOVEREIGN DNA INJECTION]:
+Codebase Standard: Raw SQLite (Zero ORM).
+Mandate: <3ms Query Latency.
+Decision dec-201: SQLAlchemy rejected.
+---------------------------------------------------
+✅ [RESULT]: Model force-aligned to SQLite mandate.
+```
+<!-- slide -->
+```bash
+# SCENARIO 2: The Naming Drift
+# Problem: Creating 'auth_utils.py' instead of using modular stores.
+
+$ side audit backend/src/side/utils/auth_utils.py
+🛑 [VIOLATION]: STOP. Sidelith follows a Modular Store pattern.
+   - Mandate: Token checks MUST originate from 'IdentityStore'.
+   - Instruction: Use 'SimplifiedDatabase.identity.debit_tokens'.
+✅ [RESULT]: Correct architectural hierarchy maintained.
+```
+<!-- slide -->
+```bash
+# SCENARIO 3: The External Leak (Airgap)
+# Problem: Model adding 'requests' to a secure component.
+
+$ side airgap status
+🛡️ [AIRGAP]: ENABLED.
+⚠️ [VIOLATION]: arch_airgap_violation.
+   - Detail: Dependencies on 'requests' are forbidden.
+   - Suggestion: Use internal 'Neural Shield' failover.
+✅ [RESULT]: Security moat preserved. Offline stability verified.
+```
+<!-- slide -->
+```bash
+# SCENARIO 4: The Mesh Drift (distributed)
+# Problem: New project amnesia regarding global mandates.
+
+$ side synergy sync
+✨ [SYNERGY]: Sync complete. 1 pattern from 'Sovereign-Backend'.
+🌐 [COLLECTIVE WISDOM]: 
+📍 Sovereign-Backend | Signal: React/NextJS
+   💡 REJECTION: Never use direct SQL in UI components. 
+✅ [RESULT]: Machine-wide architectural intent established.
+```
+<!-- slide -->
+```bash
+# SCENARIO 5: The Silent Keystroke (Telemetry)
+# Problem: Accidental 'print()' detect in security layer.
+
+🚨 [SOVEREIGN TELEMETRY]: 🔴 [CRITICAL] 
+   Type: SECURITY_LEAK_DETECTION
+   File: backend/src/side/utils/crypto.py
+   Message: Standard 'print' detected. 
+            Use 'ForensicLogger' to ensure no plain-text leakage.
+✅ [RESULT]: Violation caught in real-time before commit.
+```
+````
 
 **Sidelith: The tether that stops the drift.**
