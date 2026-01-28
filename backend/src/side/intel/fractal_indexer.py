@@ -143,10 +143,14 @@ def run_fractal_scan(root: Path):
     """
     Runs a Bottom-Up scan to ensure child checksums are ready for parents.
     """
+    ignore_service = SovereignIgnore(root)
+
     for dirpath, dirnames, filenames in os.walk(root, topdown=False):
         current_dir = Path(dirpath)
         
-        if any(p in current_dir.parts for p in IGNORES):
+        # Prune ignored directories (modify dirnames in place for efficiency if topdown=True, 
+        # but since we are topdown=False, we just check current_dir)
+        if ignore_service.should_ignore(current_dir):
             continue
             
         # skip .side folders themselves
@@ -168,6 +172,8 @@ def update_branch(root: Path, changed_path: Path):
     if not changed_path.exists() and not changed_path.parent.exists():
         return
 
+    ignore_service = SovereignIgnore(root)
+
     # Start from the parent directory of the changed file
     current_dir = changed_path.parent if changed_path.is_file() else changed_path
     
@@ -179,7 +185,7 @@ def update_branch(root: Path, changed_path: Path):
             break
             
         # skip ignore dirs
-        if any(p in current_dir.parts for p in IGNORES):
+        if ignore_service.should_ignore(current_dir):
             break
             
         print(f"⚡ Fractal Update: {current_dir}")
