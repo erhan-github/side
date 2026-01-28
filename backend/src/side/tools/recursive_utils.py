@@ -5,7 +5,7 @@ These tools allow the agent to "program" its interaction with large contexts,
 breaking them down rather than trying to swallow them whole.
 """
 import re
-from typing import List, Generator
+from typing import List, Generator, Any
 
 def peek(text: str, lines: int = 50) -> str:
     """
@@ -60,3 +60,9 @@ def partition(text: str, chunk_size: int = 5000) -> List[str]:
         chunks.append("".join(current_chunk))
         
     return chunks
+
+def chunk_list(items: List[Any], size: int) -> List[List[Any]]:
+    """
+    Split a list into chunks of size N.
+    """
+    return [items[i:i + size] for i in range(0, len(items), size)]

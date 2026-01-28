@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sidelith"
-version = "0.1.0"
+version = "1.0.0"
 description = "Palantir-level strategic intelligence for your IDE."
 readme = "README.md"
 license = "MIT"
@@ -57,7 +57,8 @@ dev = [
 
 [project.scripts]
 sidelith = "side.server:main"
-side = "side.server:main"
+sidelith-serve = "side.server:main"
+side = "side.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/side"]

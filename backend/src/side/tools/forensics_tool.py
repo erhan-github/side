@@ -2,7 +2,7 @@ import os
 import logging
 from pathlib import Path
 from typing import List, Dict, Any
-from side.tools.recursive_utils import partition, peek, grep
+from side.tools.recursive_utils import partition, peek, grep, chunk_list
 from side.intel.memory import MemoryPersistence, MemoryManager
 from side.llm.client import LLMClient
 
@@ -37,16 +37,41 @@ class ForensicsTool:
         
         # Simple heuristic: Grep for suspicious patterns if query mentions secrets
         suspicious_files = []
-        if "secret" in query.lower() or "key" in query.lower():
-             # Use our recursive grep tool
-             # We can't grep 'query' directly as it's NL.
-             # We'll upgrade this to an LLM-driven keyword extraction later.
-             # For now, we scan all files but chunk them.
-             pass
+        keywords = ["secret", "key", "token", "password", "auth", "credential"]
+             
+        # Construct grep command (case insensitive, recursive, list filenames)
+        # We use subprocess directly for speed
+        import subprocess
+        try:
+            cmd = ["grep", "-irl", "-E", "|".join(keywords), str(self.project_path)]
+            result = subprocess.run(
+                cmd, 
+                capture_output=True, 
+                text=True, 
+                timeout=5
+            )
+            if result.returncode == 0:
+                found_files = []
+                for line in result.stdout.strip().splitlines():
+                    if line:
+                        path = Path(line)
+                        if path in all_files: # Only include if it passed the base filter
+                            found_files.append(path)
+                
+                if found_files:
+                    logger.info(f"🔎 [FILTER] Grep reduced scan from {len(all_files)} to {len(found_files)} high-risk files.")
+                    suspicious_files = found_files
+        except Exception as e:
+            logger.warning(f"Grep filter failed, falling back to full scan: {e}")
+
+        if suspicious_files:
+            targets = suspicious_files
+        else:
+            targets = all_files
 
         # 3. Recursive Analysis
         # We split the file list into chunks of 5 files to prevent context overflow
-        chunks = partition(all_files, chunk_size=5)
+        chunks = chunk_list(targets, size=5)
         
         findings = []
         logger.info(f"🔎 [FORENSICS] Scanning {len(all_files)} files in {len(chunks)} chunks...")
@@ -98,14 +123,18 @@ Task: Identify any CRITICAL issues related to the query.
 - If nothing found, return "PASS".
 - If found, strictly format as: [FILE]: [LINE] - [ISSUE]
 """
-        response = await self.llm.complete_async(
-            messages=[{"role": "user", "content": prompt}],
-            system_prompt="You are a Code Forensics Engine.",
-            temperature=0.0
-        )
-        if "PASS" in response:
+        try:
+            response = await self.llm.complete_async(
+                messages=[{"role": "user", "content": prompt}],
+                system_prompt="You are a Code Forensics Engine.",
+                temperature=0.0
+            )
+            if "PASS" in response:
+                return None
+            return response
+        except Exception as e:
+            logger.error(f"❌ LLM Audit Failed for chunk: {e}")
             return None
-        return response
 
     def _synthesize_report(self, findings: List[str], query: str) -> str:
         if not findings:

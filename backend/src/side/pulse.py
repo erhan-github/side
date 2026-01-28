@@ -5,7 +5,7 @@ import base64
 import time
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -27,16 +27,20 @@ class PulseResult:
 class DynamicRule:
     id: str
     level: str
-    pattern: str # Decrypted/In-Memory only
+    pattern: str  # Source string
     rationale: str
     fix: str
-    scope: str = "CODE" # CODE, DEP, INFRA
+    compiled_pattern: Any = field(default=None, repr=False) # Optimized
+    scope: str = "CODE"
     source: str = "MANUAL"
     target: str = "ALL"
+    path_pattern: Optional[str] = None # New: Only trigger on files matching this
+    compiled_path_pattern: Any = field(default=None, repr=False)
+
 class PulseEngine:
     """
     Sovereign Pulse Engine: The Invariant Heart of Sidelith.
-    OPTIMIZED: Plain Text for Maximum Velocity (<1ms).
+    OPTIMIZED: Pre-compiled Regex for <1ms Latency.
     """
 
     def __init__(self, anchor_path: Optional[Path] = None, rules_dir: Optional[Path] = None):
@@ -49,23 +53,32 @@ class PulseEngine:
         self.CACHE_TTL = 5.0
 
     def _load_dynamic_rules(self) -> List[DynamicRule]:
-        """Loads rules from the local ledger into RAM (Plain Text)."""
+        """Loads rules from the local ledger into RAM (Pre-compiled)."""
         if self.rules_cache: return self.rules_cache
         
+        import re
         rules = []
         for rule_file in self.rules_dir.glob("*.json"):
             try:
                 with open(rule_file, "r") as f:
                     data = json.load(f)
+                    compiled = re.compile(data["pattern"])
+                    
+                    path_ptrn = data.get("path_pattern")
+                    compiled_path = re.compile(path_ptrn) if path_ptrn else None
+                    
                     rules.append(DynamicRule(
                         id=data["id"],
                         level=data["level"],
-                        pattern=data["pattern"], # RAW SPEED
+                        pattern=data["pattern"],
                         rationale=data["rationale"],
                         fix=data["fix"],
+                        compiled_pattern=compiled,
                         scope=data.get("scope", "CODE"),
                         source=data.get("source", "UNKNOWN"),
-                        target=data.get("target", "ALL")
+                        target=data.get("target", "ALL"),
+                        path_pattern=path_ptrn,
+                        compiled_path_pattern=compiled_path
                     ))
             except Exception as e:
                 logger.error(f"Failed to load rule {rule_file}: {e}")
@@ -74,10 +87,15 @@ class PulseEngine:
         return rules
 
     def _execute_rule(self, rule: DynamicRule, content: str, filepath: str) -> Optional[str]:
-        """Executes a single rule against content."""
-        import re
+        """Executes a single pre-compiled rule against content."""
         try:
-            if re.search(rule.pattern, content):
+            # 1. Path Filtering (Architectural Scope)
+            if rule.compiled_path_pattern:
+                if not rule.compiled_path_pattern.search(filepath):
+                    return None
+
+            # 2. Pattern Match
+            if rule.compiled_pattern.search(content):
                 return f"Violation [{rule.level}] | {rule.id} | {rule.rationale} | FIX: {rule.fix}"
         except Exception as e:
             logger.error(f"Rule execution failed ({rule.id}): {e}")
@@ -107,7 +125,9 @@ class PulseEngine:
             "provenance": "SOVEREIGN_LOCAL_FLYWHIELD"
         }
         
-        # 3. UPLOAD (Simulated)
+        # 3. LOG PULSE CHECK (Local Audit)
+        # We don't upload to cloud. We keep it Sovereign.
+        logger.info(f"❤️ Pulse Check Complete. Status: {status}")
         # In a real app, this would be a POST to /api/v1/traces
         print(f"🔒 [ANONYMIZED & SCRUBBED]: Trace ID generated. Personal data redacted.")
         print(f"📡 [MESH SYNC]: Decision Trace pushed to Strategic Network Pool.")
@@ -176,6 +196,27 @@ class PulseEngine:
                 "scope": "CODE",
                 "source": "SOVEREIGN_PRIME",
                 "target": "fastapi"
+            },
+            {
+                "id": "arch_layer_violation_ui",
+                "level": "CRITICAL",
+                "pattern": "from side.storage|import side.storage|SimplifiedDatabase",
+                "path_pattern": "frontend|views|components",
+                "rationale": "Architectural Guardrail: Database access detected in UI layer. This violates the Clean Architecture mandate.",
+                "fix": "Move DB logic to a Controller or Backend API.",
+                "scope": "CODE",
+                "source": "SOVEREIGN_PRIME",
+                "target": "ALL"
+            },
+            {
+                "id": "health_unhandled_exception",
+                "level": "STABILITY",
+                "pattern": "except:\\\s*\\\n\\\s*pass",
+                "rationale": "Sidelith Stability: Silent exception suppression ('except: pass') detected. This causes logic ghosts.",
+                "fix": "Log the exception or catch a specific error.",
+                "scope": "CODE",
+                "source": "SOVEREIGN_PRIME",
+                "target": "ALL"
             }
         ]
         

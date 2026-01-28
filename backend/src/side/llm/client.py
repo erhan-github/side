@@ -32,6 +32,11 @@ PROVIDER_MODELS = {
     LLMProvider.OLLAMA: "llama3",
 }
 
+# Fallback models for specific providers (Micro-Failover)
+PROVIDER_FALLBACKS = {
+    LLMProvider.GROQ: ["llama3-70b-8192", "mixtral-8x7b-32768"],
+}
+
 
 from .managed_pool import ManagedCreditPool
 
@@ -69,14 +74,27 @@ class LLMClient:
 
         try:
             # [OLLAMA] Special handling for local provider (No Key Needed)
+            # [OLLAMA] Special handling for local provider (No Key Needed)
             if provider_name == "ollama":
+                # AIRGAP TIER CHECK
+                # We must query the DB to verify entitlement
+                from side.storage.simple_db import SimplifiedDatabase
+                db = SimplifiedDatabase()
+                profile = db.get_profile(db.get_project_id("."))
+                tier = profile.get("tier", "trial") if profile else "trial"
+                
+                # Only 'hitech' or 'enterprise' allowed
+                if tier not in ["hitech", "enterprise"]:
+                    logger.warning("🚫 [AIRGAP BLOCKED]: Ollama requires 'High Tech' tier. Falling back to Cloud.")
+                    return False
+                    
                 from openai import OpenAI, AsyncOpenAI
                 # Ollama is OpenAI-compatible!
                 self.client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
                 self.async_client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
                 self.provider = LLMProvider.OLLAMA
                 self.model = PROVIDER_MODELS[LLMProvider.OLLAMA]
-                logger.info(f"✅ LLM: Neural Link (Ollama/{self.model})")
+                logger.info(f"✅ LLM: Neural Link (Ollama/{self.model}) [AIRGAP ACTIVE]")
                 return True
 
             api_key = os.getenv(f"{provider_name.upper()}_API_KEY")
@@ -114,15 +132,33 @@ class LLMClient:
                             if line and not line.startswith('#') and '=' in line:
                                 key, value = line.split('=', 1)
                                 if key.strip() in ALLOWED_KEYS:
-                                     os.environ[key.strip()] = value.strip().strip('"').strip("'")
+                                     k = key.strip()
+                                     v = value.strip().strip('"').strip("'")
+                                     if k not in os.environ:
+                                         os.environ[k] = v
                     break
                 except Exception:
                     pass
 
     def _auto_detect(self):
         # [Sovereign Choice Strategy]
-        # 1. Check Preference
-        preference = os.getenv("SIDE_BRAIN_PREFERENCE", "cloud") # Default to cloud for low friction
+        
+        # 1. Global Airgap Check (The Master Switch)
+        from side.storage.simple_db import SimplifiedDatabase
+        db = SimplifiedDatabase()
+        airgap = db.get_setting("airgap_enabled", "false") == "true"
+        
+        if airgap:
+            logger.info("🛡️ [AIRGAP MODE]: Total isolation active. Enforcing local inference.")
+            if self._init_provider("ollama"):
+                return
+            else:
+                logger.critical("🚨 [AIRGAP FAILURE]: Airgap enabled but Ollama not available! System locked for privacy.")
+                self.client = None
+                return
+
+        # 2. Check Preference
+        preference = os.getenv("SIDE_BRAIN_PREFERENCE", "cloud")
         
         if preference == "local":
             logger.info("🧠 Preference: Local (Sovereign Mode)")
@@ -131,12 +167,12 @@ class LLMClient:
             else:
                 logger.warning("⚠️ Local preference set but Ollama not found. Falling back to Cloud.")
         
-        # 2. Cloud First (Default) or Fallback
+        # 3. Cloud First (Default) or Fallback
         for provider in ["groq", "openai", "anthropic"]:
             if self._init_provider(provider):
                 return
                 
-        # 3. Last Resort: Check Ollama (if not preferred but available)
+        # 4. Last Resort: Check Ollama (if not preferred but available)
         if preference != "local" and self._init_provider("ollama"):
             return
                 
@@ -182,10 +218,12 @@ class LLMClient:
                 )
                 return response.choices[0].message.content
         except Exception as e:
-            logger.error(f"❌ {self.provider.value} API Error: {e}")
-            raise e
+            return self._handle_error_sync(e, messages, system_prompt, temperature, max_tokens, model_override)
 
-            raise e
+    def _handle_error_sync(self, e, messages, system_prompt, temperature, max_tokens, model_override):
+        """Sync version of error handling (Basic)."""
+        logger.error(f"❌ {self.provider.value} Sync Error: {e}")
+        raise e
 
     async def complete_async(self, messages, system_prompt, temperature=0.0, max_tokens=4096, model_override=None):
         """
@@ -227,18 +265,60 @@ class LLMClient:
                 
         except Exception as e:
             error_str = str(e).lower()
-            # [Phase 3] Circuit Breaker
-            if "429" in error_str or "rate limit" in error_str or "quota" in error_str:
-                logger.warning(f"⚠️ RATE LIMIT HIT ({self.provider.value}). Cooling key...")
-                
+            
+            # --- SMART ERROR CLASSIFICATION ---
+            if any(x in error_str for x in ["401", "unauthorized", "invalid api key", "authentication"]):
+                logger.error(f"🚫 [AUTH ERROR]: Key for {self.provider.value} is invalid.")
+                if self.pool and current_api_key:
+                    self.pool.mark_as_cooling(current_api_key, duration=3600*24)
+                return await self.complete_async(messages, system_prompt, temperature, max_tokens, model_override)
+
+            if any(x in error_str for x in ["429", "rate limit", "quota", "too many requests"]):
+                logger.warning(f"⚠️ [RATE LIMIT]: {self.provider.value} key exhausted. Rotating...")
                 if self.pool and current_api_key:
                     self.pool.mark_as_cooling(current_api_key)
-                    # Retry immediately with next key
-                    logger.info("🔄 Rotating to next enterprise key...")
-                    return await self.complete_async(messages, system_prompt, temperature, max_tokens, model_override)
+                if self.pool and not self.pool.is_healthy:
+                    logger.warning(f"🚨 [POOL EXHAUSTED]: No healthy keys for {self.provider.value}.")
                 else:
-                    logger.error("❌ Rate limit hit and no backup keys available.")
-                    raise e
-            else:
-                logger.error(f"❌ {self.provider.value} Async API Error: {e}")
+                    return await self.complete_async(messages, system_prompt, temperature, max_tokens, model_override)
+            
+            if any(x in error_str for x in ["500", "503", "502", "timeout", "connection", "deadline"]):
+                logger.error(f"🔥 [PROVIDER INSTABILITY]: {self.provider.value}: {e}")
+                if not model_override and self.provider in PROVIDER_FALLBACKS:
+                    next_model = self._get_next_fallback_model(actual_model)
+                    if next_model:
+                        logger.warning(f"🛡️ [MICRO-FAILOVER]: {actual_model} -> {next_model}")
+                        return await self.complete_async(messages, system_prompt, temperature, max_tokens, model_override=next_model)
+                
+            # --- MACRO-FAILOVER ---
+            fallback_chain = {
+               LLMProvider.GROQ: LLMProvider.OPENAI,
+               LLMProvider.OPENAI: LLMProvider.ANTHROPIC,
+               LLMProvider.OLLAMA: LLMProvider.GROQ
+            }
+            
+            from side.storage.simple_db import SimplifiedDatabase
+            db = SimplifiedDatabase()
+            if db.get_setting("airgap_enabled", "false") == "true":
+                logger.critical(f"❌ [AIRGAP ENFORCED]: Local failure but Cloud switch blocked.")
                 raise e
+
+            next_provider = fallback_chain.get(self.provider)
+            if next_provider:
+                logger.warning(f"🛡️ [NEURAL FAILOVER]: {self.provider.value} -> {next_provider.value}. Fluid Transition.")
+                if self._init_provider(next_provider.value):
+                    return await self.complete_async(messages, system_prompt, temperature, max_tokens, model_override)
+            
+            logger.critical(f"❌ [NEURAL COLLAPSE]: Total Provider Failure. {e}")
+            raise e
+
+    def _get_next_fallback_model(self, current_model: str) -> Optional[str]:
+        """Circular model fallback within a provider."""
+        fallbacks = PROVIDER_FALLBACKS.get(self.provider, [])
+        if not fallbacks: return None
+        if current_model == self.model: return fallbacks[0]
+        try:
+            idx = fallbacks.index(current_model)
+            if idx + 1 < len(fallbacks): return fallbacks[idx + 1]
+        except ValueError: pass
+        return None

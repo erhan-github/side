@@ -1,0 +1,68 @@
+from enum import Enum
+from typing import Any
+import logging
+from side.storage.modules.base import InsufficientTokensError
+
+logger = logging.getLogger(__name__)
+
+class SystemAction(Enum):
+    MONOLITH_UPDATE = "monolith_update"
+    PLAN_UPDATE = "plan_update"
+    
+# Cost Table (Token Price per Action)
+ACTION_COSTS = {
+    SystemAction.MONOLITH_UPDATE: 5,
+    SystemAction.PLAN_UPDATE: 2
+}
+
+class BillingService:
+    """
+    Sovereign Billing Service.
+    Enforces token economy for high-value strategic actions.
+    """
+    def __init__(self, db: Any):
+        self.db = db
+
+    def can_afford(self, project_id: str, action: SystemAction) -> bool:
+        """Check if profile has enough tokens for the action."""
+        try:
+            balance_data = self.db.get_token_balance(project_id)
+            current = balance_data.get("balance", 0)
+            cost = ACTION_COSTS.get(action, 0)
+            
+            if current >= cost:
+                return True
+            
+            logger.warning(f"Insufficient funds for {action}: Has {current}, Need {cost}")
+            return False
+            
+        except Exception as e:
+            logger.error(f"Billing check failed: {e}")
+            # Fail closed for safety, or open for UX? 
+            # Sovereign principle: If local DB fails, don't block work.
+            return True
+
+    def charge(self, project_id: str, action: SystemAction, tool_name: str, payload: dict) -> bool:
+        """Deduct tokens for an action."""
+        try:
+            cost = ACTION_COSTS.get(action, 0)
+            if cost == 0:
+                return True
+                
+            # Deduct (negative update)
+            # This handles atomicity in the DB layer
+            self.db.update_token_balance(project_id, -cost)
+            
+            logger.info(f"💰 Charged {cost} SUs for {action.value}")
+            return True
+            
+        except InsufficientTokensError:
+            logger.error(f"Charge failed: Insufficient SUs.")
+            return False
+        except Exception as e:
+            logger.error(f"Charge failed: {e}")
+            return False
+
+    def claim_trial(self, project_path: Any):
+        """One-time trial grant."""
+        pass 

@@ -27,57 +27,105 @@ class ProactiveService:
         """
         Scans for strategic friction and OSS Leverage opportunities.
         """
-        # ... logic to scan for TODO/HACK ...
-        return []
-
-    def analyze_oss_leverage(self, comment: str) -> str | None:
-        """
-        [CTO Strategy] Detects if a TODO/HACK can be replaced by a reputable OSS alternative.
-        Uses the 80/20 rule: 80% of value for 10% of code.
-        """
-        OSS_MAP = {
-            "notification": "Novu / SuprSend",
-            "auth": "Supabase Auth / Clerk / Kinde",
-            "billing": "Lemon Squeezy / Lago / Kill Bill",
-            "audit": "sideMCP (Self-Referential Mastery)",
-            "analytics": "PostHog / Umami",
-            "job": "Temporal / BullMQ",
-            "search": "Meilisearch / Typesense"
-        }
+        findings = []
         
-        low_comment = comment.lower()
-        for key, alt in OSS_MAP.items():
-            if key in low_comment and ("build" in low_comment or "implement" in low_comment or "todo" in low_comment):
-                return f"💡 **Strategy Shortcut**: Why build '{key}' from scratch? Use **{alt}**. You'll get 80% of the feature set in 1/10th of the time."
+        # 1. Get Strategic Context from Monolith
+        active_plans = self.db.list_plans(self.db.get_project_id(), status="active")
         
-        return None
+        # 2. Scan for Technical Signals (TODO, HACK, FIXME)
+        # We limit scan to source files
+        extensions = {'.py', '.js', '.ts', '.tsx', '.go', '.rs', '.java'}
+        excludes = {'.git', 'node_modules', '__pycache__', 'venv', 'env', 'dist', 'build'}
+        
+        for path in self.project_path.rglob('*'):
+            if path.is_file() and path.suffix in extensions:
+                # Basic exclude check
+                if any(part in excludes for part in path.parts):
+                    continue
+                    
+                try:
+                    content = path.read_text(errors='ignore')
+                    lines = content.splitlines()
+                    for i, line in enumerate(lines):
+                        if any(marker in line for marker in ["TODO", "HACK", "FIXME", "XXX"]):
+                            clean_line = line.strip()[:200]
+                            rel_path = str(path.relative_to(self.project_path))
+                            
+                            # Software 2.0 Analysis
+                            judgement = await self.analyze_signal(clean_line, rel_path, i + 1)
+                            
+                            if judgement:
+                                findings.append({
+                                    "type": judgement.get("type", "risk"),
+                                    "message": judgement.get("message"),
+                                    "file": rel_path,
+                                    "line": i + 1,
+                                    "context": clean_line
+                                })
+                except Exception:
+                    pass
+                    
+        return findings
 
-    def analyze_vision_drift(self, comment: str, goals: List[Dict[str, Any]]) -> str | None:
+    async def analyze_signal(self, comment: str, file_path: str, line_no: int) -> Dict[str, Any] | None:
         """
-        Cross-references a code comment with active $100M goals.
-        Returns a warning if there is a potential vision-gap.
+        [Software 2.0] Uses the LLM to judge if a technical signal is a strategic risk.
+        Replaces the fragile Regex/Dictionary lookups with a Virtual CTO.
         """
-        comment_low = comment.lower()
-        for goal in goals:
-            target = goal.get("title", "").lower()
-            if target in comment_low and "hack" in comment_low:
-                return f"⚠️ **Vision Drift Detected**: You added a HACK related to active goal '{goal['title']}'. This may introduce technical debt in a high-leverage area."
-        return None
+        # 1. Fetch Strategic Context (The Monolith)
+        # In a real impl, we'd cache this or pass it in. 
+        # For now, we assume the DB has the high-level goals.
+        active_plans = self.db.list_plans(self.db.get_project_id(), status="active")
+        context_str = "\n".join([f"- {p['title']}" for p in active_plans])
+        
+        prompt = f"""You are the 'Provocateur' - a ruthless CTO AI.
+        
+STRATEGIC CONTEXT (Current Goals):
+{context_str}
 
-    def analyze_dead_end(self, comment: str, decisions: List[Dict[str, Any]]) -> str | None:
-        """
-        [CTO Vision Anchor] Checks if the user is building a feature previously rejected.
-        Prevents wasting months on 'Dead-Ends'.
-        """
-        comment_low = comment.lower()
-        for dec in decisions:
-            # We look for decisions where the answer was "No" or "Rejected"
-            answer = dec.get("answer", "").lower()
-            if any(refusal in answer for refusal in ["no", "rejected", "won't do", "don't build"]):
-                target = dec.get("question", "").lower()
-                # If the comment contains keywords from the rejected question
-                # (This is heuristic; real version would use NLP/Embeddings)
-                keywords = [w for w in target.split() if len(w) > 4]
-                if any(kw in comment_low for kw in keywords) and ("build" in comment_low or "implement" in comment_low):
-                    return f"🚨 **Dead-End Relapse**: You are building something previously rejected in decision: '{dec['question']}'. Reason: {dec['answer']}. Stop building to preserve project velocity."
+THE FINDING (Technical Signale):
+File: {file_path}:{line_no}
+Comment: "{comment}"
+
+YOUR MISSION:
+Analyze if this comment represents:
+1. **Vision Drift**: Building features we didn't plan?
+2. **Reinventing the Wheel**: Building something that exists as OSS? (OSS Leverage)
+3. **Dead End**: Implementing a pattern we explicitly rejected?
+4. **Strategic Risk**: A 'HACK' in a critical path?
+
+OUTPUT:
+If this is minor/irrelevant, output NONE.
+If this is a strategic violation, output a JSON:
+{{
+    "type": "drift|leverage|risk",
+    "severity": "high|medium",
+    "message": "A provocative, concise roast explaining why this is a bad idea and what to do instead."
+}}
+"""
+        try:
+            from side.llm.client import LLMClient
+            client = LLMClient()
+            # We use a lower latency model if possible, or standard.
+            # Temperature 0.3 for consistent but creative roasts.
+            response = await client.complete_async(
+                messages=[{"role": "user", "content": prompt}],
+                system_prompt="You are Sidelith's Strategic Conscience. You are concise, brutal, and helpful.",
+                temperature=0.3
+            )
+            
+            # Simple parsing of the potential JSON response
+            import json
+            if "NONE" in response:
+                return None
+            
+            # Try to find JSON blob
+            start = response.find("{")
+            end = response.rfind("}") + 1
+            if start != -1 and end != -1:
+                return json.loads(response[start:end])
+                
+        except Exception as e:
+            logger.warning(f"Provocateur failed: {e}")
+            
         return None

@@ -168,8 +168,10 @@ async def run_onboarding(project_root: str) -> dict:
     auto_intel = get_auto_intel()
     profile = await auto_intel.get_or_create_profile(project_root)
     
-    # Mock findings for now (Lightweight Mode)
-    findings = []
+    # Real Forensics Audit (The Spear)
+    from side.tools.forensics_tool import ForensicsTool
+    spear = ForensicsTool()
+    findings = spear.scan_project(str(project_root))
     
     # [Anti-Abuse] Claim Trial (Repo Lock) - Uses shared DB
     billing = BillingService(db)

@@ -2,7 +2,7 @@
 from typing import Any, Dict
 import time
 from dataclasses import dataclass
-from side.intel.forensic_engine import ForensicEngine
+from side.tools.forensics_tool import ForensicsTool
 from side.qa.generator import TestGenerator
 from pathlib import Path
 
@@ -19,26 +19,25 @@ class VerificationTool:
         finding_type = args.get("finding_type")
         file_path = args.get("file_path")
         
-        # 1. Run targeted scan
-        engine = ForensicEngine(".")
-        # bust cache
-        from side.intel.forensic_engine import _FORENSIC_CACHE
-        _FORENSIC_CACHE.clear()
+        finding_type = args.get("finding_type")
+        file_path = args.get("file_path")
         
-        findings = await engine.scan()
+        # 1. Run targeted scan using ForensicsTool (LLM-based)
+        tool = ForensicsTool(Path("."))
+        query = f"Check specifically for '{finding_type}' issues in {file_path or 'the codebase'}."
         
-        # 2. Check if the finding type still exists for the file
-        matches = [f for f in findings if f.type == finding_type]
-        if file_path:
-            matches = [f for f in matches if f.file == file_path or f.file.endswith(file_path)]
-            
-        if not matches:
-            return ToolResult(
-                content=f"✅ VERIFICATION PASSED: No issues of type '{finding_type}' found in '{file_path or 'project'}'. Fix confirmed.",
+        report = await tool.scan_codebase(query)
+        
+        # 2. Heuristic check of the report
+        if "No issues found" in report or "Clean" in report:
+             return ToolResult(
+                content=f"✅ VERIFICATION PASSED: Report indicates fix.\n\n{report}",
                 metadata={"status": "pass"}
             )
         else:
-                metadata={"status": "fail", "remaining": len(matches)}
+            return ToolResult(
+                content=f"❌ VERIFICATION FAILED: Report indicates remaining issues.\n\n{report}",
+                metadata={"status": "fail"}
             )
 
     async def generate_repro(self, args: Dict[str, Any]) -> ToolResult:

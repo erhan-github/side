@@ -1,0 +1,111 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Sovereign Knowledge Graph",
+    "version": "2.0.0",
+    "description": "The Indexed Brain of a Sidelith-managed Project.",
+    "type": "object",
+    "required": [
+        "version",
+        "last_scan",
+        "dna",
+        "stats",
+        "nodes"
+    ],
+    "properties": {
+        "version": {
+            "type": "string",
+            "description": "Sidelith Brain Version"
+        },
+        "last_scan": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "dna": {
+            "type": "object",
+            "properties": {
+                "detected_stack": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "primary_languages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "stats": {
+            "type": "object",
+            "required": [
+                "nodes",
+                "total_size_bytes",
+                "total_lines"
+            ],
+            "properties": {
+                "nodes": {
+                    "type": "integer"
+                },
+                "total_size_bytes": {
+                    "type": "integer"
+                },
+                "total_lines": {
+                    "type": "integer"
+                }
+            }
+        },
+        "nodes": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "path",
+                    "type",
+                    "semantics"
+                ],
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "lines": {
+                        "type": "integer"
+                    },
+                    "digest": {
+                        "type": "string"
+                    },
+                    "semantics": {
+                        "type": "object",
+                        "properties": {
+                            "classes": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "functions": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "signals": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

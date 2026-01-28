@@ -69,14 +69,17 @@ Write a SELF-CONTAINED Python script (using pytest) that attempts to REPRODUCE t
 - Output ONLY the python code for the test file. No markdown, no explanations.
 """
         
-        logger.info(f"🧬 Generating Red Test for {issue_type}...")
-        response = await self.llm.complete_async(
-            messages=[{"role": "user", "content": prompt}],
-            system_prompt="You are a Forensic Code Auditor. Your output must be a strictly compliant, standalone Python reproduction script. No chatter.",
-            temperature=0.1
-        )
-        
-        return self._clean_code(response)
+        try:
+            logger.info(f"🧬 Generating Red Test for {issue_type}...")
+            response = await self.llm.complete_async(
+                messages=[{"role": "user", "content": prompt}],
+                system_prompt="You are a Forensic Code Auditor. Your output must be a strictly compliant, standalone Python reproduction script. No chatter.",
+                temperature=0.1
+            )
+            return self._clean_code(response)
+        except Exception as e:
+            logger.error(f"❌ Failed to generate Red Test: {e}")
+            return f"# [RED TEST FAILURE]\n# Error generating repro: {e}\n# Please manually verify {context_files}"
 
     def _clean_code(self, text: str) -> str:
         """Strip markdown code blocks."""

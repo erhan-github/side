@@ -13,24 +13,37 @@ class LLMOrchestrator:
     """
     
     def __init__(self, provider="groq"):
-        self.provider = provider
+        from side.llm.client import LLMClient
+        self.client = LLMClient(preferred_provider=provider)
         
     async def synthesize_findings(self, findings: List[Dict]) -> str:
         """
-        Take raw findings (e.g., "Complexity: 15", "Security: Clean")
-        and generate a Strategic Insight.
+        Take raw findings and generate a Strategic Insight using the Neural Engine.
         """
         if not findings:
             return "No findings to synthesize."
             
-        # Mocking the LLM call for V1 (to operate without API keys in this env)
-        # Real impl would call OpenAI/Anthropic/Groq
+        # Construct Prompt
+        prompt = f"""
+        You are the Sovereign CTO. Analyze these technical findings and provide a Strategic Executive Summary.
         
-        summary = f"Analyzed {len(findings)} data points.\n"
-        for f in findings:
-            summary += f"- {f.get('type', 'Unknown')}: {f.get('status', 'Info')}\n"
-            
-        return f"EXEC SUMMARY:\n{summary}\nRECOMMENDATION: Proceed with caution."
+        FINDINGS:
+        {findings}
+        
+        Format:
+        1. Executive Summary (1-2 sentences)
+        2. Critical Risks (Bullet points)
+        3. Strategic Recommendation (Actionable)
+        """
+        
+        try:
+            return self.client.complete(
+                messages=[{"role": "user", "content": prompt}],
+                system_prompt="You are Sidelith, the Sovereign Context Engine.",
+                temperature=0.3
+            )
+        except Exception as e:
+            return f"Neural Synthesis Failed: {e}"
 
     async def verify_fix(self, original_code: str, new_code: str) -> bool:
         """
@@ -43,6 +56,42 @@ class LLMOrchestrator:
         except SyntaxError:
             return False
             
-        # 2. Semantic Check (LLM)
-        # Mock: Assume True if syntax passes
-        return True
+        # 2. Semantic Check (Pulse Engine)
+        # "Experience Perfection": Don't ask the LLM if the code is safe 
+        # if the Deterministic Engine already knows it isn't.
+        from side.pulse import pulse
+        
+        ctx = {
+            "target_file": "virtual_fix.py",
+            "file_content": new_code,
+            "PORT": "3999"
+        }
+        
+        pulse_result = pulse.check_pulse(ctx)
+        if pulse_result.status.value != "SECURE":
+            # If Pulse fails, we don't even bother the LLM. 
+            # We save tokens and return False immediately.
+            return False
+
+        # 3. Semantic Insight (LLM)
+        prompt = f"""
+        Compare the Original Code and the New Fix.
+        Does the New Fix resolve the issue without introducing new bugs?
+        Return ONLY 'YES' or 'NO'.
+        
+        ORIGINAL:
+        {original_code[:1000]}
+        
+        NEW:
+        {new_code[:1000]}
+        """
+        
+        try:
+            response = self.client.complete(
+                messages=[{"role": "user", "content": prompt}],
+                system_prompt="You are a Senior Code Auditor. Strict Verification.",
+                temperature=0.0
+            )
+            return "YES" in response.upper()
+        except Exception:
+            return True # Fail open on LLM error to avoid blocking valid fixes

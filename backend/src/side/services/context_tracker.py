@@ -149,41 +149,64 @@ class ContextTracker:
 
         return None
 
-    def _detect_focus_area(
+    async def _detect_focus_area(
         self,
         recent_files: list[str],
         recent_commits: list[dict[str, Any]],
     ) -> tuple[str, float]:
         """
-        Detect current focus area from files and commits.
-
-        Returns:
-            Tuple of (focus_area, confidence)
+        [Software 2.0] Detect current focus area from files and commits using LLM.
         """
-        # Combine files and commit messages for analysis
-        text = " ".join(recent_files).lower()
-        text += " " + " ".join(c["message"] for c in recent_commits).lower()
+        # Combine files and commit messages for context
+        files_str = "\n".join(recent_files[:10])
+        commits_str = "\n".join([f"- {c['message']}" for c in recent_commits[:5]])
+        
+        prompt = f"""You are a Technical Project Manager.
+        
+RECENT FILES CHANGED:
+{files_str}
 
-        # Score each focus area
-        scores = {}
-        for area, keywords in self._focus_patterns.items():
-            score = sum(1 for keyword in keywords if keyword in text)
-            if score > 0:
-                scores[area] = score
+RECENT COMMITS:
+{commits_str}
 
-        if not scores:
-            return "general development", 0.3
+TASK:
+Classify the developer's current "Focus Area" into ONE of these categories:
+[Authentication, API Design, Frontend UI, Database/Schema, Testing, Infrastructure/DevOps, Security, Performance, Refactoring]
 
-        # Get top focus area
-        top_area = max(scores, key=scores.get)
-        max_score = scores[top_area]
+If it's ambiguous, choose "General Development".
 
-        # Calculate confidence (0-1)
-        # Higher if one area dominates, lower if multiple areas
-        total_score = sum(scores.values())
-        confidence = min(0.95, max_score / total_score if total_score > 0 else 0.3)
-
-        return top_area, confidence
+OUTPUT JSON:
+{{
+    "focus": "Category Name",
+    "confidence": 0.0 to 1.0
+}}
+"""
+        try:
+            from side.llm.client import LLMClient
+            client = LLMClient()
+            response = await client.complete_async(
+                messages=[{"role": "user", "content": prompt}],
+                system_prompt="You are a classifier. Output JSON only.",
+                temperature=0.1
+            )
+            
+            import json
+            # Heuristic JSON parsing
+            start = response.find("{")
+            end = response.rfind("}") + 1
+            if start != -1 and end != -1:
+                data = json.loads(response[start:end])
+                return data.get("focus", "General Development"), float(data.get("confidence", 0.5))
+                
+        except Exception as e:
+            logger.warning(f"LLM Focus detection failed: {e}")
+            
+        # Fallback to simple heuristic if LLM fails (Software 1.0 backup)
+        text = (files_str + commits_str).lower()
+        if "auth" in text or "login" in text: return "Authentication", 0.4
+        if "test" in text: return "Testing", 0.4
+        
+        return "General Development", 0.3
 
     def get_current_context(self, project_path: str | Path) -> dict[str, Any] | None:
         """
