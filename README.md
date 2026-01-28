@@ -21,13 +21,29 @@ We are not competing with Cursor or Claude. We are their **Intel Source**.
 
 ---
 
-## 🛡️ The Sovereign Promise (Our Moats)
+## 🛡️ The Sovereign Moats (Why We Win)
 
-Unlike "AI Wrappers" that rely 100% on the cloud, Sidelith runs **Locally First** to protect you.
+We don't compete on "Editor Features." We compete on **The Brain**.
 
-1.  **Pulse Engine**: A <1ms latency local rule engine that blocks secrets/bad patterns *before* they leave your laptop.
-2.  **Sovereign Governor**: A self-policing resource monitor. If Sidelith exceeds **1% CPU (Idle)** or **500MB RAM**, it auto-terminates to save your battery.
-3.  **Sovereign Airgap**: (High Tech Only) Complete offline capability for environments that cannot touch the cloud.
+1.  **🏰 The Governance Moat (Constitutional Monarchy)**
+    *   **The Problem**: Linters act as "Nagging Parents."
+    *   **Our Solution**: **Atomic Sovereignty**. Rules are individual JSON files (`.side/rules/`) that you can *negotiate* with the AI via MCP.
+    *   **Result**: You are not a typist; you are the **Monarch**.
+
+2.  **🧠 The Memory Moat (Sovereign Ledger)**
+    *   **The Problem**: Cloud LLMs have "Amnesia." They forget your strategic intent after the chat closes.
+    *   **Our Solution**: **Permanent Context**. We store your "Correction Vectors" (Rejections) and "Mandates" in a local SQLite Brain (`.side/local.db`).
+    *   **Result**: Sidelith never makes the same mistake twice.
+
+3.  **🔒 The Privacy Moat (Neural Shield)**
+    *   **The Problem**: To be smart, AI needs your secrets. To be safe, it shouldn't have them.
+    *   **Our Solution**: **Encrypted At Rest**. Your context is sealed with AES-256 locally. Even if you sync to the cloud, they only see cipher-text.
+    *   **Result**: Enterprise-grade intelligence with Air-gapped security.
+
+4.  **⚡ The Architecture Moat (Fractal Index)**
+    *   **The Problem**: Monoliths (VS Code) are slow to index massive repos.
+    *   **Our Solution**: **Fractal Merkle Trees**. Indexing is O(log n).
+    *   **Result**: Infinite Scalability. 10 users or 10,000—the speed is the same.
 
 ---
 
