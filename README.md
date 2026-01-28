@@ -26,23 +26,23 @@ We are not competing with Cursor or Claude. We are their **Intel Source**.
 We don't compete on "Editor Features." We compete on **The Brain**.
 
 1.  **🏰 The Governance Moat (Constitutional Monarchy)**
-    *   **The Problem**: Linters act as "Nagging Parents."
-    *   **Our Solution**: **Atomic Sovereignty**. Rules are individual JSON files (`.side/rules/`) that you can *negotiate* with the AI via MCP.
+    *   **The Strategy**: We don't have settings; we have **Laws** (`.side/rules/`) that you negotiate with the AI.
+    *   **The Tech (Pulse Engine)**: A **<1ms latency** local rule engine that blocks secrets and architectural violations *before* they leave your laptop.
     *   **Result**: You are not a typist; you are the **Monarch**.
 
 2.  **🧠 The Memory Moat (Sovereign Ledger)**
-    *   **The Problem**: Cloud LLMs have "Amnesia." They forget your strategic intent after the chat closes.
-    *   **Our Solution**: **Permanent Context**. We store your "Correction Vectors" (Rejections) and "Mandates" in a local SQLite Brain (`.side/local.db`).
+    *   **The Strategy**: Cloud LLMs have "Amnesia." We store your "Correction Vectors" (Rejections) locally.
+    *   **The Tech (Dual-Store)**: A specialized SQLite Brain (`.side/local.db`) for decisions + Fractal Merkle Trees for code structure.
     *   **Result**: Sidelith never makes the same mistake twice.
 
 3.  **🔒 The Privacy Moat (Neural Shield)**
-    *   **The Problem**: To be smart, AI needs your secrets. To be safe, it shouldn't have them.
-    *   **Our Solution**: **Encrypted At Rest**. Your context is sealed with AES-256 locally. Even if you sync to the cloud, they only see cipher-text.
-    *   **Result**: Enterprise-grade intelligence with Air-gapped security.
+    *   **The Strategy**: To be smart, AI needs secrets. To be safe, it shouldn't have them.
+    *   **The Tech (Airgap + Encryption)**: Context is sealed with **AES-256** at rest. Plus, a **Sovereign Airgap** mode for complete offline capability.
+    *   **Result**: Enterprise-grade intelligence with Military-grade security.
 
 4.  **⚡ The Architecture Moat (Fractal Index)**
-    *   **The Problem**: Monoliths (VS Code) are slow to index massive repos.
-    *   **Our Solution**: **Fractal Merkle Trees**. Indexing is O(log n).
+    *   **The Strategy**: Monoliths are slow. Fractals are infinite.
+    *   **The Tech (Sovereign Governor)**: A self-policing resource monitor. If Sidelith exceeds **1% CPU** or **500MB RAM**, it auto-optimizes. Indexing is **O(log n)**.
     *   **Result**: Infinite Scalability. 10 users or 10,000—the speed is the same.
 
 ---
