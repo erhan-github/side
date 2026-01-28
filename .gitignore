@@ -9,11 +9,6 @@ web/.next
 # Local scripts
 scripts/
 
-# Local docs / reports
-docs/SESSION_SUMMARY.md
-docs/STRATEGIC_AUDIT.md
-docs/COMPLETED.md
-
 # Archive
 archive/
 
@@ -27,8 +22,6 @@ backend/task.md
 
 # Classified Strategy (Sovereign Level)
 private/
-docs/strategy/
-docs/SOVEREIGN_*
 .side
 docs/
 readings/
