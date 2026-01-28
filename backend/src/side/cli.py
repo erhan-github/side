@@ -56,13 +56,52 @@ def main():
     # Connect Command (MCP Setup)
     subparsers.add_parser("connect", help="Generate MCP Configuration for IDEs")
 
-    # Watch Command (Real-time Context)
+    # Watch Command (Phase II: Neural Compression)
     watch_parser = subparsers.add_parser("watch", help="Launch the 'Always-On' Watcher for real-time fractal context")
     watch_parser.add_argument("path", nargs="?", default=".", help="Project path to watch")
+
+    # Prune Command (Neural Decay)
+    subparsers.add_parser("prune", help="Optimize Sovereign Memory by purging the 'Dead Wisdom'")
+
+    # Train Command (Phase II-C: Software 2.0)
+    train_parser = subparsers.add_parser("train", help="Synthesize fine-tuning data from Sovereign Memory")
+    train_parser.add_argument("--export", action="store_true", help="Generate JSONL training pairs")
 
     # Airgap Command
     airgap_parser = subparsers.add_parser("airgap", help="Toggle Sovereign Airgap Mode (100% Offline)")
     airgap_parser.add_argument("state", choices=["on", "off", "status"], nargs="?", default="status", help="Toggle Airgap on/off")
+
+
+    # Recovery Command (The Phoenix Protocol)
+    subparsers.add_parser("recovery", help="Regenerate .side context from the Sovereign Ledger (local.db)")
+
+    # Export Command (Sovereign Mobility)
+    export_parser = subparsers.add_parser("export", help="Export Sovereign Identity for mobility")
+    export_parser.add_argument("--portable", action="store_true", help="Generate an encrypted, signed manifest for migration")
+
+    # Import Command (Sovereign Mobility)
+    import_parser = subparsers.add_parser("import", help="Import Sovereign Identity from a mobility manifest")
+    import_parser.add_argument("bundle", help="Path to the .shield bundle to import")
+    
+    # Mesh Command (Phase III: Universal Mesh)
+    mesh_parser = subparsers.add_parser("mesh", help="Interact with the Universal Mesh (Global Brain)")
+    mesh_subparsers = mesh_parser.add_subparsers(dest="mesh_command", help="Mesh actions")
+    mesh_subparsers.add_parser("list", help="List all discovered Sidelith nodes")
+    mesh_search_parser = mesh_subparsers.add_parser("search", help="Execute deep strategic search across all nodes")
+    mesh_search_parser.add_argument("query", help="The strategic query to search for")
+    
+    # Telemetry Command (Phase III-B: Proactive Observer)
+    telemetry_parser = subparsers.add_parser("telemetry", help="Manage proactive strategic alerts")
+    telemetry_subparsers = telemetry_parser.add_subparsers(dest="telemetry_command", help="Telemetry actions")
+    telemetry_subparsers.add_parser("status", help="Show all active architectural warnings")
+    telemetry_resolve_parser = telemetry_subparsers.add_parser("resolve", help="Mark a strategic alert as resolved")
+    telemetry_resolve_parser.add_argument("id", type=int, help="Alert ID to resolve")
+    
+    # Synergy Command (Phase III-B: Distributed Brain)
+    synergy_parser = subparsers.add_parser("synergy", help="Manage cross-project strategic synergy")
+    synergy_subparsers = synergy_parser.add_subparsers(dest="synergy_command", help="Synergy actions")
+    synergy_subparsers.add_parser("sync", help="Harvest architectural wisdom from the Universal Mesh")
+    synergy_subparsers.add_parser("wisdom", help="List all inherited strategic patterns")
     
     args = parser.parse_args()
     
@@ -309,6 +348,14 @@ def main():
         from side.intel.auto_intelligence import AutoIntelligence
         intel = AutoIntelligence(Path(args.path))
         
+        # Phase III: Mesh Registration & Synergy
+        from side.storage.simple_db import SimplifiedDatabase
+        from side.intel.synergy import run_synergy_sync
+        
+        db = SimplifiedDatabase()
+        db.register_mesh_node(db.get_project_id(args.path), Path(args.path).resolve())
+        run_synergy_sync(Path(args.path))
+
         # Run Async Feed
         if args.historic:
             fragments = asyncio.run(intel.historic_feed(months=args.months))
@@ -334,10 +381,6 @@ def main():
         print(result)
         print("---------------------------------------------------")
 
-    elif args.command == "watch":
-        print(f"🛡️ [Sovereign Watcher]: Monitoring {args.path}...")
-        from side.intel.watcher import start_watcher
-        start_watcher(Path(args.path))
 
     elif args.command == "airgap":
         from side.storage.simple_db import SimplifiedDatabase
@@ -352,6 +395,72 @@ def main():
             status = db.get_setting("airgap_enabled", "false")
             color = "🟢 OFF" if status == "false" else "🔴 ON (Local Only)"
             print(f"🛡️ [AIRGAP STATUS]: {color}")
+
+    elif args.command == "watch":
+        # Phase III: Mesh Registration
+        from side.storage.simple_db import SimplifiedDatabase
+        db = SimplifiedDatabase()
+        db.register_mesh_node(db.get_project_id(args.path), Path(args.path).resolve())
+
+        from side.intel.watcher import start_sovereign_watcher
+        start_sovereign_watcher(Path(args.path))
+
+    elif args.command == "prune":
+        print("🧠 [NEURAL DECAY]: Identifying architectural noise...")
+        import asyncio
+        from side.intel.auto_intelligence import AutoIntelligence
+        intel = AutoIntelligence(Path("."))
+        removed = asyncio.run(intel.prune_wisdom())
+        print(f"✅ [SUCCESS]: Pruned {removed} obsolete fragments. Sovereign Brain is optimized.")
+
+    elif args.command == "train":
+        if args.export:
+            from side.intel.trainer import generate_training_data
+            generate_training_data(Path("."))
+        else:
+            print("⚠️ Specify --export to generate a fine-tuning dataset.")
+
+    elif args.command == "recovery":
+        print("🔥 [PHOENIX PROTOCOL]: Initiating context regeneration...")
+        import asyncio
+        from side.intel.auto_intelligence import AutoIntelligence
+        intel = AutoIntelligence(Path("."))
+        asyncio.run(intel.recovery_pass())
+        print("✅ [SUCCESS]: Sovereign Context restored from the Local Ledger.")
+
+    elif args.command == "export":
+        if args.portable:
+            print("🚀 [SOVEREIGN MOBILITY]: Generating portable manifest...")
+            from side.storage.portability import export_project
+            export_project(".")
+        else:
+            print("⚠️ Specify --portable to generate a signed migration manifest.")
+
+    elif args.command == "import":
+        from side.storage.portability import import_project
+        import_project(args.bundle)
+
+    elif args.command == "mesh":
+        # ... mesh implementation ...
+        pass
+
+    elif args.command == "synergy":
+        from side.storage.simple_db import SimplifiedDatabase
+        from side.intel.synergy import run_synergy_sync
+        db = SimplifiedDatabase()
+        if args.synergy_command == "sync":
+            count = run_synergy_sync(Path("."))
+            print(f"✨ [SYNERGY]: Sync complete. {count} strategic patterns harvested.")
+        elif args.synergy_command == "wisdom":
+            wisdom = db.list_public_wisdom()
+            print("\n🌐 [COLLECTIVE WISDOM]: Inherited Strategic Patterns")
+            print("-" * 60)
+            if not wisdom:
+                print("No public wisdom inherited yet. Run 'side synergy sync'.")
+            for w in wisdom:
+                print(f"📍 {w['origin_node']:<15} | Signal: {w['signal_pattern']}")
+                print(f"   💡 {w['wisdom_text']}")
+                print("-" * 60)
 
     elif args.command == "login":
         print("🔐 [Sovereign Auth]: Authenticating...")
