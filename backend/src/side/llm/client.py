@@ -161,10 +161,13 @@ class LLMClient:
 
     def _auto_detect(self):
         # [Sovereign Choice Strategy]
-        
-        # 1. Global Airgap Check (The Master Switch)
         from side.storage.simple_db import SimplifiedDatabase
         db = SimplifiedDatabase()
+        project_id = db.get_project_id(".")
+        profile = db.get_profile(project_id)
+        tier = profile.get("tier", "trial") if profile else "trial"
+        
+        # 1. Global Airgap Check (The Master Switch)
         airgap = db.get_setting("airgap_enabled", "false") == "true"
         
         if airgap:
@@ -176,23 +179,24 @@ class LLMClient:
                 self.client = None
                 return
 
-        # 2. Check Preference
-        preference = os.getenv("SIDE_BRAIN_PREFERENCE", "cloud")
-        
-        if preference == "local":
-            logger.info("🧠 Preference: Local (Sovereign Mode)")
+        # 2. Tier-Based Default Routing
+        # High Tech defaults to Local (Sovereign)
+        # Others default to Cloud
+        if tier == "hitech":
+            logger.info(f"🏛️ [NEURAL ROUTING]: High Tech detected. Prioritizing Sovereign (Ollama).")
             if self._init_provider("ollama"):
                 return
-            else:
-                logger.warning("⚠️ Local preference set but Ollama not found. Falling back to Cloud.")
-        
-        # 3. Cloud First (Default) or Fallback
+            logger.warning("⚠️ Sovereign Node unavailable. Sliding into Cloud Failover...")
+        else:
+            logger.info(f"🚀 [NEURAL ROUTING]: {tier.capitalize()} Tier detected. Prioritizing Cloud Performance.")
+
+        # 3. Cloud Chain
         for provider in ["groq", "openai", "anthropic"]:
             if self._init_provider(provider):
                 return
                 
-        # 4. Last Resort: Check Ollama (if not preferred but available)
-        if preference != "local" and self._init_provider("ollama"):
+        # 4. Final Fallback to Ollama (if not already used)
+        if tier != "hitech" and self._init_provider("ollama"):
             return
                 
     def _init_provider_cloud(self, provider_name: str) -> bool: # Renamed older method to avoid conflict if I messed up replacement logic, but actually I am replacing the method body of _init_provider so I should correct myself. 
