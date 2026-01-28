@@ -115,6 +115,22 @@ class StrategicStore:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_project ON rejections(project_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_hash ON rejections(instruction_hash)")
 
+        # ─────────────────────────────────────────────────────────────
+        # CORE TABLE 6: PUBLIC_WISDOM - Cross-Node Collective Brain
+        # ─────────────────────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS public_wisdom (
+                id TEXT PRIMARY KEY,
+                origin_node TEXT,
+                category TEXT,
+                signal_pattern TEXT, -- e.g. "FastAPI", "React", "Supabase"
+                wisdom_text TEXT NOT NULL,
+                confidence INTEGER DEFAULT 5,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_public_wisdom_signal ON public_wisdom(signal_pattern)")
+
 
     def save_plan(self, project_id: str, plan_id: str, title: str, plan_type: str = "goal",
                   description: str | None = None, due_date: str | None = None,
@@ -281,5 +297,33 @@ class StrategicStore:
                 "SELECT * FROM rejections ORDER BY created_at DESC LIMIT ?",
                 (limit,)
             ).fetchall()
+            return [dict(row) for row in rows]
+
+    def save_public_wisdom(self, wisdom_id: str, wisdom_text: str, origin_node: str | None = None,
+                           category: str | None = None, signal_pattern: str | None = None,
+                           confidence: int = 5) -> None:
+        """Save architectural wisdom harvested from the Universal Mesh."""
+        with self.engine.connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO public_wisdom (id, origin_node, category, signal_pattern, wisdom_text, confidence)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    wisdom_text = excluded.wisdom_text,
+                    confidence = excluded.confidence
+                """,
+                (wisdom_id, origin_node, category, signal_pattern, wisdom_text, confidence),
+            )
+
+    def list_public_wisdom(self, signal_pattern: str | None = None) -> List[Dict[str, Any]]:
+        """Retrieve public wisdom, optionally filtered by architectural signal."""
+        with self.engine.connection() as conn:
+            if signal_pattern:
+                rows = conn.execute(
+                    "SELECT * FROM public_wisdom WHERE signal_pattern = ? ORDER BY confidence DESC",
+                    (signal_pattern,)
+                ).fetchall()
+            else:
+                rows = conn.execute("SELECT * FROM public_wisdom ORDER BY created_at DESC").fetchall()
             return [dict(row) for row in rows]
 

@@ -196,6 +196,10 @@ class SimplifiedDatabase:
     def get_recent_activities(self, project_id: str, limit: int = 20) -> list[dict[str, Any]]:
         return self.forensic.get_recent_activities(project_id, limit)
 
+    def get_recent_ledger(self, limit: int = 20) -> list[dict[str, Any]]:
+        """Cross-project strategic ledger (Global)."""
+        return self.forensic.get_recent_activities(project_id="global", limit=limit)
+
     def get_recent_audits(self, project_id: str, limit: int = 10) -> list[dict[str, Any]]:
         return self.forensic.get_recent_audits(project_id, limit)
 
@@ -235,6 +239,33 @@ class SimplifiedDatabase:
 
     def get_global_stats(self) -> Dict[str, Any]:
         return self.operational.get_global_stats()
+
+    def register_mesh_node(self, project_id: str, path: Path, dna_summary: str | None = None) -> None:
+        return self.operational.register_mesh_node(project_id, path, dna_summary)
+
+    def list_mesh_nodes(self) -> List[Dict[str, Any]]:
+        return self.operational.list_mesh_nodes()
+
+    def search_mesh_wisdom(self, query: str) -> List[Dict[str, Any]]:
+        return self.operational.search_mesh_wisdom(query)
+
+    def save_telemetry_alert(self, project_id: str, alert_type: str, severity: str, 
+                             message: str, file_path: str | None = None) -> None:
+        return self.operational.save_telemetry_alert(project_id, alert_type, severity, message, file_path)
+
+    def get_active_telemetry_alerts(self, project_id: str | None = None) -> List[Dict[str, Any]]:
+        return self.operational.get_active_telemetry_alerts(project_id)
+
+    def resolve_telemetry_alert(self, alert_id: int) -> None:
+        return self.operational.resolve_telemetry_alert(alert_id)
+
+    def save_public_wisdom(self, wisdom_id: str, wisdom_text: str, origin_node: str | None = None,
+                           category: str | None = None, signal_pattern: str | None = None,
+                           confidence: int = 5) -> None:
+        return self.strategic.save_public_wisdom(wisdom_id, wisdom_text, origin_node, category, signal_pattern, confidence)
+
+    def list_public_wisdom(self, signal_pattern: str | None = None) -> List[Dict[str, Any]]:
+        return self.strategic.list_public_wisdom(signal_pattern)
 
     def get_setting(self, key: str, default: str | None = None) -> str | None:
         return self.operational.get_setting(key, default)

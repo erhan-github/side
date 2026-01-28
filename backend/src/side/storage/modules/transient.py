@@ -31,6 +31,20 @@ class OperationalStore:
         conn.execute("INSERT OR IGNORE INTO meta (key, value) VALUES ('version', '1.0')")
 
         # ─────────────────────────────────────────────────────────────
+        # OPERATIONAL TABLE: MESH_NODES (THE UNIVERSAL MESH)
+        # ─────────────────────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS mesh_nodes (
+                project_id TEXT PRIMARY KEY,
+                path TEXT NOT NULL,
+                name TEXT,
+                last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                dna_summary TEXT
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_mesh_last_seen ON mesh_nodes(last_seen)")
+
+        # ─────────────────────────────────────────────────────────────
         # OPERATIONAL TABLE: QUERY_CACHE
         # ─────────────────────────────────────────────────────────────
         conn.execute("""
@@ -43,6 +57,23 @@ class OperationalStore:
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_query_cache_expires ON query_cache(expires_at)")
+
+        # ─────────────────────────────────────────────────────────────
+        # OPERATIONAL TABLE: TELEMETRY_ALERTS (THE PROACTIVE OBSERVER)
+        # ─────────────────────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS telemetry_alerts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                severity TEXT NOT NULL,
+                message TEXT NOT NULL,
+                file_path TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'active'
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_telemetry_status ON telemetry_alerts(status)")
 
 
     def get_version(self) -> float:
@@ -133,10 +164,130 @@ class OperationalStore:
             stats["db_size_mb"] = stats["db_size_bytes"] / (1024 * 1024)
             return stats
 
+    def register_mesh_node(self, project_id: str, path: Path, dna_summary: str | None = None) -> None:
+        """Adds or updates a project in the Local Universal Mesh."""
+        name = path.name
+        with self.engine.connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO mesh_nodes (project_id, path, name, dna_summary, last_seen)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(project_id) DO UPDATE SET
+                    path = excluded.path,
+                    name = excluded.name,
+                    dna_summary = COALESCE(excluded.dna_summary, dna_summary),
+                    last_seen = CURRENT_TIMESTAMP
+                """,
+                (project_id, str(path), name, dna_summary),
+            )
+
+    def list_mesh_nodes(self) -> List[Dict[str, Any]]:
+        """Returns all discovered Sidelith projects on this machine."""
+        with self.engine.connection() as conn:
+            rows = conn.execute("SELECT * FROM mesh_nodes ORDER BY last_seen DESC").fetchall()
+            return [dict(row) for row in rows]
+
+    def search_mesh_wisdom(self, query: str) -> List[Dict[str, Any]]:
+        """
+        Multi-node deep search across all local project brains.
+        Searches decisions, learnings, and rejections.
+        """
+        nodes = self.discover_sovereign_nodes()
+        results = []
+        
+        for node_path in nodes:
+            try:
+                with sqlite3.connect(node_path) as conn:
+                    conn.row_factory = sqlite3.Row
+                    q = f"%{query}%"
+                    
+                    # Resilient Table Search
+                    all_rows = []
+                    
+                    # 1. Decisions
+                    try:
+                        all_rows.extend(conn.execute("""
+                            SELECT 'DECISION' as type, question as title, answer as detail, category 
+                            FROM decisions WHERE question LIKE ? OR answer LIKE ?
+                        """, (q, q)).fetchall())
+                    except sqlite3.OperationalError: pass
+                    
+                    # 2. Learnings
+                    try:
+                        all_rows.extend(conn.execute("""
+                            SELECT 'LEARNING' as type, insight as title, impact as detail, 'wisdom' 
+                            FROM learnings WHERE insight LIKE ?
+                        """, (q,)).fetchall())
+                    except sqlite3.OperationalError: pass
+                    
+                    # 3. Rejections
+                    try:
+                        all_rows.extend(conn.execute("""
+                            SELECT 'REJECTION' as type, rejection_reason as title, file_path as detail, 'guardrail' 
+                            FROM rejections WHERE rejection_reason LIKE ?
+                        """, (q,)).fetchall())
+                    except sqlite3.OperationalError: pass
+                    
+                    for row in all_rows:
+                        res = dict(row)
+                        res["node"] = node_path.name
+                        results.append(res)
+            except Exception as e:
+                logger.debug(f"Mesh search skipped node {node_path}: {e}")
+                continue
+                
+        return results
+
+    def save_telemetry_alert(self, project_id: str, alert_type: str, severity: str, 
+                             message: str, file_path: str | None = None) -> None:
+        """Log a proactive strategic warning."""
+        with self.engine.connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO telemetry_alerts (project_id, type, severity, message, file_path)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (project_id, alert_type, severity, message, file_path),
+            )
+
+    def get_active_telemetry_alerts(self, project_id: str | None = None) -> List[Dict[str, Any]]:
+        """Retrieve active strategic warnings."""
+        with self.engine.connection() as conn:
+            if project_id:
+                rows = conn.execute(
+                    "SELECT * FROM telemetry_alerts WHERE project_id = ? AND status = 'active' ORDER BY timestamp DESC",
+                    (project_id,)
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM telemetry_alerts WHERE status = 'active' ORDER BY timestamp DESC"
+                ).fetchall()
+            return [dict(row) for row in rows]
+
+    def resolve_telemetry_alert(self, alert_id: int) -> None:
+        """Mark a telemetry alert as resolved."""
+        with self.engine.connection() as conn:
+            conn.execute(
+                "UPDATE telemetry_alerts SET status = 'resolved' WHERE id = ?",
+                (alert_id,)
+            )
+
     def discover_sovereign_nodes(self) -> List[Path]:
-        """Find all Sovereign nodes."""
+        """Find all Sovereign nodes globally using the Mesh Registry."""
+        nodes = []
+        # 1. Local Defaults
         side_root = Path.home() / ".side"
-        return list(side_root.glob("*.db"))
+        nodes.extend(list(side_root.glob("*.db")))
+        
+        # 2. Registered Mesh Nodes
+        with self.engine.connection() as conn:
+            rows = conn.execute("SELECT path FROM mesh_nodes").fetchall()
+            for row in rows:
+                p = Path(row['path']) / ".side" / "local.db"
+                if p.exists() and p not in nodes:
+                    nodes.append(p)
+                    
+        return list(set(nodes))
 
     def get_global_stats(self) -> Dict[str, Any]:
         """Aggregate stats across all discovered nodes."""
