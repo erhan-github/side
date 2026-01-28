@@ -65,28 +65,24 @@ class SovereignIgnore:
         Check if a path should be ignored.
         Checks against all loaded patterns.
         """
-        # 1. Check strict name match (fast)
-        if path.name in self.ignore_patterns:
-            return True
+        # 1. Fast check for project root itself (never ignore)
+        if path == self.project_root:
+            return False
 
-        # 2. Check path relative to root
-        try:
-            rel_path = path.relative_to(self.project_root)
-        except ValueError:
-            # Path is not inside project root
-            return True
-
-        str_path = str(rel_path)
-        
-        # 3. Check glob patterns
+        # 2. Check if ANY parent directory is in the ignore list
+        # This is the most robust way to handle nested node_modules, etc.
+        parts = path.relative_to(self.project_root).parts
+        for part in parts:
+            if part in self.ignore_patterns:
+                return True
+            
+        # 3. Check glob patterns against the full relative path
+        str_path = str(path.relative_to(self.project_root))
         for pattern in self.ignore_patterns:
-            # Match directly
             if fnmatch.fnmatch(path.name, pattern):
                 return True
-            # Match full relative path (e.g., "backend/secret/*.key")
             if fnmatch.fnmatch(str_path, pattern):
                 return True
-            # Match directory prefix (e.g., "dist/" matches "dist/bundle.js")
             if str_path.startswith(pattern + "/"):
                 return True
 

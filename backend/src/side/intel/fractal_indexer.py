@@ -12,6 +12,7 @@ import os
 import json
 import hashlib
 import re
+import logging
 from pathlib import Path
 from typing import Dict, Any, List
 from side.utils.crypto import shield
@@ -86,20 +87,20 @@ def generate_local_index(directory: Path) -> Dict[str, Any]:
     files = []
     children_checksums = {}
     aggregated_signals = set()
+    total_classes = 0
+    total_functions = 0
     
-    ignore_service = SovereignIgnore(directory) # In a real implementation this should be passed in or single-instanced
-    # But for a script run, we instantiate based on the directory root (assuming project root above)
-    # To resolve properly, we try to find the project root.
+    ignore_service = SovereignIgnore(directory)
+    # Finding project root for ignore service
     try:
-        project_root = SimplifiedDatabase.get_project_id() # Logic to get root is implicit in CLI usually
-        # Fallback for script usage:
         project_root_path = directory
         while not (project_root_path / ".git").exists() and project_root_path.parent != project_root_path:
             project_root_path = project_root_path.parent
         ignore_service = SovereignIgnore(project_root_path)
     except:
-        ignore_service = SovereignIgnore(directory) # Fallback
+        ignore_service = SovereignIgnore(directory)
 
+    has_subdirs = False
     for item in directory.iterdir():
         if ignore_service.should_ignore(item):
             continue
@@ -108,26 +109,39 @@ def generate_local_index(directory: Path) -> Dict[str, Any]:
             dna = get_file_dna(item)
             files.append(dna)
             if "semantics" in dna:
-                aggregated_signals.update(dna["semantics"].get("signals", []))
-        elif item.is_dir():
+                sem = dna["semantics"]
+                aggregated_signals.update(sem.get("signals", []))
+                total_classes += len(sem.get("classes", []))
+                total_functions += len(sem.get("functions", []))
+        elif item.is_dir() and item.name != ".side":
+            has_subdirs = True
             child_index = item / ".side" / "local.json"
             if child_index.exists():
                 try:
-                    # USE SHIELD TO DECRYPT CHILD INDEX
                     raw_data = shield.unseal_file(child_index)
                     data = json.loads(raw_data)
                     children_checksums[item.name] = data.get("checksum", "unknown")
                 except:
                     pass
     
+    # --- KARPATHY HEURISTIC (Complexity Analysis) ---
+    is_complex = (
+        len(files) >= 5 or 
+        total_classes > 0 or 
+        total_functions >= 3 or 
+        has_subdirs or 
+        len(aggregated_signals) > 0
+    )
+    
     # Calculate Self Checksum (Merkle-like)
     payload = json.dumps({"files": files, "children": children_checksums}, sort_keys=True)
     checksum = hashlib.sha256(payload.encode()).hexdigest()[:16]
     
     index_data = {
-        "protocol": "v3.fractal",
+        "protocol": "v3.sparse",
         "path": str(directory),
         "checksum": checksum,
+        "is_complex": is_complex,
         "dna": {
             "signals": list(aggregated_signals)
         },
@@ -141,29 +155,44 @@ def generate_local_index(directory: Path) -> Dict[str, Any]:
 
 def run_fractal_scan(root: Path):
     """
-    Runs a Bottom-Up scan to ensure child checksums are ready for parents.
+    Runs a pruning Top-Down scan to gather directories, 
+    then processes them Bottom-Up to ensure Merkle integrity.
     """
     ignore_service = SovereignIgnore(root)
+    dirs_to_process = []
 
-    for dirpath, dirnames, filenames in os.walk(root, topdown=False):
+    # 1. Top-Down Pruning Pass
+    for dirpath, dirnames, filenames in os.walk(root, topdown=True):
         current_dir = Path(dirpath)
         
-        # Prune ignored directories (modify dirnames in place for efficiency if topdown=True, 
-        # but since we are topdown=False, we just check current_dir)
-        if ignore_service.should_ignore(current_dir):
+        # Modify dirnames in-place to prune the traversal
+        dirnames[:] = [d for d in dirnames if not ignore_service.should_ignore(current_dir / d)]
+        
+        # Don't index .side folders or the root itself (root processed last)
+        if current_dir.name == ".side":
             continue
             
-        # skip .side folders themselves
-        if ".side" in current_dir.parts:
-            continue
+        dirs_to_process.append(current_dir)
 
+    # 2. Bottom-Up Processing Pass (Reverse order)
+    for current_dir in reversed(dirs_to_process):
+        # Skip .git and root is handled explicitly if needed, 
+        # but reversed(dirs_to_process) includes root at the end.
+        
         print(f"🔮 Deep Indexing: {current_dir}")
         index_data = generate_local_index(current_dir)
         
-        # Write .side/local.json
+        # SPARSE WRITE LOGIC
+        is_root = current_dir == root
         side_dir = current_dir / ".side"
-        side_dir.mkdir(exist_ok=True)
-        shield.seal_file(side_dir / "local.json", json.dumps(index_data, indent=2))
+        
+        if index_data["is_complex"] or is_root:
+            side_dir.mkdir(exist_ok=True)
+            shield.seal_file(side_dir / "local.json", json.dumps(index_data, indent=2))
+        else:
+            import shutil
+            if side_dir.exists():
+                shutil.rmtree(side_dir)
 
 def update_branch(root: Path, changed_path: Path):
     """
@@ -191,10 +220,16 @@ def update_branch(root: Path, changed_path: Path):
         print(f"⚡ Fractal Update: {current_dir}")
         index_data = generate_local_index(current_dir)
         
-        # Write .side/local.json
         side_dir = current_dir / ".side"
-        side_dir.mkdir(exist_ok=True)
-        shield.seal_file(side_dir / "local.json", json.dumps(index_data, indent=2))
+        is_root = current_dir == root
+        
+        if index_data["is_complex"] or is_root:
+            side_dir.mkdir(exist_ok=True)
+            shield.seal_file(side_dir / "local.json", json.dumps(index_data, indent=2))
+        else:
+            import shutil
+            if side_dir.exists():
+                shutil.rmtree(side_dir)
         
         if current_dir == root:
             break
