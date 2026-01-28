@@ -44,23 +44,38 @@ class NeuralShield:
         """Encrypts data string into bytes."""
         return self.fernet.encrypt(data.encode())
 
+    def seal_bytes(self, data: bytes) -> bytes:
+        """Encrypts raw bytes into bytes."""
+        return self.fernet.encrypt(data)
+
     def unseal(self, encrypted_data: bytes | str) -> str:
         """Decrypts bytes/str into original string."""
         if isinstance(encrypted_data, str):
             encrypted_data = encrypted_data.encode()
         return self.fernet.decrypt(encrypted_data).decode()
 
-    def seal_file(self, file_path: Path, data: str):
+    def unseal_bytes(self, encrypted_data: bytes | str) -> bytes:
+        """Decrypts bytes/str into original bytes."""
+        if isinstance(encrypted_data, str):
+            encrypted_data = encrypted_data.encode()
+        return self.fernet.decrypt(encrypted_data)
+
+    def seal_file(self, file_path: Path, data: str | bytes):
         """Writes encrypted data to a file."""
-        encrypted = self.seal(data)
+        if isinstance(data, str):
+            encrypted = self.seal(data)
+        else:
+            encrypted = self.seal_bytes(data)
         file_path.write_bytes(encrypted)
 
-    def unseal_file(self, file_path: Path) -> str:
+    def unseal_file(self, file_path: Path, binary: bool = False) -> str | bytes:
         """Reads and decrypts data from a file."""
         if not file_path.exists():
-            return ""
+            return "" if not binary else b""
         encrypted = file_path.read_bytes()
         try:
+            if binary:
+                return self.unseal_bytes(encrypted)
             return self.unseal(encrypted)
         except Exception as e:
             logger.error(f"❌ [SHIELD]: Decryption failure for {file_path}. Key mismatch? {e}")

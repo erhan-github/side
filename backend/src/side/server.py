@@ -123,6 +123,47 @@ def get_sovereign_graph() -> str:
     except Exception as e:
         return f"Error reading brain: {e}"
 
+@mcp.resource("side://mesh/nodes")
+def get_mesh_nodes() -> str:
+    """List all discovered Sidelith projects on this machine."""
+    try:
+        nodes = db.list_mesh_nodes()
+        return json.dumps(nodes, indent=2)
+    except Exception as e:
+        return json.dumps({"error": f"Mesh access failed: {e}"}, indent=2)
+
+@mcp.resource("side://mesh/wisdom")
+def get_universal_wisdom() -> str:
+    """
+    Aggregate all architectural rejections and mandates from ALL local projects.
+    The 'Universal Wisdom' layer for the machine.
+    """
+    try:
+        wisdom = []
+        nodes = db.list_mesh_nodes()
+        for node in nodes:
+            # Note: We simulate aggregation from the global ledger here
+            # In V2.2, we'll implement deep cross-node querying.
+            pass
+            
+        rejections = db.list_rejections(limit=20)
+        return json.dumps({
+            "scope": "Global Mesh",
+            "findings": rejections,
+            "node_count": len(nodes)
+        }, indent=2)
+    except Exception as e:
+        return json.dumps({"error": f"Wisdom aggregation failed: {e}"}, indent=2)
+
+@mcp.resource("side://telemetry/alerts")
+def get_telemetry_alerts() -> str:
+    """Retrieve active proactive strategic warnings from the Sovereign Ledger."""
+    try:
+        alerts = db.get_active_telemetry_alerts()
+        return json.dumps(alerts, indent=2)
+    except Exception as e:
+        return json.dumps({"error": f"Telemetry access failed: {e}"}, indent=2)
+
 @mcp.resource("side://context/sovereign")
 def get_sovereign_context() -> str:
     """
@@ -182,6 +223,23 @@ def query_ledger(limit: int = 20) -> str:
         return json.dumps(ledger, indent=2)
     except Exception as e:
         return f"Query failure: {e}"
+
+@mcp.tool()
+def search_mesh(query: str) -> str:
+    """
+    Search for architectural wisdom (decisions, rejections, mandates) 
+    across ALL Sidelith projects on this machine.
+    
+    Args:
+        query: The architectural pattern or decision to search for.
+    """
+    try:
+        results = db.search_mesh_wisdom(query)
+        if not results:
+            return f"No matching strategic wisdom found in the local mesh for '{query}'."
+        return json.dumps(results, indent=2)
+    except Exception as e:
+        return f"Mesh search failed: {e}"
 
 @mcp.tool()
 def check_safety(code: str, filename: str = "snippet.py") -> str:

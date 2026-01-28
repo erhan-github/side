@@ -96,7 +96,7 @@ class AutoIntelligence:
             logger.error(f"Git log failed: {e}")
             return []
 
-        llm = LLMClient()
+        llm = LLMClient(purpose="intelligence")
         fragments = []
         
         for line in commits:
@@ -137,6 +137,43 @@ class AutoIntelligence:
             shield.seal_file(sovereign_file, json.dumps(data, indent=2))
             
         return fragments
+
+    async def prune_wisdom(self) -> int:
+        """
+        The Decay Protocol: Removes redundant or obsolete architectural fragments.
+        Prevents 'Neural Bloat' and ensures high-signal context.
+        """
+        sovereign_file = self.project_path / ".side" / "sovereign.json"
+        if not sovereign_file.exists():
+            return 0
+            
+        import json
+        raw = shield.unseal_file(sovereign_file)
+        data = json.loads(raw)
+        fragments = data.get("history_fragments", [])
+        
+        initial_count = len(fragments)
+        seen_hashes = set()
+        pruned_fragments = []
+        
+        # 1. Deduplication & Signal Analysis
+        # We walk backwards (most recent first) and keep only unique hashes
+        for frag in reversed(fragments):
+            h = frag.get("hash")
+            if h not in seen_hashes:
+                seen_hashes.add(h)
+                pruned_fragments.append(frag)
+        
+        # 2. Limit capacity (for Alpha performance)
+        # Keep top 100 most recent fragments
+        final_fragments = sorted(pruned_fragments, key=lambda x: x.get('date', ''), reverse=True)[:100]
+        
+        data["history_fragments"] = final_fragments
+        shield.seal_file(sovereign_file, json.dumps(data, indent=2))
+        
+        removed = initial_count - len(final_fragments)
+        logger.info(f"🧠 [PRUNE]: Neural Decay complete. Removed {removed} obsolete fragments.")
+        return removed
 
     def gather_context(self, active_file: str = None, topic: str = None) -> str:
         """
@@ -189,6 +226,31 @@ class AutoIntelligence:
             return summary
         except Exception as e:
             return f"Strategic DNA extraction failed: {e}"
+
+    async def recovery_pass(self) -> None:
+        """
+        The Phoenix Protocol: Rebuilds the Sovereign Context from the Ledger.
+        Triggered when .side is wiped or context is corrupted.
+        """
+        logger.info("🔥 [PHOENIX]: Regenerating project soul from the Ledger...")
+        
+        # 1. Restore Project Identity
+        from side.storage.simple_db import SimplifiedDatabase
+        db = SimplifiedDatabase()
+        project_id = db.get_project_id(self.project_path)
+        logger.info(f"📍 [IDENTITY]: Project Recognized: {project_id}")
+
+        # 2. Re-mine Historical Wisdom (The Memories)
+        # We run a deep historic feed to restore strategic fragments
+        logger.info("🕰️ [PHOENIX]: Re-mining Strategic Wisdom (12-month lookback)...")
+        await self.historic_feed(months=12)
+        
+        # 3. Re-run Fractal Scan (The Body)
+        # We build a fresh distributed index of the current filesystem
+        logger.info("🧠 [PHOENIX]: Re-building Fractal Context Graph...")
+        await self.feed()
+        
+        logger.info("✨ [PHOENIX]: Recovery Complete. Sovereign Context is Immortal.")
 
     def enrich_system_prompt(self, base_prompt: str, context: str) -> str:
         """

@@ -48,12 +48,13 @@ class LLMClient:
     V3 (Neural Link): Local Ollama Support.
     """
     
-    def __init__(self, preferred_provider: Optional[str] = None):
+    def __init__(self, preferred_provider: Optional[str] = None, purpose: str = "reasoning"):
         self.provider: Optional[LLMProvider] = None
         self.client = None
         self.async_client = None
         self.model: Optional[str] = None
         self.pool: Optional[ManagedCreditPool] = None
+        self.purpose = purpose # "reasoning" or "intelligence"
         
         self._load_dotenv()
         
@@ -160,64 +161,60 @@ class LLMClient:
                     pass
 
     def _auto_detect(self):
-        # [Sovereign Choice Strategy]
+        """
+        Determines the primary LLM provider based on:
+        1. Airgap Mode (Master Override)
+        2. Task Purpose (Intelligence vs Reasoning)
+        3. User Tier (HiTech/Enterprise vs Standard)
+        4. User Preference (Settings Toggle)
+        """
         from side.storage.simple_db import SimplifiedDatabase
         db = SimplifiedDatabase()
         project_id = db.get_project_id(".")
         profile = db.get_profile(project_id)
         tier = profile.get("tier", "trial") if profile else "trial"
         
-        # 1. Global Airgap Check (The Master Switch)
-        airgap = db.get_setting("airgap_enabled", "false") == "true"
-        
-        if airgap:
+        # 1. AIRGAP: Force local, no exceptions
+        if db.get_setting("airgap_enabled") == "true":
             logger.info("🛡️ [AIRGAP MODE]: Total isolation active. Enforcing local inference.")
-            if self._init_provider("ollama"):
-                return
-            else:
-                logger.critical("🚨 [AIRGAP FAILURE]: Airgap enabled but Ollama not available! System locked for privacy.")
-                self.client = None
-                return
-
-        # 2. Tier-Based Default Routing
-        # High Tech defaults to Local (Sovereign)
-        # Others default to Cloud
-        if tier == "hitech":
-            logger.info(f"🏛️ [NEURAL ROUTING]: High Tech detected. Prioritizing Sovereign (Ollama).")
-            if self._init_provider("ollama"):
-                return
-            logger.warning("⚠️ Sovereign Node unavailable. Sliding into Cloud Failover...")
-        else:
-            logger.info(f"🚀 [NEURAL ROUTING]: {tier.capitalize()} Tier detected. Prioritizing Cloud Performance.")
-
-        # 3. Cloud Chain
-        for provider in ["groq", "openai", "anthropic"]:
-            if self._init_provider(provider):
-                return
-                
-        # 4. Final Fallback to Ollama (if not already used)
-        if tier != "hitech" and self._init_provider("ollama"):
+            if self._init_provider("ollama"): return
+            logger.critical("🚨 [AIRGAP FAILURE]: Airgap enabled but Ollama unavailable. System locked.")
+            self.client = None
             return
+
+        # 2. RESOLVE PREFERENCE
+        # 'Intelligence' purpose always prefers Cloud power (Fuel)
+        if self.purpose == "intelligence":
+            logger.info("🦅 [HYBRID INTEL]: Purpose is 'Intelligence'. Routing to Cloud Fuel.")
+            resolved_preference = "cloud"
+        else:
+            # 'Reasoning' purpose respects Tier + Settings
+            user_pref = db.get_setting("llm_engine_preference")
+            
+            if tier == "hitech":
+                resolved_preference = user_pref or "local"
+            elif tier == "enterprise":
+                resolved_preference = user_pref or "cloud"
+            else:
+                # trial, pro/free
+                resolved_preference = "cloud"
+                if user_pref == "local":
+                    logger.warning(f"🚫 [TIER LIMIT]: Local Engine requires High Tech or Enterprise tier.")
+
+        logger.info(f"🧠 [NEURAL ROUTING]: {tier.upper()} Tier. Engine: {resolved_preference.upper()}. Purpose: {self.purpose.upper()}")
+
+        # 3. EXECUTION CHAIN
+        if resolved_preference == "local":
+            if self._init_provider("ollama"): return
+            logger.warning("⚠️ Local Engine unavailable. Sliding into Cloud Failover...")
+            
+        # Cloud Chain (Default or Fallback)
+        for provider in ["groq", "openai", "anthropic"]:
+            if self._init_provider(provider): return
                 
-    def _init_provider_cloud(self, provider_name: str) -> bool: # Renamed older method to avoid conflict if I messed up replacement logic, but actually I am replacing the method body of _init_provider so I should correct myself. 
-        # Wait, I am replacing the whole chunks. 
-        # The logic in replacement chunk above handles both Ollama and Cloud.
-        # But wait, looking at my replacement chunk, I included `_init_provider` implementation.
-        # I need to be careful not to duplicate generic `_init_provider`.
-        # The `replace_file_content` replaces a contiguous block. 
-        # I see the target block starts at `GROQ = ...` (line 21) and ends at line 150 `return False`.
-        # This covers the Enum, PROVIDER_MODELS, class def, __init__, _init_provider, _load_dotenv, _auto_detect, and the START of the second `_init_provider` (which is a duplicate in the original file?).
-        # Ah, in the original file view, lines 62-81 are `_init_provider`, and 115-150 are ALSO `_init_provider`?
-        # Let me re-read the original file.
-        # Lines 62-81: `def _init_provider(self, provider_name: str) -> bool:` ... `logger.debug...` `return False`.
-        # Lines 115-150: `def _init_provider(self, provider_name: str) -> bool:` ... logic for groq/openai/anthropic.
-        # Yes, the original file has TWO `_init_provider` methods! The python class will uses the LAST one defined.
-        # The first one (lines 62-81) seems to handle Pool logic but returns False at the end mostly? Or attempts to find key. 
-        # The second one (lines 115-150) handles the actual client initialization.
-        # My replacement supersedes BOTH if I capture the range correctly.
-        # My replacement content defines a SINGLE `_init_provider` that handles Pool logic AND Client Init (including Ollama).
-        # So I am cleaning up the duplicate method as well. Excellent.
-        pass
+        # Final Fallback to Ollama (if not already tried)
+        if resolved_preference != "local" and self._init_provider("ollama"):
+            return
 
     def is_available(self) -> bool:
         """Check if LLM is configured and available."""
