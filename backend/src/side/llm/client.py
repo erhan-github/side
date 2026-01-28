@@ -105,6 +105,25 @@ class LLMClient:
 
             if not api_key:
                 return False
+            
+            # 3. Instantiate Provider
+            if provider_name == "groq":
+                from groq import Groq, AsyncGroq
+                self.client = Groq(api_key=api_key)
+                self.async_client = AsyncGroq(api_key=api_key)
+            elif provider_name == "openai":
+                from openai import OpenAI, AsyncOpenAI
+                self.client = OpenAI(api_key=api_key)
+                self.async_client = AsyncOpenAI(api_key=api_key)
+            elif provider_name == "anthropic":
+                from anthropic import Anthropic, AsyncAnthropic
+                self.client = Anthropic(api_key=api_key)
+                self.async_client = AsyncAnthropic(api_key=api_key)
+            
+            self.provider = LLMProvider(provider_name)
+            self.model = PROVIDER_MODELS[self.provider]
+            logger.info(f"✅ LLM: {provider_name.upper()} ({self.model})")
+            return True
                 
         except Exception as e:
             logger.debug(f"Provider {provider_name} init failed: {e}")
