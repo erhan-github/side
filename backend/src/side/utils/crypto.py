@@ -1,0 +1,70 @@
+import base64
+import os
+import logging
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+class NeuralShield:
+    """
+    Seals and Unseals Sidelith Intelligence.
+    Ensures that .side files are encrypted at rest.
+    """
+    def __init__(self):
+        self._key = None
+        self._fernet = None
+
+    @property
+    def fernet(self) -> Fernet:
+        """Lazy-loads the master key and initializes Fernet."""
+        if self._fernet is None:
+            self._key = self._get_or_create_master_key()
+            self._fernet = Fernet(self._key)
+        return self._fernet
+
+    def _get_or_create_master_key(self) -> bytes:
+        """Retrieves or generates a machine-persisted master key."""
+        from side.storage.simple_db import SimplifiedDatabase
+        db = SimplifiedDatabase()
+        key_str = db.operational.get_setting("neural_shield_key")
+        
+        if not key_str:
+            logger.info("🛡️ [SHIELD]: Generating new Master Key for this machine...")
+            # Generate a strong random key
+            key = Fernet.generate_key()
+            db.operational.set_setting("neural_shield_key", key.decode())
+            return key
+        
+        return key_str.encode()
+
+    def seal(self, data: str) -> bytes:
+        """Encrypts data string into bytes."""
+        return self.fernet.encrypt(data.encode())
+
+    def unseal(self, encrypted_data: bytes | str) -> str:
+        """Decrypts bytes/str into original string."""
+        if isinstance(encrypted_data, str):
+            encrypted_data = encrypted_data.encode()
+        return self.fernet.decrypt(encrypted_data).decode()
+
+    def seal_file(self, file_path: Path, data: str):
+        """Writes encrypted data to a file."""
+        encrypted = self.seal(data)
+        file_path.write_bytes(encrypted)
+
+    def unseal_file(self, file_path: Path) -> str:
+        """Reads and decrypts data from a file."""
+        if not file_path.exists():
+            return ""
+        encrypted = file_path.read_bytes()
+        try:
+            return self.unseal(encrypted)
+        except Exception as e:
+            logger.error(f"❌ [SHIELD]: Decryption failure for {file_path}. Key mismatch? {e}")
+            raise e
+
+# Global instance
+shield = NeuralShield()

@@ -5,6 +5,7 @@ Sovereign Strategic Store - Plans, Decisions, & Learnings.
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from side.utils.crypto import shield
 from .base import SovereignEngine
 
 logger = logging.getLogger(__name__)
@@ -97,6 +98,24 @@ class StrategicStore:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_check_ins_plan ON check_ins(plan_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_check_ins_date ON check_ins(created_at DESC)")
 
+        # ─────────────────────────────────────────────────────────────
+        # CORE TABLE 5: REJECTIONS - Correction Vectors (The "Kill" Signal)
+        # ─────────────────────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS rejections (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL DEFAULT 'default',
+                instruction_hash TEXT,
+                file_path TEXT,
+                rejection_reason TEXT, 
+                diff_signature TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_project ON rejections(project_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_hash ON rejections(instruction_hash)")
+
+
     def save_plan(self, project_id: str, plan_id: str, title: str, plan_type: str = "goal",
                   description: str | None = None, due_date: str | None = None,
                   parent_id: str | None = None, priority: int = 0) -> None:
@@ -161,6 +180,9 @@ class StrategicStore:
                       reasoning: str | None = None, category: str | None = None,
                       plan_id: str | None = None, confidence: int = 5) -> None:
         """Save a strategic decision."""
+        # SEAL SENSITIVE REASONING
+        sealed_reasoning = shield.seal(reasoning) if reasoning else None
+
         with self.engine.connection() as conn:
             conn.execute(
                 """
@@ -171,20 +193,30 @@ class StrategicStore:
                     reasoning = excluded.reasoning,
                     confidence = excluded.confidence
                 """,
-                (decision_id, question, answer, reasoning, category, plan_id, confidence),
+                (decision_id, question, answer, sealed_reasoning, category, plan_id, confidence),
             )
 
     def list_decisions(self, category: str | None = None) -> list[dict[str, Any]]:
         """List decisions."""
         with self.engine.connection() as conn:
+            query = "SELECT * FROM decisions ORDER BY created_at DESC"
             if category:
                 rows = conn.execute(
                     "SELECT * FROM decisions WHERE category = ? ORDER BY created_at DESC",
                     (category,)
                 ).fetchall()
             else:
-                rows = conn.execute("SELECT * FROM decisions ORDER BY created_at DESC").fetchall()
-            return [dict(row) for row in rows]
+                rows = conn.execute(query).fetchall()
+            results = []
+            for row in rows:
+                d = dict(row)
+                if d.get("reasoning"):
+                    try:
+                        d["reasoning"] = shield.unseal(d["reasoning"])
+                    except Exception:
+                        d["reasoning"] = "[ENCRYPTED_PRIVATE_REASONING]"
+                results.append(d)
+            return results
 
     def save_learning(self, learning_id: str, insight: str, source: str | None = None,
                       impact: str = "medium", plan_id: str | None = None) -> None:
@@ -226,3 +258,28 @@ class StrategicStore:
                 (plan_id,)
             ).fetchall()
             return [dict(row) for row in rows]
+
+    def save_rejection(self, rejection_id: str, file_path: str, reason: str, 
+                       instruction_hash: str | None = None, diff_signature: str | None = None) -> None:
+        """
+        Save a Correction Vector (Rejection). 
+        This is the 'Negative Context' that stops 'Beautiful Wrong Directions'.
+        """
+        with self.engine.connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO rejections (id, file_path, rejection_reason, instruction_hash, diff_signature)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (rejection_id, file_path, reason, instruction_hash, diff_signature),
+            )
+
+    def list_rejections(self, limit: int = 10) -> list[dict[str, Any]]:
+        """List recent rejections for the Sovereign Footer."""
+        with self.engine.connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM rejections ORDER BY created_at DESC LIMIT ?",
+                (limit,)
+            ).fetchall()
+            return [dict(row) for row in rows]
+

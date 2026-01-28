@@ -145,6 +145,14 @@ class SimplifiedDatabase:
     def list_check_ins(self, plan_id: str) -> list[dict[str, Any]]:
         return self.strategic.list_check_ins(plan_id)
 
+    def save_rejection(self, rejection_id: str, file_path: str, reason: str, 
+                       instruction_hash: str | None = None, diff_signature: str | None = None) -> None:
+        return self.strategic.save_rejection(rejection_id, file_path, reason, instruction_hash, diff_signature)
+
+    def list_rejections(self, limit: int = 10) -> list[dict[str, Any]]:
+        return self.strategic.list_rejections(limit)
+
+
     # --- Goal Compatibility ---
     def save_goal(self, goal_id: str, title: str, description: str | None = None,
                   due_date: str | None = None, parent_id: str | None = None,
@@ -227,6 +235,12 @@ class SimplifiedDatabase:
 
     def get_global_stats(self) -> Dict[str, Any]:
         return self.operational.get_global_stats()
+
+    def get_setting(self, key: str, default: str | None = None) -> str | None:
+        return self.operational.get_setting(key, default)
+
+    def set_setting(self, key: str, value: str) -> None:
+        return self.operational.set_setting(key, value)
 
     # --- Core Mechanics ---
     def check_integrity(self) -> bool:

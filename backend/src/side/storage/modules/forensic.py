@@ -6,6 +6,7 @@ import json
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
+from side.utils.crypto import shield
 from .base import SovereignEngine, InsufficientTokensError
 
 logger = logging.getLogger(__name__)
@@ -98,13 +99,16 @@ class ForensicStore:
                     logger.warning(f"🚫 Hard Stop: Insufficient tokens for {project_id} ({balance} available, {cost_tokens} needed)")
                     raise InsufficientTokensError(f"Insufficient tokens. {balance} remaining.")
 
+            # SEAL SENSITIVE PAYLOAD
+            sealed_payload = shield.seal(json.dumps(payload or {}))
+
             conn.execute(
                 """
                 INSERT INTO activities (
                     project_id, tool, action, cost_tokens, tier, payload
                 ) VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (project_id, tool, action, cost_tokens, tier, json.dumps(payload or {}))
+                (project_id, tool, action, cost_tokens, tier, sealed_payload)
             )
             
             if cost_tokens > 0:
@@ -120,7 +124,20 @@ class ForensicStore:
                 "SELECT * FROM activities WHERE project_id = ? ORDER BY created_at DESC LIMIT ?",
                 (project_id, limit)
             ).fetchall()
-            return [dict(row) for row in rows]
+            results = []
+            for row in rows:
+                d = dict(row)
+                if d.get("payload"):
+                    try:
+                        d["payload"] = json.loads(shield.unseal(d["payload"]))
+                    except Exception:
+                        # Fallback for old unencrypted data
+                        try:
+                            d["payload"] = json.loads(d["payload"])
+                        except Exception:
+                             d["payload"] = {"error": "[PAYLOAD_SEALED]"}
+                results.append(d)
+            return results
 
     def get_recent_audits(self, project_id: str, limit: int = 10) -> list[dict[str, Any]]:
         """Get recent audits."""

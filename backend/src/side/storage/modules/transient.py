@@ -62,6 +62,20 @@ class OperationalStore:
                 (str(version),)
             )
 
+    def get_setting(self, key: str, default: str | None = None) -> str | None:
+        """Get a global system setting."""
+        with self.engine.connection() as conn:
+            row = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+            return row["value"] if row else default
+
+    def set_setting(self, key: str, value: str) -> None:
+        """Set a global system setting."""
+        with self.engine.connection() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)",
+                (key, str(value))
+            )
+
     def save_query_cache(self, query_type: str, query_params: dict[str, Any], 
                          result: Any, ttl_hours: int = 1) -> None:
         """Cache query result."""

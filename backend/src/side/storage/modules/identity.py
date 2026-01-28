@@ -30,9 +30,9 @@ class IdentityStore:
                 business_model TEXT,
                 target_raise TEXT,
                 tech_stack JSON,
-                tier TEXT DEFAULT 'free',
-                token_balance INTEGER DEFAULT 50,
-                tokens_monthly INTEGER DEFAULT 50,
+                tier TEXT DEFAULT 'trial',
+                token_balance INTEGER DEFAULT 500,
+                tokens_monthly INTEGER DEFAULT 0,
                 tokens_used INTEGER DEFAULT 0,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
