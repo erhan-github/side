@@ -210,6 +210,45 @@ class StrategicStore:
             rows = conn.execute(query, params).fetchall()
             return [dict(row) for row in rows]
 
+    def find_objectives_by_symbols(self, project_id: str, symbols: List[str]) -> List[Dict[str, Any]]:
+        """
+        [TECH-04]: Maps architectural symbols (classes/functions) to strategic objectives.
+        Uses fuzzy title/description matching.
+        """
+        if not symbols:
+            return []
+            
+        objectives = []
+        with self.engine.connection() as conn:
+            for symbol in symbols:
+                # 1. Try exact/contained match first
+                query = f"%{symbol}%"
+                rows = conn.execute("""
+                    SELECT id, title, type FROM plans 
+                    WHERE project_id = ? AND status != 'done'
+                    AND (title LIKE ? OR description LIKE ? OR notes LIKE ?)
+                """, (project_id, query, query, query)).fetchall()
+                
+                # 2. If no match, try matching segments (CamelCase split)
+                if not rows:
+                    import re
+                    segments = re.findall(r'[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z]|\b)', symbol)
+                    for seg in segments:
+                        if len(seg) < 3: continue
+                        seg_query = f"%{seg}%"
+                        rows += conn.execute("""
+                            SELECT id, title, type FROM plans 
+                            WHERE project_id = ? AND status != 'done'
+                            AND (title LIKE ? OR description LIKE ? OR notes LIKE ?)
+                        """, (project_id, seg_query, seg_query, seg_query)).fetchall()
+
+                for row in rows:
+                    objectives.append(dict(row))
+        
+        # Deduplicate results
+        unique_objs = {obj['id']: obj for obj in objectives}.values()
+        return list(unique_objs)
+
     def update_plan_status(self, plan_id: str, status: str) -> bool:
         """Update plan status."""
         with self.engine.connection() as conn:

@@ -185,10 +185,14 @@ class AutoIntelligence:
                     logger.warning(f"⚠️ [ECONOMY]: Skipping boost for {h[:8]} due to zero balance.")
                     continue
 
+                # --- TECH-04: INTENT CORRELATION ---
+                correlated_objectives = self.strategic.find_objectives_by_symbols(project_id, modified_symbols)
+                objective_titles = [obj['title'] for obj in correlated_objectives]
+
                 prompt = [
-                    {"role": "user", "content": f"Commit: {msg}\nSymbols: {modified_symbols}\nDiff (Truncated):\n{diff_content[:3000]}"}
+                    {"role": "user", "content": f"Commit: {msg}\nSymbols: {modified_symbols}\nAligned Objectives: {objective_titles}\nDiff (Truncated):\n{diff_content[:3000]}"}
                 ]
-                system = "Extract the 'Strategic Why' from this commit. Be concise. What architectural decision was made? Format: 'Decision: [Why we did it]'. Ignore trivialities."
+                system = "Extract the 'Strategic Why' from this commit. Be concise. What architectural decision was made? Format: 'Decision: [Why we did it]'. If it aligns with objectives, mention how. Ignore trivialities."
                 
                 wisdom = await llm.complete_async(prompt, system, max_tokens=150)
                 
@@ -197,9 +201,10 @@ class AutoIntelligence:
                     "date": date,
                     "summary": msg,
                     "symbols": modified_symbols,
+                    "aligned_objectives": [obj['id'] for obj in correlated_objectives],
                     "wisdom": wisdom.strip()
                 })
-                logger.info(f"✨ [BOOSTED]: {h[:8]} - {msg[:30]} (Cost: {su_cost} SU)")
+                logger.info(f"✨ [BOOSTED]: {h[:8]} - {msg[:30]} (Aligned: {len(correlated_objectives)})")
             except Exception as e:
                 logger.debug(f"Failed to mine commit: {e}")
                 continue

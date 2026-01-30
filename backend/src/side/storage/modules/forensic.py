@@ -97,6 +97,33 @@ class ForensicStore:
             )
         """)
 
+        # ─────────────────────────────────────────────────────────────
+        # [TECH-05] CORE TABLE 13: AVERTED_DISASTERS - ROI Tracking
+        # ─────────────────────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS averted_disasters (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                su_saved INTEGER DEFAULT 0,
+                technical_debt_averted TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_averted_project ON averted_disasters(project_id)")
+
+    def log_averted_disaster(self, project_id: str, reason: str, su_saved: int = 50, technical_debt: str | None = None) -> None:
+        """
+        [TECH-05]: Quantifies ROI by logging blocked architectural or security violations.
+        """
+        import uuid
+        with self.engine.connection() as conn:
+            conn.execute("""
+                INSERT INTO averted_disasters (id, project_id, reason, su_saved, technical_debt_averted)
+                VALUES (?, ?, ?, ?, ?)
+            """, (str(uuid.uuid4()), project_id, reason, su_saved, technical_debt))
+        logger.info(f"🛡️ [ROI]: Averted Disaster Logged: {reason} (Saved {su_saved} SU)")
+
     def log_activity(self, project_id: str, tool: str, action: str, 
                      cost_tokens: int = 0, tier: str = 'free', 
                      payload: dict[str, Any] | None = None) -> None:
