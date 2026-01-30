@@ -65,7 +65,7 @@ async def handle_tool_call(name: str, arguments: dict[str, Any]) -> str:
     
     # 3. Verify balance before execution
     if cost > 0:
-        balance_info = db.get_token_balance(project_id)
+        balance_info = db.identity.get_token_balance(project_id)
         if balance_info["balance"] < cost:
             return f"""
 ⚠️ **Insufficient Strategic Units (SUs)**
@@ -89,8 +89,8 @@ Required for `{name}`: `{cost} SUs`
         # 4. Deduct cost on success (No-bullshit logic)
         if cost > 0:
             try:
-                db.update_token_balance(project_id, -cost)
-                db.log_activity(project_id, name, "execution", cost)
+                db.identity.update_token_balance(project_id, -cost)
+                db.forensic.log_activity(project_id, name, "execution", cost)
             except InsufficientTokensError:
                 pass # Atomic check already passed, this is a safety fallback
                 

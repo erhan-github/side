@@ -3,7 +3,6 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 from side.tools.recursive_utils import partition, peek, grep, chunk_list
-from side.intel.memory import MemoryPersistence, MemoryManager
 from side.llm.client import LLMClient
 
 logger = logging.getLogger(__name__)

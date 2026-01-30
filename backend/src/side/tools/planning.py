@@ -50,13 +50,13 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     if not query:
         return "❌ Please specify the goal or task to check."
     
-    all_plans = db.list_plans(project_id=db.get_project_id())
+    all_plans = db.strategic.list_plans(project_id=db.get_project_id())
     matching = next((p for p in all_plans if query.lower() in p['title'].lower()), None)
     
     if not matching:
         return f"❓ Could not find plan matching: \"{query}\""
     
-    db.update_plan_status(matching['id'], 'done')
+    db.strategic.update_plan_status(matching['id'], 'done')
 
     # INSTRUMENTATION: Record Outcome
     ie = InstrumentationEngine(db)
@@ -73,8 +73,8 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     
     # LOG COMPLETION
     try:
-        profile = db.get_profile(db.get_project_id())
-        db.log_activity(
+        profile = db.identity.get_profile(db.get_project_id())
+        db.forensic.log_activity(
             project_id=db.get_project_id(),
             tool="check",
             action=f"Completed: {matching['title'][:50]}{'...' if len(matching['title']) > 50 else ''}",
@@ -110,16 +110,16 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
     
     # 1. Auto-Detection via Git
     project_id = db.get_project_id()
-    pending_goals = db.list_plans(project_id=project_id, status="active")
+    pending_goals = db.strategic.list_plans(project_id=project_id, status="active")
     if pending_goals:
         detected = await auto_intel.detect_goal_completion(pending_goals)
         for d in detected:
-            db.update_plan_status(d["goal_id"], "done")
+            db.strategic.update_plan_status(d["goal_id"], "done")
             
             # LOG AUTO-COMPLETION
             try:
-                profile = db.get_profile(db.get_project_id())
-                db.log_activity(
+                profile = db.identity.get_profile(db.get_project_id())
+                db.forensic.log_activity(
                     project_id=db.get_project_id(),
                     tool="plan",
                     action=f"Auto-completed: {d['goal_title'][:40]}{'...' if len(d['goal_title']) > 40 else ''}",
@@ -147,7 +147,7 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         elif any(kw in goal_lower for kw in ["fix", "add", "remove"]): plan_type = "task"
         else: plan_type = "goal"
         
-        db.save_plan(project_id=project_id, plan_id=goal_id, title=goal_text, plan_type=plan_type, due_date=due_date)
+        db.strategic.save_plan(project_id=project_id, plan_id=goal_id, title=goal_text, plan_type=plan_type, due_date=due_date)
         
         # BILLING: Charge for New Directive
         billing = BillingService(db)
@@ -160,8 +160,8 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         
         # LOG NEW PLAN
         try:
-            profile = db.get_profile(db.get_project_id())
-            db.log_activity(
+            profile = db.identity.get_profile(db.get_project_id())
+            db.forensic.log_activity(
                 project_id=db.get_project_id(),
                 tool="plan",
                 action=f"Added {plan_type}: {goal_text[:50]}{'...' if len(goal_text) > 50 else ''}",
@@ -183,7 +183,7 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
     if monolith_path:
         output += f"🏛️ **MONOLITH EVOLVED:** {monolith_path}\n"
     
-    all_plans = db.list_plans(project_id=project_id)
+    all_plans = db.strategic.list_plans(project_id=project_id)
     output += format_plan(all_plans)
     
     return output

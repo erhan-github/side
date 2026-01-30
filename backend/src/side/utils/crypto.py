@@ -27,15 +27,17 @@ class NeuralShield:
 
     def _get_or_create_master_key(self) -> bytes:
         """Retrieves or generates a machine-persisted master key."""
-        from side.storage.simple_db import SimplifiedDatabase
-        db = SimplifiedDatabase()
-        key_str = db.operational.get_setting("neural_shield_key")
+        from side.storage.modules.base import SovereignEngine
+        from side.storage.modules.transient import OperationalStore
+        engine = SovereignEngine()
+        op_store = OperationalStore(engine)
+        key_str = op_store.get_setting("neural_shield_key")
         
         if not key_str:
             logger.info("🛡️ [SHIELD]: Generating new Master Key for this machine...")
             # Generate a strong random key
             key = Fernet.generate_key()
-            db.operational.set_setting("neural_shield_key", key.decode())
+            op_store.set_setting("neural_shield_key", key.decode())
             return key
         
         return key_str.encode()
