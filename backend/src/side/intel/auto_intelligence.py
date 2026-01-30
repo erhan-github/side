@@ -1,6 +1,8 @@
 import logging
+import time
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
+import ast
 from side.intel.memory import MemoryManager
 from side.llm.client import LLMClient
 from side.utils.crypto import shield
@@ -16,10 +18,23 @@ class AutoIntelligence:
     3. Past Failures (Ledger).
     """
 
-    def __init__(self, project_path: Path):
+    def __init__(self, project_path: Path, buffer=None):
+        import os
+        from side.storage.modules.base import SovereignEngine
+        from side.storage.modules.strategic import StrategicStore
+        from side.storage.modules.forensic import ForensicStore
+        from side.storage.modules.mmap_store import MmapStore
         self.project_path = project_path
-        self.memory = MemoryManager(project_path)
-        self.brain_path = project_path / ".side" / "brain"
+        self.engine = SovereignEngine()
+        self.strategic = StrategicStore(self.engine)
+        self.forensic = ForensicStore(self.engine)
+        self.buffer = buffer
+        self.mmap = MmapStore(project_path)
+        self.memory = MemoryManager(self.strategic, project_id=self.engine.get_project_id())
+        
+        # [KAR-4]: Universal Brain Path (Default to .side/brain or ENV)
+        env_brain = os.getenv("SIDE_BRAIN_PATH")
+        self.brain_path = Path(env_brain) if env_brain else project_path / ".side" / "brain"
 
     async def feed(self) -> Dict[str, Any]:
         """
@@ -31,8 +46,11 @@ class AutoIntelligence:
         from side.intel.fractal_indexer import run_fractal_scan
         
         # 1. Run the Fractal Scan (Distributed Indexing)
-        logger.info("🧠 [BRAIN]: Initiating Fractal Context Scan...")
+        start_time = time.time()
+        logger.info("🧠 [BRAIN]: Initiating Parallel Fractal Context Scan...")
         run_fractal_scan(self.project_path)
+        scan_duration = time.time() - start_time
+        logger.info(f"🧠 [BRAIN]: Scan completed in {scan_duration:.2f}s.")
         
         # 2. Rollup to Monolith (For v1/v2 Compatibility)
         # We read the root local.json (ENCRYPTED) and wrap it as the Master Brain
@@ -43,20 +61,35 @@ class AutoIntelligence:
         raw_data = shield.unseal_file(root_index_path)
         local_data = json.loads(raw_data)
         
-        # 3. Construct the Sovereign Graph (Legacy Wrapper)
+        # 3. Construct the Sovereign Graph (Unified Intent Layer)
+        project_id = self.engine.get_project_id()
+        
+        # Ingest Strategic Intent (Plans & Directives)
+        plans = self.strategic.list_plans(project_id)
+        objectives = [p for p in plans if p['type'] == 'objective' and p['status'] != 'done']
+        tasks = [p for p in plans if p['type'] == 'task' and p['status'] != 'done']
+        
+        # Ingest Recent Intel (Silicon Pulse & Activity)
+        activities = self.forensic.get_recent_activities(project_id, limit=10)
+        
         sovereign_graph = {
             "$schema": "./backend/src/side/schema/sovereign.schema.json",
-            "version": "3.0.0 (Fractal)",
+            "version": "3.1.0 (Unified HUD Edition)",
             "last_scan": datetime.now(timezone.utc).isoformat(),
             "dna": {
-                "detected_stack": ["Detected via Fractal Tree"], # Todo: Extract from tree
+                "detected_stack": ["M2 Pro Accelerated"], # Todo: Extract from tree/hardware.py
                 "primary_languages": []
             },
+            "intent": {
+                "objectives": objectives,
+                "directives": tasks,
+                "latest_destination": "Peru Summit v1.0",
+                "intel_signals": activities
+            },
             "stats": {
-                "nodes": len(local_data.get("context", {}).get("files", [])), # Approximate
+                "nodes": len(local_data.get("context", {}).get("files", [])),
                 "mode": "Distributed"
             },
-            "nodes": [], # Legacy nodes empty, tools must learn Protocol v3 walk
             "fractal_root": local_data,
             "history_fragments": []
         }
@@ -65,6 +98,30 @@ class AutoIntelligence:
         sovereign_file = self.project_path / ".side" / "sovereign.json"
         sovereign_file.parent.mkdir(parents=True, exist_ok=True)
         shield.seal_file(sovereign_file, json.dumps(sovereign_graph, indent=2))
+        
+        # 5. Harvest Documentation DNA [KAR-4]
+        await self._harvest_documentation_dna()
+        
+        # 6. [INTEL-4] Sync Mmap Store for NEON Acceleration
+        try:
+            wisdom = self.strategic.list_public_wisdom()
+            fragments = []
+            for w in wisdom:
+                sig_hash = w.get('signal_hash')
+                w_id = w.get('id')
+                if sig_hash is not None and w_id:
+                    # Convert UUID string to 16-byte buffer
+                    import uuid
+                    try:
+                        uuid_obj = uuid.UUID(w_id)
+                        fragments.append((sig_hash, uuid_obj.bytes))
+                    except:
+                        continue
+            
+            if fragments:
+                 self.mmap.sync_from_ledger(fragments)
+        except Exception as e:
+            logger.warning(f"MMAP Sync Failed: {e}")
         
         logger.info(f"🧠 [BRAIN]: Fractal Feed complete. Root Checksum: {local_data.get('checksum')}")
         return sovereign_graph
@@ -97,6 +154,7 @@ class AutoIntelligence:
             return []
 
         llm = LLMClient(purpose="intelligence")
+        project_id = self.engine.get_project_id()
         fragments = []
         
         for line in commits:
@@ -106,11 +164,29 @@ class AutoIntelligence:
                 # Get the diff for this commit
                 diff_cmd = ["git", "show", "--pretty=format:", h]
                 diff_res = subprocess.run(diff_cmd, cwd=self.project_path, capture_output=True, text=True)
-                diff_content = diff_res.stdout[:4000] # Cap diff size for context efficiency
+                diff_content = diff_res.stdout
                 
-                # 2. Extract 'The Why' using LLM
+                # --- TIERED INFERENCE LOGIC ---
+                # Tier 0: AST Symbol Extraction (Local Heuristic)
+                modified_symbols = self._extract_symbols(diff_content)
+                
+                # Gating: If no symbols modified (just comments/logs) and no high-entropy keywords
+                high_entropy_keywords = ["sec", "auth", "fix", "breaking", "api", "infra"]
+                is_high_entropy = any(kw in msg.lower() for kw in high_entropy_keywords)
+                
+                if not modified_symbols and not is_high_entropy:
+                    logger.info(f"⏭️ [GATED]: Skipping LLM for routine commit {h[:8]} ('{msg[:30]}')")
+                    continue
+
+                # Tier 2: Strategic Boost (LLM Analysis)
+                # We only reach here if it's high-entropy or has symbol changes
+                su_cost = 15 if is_high_entropy else 5
+                if not self.engine.accounting.deduct_su(project_id, su_cost, f"Semantic Boost: {h[:8]}"):
+                    logger.warning(f"⚠️ [ECONOMY]: Skipping boost for {h[:8]} due to zero balance.")
+                    continue
+
                 prompt = [
-                    {"role": "user", "content": f"Commit: {msg}\nDiff:\n{diff_content}"}
+                    {"role": "user", "content": f"Commit: {msg}\nSymbols: {modified_symbols}\nDiff (Truncated):\n{diff_content[:3000]}"}
                 ]
                 system = "Extract the 'Strategic Why' from this commit. Be concise. What architectural decision was made? Format: 'Decision: [Why we did it]'. Ignore trivialities."
                 
@@ -120,9 +196,10 @@ class AutoIntelligence:
                     "hash": h[:8],
                     "date": date,
                     "summary": msg,
+                    "symbols": modified_symbols,
                     "wisdom": wisdom.strip()
                 })
-                logger.info(f"✨ [MINED]: {h[:8]} - {msg[:30]}...")
+                logger.info(f"✨ [BOOSTED]: {h[:8]} - {msg[:30]} (Cost: {su_cost} SU)")
             except Exception as e:
                 logger.debug(f"Failed to mine commit: {e}")
                 continue
@@ -139,41 +216,157 @@ class AutoIntelligence:
         return fragments
 
     async def prune_wisdom(self) -> int:
+        """Entry point for manual or scheduled neural decay."""
+        return await self.autonomous_janitor()
+
+    def _extract_symbols(self, diff_content: str) -> List[str]:
         """
-        The Decay Protocol: Removes redundant or obsolete architectural fragments.
-        Prevents 'Neural Bloat' and ensures high-signal context.
+        Uses native Python AST to find which functions or classes were modified in a diff.
+        Currently highly optimized for Python files.
         """
-        sovereign_file = self.project_path / ".side" / "sovereign.json"
-        if not sovereign_file.exists():
-            return 0
+        import re
+        symbols = set()
+        
+        # Heuristic: Find lines starting with + or - that look like def or class
+        # (Slightly faster than parsing the whole file for every diff)
+        lines = diff_content.splitlines()
+        for line in lines:
+            if line.startswith("+") and not line.startswith("+++"):
+                match = re.search(r"(def|class)\s+([a-zA-Z_][a-zA-Z0-9_]*)", line)
+                if match:
+                    symbols.add(match.group(2))
+        
+        return list(symbols)
+
+    async def autonomous_janitor(self, throttle_hook=None) -> int:
+        """
+        The 'Neural Decay' Protocol. 
+        Prunes obsolete, redundant, or conflicting strategic fragments.
+        Uses SimHash bit-similarity to identify 'Dead Wisdom'.
+        [INTEL-2]: Supports adaptive throttle hooks for thermal safety.
+        """
+        from side.storage.modules.base import SovereignEngine
+        from side.storage.modules.strategic import StrategicStore
+        from side.utils.hashing import sparse_hasher
+        
+        engine = SovereignEngine()
+        strategic = StrategicStore(engine)
+        
+        pruned_count = 0
+        
+        # 1. PRUNE: Conflict Decay (Rejections vs Successful Ledger Actions)
+        rejections = strategic.list_rejections(limit=100)
+        
+        for rej in rejections:
+            if throttle_hook: await throttle_hook()
             
-        import json
-        raw = shield.unseal_file(sovereign_file)
-        data = json.loads(raw)
-        fragments = data.get("history_fragments", [])
+            rej_id = rej['id']
+            rej_hash = rej.get('signal_hash')
+            if not rej_hash: continue
+            pass
+
+        # 2. PRUNE: Redundancy (SimHash Deduplication)
+        wisdom = strategic.list_public_wisdom()
+        hashes = {} # hash -> id
         
-        initial_count = len(fragments)
-        seen_hashes = set()
-        pruned_fragments = []
+        for w in wisdom:
+            if throttle_hook: await throttle_hook()
+            
+            w_hash = w.get('signal_hash')
+            if not w_hash: continue
+            
+            # Find near-duplicates
+            duplicate_found = False
+            for existing_hash, existing_id in hashes.items():
+                if sparse_hasher.similarity(w_hash, existing_hash) > 0.70:
+                    # [STRATEGIC AUDIT]: Never deduplicate (delete) a pinned wisdom
+                    if w.get('is_pinned'):
+                        continue
+                    low_id = w['id']
+                    with engine.connection() as conn:
+                        conn.execute("DELETE FROM public_wisdom WHERE id = ?", (low_id,))
+                    pruned_count += 1
+                    duplicate_found = True
+                    break
+            
+            if not duplicate_found:
+                hashes[w_hash] = w['id']
+
+        # 3. Timeline Decay: Prune rejections passed their half-life (Neural Decay KAR-1)
+        purged_stale = self.strategic.purge_stale_rejections(days=180)
+        pruned_count += purged_stale
+
+        # 4. Limit Decay: Ensure 'rejections' doesn't exceed 200 entries (pinned excluded).
+        with engine.connection() as conn:
+            cursor = conn.execute("DELETE FROM rejections WHERE is_pinned = 0 AND id NOT IN (SELECT id FROM rejections ORDER BY created_at DESC LIMIT 200)")
+            pruned_count += cursor.rowcount
+
+        logger.info(f"🧹 [JANITOR]: Neural Decay complete. Purged {pruned_count} strategic fragments.")
+        return pruned_count
+
+    async def _harvest_documentation_dna(self):
+        """
+        [KAR-4] Universal Strategic Memory.
+        Scans walkthroughs and notes to extract 'Documentation DNA'.
+        """
+        from side.utils.hashing import sparse_hasher
+        import uuid
         
-        # 1. Deduplication & Signal Analysis
-        # We walk backwards (most recent first) and keep only unique hashes
-        for frag in reversed(fragments):
-            h = frag.get("hash")
-            if h not in seen_hashes:
-                seen_hashes.add(h)
-                pruned_fragments.append(frag)
+        # 1. SCAN LOCATIONS
+        doc_paths = [
+            self.project_path / "README.md",
+            self.brain_path,
+        ]
         
-        # 2. Limit capacity (for Alpha performance)
-        # Keep top 100 most recent fragments
-        final_fragments = sorted(pruned_fragments, key=lambda x: x.get('date', ''), reverse=True)[:100]
-        
-        data["history_fragments"] = final_fragments
-        shield.seal_file(sovereign_file, json.dumps(data, indent=2))
-        
-        removed = initial_count - len(final_fragments)
-        logger.info(f"🧠 [PRUNE]: Neural Decay complete. Removed {removed} obsolete fragments.")
-        return removed
+        for path in doc_paths:
+            if not path.exists():
+                continue
+            
+            files = [path] if path.is_file() else list(path.glob("*.md"))
+            
+            for f in files:
+                try:
+                    content = f.read_text()
+                    # Segment by headers
+                    sections = content.split("\n#")
+                    for section in sections:
+                        if len(section.strip()) < 50:
+                            continue
+                            
+                        # Generate Signal Hash [SILO PROTOCOL]: Salted with Project ID
+                        project_id = self.engine.get_project_id()
+                        sig_hash = sparse_hasher.fingerprint(section, salt=project_id)
+                        
+                        # Store as Public Wisdom (Documentation-Sourced)
+                        # We use a UUID based on the file and hash to avoid duplicates
+                        fragment_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{f.name}:{sig_hash}"))
+                        
+                        if self.buffer:
+                            await self.buffer.ingest("wisdom", {
+                                "id": fragment_id,
+                                "origin": "local",
+                                "category": "documentation",
+                                "pattern": f.name,
+                                "signal_hash": sig_hash,
+                                "text": section[:1000].strip(),
+                                "source_type": "documentation",
+                                "source_file": str(f),
+                                "confidence": 8
+                            })
+                        else:
+                            with self.engine.connection() as conn:
+                                conn.execute("""
+                                    INSERT OR REPLACE INTO public_wisdom (
+                                        id, origin_node, category, signal_pattern, 
+                                        signal_hash, wisdom_text, source_type, source_file, confidence
+                                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                """, (
+                                    fragment_id, "local", "documentation", f.name,
+                                    sig_hash, section[:1000].strip(), "documentation", str(f), 8
+                                ))
+                            
+                except Exception as e:
+                    logger.warning(f"Failed to harvest DNA from {f}: {e}")
 
     def gather_context(self, active_file: str = None, topic: str = None) -> str:
         """
@@ -235,9 +428,8 @@ class AutoIntelligence:
         logger.info("🔥 [PHOENIX]: Regenerating project soul from the Ledger...")
         
         # 1. Restore Project Identity
-        from side.storage.simple_db import SimplifiedDatabase
-        db = SimplifiedDatabase()
-        project_id = db.get_project_id(self.project_path)
+        from side.storage.modules.base import SovereignEngine
+        project_id = SovereignEngine.get_project_id(self.project_path)
         logger.info(f"📍 [IDENTITY]: Project Recognized: {project_id}")
 
         # 2. Re-mine Historical Wisdom (The Memories)

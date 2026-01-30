@@ -25,6 +25,15 @@ class SovereignEngine:
             db_path = Path.home() / ".side" / "local.db"
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize sub-stores
+        from side.storage.modules.strategic import StrategicStore
+        from side.storage.modules.forensic import ForensicStore
+        from side.storage.modules.accounting import AccountingStore
+        
+        self.strategic = StrategicStore(self)
+        self.forensic = ForensicStore(self)
+        self.accounting = AccountingStore(self)
 
     @contextmanager
     def connection(self) -> Generator[sqlite3.Connection, None, None]:
@@ -92,3 +101,29 @@ class SovereignEngine:
                 os.chmod(self.db_path, 0o600)
             except Exception:
                 pass
+
+    @staticmethod
+    def get_project_id(project_path: str | Path | None = None) -> str:
+        """Persists project ID in a hidden file for stable isolation."""
+        if project_path is None:
+            project_path = Path.cwd()
+        else:
+            project_path = Path(project_path)
+            
+        project_path = project_path.resolve()
+        id_file = project_path / ".side-id"
+        
+        if id_file.exists():
+            try:
+                return id_file.read_text().strip()
+            except Exception:
+                pass
+        
+        import hashlib
+        path_hash = hashlib.sha256(str(project_path).encode()).hexdigest()[:16]
+        try:
+            id_file.write_text(path_hash)
+        except Exception:
+            pass
+            
+        return path_hash
