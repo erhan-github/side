@@ -181,8 +181,8 @@ class AutoIntelligence:
                 # Tier 2: Strategic Boost (LLM Analysis)
                 # We only reach here if it's high-entropy or has symbol changes
                 
-                # Calculate dynamic SU cost
-                est_tokens_in = min(3000, len(diff_content))  # Rough estimate
+                # Calculate dynamic SU cost using Claude Sonnet 4.5
+                est_tokens_in = min(3500, len(diff_content))  # More accurate estimate
                 est_tokens_out = 150
                 
                 if not self.engine.accounting.deduct_task_su(
@@ -190,7 +190,7 @@ class AutoIntelligence:
                     task_type="semantic_boost",
                     llm_tokens_in=est_tokens_in,
                     llm_tokens_out=est_tokens_out,
-                    llm_model="groq-llama-70b",
+                    llm_model="claude-sonnet-4.5",  # Premium quality
                     operations=["ast_extraction", "intent_correlation"],
                     value_delivered={"objective_advanced": True} if is_high_entropy else {}
                 ):

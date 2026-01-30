@@ -38,9 +38,9 @@ class AccountingStore:
             row = conn.execute("SELECT balance FROM su_balance WHERE project_id = ?", (project_id,)).fetchone()
             if row:
                 return row[0]
-            # Initialize with default trial balance if not exists
-            conn.execute("INSERT INTO su_balance (project_id, balance) VALUES (?, ?)", (project_id, 500))
-            return 500
+            # Initialize with default Pro tier balance (750 SU)
+            conn.execute("INSERT INTO su_balance (project_id, balance) VALUES (?, ?)", (project_id, 750))
+            return 750
 
     def deduct_su(self, project_id: str, amount: int, reason: str) -> bool:
         """
@@ -94,11 +94,23 @@ class AccountingStore:
         "roi_calculation": 1.0,     # Counterfactual ROI logic
     }
     
-    # LLM costs (2026 projected, per 1M tokens)
+    # LLM costs (Claude 4.5, 2026 pricing per 1M tokens)
     LLM_COSTS = {
+        "claude-haiku-4.5": {"input": 1.00, "output": 5.00},
+        "claude-sonnet-4.5": {"input": 3.00, "output": 15.00},
+        "claude-opus-4.5": {"input": 5.00, "output": 25.00},
+        # Legacy Groq (fallback)
         "groq-llama-70b": {"input": 0.20, "output": 0.30},
-        "claude-3.5-sonnet": {"input": 3.00, "output": 15.00},
-        "gpt-4-turbo": {"input": 10.00, "output": 30.00},
+    }
+    
+    # Free tasks (habit-forming, no SU charge)
+    FREE_TASKS = {
+        "pulse_scan",
+        "ast_extraction",
+        "forensic_log",
+        "file_watcher",
+        "git_hook_detection",
+        "intent_correlation"
     }
     
     def calculate_task_su(
@@ -106,7 +118,7 @@ class AccountingStore:
         task_type: str,
         llm_tokens_in: int = 0,
         llm_tokens_out: int = 0,
-        llm_model: str = "groq-llama-70b",
+        llm_model: str = "claude-sonnet-4.5",
         operations: List[str] = None,
         value_delivered: Dict[str, Any] = None
     ) -> int:
@@ -120,13 +132,18 @@ class AccountingStore:
             task_type: Type of task (e.g., "atomic_context", "semantic_boost")
             llm_tokens_in: Input tokens consumed
             llm_tokens_out: Output tokens generated
-            llm_model: LLM model used
+            llm_model: LLM model used (default: Claude Sonnet 4.5)
             operations: List of algorithmic operations performed
-            value_delivered: Dict of value metrics (e.g., {"disaster_averted": 50000})
+            value_delivered: Dict of value metrics (e.g., {"disaster_averted_usd": 50000})
         
         Returns:
-            Total SU cost (integer)
+            Total SU cost (integer), 0 if free task
         """
+        # Check if task is free (habit-forming)
+        if task_type in self.FREE_TASKS:
+            logger.debug(f"💰 [SU CALC]: {task_type} → FREE (habit-forming)")
+            return 0
+        
         operations = operations or []
         value_delivered = value_delivered or {}
         
