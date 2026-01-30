@@ -1,108 +1,83 @@
 """
-Claude 4.5 Model Router - Premium Tiered Intelligence
+Model Router - Pragmatic Strategy
 
-Routes tasks to the optimal Claude 4.5 model based on complexity:
-- Fast: Haiku 4.5 ($1/$5) - Atomic context, quick suggestions
-- Balanced: Sonnet 4.5 ($3/$15) - Strategic analysis, general context
-- Smart: Opus 4.5 ($5/$25) - Complex reasoning, mesh wisdom
+Phase 1 (Months 1-2): Groq Llama 70B for everything (MVP)
+Phase 2 (Month 3+): Migrate to Gemini 3 Flash when validated
+
+Philosophy: Same intelligence for all users, charge based on usage.
 """
 
 from typing import Literal
 
-ModelTier = Literal["fast", "balanced", "smart"]
+# Phase selection (switch to "gemini" when ready to migrate)
+CURRENT_PHASE = "groq"  # Options: "groq" or "gemini"
 
-# Claude 4.5 Model Registry (2026)
-CLAUDE_MODELS = {
-    "fast": "claude-haiku-4.5",      # $1/$5 per 1M tokens
-    "balanced": "claude-sonnet-4.5",  # $3/$15 per 1M tokens
-    "smart": "claude-opus-4.5"        # $5/$25 per 1M tokens
+# Model configuration per phase
+MODELS = {
+    "groq": {
+        "default": "llama-3.1-70b-versatile",
+        "pricing": {"input": 0.20, "output": 0.30}  # per 1M tokens
+    },
+    "gemini": {
+        "default": "gemini-3-flash-thinking",
+        "pricing": {"input": 0.50, "output": 3.00}  # per 1M tokens
+    }
 }
 
-# Pricing (per 1M tokens)
-CLAUDE_PRICING = {
-    "claude-haiku-4.5": {"input": 1.00, "output": 5.00},
-    "claude-sonnet-4.5": {"input": 3.00, "output": 15.00},
-    "claude-opus-4.5": {"input": 5.00, "output": 25.00}
-}
-
-# Task-to-Tier Mapping
-TASK_ROUTING = {
-    # Fast Tier (40% of intelligent tasks)
-    "fast": [
-        "atomic_context",
-        "proactive_suggestion",
-        "context_signature",
-        "quick_analysis"
-    ],
-    
-    # Balanced Tier (50% of intelligent tasks)
-    "balanced": [
-        "semantic_boost",
-        "general_context",
-        "forensic_analysis",
-        "roi_simulation",
-        "intent_analysis",
-        "code_review"
-    ],
-    
-    # Smart Tier (10% of intelligent tasks)
-    "smart": [
-        "strategic_planning",
-        "mesh_wisdom",
-        "architectural_audit",
-        "complex_reasoning",
-        "cross_project_analysis"
-    ]
-}
-
-# Free Tasks (0 SU) - Habit-forming, no LLM
+# Free tasks (habit-forming, no SU charge)
 FREE_TASKS = {
-    "pulse_scan",           # Pre-commit secret detection
-    "ast_extraction",       # Symbol extraction
-    "forensic_log",         # Activity logging
-    "file_watcher",         # File open events
-    "git_hook_detection",   # Commit capture
-    "intent_correlation"    # Symbol → objective matching (SQL only)
+    "pulse_scan",
+    "ast_extraction",
+    "forensic_log",
+    "file_watcher",
+    "git_hook_detection",
+    "intent_correlation"
 }
 
 
-def select_claude_model(task_type: str, force_tier: ModelTier | None = None) -> str:
+def select_model(task_type: str) -> str | None:
     """
-    Select the optimal Claude 4.5 model for a given task.
+    Select the appropriate model for a given task.
+    
+    MVP Strategy (Groq):
+    - Single model for all intelligent tasks
+    - Free tasks return None (no LLM)
+    
+    Production Strategy (Gemini):
+    - Single model for all intelligent tasks
+    - Free tasks return None (no LLM)
     
     Args:
         task_type: Type of task (e.g., "semantic_boost", "general_context")
-        force_tier: Optional override to force a specific tier
         
     Returns:
-        Claude model name (e.g., "claude-sonnet-4.5")
+        Model name or None if free task
     """
-    
     # Check if task is free (no LLM)
     if task_type in FREE_TASKS:
-        return None  # No LLM needed
+        return None
     
-    # Force specific tier if requested
-    if force_tier:
-        return CLAUDE_MODELS[force_tier]
-    
-    # Auto-route based on task type
-    for tier, tasks in TASK_ROUTING.items():
-        if task_type in tasks:
-            return CLAUDE_MODELS[tier]
-    
-    # Default to balanced tier if task type unknown
-    return CLAUDE_MODELS["balanced"]
+    # Return current phase model
+    return MODELS[CURRENT_PHASE]["default"]
 
 
-def get_model_pricing(model_name: str) -> dict:
+def get_model_pricing(model_name: str | None = None) -> dict:
     """
-    Get pricing for a specific Claude model.
+    Get pricing for the current or specified model.
     
     Returns:
         {"input": float, "output": float} per 1M tokens
     """
-    return CLAUDE_PRICING.get(model_name, CLAUDE_PRICING["claude-sonnet-4.5"])
+    if model_name is None:
+        return MODELS[CURRENT_PHASE]["pricing"]
+    
+    # Check all phases for the model
+    for phase, config in MODELS.items():
+        if config["default"] == model_name:
+            return config["pricing"]
+    
+    # Default to current phase pricing
+    return MODELS[CURRENT_PHASE]["pricing"]
 
 
 def is_free_task(task_type: str) -> bool:

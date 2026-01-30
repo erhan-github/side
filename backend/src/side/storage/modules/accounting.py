@@ -94,13 +94,17 @@ class AccountingStore:
         "roi_calculation": 1.0,     # Counterfactual ROI logic
     }
     
-    # LLM costs (Claude 4.5, 2026 pricing per 1M tokens)
+    # LLM costs (2026 pricing per 1M tokens)
+    # Phase 1 (Months 1-2): Groq
+    # Phase 2 (Month 3+): Gemini 3 Flash
     LLM_COSTS = {
-        "claude-haiku-4.5": {"input": 1.00, "output": 5.00},
-        "claude-sonnet-4.5": {"input": 3.00, "output": 15.00},
-        "claude-opus-4.5": {"input": 5.00, "output": 25.00},
-        # Legacy Groq (fallback)
-        "groq-llama-70b": {"input": 0.20, "output": 0.30},
+        # Groq (MVP - Current)
+        "llama-3.1-70b-versatile": {"input": 0.20, "output": 0.30},
+        
+        # Gemini (Production - Future)
+        "gemini-3-flash-thinking": {"input": 0.50, "output": 3.00},
+        "gemini-2.5-flash": {"input": 0.30, "output": 2.50},
+        "gemini-2.5-flash-lite": {"input": 0.10, "output": 0.40},
     }
     
     # Free tasks (habit-forming, no SU charge)
@@ -118,7 +122,7 @@ class AccountingStore:
         task_type: str,
         llm_tokens_in: int = 0,
         llm_tokens_out: int = 0,
-        llm_model: str = "claude-sonnet-4.5",
+        llm_model: str = "llama-3.1-70b-versatile",  # Groq for MVP
         operations: List[str] = None,
         value_delivered: Dict[str, Any] = None
     ) -> int:
@@ -150,7 +154,7 @@ class AccountingStore:
         # 1. LLM Cost Component
         llm_cost_usd = 0.0
         if llm_tokens_in or llm_tokens_out:
-            costs = self.LLM_COSTS.get(llm_model, self.LLM_COSTS["groq-llama-70b"])
+            costs = self.LLM_COSTS.get(llm_model, self.LLM_COSTS["llama-3.1-70b-versatile"])
             llm_cost_usd = (
                 (llm_tokens_in * costs["input"] / 1_000_000) +
                 (llm_tokens_out * costs["output"] / 1_000_000)
