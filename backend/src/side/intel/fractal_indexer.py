@@ -15,6 +15,7 @@ import re
 import logging
 from pathlib import Path
 from typing import Dict, Any, List
+from concurrent.futures import ThreadPoolExecutor
 from side.utils.crypto import shield
 
 # --- PERFORMANCE CONFIG ---
@@ -101,28 +102,33 @@ def generate_local_index(directory: Path) -> Dict[str, Any]:
         ignore_service = SovereignIgnore(directory)
 
     has_subdirs = False
-    for item in directory.iterdir():
-        if ignore_service.should_ignore(item):
-            continue
-            
-        if item.is_file():
-            dna = get_file_dna(item)
+    
+    # [PERFORMANCE SPRINT I] Parallel file scanning
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        items_to_scan = [item for item in directory.iterdir() if not ignore_service.should_ignore(item)]
+        
+        file_items = [i for i in items_to_scan if i.is_file()]
+        dna_results = list(executor.map(get_file_dna, file_items))
+        
+        for dna in dna_results:
             files.append(dna)
             if "semantics" in dna:
                 sem = dna["semantics"]
                 aggregated_signals.update(sem.get("signals", []))
                 total_classes += len(sem.get("classes", []))
                 total_functions += len(sem.get("functions", []))
-        elif item.is_dir() and item.name != ".side":
-            has_subdirs = True
-            child_index = item / ".side" / "local.json"
-            if child_index.exists():
-                try:
-                    raw_data = shield.unseal_file(child_index)
-                    data = json.loads(raw_data)
-                    children_checksums[item.name] = data.get("checksum", "unknown")
-                except:
-                    pass
+
+        for item in items_to_scan:
+            if item.is_dir() and item.name != ".side":
+                has_subdirs = True
+                child_index = item / ".side" / "local.json"
+                if child_index.exists():
+                    try:
+                        raw_data = shield.unseal_file(child_index)
+                        data = json.loads(raw_data)
+                        children_checksums[item.name] = data.get("checksum", "unknown")
+                    except:
+                        pass
     
     # --- KARPATHY HEURISTIC (Complexity Analysis) ---
     is_complex = (

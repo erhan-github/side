@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 class IdentityStore:
     def __init__(self, engine: SovereignEngine):
         self.engine = engine
+        with self.engine.connection() as conn:
+            self.init_schema(conn)
 
     def init_schema(self, conn):
         """Initialize identity tables."""
@@ -34,6 +36,8 @@ class IdentityStore:
                 token_balance INTEGER DEFAULT 500,
                 tokens_monthly INTEGER DEFAULT 0,
                 tokens_used INTEGER DEFAULT 0,
+                design_pattern TEXT DEFAULT 'declarative', -- [KAR-3]: Declarative vs Imperative
+                is_airgapped INTEGER DEFAULT 0,            -- [PAL-3]: 1 = Local Only, 0 = Mesh Allowed
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -53,6 +57,42 @@ class IdentityStore:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # ─────────────────────────────────────────────────────────────
+        # ECONOMY TABLE: SU_VALUATION - Cost of Sovereignty [Software 2.0]
+        # ─────────────────────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS su_valuation (
+                action_key TEXT PRIMARY KEY,
+                su_cost INTEGER NOT NULL,
+                description TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Seed default values
+        defaults = [
+            ('CORE_REFACT', 50, 'Architectural refactor'),
+            ('AUTH_SHIFT', 30, 'Authentication logic change'),
+            ('FORENSIC_AUDIT', 10, 'Deep forensic analysis'),
+            ('SHELL_COMMAND', 1, 'Real-time terminal ingestion'),
+            ('RED_TEST_GEN', 25, 'Generative QA reproduction script'),
+            ('GHOST_REFACTOR', 100, 'Background worktree refactor experiment'),
+            ('SEMANTIC_BOOST', 15, 'High-fidelity architectural audit'),
+            ('STRATEGIC_PIVOT', 50, 'Strategic goal drift detection')
+        ]
+        conn.executemany(
+            "INSERT OR IGNORE INTO su_valuation (action_key, su_cost, description) VALUES (?, ?, ?)",
+            defaults
+        )
+
+        # ─────────────────────────────────────────────────────────────
+        # MIGRATIONS: Architecture Versioning [KAR-3]
+        # ─────────────────────────────────────────────────────────────
+        try:
+            conn.execute("ALTER TABLE profile ADD COLUMN design_pattern TEXT DEFAULT 'declarative'")
+            conn.execute("ALTER TABLE profile ADD COLUMN is_airgapped INTEGER DEFAULT 0")
+            logger.info("MIGRATION: Added architectural signals to profile")
+        except: pass
 
 
     def update_profile(self, project_id: str, profile_data: dict[str, Any]) -> None:
@@ -72,8 +112,9 @@ class IdentityStore:
                 """
                 INSERT INTO profile (
                     id, name, company, domain, stage, business_model, 
-                    target_raise, tech_stack, tier, token_balance, tokens_monthly, tokens_used, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    target_raise, tech_stack, tier, token_balance, tokens_monthly, tokens_used,
+                    design_pattern, is_airgapped, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = COALESCE(excluded.name, name),
                     company = COALESCE(excluded.company, company),
@@ -86,6 +127,8 @@ class IdentityStore:
                     token_balance = COALESCE(excluded.token_balance, token_balance),
                     tokens_monthly = COALESCE(excluded.tokens_monthly, tokens_monthly),
                     tokens_used = COALESCE(excluded.tokens_used, tokens_used),
+                    design_pattern = COALESCE(excluded.design_pattern, design_pattern),
+                    is_airgapped = COALESCE(excluded.is_airgapped, is_airgapped),
                     updated_at = excluded.updated_at
                 """,
                 (
@@ -101,6 +144,8 @@ class IdentityStore:
                     profile_data.get("token_balance"),
                     profile_data.get("tokens_monthly"),
                     profile_data.get("tokens_used"),
+                    profile_data.get("design_pattern", "declarative"),
+                    1 if profile_data.get("is_airgapped") else 0,
                     datetime.now(timezone.utc).isoformat()
                 )
             )
@@ -126,6 +171,8 @@ class IdentityStore:
                     "recent_commits": tech_stack.get("recent_commits", 0),
                     "focus_areas": tech_stack.get("focus_areas", []),
                     "tech_stack": tech_stack,
+                    "design_pattern": row["design_pattern"],
+                    "is_airgapped": bool(row["is_airgapped"]),
                     "updated_at": row["updated_at"]
                 }
             return None
@@ -180,3 +227,27 @@ class IdentityStore:
         with self.engine.connection() as conn:
             row = conn.execute("SELECT COUNT(*) as count FROM profile").fetchone()
             return row["count"] if row else 0
+
+    def get_su_cost(self, action_key: str) -> int:
+        """Get the SU cost for a specific action."""
+        with self.engine.connection() as conn:
+            row = conn.execute(
+                "SELECT su_cost FROM su_valuation WHERE action_key = ?", 
+                (action_key,)
+            ).fetchone()
+            return row["su_cost"] if row else 5 # Default cost
+            
+    def set_su_cost(self, action_key: str, cost: int, description: str | None = None) -> None:
+        """Update or set the SU cost for an action."""
+        with self.engine.connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO su_valuation (action_key, su_cost, description) 
+                VALUES (?, ?, ?)
+                ON CONFLICT(action_key) DO UPDATE SET 
+                    su_cost = excluded.su_cost,
+                    description = COALESCE(excluded.description, description),
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (action_key, cost, description)
+            )

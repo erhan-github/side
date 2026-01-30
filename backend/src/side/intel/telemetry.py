@@ -1,9 +1,9 @@
-
 import logging
 import re
 from pathlib import Path
 from typing import List, Dict, Any
-from side.storage.simple_db import SimplifiedDatabase
+from side.storage.modules.base import SovereignEngine
+from side.storage.modules.transient import OperationalStore
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +14,9 @@ class ProactiveForensicObserver:
     """
     def __init__(self, project_path: Path):
         self.project_path = Path(project_path).resolve()
-        self.db = SimplifiedDatabase()
-        self.project_id = self.db.get_project_id(self.project_path)
+        self.engine = SovereignEngine()
+        self.operational = OperationalStore(self.engine)
+        self.project_id = SovereignEngine.get_project_id(self.project_path)
         
         # High-Speed Forensic Rules (Subset of Pulse)
         self.rules = [
@@ -56,7 +57,7 @@ class ProactiveForensicObserver:
                 findings.append(finding)
                 
                 # Log to Sovereign Ledger
-                self.db.save_telemetry_alert(
+                self.operational.save_telemetry_alert(
                     project_id=self.project_id,
                     alert_type=rule["id"],
                     severity=rule["severity"],
@@ -67,6 +68,33 @@ class ProactiveForensicObserver:
                 
         return findings
 
+    def check_hardware_friction(self) -> Dict[str, Any] | None:
+        """
+        Analyzes systemic friction from silicon pulse telemetry.
+        [HYPER-PERCEPTION]: Correlates hardware stress with architectural state.
+        """
+        pulse_score = self.operational.get_setting("silicon_pulse_score")
+        if pulse_score and float(pulse_score) > 0.8:
+            stats = self.operational.get_setting("silicon_pulse_stats")
+            message = f"Hyper-Ralph detected severe hardware friction ({pulse_score}). Possible infinite loop or unoptimized logic."
+            
+            # Log to Sovereign Ledger
+            self.operational.save_telemetry_alert(
+                project_id=self.project_id,
+                alert_type="hardware_friction_spike",
+                severity="WARNING",
+                message=message,
+                file_path="SYSTEM"
+            )
+            logger.warning(f"🚨 [SILICON PULSE]: {message}")
+            return {
+                "type": "hardware_friction_spike",
+                "severity": "WARNING",
+                "message": message,
+                "stats": stats
+            }
+        return None
+
 def run_proactive_scan(project_path: Path, file_path: Path):
     """Entry point for the background observer."""
     try:
@@ -76,5 +104,8 @@ def run_proactive_scan(project_path: Path, file_path: Path):
         content = file_path.read_text(errors="ignore")
         observer = ProactiveForensicObserver(project_path)
         observer.scan_file(file_path, content)
+        
+        # [HYPER-PERCEPTION] Check systemic friction
+        observer.check_hardware_friction()
     except Exception as e:
         logger.error(f"❌ [TELEMETRY_ERROR]: Scan failed for {file_path}: {e}")

@@ -22,7 +22,7 @@ class InstrumentationEngine:
             
             # Log to DB activities table
             # We map 'instrumentation' to a system-level tool log
-            self.db.log_activity(
+            self.db.forensic.log_activity(
                 project_id=project_id,
                 tool="instrumentation",
                 action=event,
@@ -44,7 +44,7 @@ class InstrumentationEngine:
         """
         try:
              # For V1, we log this as detailed activity to be picked up by the report generator
-             self.db.log_activity(
+             self.db.forensic.log_activity(
                 project_id=project_id,
                 tool="instrumentation",
                 action=f"Metric: {name}",

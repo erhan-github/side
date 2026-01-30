@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 class OperationalStore:
     def __init__(self, engine: SovereignEngine):
         self.engine = engine
+        with self.engine.connection() as conn:
+            self.init_schema(conn)
 
     def init_schema(self, conn):
         """Initialize operational tables."""
@@ -39,10 +41,17 @@ class OperationalStore:
                 path TEXT NOT NULL,
                 name TEXT,
                 last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                dna_summary TEXT
+                dna_summary TEXT,
+                dna_hash INTEGER -- Sparse Semantic Hash (SimHash)
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_mesh_last_seen ON mesh_nodes(last_seen)")
+
+        # Migration: Add dna_hash if missing
+        try:
+            conn.execute("ALTER TABLE mesh_nodes ADD COLUMN dna_hash INTEGER")
+        except sqlite3.OperationalError:
+            pass # Already exists
 
         # ─────────────────────────────────────────────────────────────
         # OPERATIONAL TABLE: QUERY_CACHE
@@ -164,22 +173,34 @@ class OperationalStore:
             stats["db_size_mb"] = stats["db_size_bytes"] / (1024 * 1024)
             return stats
 
-    def register_mesh_node(self, project_id: str, path: Path, dna_summary: str | None = None) -> None:
-        """Adds or updates a project in the Local Universal Mesh."""
-        name = path.name
+    def register_mesh_node(self, project_id: str, path: Path, dna_summary: str | None = None, **kwargs) -> None:
+        """Adds or updates a single project in the Local Universal Mesh."""
+        self.register_mesh_nodes_batch([{
+            'project_id': project_id,
+            'path': path,
+            'dna_summary': dna_summary,
+            'dna_hash': kwargs.get("dna_hash")
+        }])
+
+    def register_mesh_nodes_batch(self, nodes: List[Dict[str, Any]]) -> None:
+        """Adds or updates multiple projects in a single transaction."""
         with self.engine.connection() as conn:
-            conn.execute(
-                """
-                INSERT INTO mesh_nodes (project_id, path, name, dna_summary, last_seen)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(project_id) DO UPDATE SET
-                    path = excluded.path,
-                    name = excluded.name,
-                    dna_summary = COALESCE(excluded.dna_summary, dna_summary),
-                    last_seen = CURRENT_TIMESTAMP
-                """,
-                (project_id, str(path), name, dna_summary),
-            )
+            for node in nodes:
+                path_str = str(node['path'])
+                name = Path(path_str).name
+                conn.execute(
+                    """
+                    INSERT INTO mesh_nodes (project_id, path, name, dna_summary, dna_hash, last_seen)
+                    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(project_id) DO UPDATE SET
+                        path = excluded.path,
+                        name = excluded.name,
+                        dna_summary = COALESCE(excluded.dna_summary, dna_summary),
+                        dna_hash = COALESCE(excluded.dna_hash, dna_hash),
+                        last_seen = CURRENT_TIMESTAMP
+                    """,
+                    (node['project_id'], path_str, name, node.get('dna_summary'), node.get('dna_hash')),
+                )
 
     def list_mesh_nodes(self) -> List[Dict[str, Any]]:
         """Returns all discovered Sidelith projects on this machine."""
@@ -238,6 +259,45 @@ class OperationalStore:
                 
         return results
 
+    def search_mesh_by_hash(self, target_hash: int, threshold: float = 0.8) -> List[Dict[str, Any]]:
+        """
+        Bit-level similarity search across all discovered project brains.
+        Uses Sparse Semantic Hashes to identify matching architectural patterns.
+        """
+        nodes = self.discover_sovereign_nodes()
+        results = []
+        from side.utils.hashing import sparse_hasher
+
+        for node_path in nodes:
+            try:
+                with sqlite3.connect(node_path) as conn:
+                    conn.row_factory = sqlite3.Row
+                    
+                    # 1. Search Rejections & Public Wisdom by Hash
+                    # We fetch all with ANY hash and then distance-filter in Python (Software 2.0 approach)
+                    query = """
+                        SELECT 'REJECTION' as type, rejection_reason as title, file_path as detail, signal_hash 
+                        FROM rejections WHERE signal_hash IS NOT NULL
+                        UNION ALL
+                        SELECT 'WISDOM' as type, wisdom_text as title, category as detail, signal_hash 
+                        FROM public_wisdom WHERE signal_hash IS NOT NULL
+                    """
+                    
+                    rows = conn.execute(query).fetchall()
+                    for row in rows:
+                        row_hash = row["signal_hash"]
+                        if row_hash is not None:
+                            similarity = sparse_hasher.similarity(target_hash, row_hash)
+                            if similarity >= threshold:
+                                res = dict(row)
+                                res["similarity"] = round(similarity, 3)
+                                res["node"] = node_path.name
+                                results.append(res)
+            except Exception as e:
+                logger.debug(f"Hash search skipped node {node_path}: {e}")
+        
+        return results
+
     def save_telemetry_alert(self, project_id: str, alert_type: str, severity: str, 
                              message: str, file_path: str | None = None) -> None:
         """Log a proactive strategic warning."""
@@ -288,6 +348,59 @@ class OperationalStore:
                     nodes.append(p)
                     
         return list(set(nodes))
+
+    def get_semantic_clusters(self, threshold: float = 0.7) -> List[Dict[str, Any]]:
+        """
+        Groups all wisdom and rejections across the mesh into semantic clusters.
+        """
+        from side.utils.hashing import sparse_hasher
+        nodes = self.discover_sovereign_nodes()
+        all_fragments = []
+        
+        for node_path in nodes:
+            try:
+                with sqlite3.connect(node_path) as conn:
+                    conn.row_factory = sqlite3.Row
+                    query = """
+                        SELECT 'REJECTION' as type, rejection_reason as title, file_path as detail, signal_hash 
+                        FROM rejections WHERE signal_hash IS NOT NULL
+                        UNION ALL
+                        SELECT 'WISDOM' as type, wisdom_text as title, category as detail, signal_hash 
+                        FROM public_wisdom WHERE signal_hash IS NOT NULL
+                    """
+                    rows = conn.execute(query).fetchall()
+                    for r in rows:
+                        all_fragments.append({**dict(r), "node": node_path.name})
+            except: continue
+
+        clusters = []
+        visited = set()
+
+        for i, frag in enumerate(all_fragments):
+            if i in visited: continue
+            
+            # Start a new cluster
+            current_cluster = [frag]
+            visited.add(i)
+            
+            for j, other in enumerate(all_fragments):
+                if j in visited: continue
+                
+                similarity = sparse_hasher.similarity(frag['signal_hash'], other['signal_hash'])
+                if similarity >= threshold:
+                    current_cluster.append(other)
+                    visited.add(j)
+            
+            if len(current_cluster) > 0:
+                # Heuristic for cluster name: Use the shortest title as the label
+                label = min(current_cluster, key=lambda x: len(x['title']))['title'][:40]
+                clusters.append({
+                    "label": f"[{label}]",
+                    "size": len(current_cluster),
+                    "fragments": current_cluster
+                })
+        
+        return sorted(clusters, key=lambda x: x['size'], reverse=True)
 
     def get_global_stats(self) -> Dict[str, Any]:
         """Aggregate stats across all discovered nodes."""

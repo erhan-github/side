@@ -13,15 +13,17 @@ sys.path.append(str(project_root))
 
 # from side.forensic_audit.runner import ForensicAuditRunner (DELETED)
 # from side.intel.intelligence_store import IntelligenceStore (DELETED)
-from side.storage.simple_db import SimplifiedDatabase
+from side.storage.modules.base import SovereignEngine
+from side.storage.modules.forensic import ForensicStore
 # from side.common.telemetry import monitor (DELETED)
 
 class SidelithEventHandler(FileSystemEventHandler):
     """
     Handles file system events, triggers forensic audits, AND records the Event Clock.
     """
-    def __init__(self, db: SimplifiedDatabase, loop: asyncio.AbstractEventLoop, project_id: str):
-        self.db = db
+    def __init__(self, engine: SovereignEngine, forensic: ForensicStore, loop: asyncio.AbstractEventLoop, project_id: str):
+        self.engine = engine
+        self.forensic = forensic
         self.loop = loop
         self.project_id = project_id
         self.last_scan_time: Dict[str, float] = {}
@@ -68,25 +70,27 @@ class SidelithEventHandler(FileSystemEventHandler):
         """
         try:
             print(f"\n⏳ [SILENT RESONANCE]: Discovering intent from outcomes...")
-            # In a real implementation, we'd call a Heavy LLM here to analyze 
-            # the diffs and commit messages from the last hour.
-            # Simplified for now:
-            self.db.log_activity(
+            self.forensic.log_activity(
                 project_id=self.project_id,
                 tool="watcher",
                 action="SILENT_RESONANCE",
-                cost=0
+                cost_tokens=0
             )
-            self.db.optimize()
+            # Remove fat: optimize call replaced with standard cleanup if needed
+            self.forensic.cleanup_expired_data()
         except Exception as e:
             print(f"⚠️ Resonance Error: {e}")
 
     def _should_ignore(self, filepath: str) -> bool:
-        ignored = [
-            '__pycache__', '.git', '.side', 'node_modules', 
-            '.DS_Store', 'dist', 'build', '.env', '.pytest_cache'
-        ]
-        return any(x in filepath for x in ignored)
+        # [EFFICIENCY]: Cache ignored patterns as a set for O(1) lookups
+        if not hasattr(self, '_ignored_segments'):
+            self._ignored_segments = {
+                '__pycache__', '.git', '.side', 'node_modules', 
+                '.DS_Store', 'dist', 'build', '.pytest_cache'
+            }
+        
+        path_parts = Path(filepath).parts
+        return any(part in self._ignored_segments for part in path_parts) or filepath.endswith('.env')
 
     async def _process_event(self, filepath: str):
         """
@@ -119,12 +123,12 @@ class SidelithEventHandler(FileSystemEventHandler):
             elif result.status == PulseStatus.DRIFT:
                 outcome_status = "DRIFT"
             
-            # Pulse check costs 5 SU
-            self.db.log_activity(
+            # Pulse check costs 0 SU for background watcher
+            self.forensic.log_activity(
                 project_id=self.project_id,
                 tool="watcher",
                 action=f"FILE_MOD:{rel_path}",
-                cost=0,
+                cost_tokens=0,
                 payload={"outcome": outcome_status}
             )
             
@@ -146,12 +150,19 @@ async def start_watcher(path: str):
     path_obj = Path(path).resolve()
     print(f"🔭 Sidelith Watcher active on: {path_obj}")
 
-    # Initialize The Stack
-    db = SimplifiedDatabase()
-    project_id = db.get_project_id(str(path_obj))
+    # [SILENT PARTNER]: Set low process priority
+    try:
+        if sys.platform != 'win32':
+            os.nice(10) # 0 is normal, 20 is lowest. 10 is very polite.
+            print("🍃 [POLITE]: Background priority set (os.nice).")
+    except Exception as e:
+        print(f"⚠️ Could not set process niceness: {e}")
+    engine = SovereignEngine()
+    forensic = ForensicStore(engine)
+    project_id = SovereignEngine.get_project_id(str(path_obj))
     loop = asyncio.get_running_loop()
     
-    event_handler = SidelithEventHandler(db, loop, project_id)
+    event_handler = SidelithEventHandler(engine, forensic, loop, project_id)
     observer = Observer()
     observer.schedule(event_handler, str(path_obj), recursive=True)
     observer.start()

@@ -12,22 +12,24 @@ from mcp.types import (
     TextContent,
 )
 
-from side.storage.simple_db import SimplifiedDatabase
-from side.intel.intelligence_store import IntelligenceStore
+from side.storage.modules.base import SovereignEngine
+from side.storage.modules.forensic import ForensicStore
+from side.storage.modules.strategic import StrategicStore
+from side.storage.modules.transient import OperationalStore
+from side.storage.modules.identity import IdentityStore
 
 logger = logging.getLogger("side-mcp")
 
 class DynamicPromptManager:
     def __init__(self):
-        # Initialize DB connection for reading findings
-        try:
-            db_path = Path.home() / ".side" / "local.db"
-            self.db = SimplifiedDatabase(db_path)
-            self.store = IntelligenceStore(self.db)
-            self.project_path = Path.cwd()
-            self.project_id = SimplifiedDatabase.get_project_id(self.project_path)
-        except Exception:
-            self.store = None
+        # SFO Sprint: No Fat Architecture
+        self.engine = SovereignEngine()
+        self.forensic = ForensicStore(self.engine)
+        self.strategic = StrategicStore(self.engine)
+        self.operational = OperationalStore(self.engine)
+        self.identity = IdentityStore(self.engine)
+        self.project_path = Path.cwd()
+        self.project_id = SovereignEngine.get_project_id(self.project_path)
 
     def get_prompts(self) -> list[Prompt]:
         prompts = [
@@ -48,12 +50,12 @@ class DynamicPromptManager:
             return prompts
 
         try:
-            # Fetch active high-severity findings
-            findings = self.store.get_active_findings(self.project_id)
+            # SFO Sprint: No Fat - Direct ForensicStore access
+            findings = self.forensic.get_recent_activities(self.project_id, limit=100)
             
-            # Group by type to avoid spamming prompts
-            security_issues = [f for f in findings if f['severity'] in ['CRITICAL', 'HIGH'] and f.get('metadata', {}).get('dimension') == 'Security']
-            perf_issues = [f for f in findings if f['severity'] in ['CRITICAL', 'HIGH'] and f.get('metadata', {}).get('dimension') == 'Performance']
+            # Filter for meaningful architectural or security findings
+            security_issues = [f for f in findings if f.get('outcome') == 'VIOLATION' or 'security' in str(f.get('payload', '')).lower()]
+            perf_issues = [f for f in findings if 'performance' in str(f.get('payload', '')).lower()]
             
             if security_issues:
                 prompts.append(Prompt(
@@ -145,8 +147,10 @@ class DynamicPromptManager:
     def get_prompt_result(self, name: str, args: dict[str, str]) -> GetPromptResult:
         if name == "fix_flow":
             # Smart Logic: Find the worst issue
-            findings = self.store.get_active_findings(self.project_id)
-            if not findings:
+            findings = self.forensic.get_recent_activities(self.project_id, limit=50)
+            # Filter for violations
+            violations = [f for f in findings if f.get('outcome') == 'VIOLATION']
+            if not violations:
                  return GetPromptResult(
                     description="No issues found",
                     messages=[PromptMessage(role="user", content=TextContent(type="text", text="Side, run a deep audit to find new things to fix."))]
@@ -176,15 +180,14 @@ class DynamicPromptManager:
             
         if name == "brief":
             # 1. Get Profile
-            profile = self.db.get_profile(self.project_id) or {}
+            profile = self.identity.get_profile(self.project_id) or {}
             
             # 2. Get Active Plans
-            all_plans = self.db.list_plans()
-            active = [p for p in all_plans if p.get('status') == 'active']
-            top_focus = active[0]['title'] if active else "No active directives."
+            all_plans = self.strategic.list_plans(self.project_id, status="active")
+            top_focus = all_plans[0]['title'] if all_plans else "No active directives."
             
             # 3. Get Recent Activity (Context)
-            activities = self.db.get_recent_activities(self.project_id, limit=5)
+            activities = self.forensic.get_recent_activities(self.project_id, limit=5)
             recent_context = "\n".join([f"- {a['action']} ({a['tool']})" for a in activities]) if activities else "None."
             
             return GetPromptResult(
@@ -208,19 +211,13 @@ class DynamicPromptManager:
             question = args.get("question", "What should we do?")
             
             # 1. Get Strategic Context
-            profile = self.db.get_profile(self.project_id) or {}
+            profile = self.identity.get_profile(self.project_id) or {}
             stack = profile.get("tech_stack", "Unknown Stack")
             stage = profile.get("stage", "Unknown Stage")
             
             # 2. Get Past Decisions (Consistency)
-            # We don't have a direct get_recent_decisions method exposed in SimpleDB wrapper effectively,
-            # but we can query raw.
-            with self.db._connection() as conn:
-                rows = conn.execute(
-                    "SELECT question, answer, category FROM decisions WHERE project_id = ? ORDER BY created_at DESC LIMIT 3", 
-                    (self.project_id,)
-                ).fetchall()
-                past_decisions = "\n".join([f"- Q: {r['question']} -> A: {r['answer']}" for r in rows]) if rows else "None."
+            decisions = self.strategic.list_rejections(self.project_id, limit=3)
+            past_decisions = "\n".join([f"- Q: {r['question']} -> A: {r['answer']}" for r in decisions]) if decisions else "None."
 
             return GetPromptResult(
                 description="Strategic Consultation",
@@ -247,9 +244,10 @@ class DynamicPromptManager:
 
         if name == "verify":
             # 1. Get Security Posture
-            summary = self.db.get_audit_summary(self.project_id)
-            crit = summary.get("CRITICAL", 0)
-            high = summary.get("HIGH", 0)
+            # SFO Sprint: Simplified audit summary from forensic store
+            findings = self.forensic.get_recent_activities(self.project_id, limit=100)
+            crit = len([f for f in findings if f.get('outcome') == 'VIOLATION'])
+            high = 0 # Placeholder for severity mapping in ForensicStore
             
             # 2. Get Recent Work
             # Determine what to verify (e.g. files changed recently, though we can't easily get diffs here without git tool)

@@ -5,6 +5,7 @@ import base64
 import time
 import logging
 from pathlib import Path
+from datetime import datetime, timezone
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
@@ -36,11 +37,13 @@ class DynamicRule:
     target: str = "ALL"
     path_pattern: Optional[str] = None # New: Only trigger on files matching this
     compiled_path_pattern: Any = field(default=None, repr=False)
+    semantic_query: Optional[str] = None # New: Tree-sitter S-expression
 
 class PulseEngine:
     """
     Sovereign Pulse Engine: The Invariant Heart of Sidelith.
     OPTIMIZED: Pre-compiled Regex for <1ms Latency.
+    UPGRADED: Tier-4 Semantic Awareness via Tree-sitter.
     """
 
     def __init__(self, anchor_path: Optional[Path] = None, rules_dir: Optional[Path] = None):
@@ -62,7 +65,7 @@ class PulseEngine:
             try:
                 with open(rule_file, "r") as f:
                     data = json.load(f)
-                    compiled = re.compile(data["pattern"])
+                    compiled = re.compile(data["pattern"]) if "pattern" in data else None
                     
                     path_ptrn = data.get("path_pattern")
                     compiled_path = re.compile(path_ptrn) if path_ptrn else None
@@ -70,7 +73,7 @@ class PulseEngine:
                     rules.append(DynamicRule(
                         id=data["id"],
                         level=data["level"],
-                        pattern=data["pattern"],
+                        pattern=data.get("pattern", ""),
                         rationale=data["rationale"],
                         fix=data["fix"],
                         compiled_pattern=compiled,
@@ -78,7 +81,8 @@ class PulseEngine:
                         source=data.get("source", "UNKNOWN"),
                         target=data.get("target", "ALL"),
                         path_pattern=path_ptrn,
-                        compiled_path_pattern=compiled_path
+                        compiled_path_pattern=compiled_path,
+                        semantic_query=data.get("semantic_query")
                     ))
             except Exception as e:
                 logger.error(f"Failed to load rule {rule_file}: {e}")
@@ -87,15 +91,23 @@ class PulseEngine:
         return rules
 
     def _execute_rule(self, rule: DynamicRule, content: str, filepath: str) -> Optional[str]:
-        """Executes a single pre-compiled rule against content."""
+        """Executes a single rule (Regex or Semantic) against content."""
         try:
             # 1. Path Filtering (Architectural Scope)
             if rule.compiled_path_pattern:
                 if not rule.compiled_path_pattern.search(filepath):
                     return None
 
-            # 2. Pattern Match
-            if rule.compiled_pattern.search(content):
+            # 2. Semantic Audit (Tier-4) - Higher Precision
+            if rule.semantic_query:
+                from side.intel.semantic_auditor import semantic_auditor
+                lang_id = Path(filepath).suffix[1:] or "python"
+                results = semantic_auditor.query_code(lang_id, content, rule.semantic_query)
+                if results:
+                    return f"Semantic Violation [{rule.level}] | {rule.id} | {rule.rationale} | Found {len(results)} matches | FIX: {rule.fix}"
+
+            # 3. Regex Pattern Match (Tier-3) - Fallback
+            if rule.compiled_pattern and rule.compiled_pattern.search(content):
                 return f"Violation [{rule.level}] | {rule.id} | {rule.rationale} | FIX: {rule.fix}"
         except Exception as e:
             logger.error(f"Rule execution failed ({rule.id}): {e}")
@@ -107,14 +119,8 @@ class PulseEngine:
         
         # 1. PII SCRUBBING (Privacy Moat)
         # Satisfying Board Concern #4: "The Intent Leak Nightmare"
-        def scrub_pii(text: str) -> str:
-            import re
-            text = re.sub(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", "<EMAIL_REDACTED>", text)
-            text = re.sub(r"(sk-[a-zA-Z0-9]{20,})", "<API_KEY_REDACTED>", text)
-            text = re.sub(r"(ghp_[a-zA-Z0-9]{20,})", "<GITHUB_TOKEN_REDACTED>", text)
-            return text
-
-        scrubbed_fix = scrub_pii(fix_applied)
+        from side.utils.shield import shield as sovereign_shield
+        scrubbed_fix = sovereign_shield.scrub(fix_applied)
 
         # 2. ANONYMIZATION
         trace = {
@@ -144,20 +150,51 @@ class PulseEngine:
             "scale": "SMALL" # Default
         }
         
-        # 1. Scan Extensions
-        for ext in [".py", ".js", ".ts", ".go", ".rs"]:
+        # 1. Scan Extensions (Tier-1 Polyglot)
+        for ext in [".py", ".js", ".ts", ".go", ".rs", ".swift", ".kt"]:
             if list(Path.cwd().glob(f"**/*{ext}")):
                 fingerprint["languages"].add(ext[1:])
         
-        # 2. Scan Requirements/Packages
-        req_file = Path.cwd() / "requirements.txt"
-        if req_file.exists():
-            content = req_file.read_text().lower()
-            if "fastapi" in content: fingerprint["frameworks"].add("fastapi")
-            if "django" in content: fingerprint["frameworks"].add("django")
-            if "flask" in content: fingerprint["frameworks"].add("flask")
-            if "redis" in content: fingerprint["infra"].add("redis")
-            if "postgresql" in content: fingerprint["infra"].add("postgres")
+        # 2. Project Markers (Ecosystem Identifiers)
+        markers = {
+            "Cargo.toml": ("rust", "cargo"),
+            "go.mod": ("go", "go_modules"),
+            "Package.swift": ("swift", "swiftpm"),
+            "Podfile": ("swift", "cocoapods"),
+            "build.gradle.kts": ("kotlin", "gradle"),
+            "AndroidManifest.xml": ("kotlin", "android"),
+            "requirements.txt": ("python", "pip"),
+            "package.json": ("javascript", "npm")
+        }
+        
+        for marker, (lang, infra) in markers.items():
+            if (Path.cwd() / marker).exists():
+                fingerprint["languages"].add(lang)
+                fingerprint["infra"].add(infra)
+                
+                # Deep Dive: Framework detection inside markers
+                content = (Path.cwd() / marker).read_text().lower()
+                
+                # Python
+                if marker == "requirements.txt":
+                    for fw in ["fastapi", "django", "flask"]:
+                        if fw in content: fingerprint["frameworks"].add(fw)
+                    for inf in ["redis", "postgresql", "celery"]:
+                        if inf in content: fingerprint["infra"].add(inf)
+                
+                # Mobile / Swift
+                if marker in ["Package.swift", "Podfile"]:
+                    if "swiftui" in content: fingerprint["frameworks"].add("swiftui")
+                    if "uikit" in content: fingerprint["frameworks"].add("uikit")
+                
+                # Mobile / Kotlin
+                if marker == "build.gradle.kts":
+                    if "compose" in content: fingerprint["frameworks"].add("jetpack_compose")
+                
+                # Rust
+                if marker == "Cargo.toml":
+                    if "tokio" in content: fingerprint["frameworks"].add("tokio")
+                    if "serde" in content: fingerprint["frameworks"].add("serde")
 
         # 3. Scan Scale (Crude heuristic)
         all_files = list(Path.cwd().glob("**/*"))
@@ -165,9 +202,9 @@ class PulseEngine:
             fingerprint["scale"] = "ENTERPRISE"
             
         # Convert sets to lists for JSON compatibility
-        fingerprint["languages"] = list(fingerprint["languages"])
-        fingerprint["frameworks"] = list(fingerprint["frameworks"])
-        fingerprint["infra"] = list(fingerprint["infra"])
+        fingerprint["languages"] = sorted(list(fingerprint["languages"]))
+        fingerprint["frameworks"] = sorted(list(fingerprint["frameworks"]))
+        fingerprint["infra"] = sorted(list(fingerprint["infra"]))
         
         return fingerprint
 

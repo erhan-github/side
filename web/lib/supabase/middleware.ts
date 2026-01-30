@@ -27,19 +27,23 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // IMPORTANT: Avoid writing any logic between createServerClient and
-    // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-    // issues with users being randomly logged out.
+    // [PALANTIR EFFICIENCY]: Skip expensive auth check for high-frequency telemetry
+    const isTelemetry = request.nextUrl.pathname.startsWith('/api/spc');
+    let user = null;
 
-    const {
-        data: { user },
-    } = await supabase.auth.getUser()
+    if (!isTelemetry) {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        user = authUser;
+    }
 
     if (
         !user &&
         !request.nextUrl.pathname.startsWith('/login') &&
         !request.nextUrl.pathname.startsWith('/auth') &&
         !request.nextUrl.pathname.startsWith('/pricing') &&
+        !request.nextUrl.pathname.startsWith('/hud') &&
+        !request.nextUrl.pathname.startsWith('/api/spc') &&
+        !request.nextUrl.pathname.startsWith('/public') &&
         request.nextUrl.pathname !== '/'
     ) {
         // no user, potentially respond by redirecting the user to the login page

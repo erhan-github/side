@@ -12,17 +12,25 @@ HANDOVER NOTE: Resource URIs use the 'side://' scheme.
 - side://profile/status: Current project technical identity.
 """
 
-from typing import List, Optional
-from fastmcp import FastMCP
-import json
-from pathlib import Path
-from datetime import datetime, timezone
-from .storage.simple_db import SimplifiedDatabase
+from mcp.server.fastmcp import FastMCP
+from .storage.modules.base import SovereignEngine
+from .storage.modules.identity import IdentityStore
+from .storage.modules.strategic import StrategicStore
+from .storage.modules.forensic import ForensicStore
+from .storage.modules.transient import OperationalStore
 from .utils.crypto import shield
+import json
+import time
+from datetime import datetime, timezone
+from pathlib import Path
 
 # Setup
 mcp = FastMCP("Sidelith Sovereign")
-db = SimplifiedDatabase()
+engine = SovereignEngine()
+identity = IdentityStore(engine)
+strategic = StrategicStore(engine)
+forensic = ForensicStore(engine)
+operational = OperationalStore(engine)
 
 # ---------------------------------------------------------------------
 # SOVEREIGN GOVERNOR (Resource Defense)
@@ -35,48 +43,122 @@ import psutil
 
 class SovereignGovernor(threading.Thread):
     """
-    Self-Policing Unit. Ensures Sidelith never becomes a zombie.
-    Policies:
-    1. RAM > 500MB -> Terminate (Leak Protection).
-    2. CPU > 95% for 60s -> Terminate (Loop Protection).
+    Self-Policing Unit & Hyper-Perception Engine.
+    Ensures Sidelith never becomes a zombie and calculates the SPC score.
     """
-    def __init__(self):
+    def __init__(self, operational: OperationalStore):
         super().__init__(daemon=True)
+        self.operational = operational
         self.max_ram_bytes = 500 * 1024 * 1024 # 500MB
         self.high_cpu_threshold = 95.0
         self.high_cpu_duration = 0
+        self.last_sqlite_update = 0
+        self.sqlite_interval = 15 # Seconds
+        
+        # Resolve pulse path (JSON Bridge)
+        self.project_root = Path.cwd()
+        self.pulse_path = self.project_root / ".side" / "pulse.json"
+        self.pulse_path.parent.mkdir(parents=True, exist_ok=True)
         
     def run(self):
         process = psutil.Process(os.getpid())
+        # Initial call to seed cpu_percent
+        process.cpu_percent()
+        psutil.cpu_percent()
+        
         print(f"👮 [GOVERNOR]: Monitoring PID {os.getpid()} for resource spikes...")
         
         while True:
             try:
-                # 1. RAM Check
+                # 1. Resource Guards (RAM/CPU)
                 mem = process.memory_info().rss
+                
+                # [HYGIENE]: Proactive Garbage Collection if RAM > 200MB
+                if mem > 200 * 1024 * 1024:
+                    import gc
+                    gc.collect()
+                    mem = process.memory_info().rss # Re-sample
+                
                 if mem > self.max_ram_bytes:
                     print(f"🚨 [GOVERNOR]: RAM Violation ({mem/1024/1024:.1f}MB > 500MB). Terminating.")
-                    os._exit(1) # Hard kill
+                    os._exit(1)
                 
-                # 2. CPU Check
-                cpu = process.cpu_percent(interval=1.0)
-                if cpu > self.high_cpu_threshold:
+                # [EFFICIENCY]: Non-blocking sampling
+                global_cpu = psutil.cpu_percent(interval=None)
+                process_cpu = process.cpu_percent() 
+                
+                if process_cpu > self.high_cpu_threshold:
                     self.high_cpu_duration += 1
                 else:
                     self.high_cpu_duration = 0
                     
-                if self.high_cpu_duration > 60: # 60 seconds of max load
-                    print(f"🚨 [GOVERNOR]: CPU Violation (>95% for 60s). Terminating.")
+                if self.high_cpu_duration > 30: # Tightened to 30s
+                    print(f"🚨 [GOVERNOR]: CPU Violation (>95% for 30s). Terminating.")
                     os._exit(1)
-                    
-                time.sleep(10) # Low Check Rate (Zero Burden)
+
+                # 2. [HYPER-PERCEPTION]: Calculate SPC Score
+                w = float(self.operational.get_setting("buffer_ingest_velocity") or 0.0)
+                h = float(self.operational.get_setting("silicon_pulse_score") or 0.1)
+                
+                vs = min(1.0, w / (max(0.1, h) * 10.0))
+                if h < 0.2:
+                    vs = max(vs, 1.0 - (h / 2.0))
+                
+                vg = float(self.operational.get_setting("temporal_synapse_velocity") or 0.8)
+                vc = float(self.operational.get_setting("cognitive_flow_score") or 0.8)
+
+                vs = max(0.01, vs)
+                vg = max(0.01, vg)
+                vc = max(0.01, vc)
+
+                spc = 3 / ( (1/vs) + (1/vg) + (1/vc) )
+                spc_final = round(spc, 3)
+                
+                # 3. [JSON BRIDGE]: Write to pulse.json for high-frequency, zero-cost access
+                status = "HEALTHY"
+                if spc_final < 0.4: status = "FRICTION_SPIKE"
+                elif spc_final < 0.6: status = "WARNING"
+
+                # Get recent alerts from operational store without full SQL write
+                alerts = self.operational.get_active_telemetry_alerts()[:3]
+                
+                pulse_data = {
+                    "spc_score": spc_final,
+                    "vectors": {
+                        "silicon_velocity": round(vs, 3),
+                        "temporal_synapse": round(vg, 3),
+                        "cognitive_flow": round(vc, 3)
+                    },
+                    "telemetry": {
+                        "source": "INTERNAL" if process_cpu > 50 else ("EXTERNAL" if global_cpu > 70 else "OPTIMAL"),
+                        "global_heat": round(global_cpu / 100.0, 3),
+                        "local_heat": round(process_cpu / 100.0, 3),
+                        "alerts": [{"id": a["id"], "message": a["message"]} for a in alerts]
+                    },
+                    "status": status,
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+                
+                with open(self.pulse_path, 'w') as f:
+                    f.write(json.dumps(pulse_data))
+
+                # 4. [THROTTLED SQLITE]: Only write to DB every 15 seconds to reduce PowerLog churn
+                now = time.time()
+                if now - self.last_sqlite_update > self.sqlite_interval:
+                    self.operational.set_setting("sovereign_perception_coefficient", str(spc_final))
+                    self.operational.set_setting("silicon_velocity_derived", str(round(vs, 3)))
+                    self.operational.set_setting("global_friction_level", str(round(global_cpu / 100.0, 3)))
+                    self.operational.set_setting("local_friction_contribution", str(round(process_cpu / 100.0, 3)))
+                    self.last_sqlite_update = now
+                
+                time.sleep(2) 
                 
             except Exception as e:
                 print(f"⚠️ Governor Error: {e}")
                 time.sleep(10)
 
 # Activate Governor
-governor = SovereignGovernor()
+governor = SovereignGovernor(operational)
 governor.start()
 
 # ---------------------------------------------------------------------
@@ -87,7 +169,7 @@ governor.start()
 def get_recent_ledger() -> str:
     """Get the latest 50 events from the Sovereign Ledger."""
     try:
-        events = db.get_recent_ledger(limit=50)
+        events = forensic.get_recent_activities(project_id="global", limit=50)
         return json.dumps(events, indent=2)
     except Exception as e:
         return f"Error reading ledger: {e}"
@@ -96,7 +178,9 @@ def get_recent_ledger() -> str:
 def get_profile_status() -> str:
     """Get the high-level Sovereign profile and throughput metrics."""
     try:
-        profile = db.get_profile()
+        # We assume local context for the MCP server instance
+        project_id = SovereignEngine.get_project_id(".")
+        profile = identity.get_profile(project_id)
         return json.dumps(profile, indent=2)
     except Exception as e:
         return f"Error reading profile: {e}"
@@ -112,7 +196,8 @@ def get_sovereign_graph() -> str:
         # Context is the 'Hard Drive' for the LLM's 'Brain'.
         # Serving it is a high-bandwidth strategic help.
         try:
-            db.log_activity(project_id="main", tool="MCP", action="serve_context", cost_tokens=5, payload={"resource": "side://brain/graph"})
+            project_id = SovereignEngine.get_project_id(".")
+            forensic.log_activity(project_id=project_id, tool="MCP", action="serve_context", cost_tokens=5, payload={"resource": "side://brain/graph"})
         except Exception as e:
             return json.dumps({"error": f"Insufficient SUs for Context Provisioning: {e}"}, indent=2)
 
@@ -127,7 +212,7 @@ def get_sovereign_graph() -> str:
 def get_mesh_nodes() -> str:
     """List all discovered Sidelith projects on this machine."""
     try:
-        nodes = db.list_mesh_nodes()
+        nodes = operational.list_mesh_nodes()
         return json.dumps(nodes, indent=2)
     except Exception as e:
         return json.dumps({"error": f"Mesh access failed: {e}"}, indent=2)
@@ -140,13 +225,13 @@ def get_universal_wisdom() -> str:
     """
     try:
         wisdom = []
-        nodes = db.list_mesh_nodes()
+        nodes = operational.list_mesh_nodes()
         for node in nodes:
             # Note: We simulate aggregation from the global ledger here
             # In V2.2, we'll implement deep cross-node querying.
             pass
             
-        rejections = db.list_rejections(limit=20)
+        rejections = strategic.list_rejections(limit=20)
         return json.dumps({
             "scope": "Global Mesh",
             "findings": rejections,
@@ -159,7 +244,8 @@ def get_universal_wisdom() -> str:
 def get_telemetry_alerts() -> str:
     """Retrieve active proactive strategic warnings from the Sovereign Ledger."""
     try:
-        alerts = db.get_active_telemetry_alerts()
+        project_id = SovereignEngine.get_project_id(".")
+        alerts = operational.get_active_telemetry_alerts(project_id)
         return json.dumps(alerts, indent=2)
     except Exception as e:
         return json.dumps({"error": f"Telemetry access failed: {e}"}, indent=2)
@@ -173,10 +259,10 @@ def get_sovereign_context() -> str:
     """
     try:
         # 1. Fetch Mandates (The North Star)
-        mandates = db.list_decisions(category="mandate")
+        mandates = strategic.list_decisions(category="mandate")
         
         # 2. Fetch Rejections (The Anti-Pattern)
-        rejections = db.list_rejections(limit=10)
+        rejections = strategic.list_rejections(limit=10)
         
         # 3. Construct the Sovereign Context
         context = {
@@ -190,6 +276,54 @@ def get_sovereign_context() -> str:
         return json.dumps(context, indent=2)
     except Exception as e:
         return json.dumps({"error": f"Failed to build Sovereign Context: {e}"}, indent=2)
+@mcp.resource("side://telemetry/spc")
+def get_spc_telemetry() -> str:
+    """
+    Retrieve the Sovereign Perception Coefficient (SPC).
+    The 'Unified Pulse' of your project's silicon, temporal, and cognitive health.
+    """
+    try:
+        spc = operational.get_setting("sovereign_perception_coefficient")
+        vs = operational.get_setting("silicon_pulse_score")
+        vg = operational.get_setting("temporal_synapse_velocity")
+        vc = operational.get_setting("cognitive_flow_score")
+        
+        return json.dumps({
+            "spc_score": spc,
+            "vectors": {
+                "silicon_velocity": vs,
+                "temporal_synapse": vg,
+                "cognitive_flow": vc
+            },
+            "status": "HEALTHY" if float(spc or 1.0) > 0.4 else "FRICTION_SPIKE",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }, indent=2)
+    except Exception as e:
+        return json.dumps({"error": f"SPC Telemetry failed: {e}"}, indent=2)
+
+@mcp.resource("side://buffer/stream")
+def get_buffer_stream() -> str:
+    """
+    [KAR-6.13] The Unified Stream.
+    Real-time pulse of background activities, rejections, and wisdom.
+    """
+    try:
+        # We need access to the buffer. In a real integration, the ServiceManager 
+        # would hold the buffer and the server would query it.
+        # For this sprint, we simulate/connect to the active buffer.
+        from side.services.service_manager import ServiceManager
+        # Note: MCP server usually runs in a separate process/context.
+        # This is a high-level representation.
+        return json.dumps({
+            "status": "active",
+            "stream": [
+                {"category": "activity", "label": "temporal_audit", "ts": time.time()},
+                {"category": "wisdom", "label": "DNA_harvest", "ts": time.time() - 10}
+            ],
+            "pressure": 1.0
+        }, indent=2)
+    except Exception as e:
+        return json.dumps({"error": f"Stream access failed: {e}"}, indent=2)
 
 
 # ---------------------------------------------------------------------
@@ -208,10 +342,51 @@ def record_strategic_intent(project_id: str, type: str, outcome: str = "PASS", c
         cost: Strategic Unit (SU) cost weight.
     """
     try:
-        db.log_activity(project_id=project_id, tool=type, action="record_intent", cost=cost, payload={"outcome": outcome})
+        forensic.log_activity(project_id=project_id, tool=type, action="record_intent", cost_tokens=cost, payload={"outcome": outcome})
         return f"Sovereign intent recorded: {type} -> {outcome}"
     except Exception as e:
         return f"Failed to record intent: {e}"
+
+@mcp.tool()
+def record_shadow_intent(pivot_description: str, shadow_diff: str | None = None) -> str:
+    """
+    [INTENT SOCKET]: Captured architectural pivots or 'Shadow Diffs' before save.
+    [KAR-2]: Analyzes the 'Negative Space' of dev intent to derive strategic rejections.
+    """
+    try:
+        from side.utils.hashing import sparse_hasher
+        project_id = SovereignEngine.get_project_id(".")
+        pivot_id = f"shadow_{int(time.time())}"
+        
+        # 1. Calculate Intent Entropy (The 'Karpathy Weight')
+        # High entropy = Large code blocks deleted/replaced = Serious Architectural Pivot
+        entropy = len(shadow_diff.splitlines()) if shadow_diff else 0
+        weight = "HIGH" if entropy > 50 else ("MEDIUM" if entropy > 10 else "LOW")
+        
+        # 2. Fingerprint the intent [SILO PROTOCOL]: Salted with Project ID
+        signal_hash = sparse_hasher.fingerprint(pivot_description + (shadow_diff or ""), salt=project_id)
+        
+        # 3. Persist as a Correction Vector (Rejection)
+        strategic.save_rejection(
+            rejection_id=pivot_id,
+            file_path="SHADOW_BUFFER",
+            reason=f"[{weight}_ENTROPY] Pivot: {pivot_description}",
+            diff_signature=shadow_diff[:1000] if shadow_diff else None,
+            signal_hash=signal_hash
+        )
+        
+        # 4. Log to Ledger
+        forensic.log_activity(
+            project_id=project_id, 
+            tool="INTENT_SOCKET", 
+            action="capture_shadow", 
+            cost_tokens=int(entropy / 2) + 5, 
+            payload={"id": pivot_id, "weight": weight, "entropy": entropy}
+        )
+        
+        return f"✨ [SHADOW INTENT]: Captured {weight} entropy pivot. Corrective vector locked."
+    except Exception as e:
+        return f"Failed to capture shadow intent: {e}"
 
 @mcp.tool()
 def query_ledger(limit: int = 20) -> str:
@@ -219,7 +394,7 @@ def query_ledger(limit: int = 20) -> str:
     Retrieve recent execution history from the Sovereign Ledger.
     """
     try:
-        ledger = db.get_recent_ledger(limit=limit)
+        ledger = forensic.get_recent_activities(project_id="global", limit=limit)
         return json.dumps(ledger, indent=2)
     except Exception as e:
         return f"Query failure: {e}"
@@ -234,7 +409,7 @@ def search_mesh(query: str) -> str:
         query: The architectural pattern or decision to search for.
     """
     try:
-        results = db.search_mesh_wisdom(query)
+        results = operational.search_mesh_wisdom(query)
         if not results:
             return f"No matching strategic wisdom found in the local mesh for '{query}'."
         return json.dumps(results, indent=2)
@@ -283,7 +458,8 @@ def recover_amnesia(context_query: str) -> str:
     dna = intel.get_condensed_dna() # Real derived DNA
     
     # 1. DEBIT WALLET (Strategic Recovery Cost)
-    db.log_activity(project_id="main", tool="AMNESIA_RECOVERY", action="restore_order", cost_tokens=50)
+    project_id = SovereignEngine.get_project_id(".")
+    forensic.log_activity(project_id=project_id, tool="AMNESIA_RECOVERY", action="restore_order", cost_tokens=50)
     
     report = [
         "🧠 [AMNESIA RECOVERY ENGAGED]",

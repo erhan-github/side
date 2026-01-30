@@ -8,11 +8,14 @@ Supports:
 
 Auto-detects based on available environment variables.
 """
-import os
 import logging
-from typing import List, Dict, Optional
+import os
 from enum import Enum
 from pathlib import Path
+from typing import Optional, List, Dict, Any
+from side.storage.modules.base import SovereignEngine
+from side.storage.modules.identity import IdentityStore
+from side.storage.modules.transient import OperationalStore
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +59,11 @@ class LLMClient:
         self.pool: Optional[ManagedCreditPool] = None
         self.purpose = purpose # "reasoning" or "intelligence"
         
+        # SFO Sprint: No Fat Architecture
+        self.engine = SovereignEngine()
+        self.identity = IdentityStore(self.engine)
+        self.operational = OperationalStore(self.engine)
+        
         self._load_dotenv()
         
         if preferred_provider:
@@ -78,10 +86,9 @@ class LLMClient:
             # [OLLAMA] Special handling for local provider (No Key Needed)
             if provider_name == "ollama":
                 # AIRGAP TIER CHECK
-                # We must query the DB to verify entitlement
-                from side.storage.simple_db import SimplifiedDatabase
-                db = SimplifiedDatabase()
-                profile = db.get_profile(db.get_project_id("."))
+                # We must query the identity store directly to verify entitlement
+                project_id = SovereignEngine.get_project_id(".")
+                profile = self.identity.get_profile(project_id)
                 tier = profile.get("tier", "trial") if profile else "trial"
                 
                 # Only 'hitech' or 'enterprise' allowed
@@ -168,14 +175,12 @@ class LLMClient:
         3. User Tier (HiTech/Enterprise vs Standard)
         4. User Preference (Settings Toggle)
         """
-        from side.storage.simple_db import SimplifiedDatabase
-        db = SimplifiedDatabase()
-        project_id = db.get_project_id(".")
-        profile = db.get_profile(project_id)
+        project_id = SovereignEngine.get_project_id(".")
+        profile = self.identity.get_profile(project_id)
         tier = profile.get("tier", "trial") if profile else "trial"
         
         # 1. AIRGAP: Force local, no exceptions
-        if db.get_setting("airgap_enabled") == "true":
+        if self.operational.get_setting("airgap_enabled") == "true":
             logger.info("🛡️ [AIRGAP MODE]: Total isolation active. Enforcing local inference.")
             if self._init_provider("ollama"): return
             logger.critical("🚨 [AIRGAP FAILURE]: Airgap enabled but Ollama unavailable. System locked.")
@@ -189,7 +194,7 @@ class LLMClient:
             resolved_preference = "cloud"
         else:
             # 'Reasoning' purpose respects Tier + Settings
-            user_pref = db.get_setting("llm_engine_preference")
+            user_pref = self.operational.get_setting("llm_engine_preference")
             
             if tier == "hitech":
                 resolved_preference = user_pref or "local"
@@ -317,9 +322,7 @@ class LLMClient:
                LLMProvider.OLLAMA: LLMProvider.GROQ
             }
             
-            from side.storage.simple_db import SimplifiedDatabase
-            db = SimplifiedDatabase()
-            if db.get_setting("airgap_enabled", "false") == "true":
+            if self.operational.get_setting("airgap_enabled", "false") == "true":
                 logger.critical(f"❌ [AIRGAP ENFORCED]: Local failure but Cloud switch blocked.")
                 raise e
 

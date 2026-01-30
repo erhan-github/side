@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 class StrategicStore:
     def __init__(self, engine: SovereignEngine):
         self.engine = engine
+        # Self-Initialize Schema and Migrations
+        with self.engine.connection() as conn:
+            self.init_schema(conn)
 
     def init_schema(self, conn):
         """Initialize strategic tables."""
@@ -109,27 +112,58 @@ class StrategicStore:
                 file_path TEXT,
                 rejection_reason TEXT, 
                 diff_signature TEXT,
+                signal_hash INTEGER, -- Sparse Semantic Hash (SimHash)
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_project ON rejections(project_id)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_hash ON rejections(instruction_hash)")
-
         # ─────────────────────────────────────────────────────────────
-        # CORE TABLE 6: PUBLIC_WISDOM - Cross-Node Collective Brain
+        # CORE TABLE 7: MEMORY - Long-Term Unstructured Facts [KAR-6.19]
         # ─────────────────────────────────────────────────────────────
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS public_wisdom (
+            CREATE TABLE IF NOT EXISTS memory (
                 id TEXT PRIMARY KEY,
-                origin_node TEXT,
-                category TEXT,
-                signal_pattern TEXT, -- e.g. "FastAPI", "React", "Supabase"
-                wisdom_text TEXT NOT NULL,
-                confidence INTEGER DEFAULT 5,
+                project_id TEXT NOT NULL DEFAULT 'default',
+                content TEXT NOT NULL,
+                tags TEXT, -- JSON Array
+                metadata TEXT, -- JSON Object
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_memory_project ON memory(project_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_memory_created ON memory(created_at DESC)")
+
+        # ─────────────────────────────────────────────────────────────
+        # MIGRATIONS: Upgrade existing schemas (Must run before index creation)
+        # ─────────────────────────────────────────────────────────────
+        try:
+            conn.execute("ALTER TABLE rejections ADD COLUMN signal_hash INTEGER")
+        except: pass
+        try:
+            conn.execute("ALTER TABLE public_wisdom ADD COLUMN source_type TEXT DEFAULT 'mesh'")
+        except: pass
+        try:
+            conn.execute("ALTER TABLE public_wisdom ADD COLUMN source_file TEXT")
+        except: pass
+        
+        # [STRATEGIC AUDIT] Add is_pinned to prevent over-aggressive Neural Decay
+        for table in ["plans", "learnings", "rejections", "public_wisdom"]:
+            try:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN is_pinned INTEGER DEFAULT 0")
+            except: pass
+            
+        logger.info("MIGRATION: StrategicStore schema sync check complete.")
+
+        try:
+            conn.execute("ALTER TABLE public_wisdom ADD COLUMN signal_hash INTEGER")
+            logger.info("MIGRATION: Added signal_hash to public_wisdom")
+        except: pass
+
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_project ON rejections(project_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_hash ON rejections(instruction_hash)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_signal_hash ON rejections(signal_hash)")
+
         conn.execute("CREATE INDEX IF NOT EXISTS idx_public_wisdom_signal ON public_wisdom(signal_pattern)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_public_wisdom_hash ON public_wisdom(signal_hash)")
 
 
     def save_plan(self, project_id: str, plan_id: str, title: str, plan_type: str = "goal",
@@ -276,19 +310,33 @@ class StrategicStore:
             return [dict(row) for row in rows]
 
     def save_rejection(self, rejection_id: str, file_path: str, reason: str, 
-                       instruction_hash: str | None = None, diff_signature: str | None = None) -> None:
-        """
-        Save a Correction Vector (Rejection). 
-        This is the 'Negative Context' that stops 'Beautiful Wrong Directions'.
-        """
+                       instruction_hash: str | None = None, diff_signature: str | None = None, **kwargs) -> None:
+        """Save a single Correction Vector (Rejection)."""
+        self.save_rejections_batch([{
+            'id': rejection_id,
+            'file_path': file_path,
+            'reason': reason,
+            'instruction_hash': instruction_hash,
+            'diff_signature': diff_signature,
+            'signal_hash': kwargs.get("signal_hash"),
+            'project_id': kwargs.get("project_id", "default")
+        }])
+
+    def save_rejections_batch(self, rejections: List[Dict[str, Any]]) -> None:
+        """Save multiple rejections in a single transaction."""
         with self.engine.connection() as conn:
-            conn.execute(
-                """
-                INSERT INTO rejections (id, file_path, rejection_reason, instruction_hash, diff_signature)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                (rejection_id, file_path, reason, instruction_hash, diff_signature),
-            )
+            for rej in rejections:
+                conn.execute(
+                    """
+                    INSERT INTO rejections (id, file_path, rejection_reason, instruction_hash, diff_signature, signal_hash, project_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        rejection_reason = excluded.rejection_reason,
+                        diff_signature = excluded.diff_signature
+                    """,
+                    (rej['id'], rej['file_path'], rej['reason'], rej.get('instruction_hash'), 
+                     rej.get('diff_signature'), rej.get('signal_hash'), rej.get('project_id', 'default')),
+                )
 
     def list_rejections(self, limit: int = 10) -> list[dict[str, Any]]:
         """List recent rejections for the Sovereign Footer."""
@@ -301,19 +349,34 @@ class StrategicStore:
 
     def save_public_wisdom(self, wisdom_id: str, wisdom_text: str, origin_node: str | None = None,
                            category: str | None = None, signal_pattern: str | None = None,
-                           confidence: int = 5) -> None:
-        """Save architectural wisdom harvested from the Universal Mesh."""
+                           confidence: int = 5, **kwargs) -> None:
+        """Save a single architectural wisdom fragment."""
+        self.save_public_wisdom_batch([{
+            'id': wisdom_id,
+            'text': wisdom_text,
+            'origin': origin_node,
+            'category': category,
+            'pattern': signal_pattern,
+            'confidence': confidence,
+            'signal_hash': kwargs.get("signal_hash")
+        }])
+
+    def save_public_wisdom_batch(self, wisdom_list: List[Dict[str, Any]]) -> None:
+        """Save multiple wisdom fragments in a single transaction."""
         with self.engine.connection() as conn:
-            conn.execute(
-                """
-                INSERT INTO public_wisdom (id, origin_node, category, signal_pattern, wisdom_text, confidence)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    wisdom_text = excluded.wisdom_text,
-                    confidence = excluded.confidence
-                """,
-                (wisdom_id, origin_node, category, signal_pattern, wisdom_text, confidence),
-            )
+            for w in wisdom_list:
+                conn.execute(
+                    """
+                    INSERT INTO public_wisdom (id, origin_node, category, signal_pattern, signal_hash, wisdom_text, confidence)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        wisdom_text = excluded.wisdom_text,
+                        signal_hash = excluded.signal_hash,
+                        confidence = excluded.confidence
+                    """,
+                    (w['id'], w.get('origin'), w.get('category'), w.get('pattern'), 
+                     w.get('signal_hash'), w['text'], w.get('confidence', 5)),
+                )
 
     def list_public_wisdom(self, signal_pattern: str | None = None) -> List[Dict[str, Any]]:
         """Retrieve public wisdom, optionally filtered by architectural signal."""
@@ -326,4 +389,90 @@ class StrategicStore:
             else:
                 rows = conn.execute("SELECT * FROM public_wisdom ORDER BY created_at DESC").fetchall()
             return [dict(row) for row in rows]
+
+    # ─────────────────────────────────────────────────────────────
+    # MEMORY METHODS (JSON-FREE PERSISTENCE)
+    # ─────────────────────────────────────────────────────────────
+
+    def save_fact(self, fact_id: str, project_id: str, content: str, 
+                  tags: list | None = None, metadata: dict | None = None) -> None:
+        """Saves an unstructured fact to the relational core."""
+        import json
+        with self.engine.connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO memory (id, project_id, content, tags, metadata)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    content = excluded.content,
+                    tags = excluded.tags,
+                    metadata = excluded.metadata
+                """,
+                (
+                    fact_id, 
+                    project_id, 
+                    content, 
+                    json.dumps(tags or []), 
+                    json.dumps(metadata or {})
+                ),
+            )
+
+    def recall_facts(self, query: str, project_id: str, limit: int = 5) -> list[dict[str, Any]]:
+        """Simple SQL-based fuzzy recall for facts."""
+        import json
+        with self.engine.connection() as conn:
+            q = f"%{query}%"
+            rows = conn.execute(
+                """
+                SELECT * FROM memory 
+                WHERE project_id = ? AND (content LIKE ? OR tags LIKE ?)
+                ORDER BY created_at DESC LIMIT ?
+                """,
+                (project_id, q, q, limit)
+            ).fetchall()
+            
+            results = []
+            for row in rows:
+                d = dict(row)
+                d["tags"] = json.loads(d["tags"]) if d["tags"] else []
+                d["metadata"] = json.loads(d["metadata"]) if d["metadata"] else {}
+                results.append(d)
+            return results
+
+    def purge_stale_rejections(self, days: int = 180) -> int:
+        """
+        Removes rejections older than N days.
+        [NEURAL DECAY]: Strategic laws have a half-life.
+        [STRATEGIC AUDIT]: Respects 'is_pinned' flag.
+        """
+        with self.engine.connection() as conn:
+            cursor = conn.execute(
+                "DELETE FROM rejections WHERE is_pinned = 0 AND created_at < datetime('now', ?)",
+                (f'-{days} days',)
+            )
+            return cursor.rowcount
+
+    def decay_strategic_fat(self, days: int = 30) -> Dict[str, int]:
+        """
+        [NEURAL DECAY]: Prunes low-entropy strategic data.
+        - Keeps Objectives (priority > 5 or pinned) forever.
+        - Prunes low-impact learnings older than 30 days.
+        """
+        counts = {}
+        with self.engine.connection() as conn:
+            # 1. Decay Low-Impact Learnings
+            cursor = conn.execute(
+                "DELETE FROM learnings WHERE is_pinned = 0 AND impact = 'low' AND created_at < datetime('now', ?)",
+                (f'-{days} days',)
+            )
+            counts["learnings"] = cursor.rowcount
+            
+            # 2. Decay stale done tasks
+            cursor = conn.execute(
+                "DELETE FROM plans WHERE is_pinned = 0 AND status = 'done' AND type = 'task' AND created_at < datetime('now', ?)",
+                (f'-7 days',) # Forgotten faster once achieved
+            )
+            counts["plans"] = cursor.rowcount
+            
+        return counts
 
