@@ -76,3 +76,121 @@ class AccountingStore:
                 ORDER BY created_at DESC LIMIT ?
             """, (project_id, limit)).fetchall()
             return [{"id": r[0], "amount": r[1], "reason": r[2], "date": r[3]} for r in rows]
+
+    # ─────────────────────────────────────────────────────────────
+    # DYNAMIC SU PRICING ENGINE (Phase 1)
+    # ─────────────────────────────────────────────────────────────
+    
+    # Task-type cost mapping (base algorithmic costs)
+    ALGO_MULTIPLIERS = {
+        "fractal_search": 2.0,      # Fast fractal index search
+        "ast_extraction": 1.5,      # Python AST symbol extraction
+        "intent_correlation": 3.0,  # Strategic linking (SQL + fuzzy match)
+        "pulse_scan": 0.5,          # Regex pre-commit validation
+        "mesh_wisdom": 4.0,         # Cross-project knowledge sharing
+        "context_synthesis": 2.5,   # 30-day intelligence assembly
+        "forensic_log": 0.3,        # SQLite write operation
+        "shield_fix": 1.5,          # Vault integration + auto-fix
+        "roi_calculation": 1.0,     # Counterfactual ROI logic
+    }
+    
+    # LLM costs (2026 projected, per 1M tokens)
+    LLM_COSTS = {
+        "groq-llama-70b": {"input": 0.20, "output": 0.30},
+        "claude-3.5-sonnet": {"input": 3.00, "output": 15.00},
+        "gpt-4-turbo": {"input": 10.00, "output": 30.00},
+    }
+    
+    def calculate_task_su(
+        self,
+        task_type: str,
+        llm_tokens_in: int = 0,
+        llm_tokens_out: int = 0,
+        llm_model: str = "groq-llama-70b",
+        operations: List[str] = None,
+        value_delivered: Dict[str, Any] = None
+    ) -> int:
+        """
+        Calculate SU cost for a task based on:
+        1. LLM token usage
+        2. Algorithmic complexity
+        3. Value delivered (ROI-based)
+        
+        Args:
+            task_type: Type of task (e.g., "atomic_context", "semantic_boost")
+            llm_tokens_in: Input tokens consumed
+            llm_tokens_out: Output tokens generated
+            llm_model: LLM model used
+            operations: List of algorithmic operations performed
+            value_delivered: Dict of value metrics (e.g., {"disaster_averted": 50000})
+        
+        Returns:
+            Total SU cost (integer)
+        """
+        operations = operations or []
+        value_delivered = value_delivered or {}
+        
+        # 1. LLM Cost Component
+        llm_cost_usd = 0.0
+        if llm_tokens_in or llm_tokens_out:
+            costs = self.LLM_COSTS.get(llm_model, self.LLM_COSTS["groq-llama-70b"])
+            llm_cost_usd = (
+                (llm_tokens_in * costs["input"] / 1_000_000) +
+                (llm_tokens_out * costs["output"] / 1_000_000)
+            )
+        
+        # Convert USD to SU ($0.001 = 1 SU)
+        llm_su = llm_cost_usd * 1000
+        
+        # 2. Algorithmic Value Component
+        algo_su = sum(self.ALGO_MULTIPLIERS.get(op, 1.0) for op in operations)
+        
+        # 3. Value Multiplier (ROI-based)
+        value_su = 0
+        if "disaster_averted_usd" in value_delivered:
+            # Award SUs based on disaster prevention
+            value_su += min(value_delivered["disaster_averted_usd"] / 1000, 20)  # Cap at 20 SU
+        if "time_saved_hours" in value_delivered:
+            # Award 0.5 SU per hour saved
+            value_su += value_delivered["time_saved_hours"] * 0.5
+        if "objective_advanced" in value_delivered:
+            # Award 2 SU for strategic progress
+            value_su += 2.0
+        
+        # Final calculation
+        total_su = max(1, int(llm_su + algo_su + value_su))
+        
+        logger.debug(
+            f"💰 [SU CALC]: {task_type} → LLM: {llm_su:.2f}, Algo: {algo_su:.2f}, "
+            f"Value: {value_su:.2f} = {total_su} SU"
+        )
+        
+        return total_su
+    
+    def deduct_task_su(
+        self,
+        project_id: str,
+        task_type: str,
+        llm_tokens_in: int = 0,
+        llm_tokens_out: int = 0,
+        llm_model: str = "groq-llama-70b",
+        operations: List[str] = None,
+        value_delivered: Dict[str, Any] = None
+    ) -> bool:
+        """
+        Calculate and deduct SUs for a specific task in one call.
+        
+        Returns:
+            True if deduction successful, False if insufficient balance
+        """
+        su_cost = self.calculate_task_su(
+            task_type=task_type,
+            llm_tokens_in=llm_tokens_in,
+            llm_tokens_out=llm_tokens_out,
+            llm_model=llm_model,
+            operations=operations,
+            value_delivered=value_delivered
+        )
+        
+        reason = f"{task_type} (LLM: {llm_tokens_in + llm_tokens_out} tokens)"
+        return self.deduct_su(project_id, su_cost, reason)

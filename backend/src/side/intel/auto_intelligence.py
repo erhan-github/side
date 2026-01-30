@@ -180,8 +180,20 @@ class AutoIntelligence:
 
                 # Tier 2: Strategic Boost (LLM Analysis)
                 # We only reach here if it's high-entropy or has symbol changes
-                su_cost = 15 if is_high_entropy else 5
-                if not self.engine.accounting.deduct_su(project_id, su_cost, f"Semantic Boost: {h[:8]}"):
+                
+                # Calculate dynamic SU cost
+                est_tokens_in = min(3000, len(diff_content))  # Rough estimate
+                est_tokens_out = 150
+                
+                if not self.engine.accounting.deduct_task_su(
+                    project_id=project_id,
+                    task_type="semantic_boost",
+                    llm_tokens_in=est_tokens_in,
+                    llm_tokens_out=est_tokens_out,
+                    llm_model="groq-llama-70b",
+                    operations=["ast_extraction", "intent_correlation"],
+                    value_delivered={"objective_advanced": True} if is_high_entropy else {}
+                ):
                     logger.warning(f"⚠️ [ECONOMY]: Skipping boost for {h[:8]} due to zero balance.")
                     continue
 
