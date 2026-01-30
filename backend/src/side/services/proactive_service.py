@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from side.storage.simple_db import SimplifiedDatabase
+from side.storage.modules.strategic import StrategicStore
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +19,8 @@ class ProactiveService:
     Checks for TODO/HACK comments and cross-references them with active goals.
     """
 
-    def __init__(self, db: SimplifiedDatabase, project_path: Path):
-        self.db = db
+    def __init__(self, strategic: StrategicStore, project_path: Path):
+        self.strategic = strategic
         self.project_path = project_path
 
     async def check_for_friction(self) -> List[Dict[str, Any]]:
@@ -30,7 +30,9 @@ class ProactiveService:
         findings = []
         
         # 1. Get Strategic Context from Monolith
-        active_plans = self.db.list_plans(self.db.get_project_id(), status="active")
+        from side.storage.modules.base import SovereignEngine
+        project_id = SovereignEngine.get_project_id(self.project_path)
+        active_plans = self.strategic.list_plans(project_id, status="active")
         
         # 2. Scan for Technical Signals (TODO, HACK, FIXME)
         # We limit scan to source files
@@ -73,9 +75,9 @@ class ProactiveService:
         Replaces the fragile Regex/Dictionary lookups with a Virtual CTO.
         """
         # 1. Fetch Strategic Context (The Monolith)
-        # In a real impl, we'd cache this or pass it in. 
-        # For now, we assume the DB has the high-level goals.
-        active_plans = self.db.list_plans(self.db.get_project_id(), status="active")
+        from side.storage.modules.base import SovereignEngine
+        project_id = SovereignEngine.get_project_id(self.project_path)
+        active_plans = self.strategic.list_plans(project_id, status="active")
         context_str = "\n".join([f"- {p['title']}" for p in active_plans])
         
         prompt = f"""You are the 'Provocateur' - a ruthless CTO AI.

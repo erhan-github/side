@@ -8,7 +8,7 @@ import asyncio
 import logging
 from datetime import datetime, time, timezone
 
-from side.storage.simple_db import SimplifiedDatabase
+from side.storage.modules.forensic import ForensicStore
 
 logger = logging.getLogger(__name__)
 
@@ -20,14 +20,14 @@ class CleanupScheduler:
     Runs daily at 3 AM to clean up expired data.
     """
 
-    def __init__(self, db: SimplifiedDatabase):
+    def __init__(self, forensic: ForensicStore):
         """
         Initialize cleanup scheduler.
 
         Args:
-            db: Database instance
+            forensic: Forensic store instance
         """
-        self.db = db
+        self.forensic = forensic
         self._running = False
         self._task: asyncio.Task | None = None
 
@@ -66,8 +66,8 @@ class CleanupScheduler:
         logger.info("Running cleanup job...")
 
         try:
-            deleted = self.db.cleanup_expired_data()
-            pruned_activities = self.db.prune_activities(days=30)
+            deleted = self.forensic.cleanup_expired_data()
+            pruned_activities = self.forensic.prune_activities(days=30)
 
             total = sum(deleted.values())
             logger.info(
@@ -78,7 +78,9 @@ class CleanupScheduler:
             )
 
             # Get database stats after cleanup
-            stats = self.db.get_database_stats()
+            from side.storage.modules.transient import OperationalStore
+            op_store = OperationalStore(self.forensic.engine)
+            stats = op_store.get_database_stats(self.forensic.engine.db_path)
             logger.info(
                 f"Database size: {stats['db_size_mb']:.2f} MB "
                 f"({stats['profiles_count']} profiles, "

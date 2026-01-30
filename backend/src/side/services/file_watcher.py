@@ -31,6 +31,7 @@ class FileWatcher:
         project_path: str | Path,
         on_change: Callable[[Set[Path]], None] | None = None,
         debounce_seconds: float = 2.0,
+        buffer=None,
     ):
         """
         Initialize file watcher.
@@ -43,6 +44,7 @@ class FileWatcher:
         self.project_path = Path(project_path).resolve()
         self.on_change = on_change
         self.debounce_seconds = debounce_seconds
+        self.buffer = buffer
 
         self._running = False
         self._task: asyncio.Task | None = None
@@ -55,7 +57,17 @@ class FileWatcher:
         
         # Use Sovereign Ignore Service
         from side.services.ignore import SovereignIgnore
-        self._ignore_service = SovereignIgnore(Path(root_path))
+        from side.storage.modules.transient import OperationalStore
+        from side.storage.modules.base import SovereignEngine
+        self._ignore_service = SovereignIgnore(self.project_path)
+        self.operational = OperationalStore(SovereignEngine())
+        
+        # Temporal Synapse State
+        self._last_commit_time = datetime.now(timezone.utc)
+        self._revert_count = 0
+        self._total_commits_hour = 0
+        self._last_commit_msg = ""
+        self._git_velocity = 1.0 # 0.0 - 1.0
 
 
     async def start(self) -> None:
@@ -102,24 +114,72 @@ class FileWatcher:
 
         while self._running:
             try:
-                # Check for git commits
+                # 1. Physical Presence Scan (Distributed Context)
+                current_scan = self._get_scan_snapshot()
+                
+                # 2. Check for git commits
                 current_commit = self._get_current_commit()
                 if current_commit and current_commit != self._last_commit_hash:
-                    logger.info(f"New commit detected: {current_commit[:8]}")
+                    now = datetime.now(timezone.utc)
+                    delta = (now - self._last_commit_time).total_seconds()
+                    
+                    commit_msg = self._get_commit_message(current_commit)
+                    is_revert = any(x in commit_msg.lower() for x in ["revert", "undo", "fixup", "rollback"])
+                    
+                    if is_revert:
+                        self._revert_count += 1
+                        logger.warning(f"⚠️ [REVERT DETECTED]: {commit_msg[:50]}...")
+                    
+                    self._total_commits_hour += 1
+                    
+                    logger.info(f"New commit detected: {current_commit[:8]} (Delta: {delta}s)")
+                    
+                    # Calculate Git Velocity (V_git)
+                    # V_git = 1.0 - (reverts / total_commits)
+                    # High velocity/low reverts = healthy flow. 
+                    self._git_velocity = max(0.0, 1.0 - (self._revert_count / max(1, self._total_commits_hour)))
+                    
+                    self.operational.set_setting("temporal_synapse_velocity", str(round(self._git_velocity, 3)))
+                    self.operational.set_setting("git_revert_count", str(self._revert_count))
+                    
                     self._last_commit_hash = current_commit
+                    self._last_commit_time = now
+                    # We reset every hour or after 10 commits to keep the metric fresh
+                    if delta > 3600 or self._total_commits_hour > 10:
+                        self._revert_count = 0
+                        self._total_commits_hour = 0
+                    
                     # Trigger full rescan on commit
                     await self._trigger_change(set([self.project_path]))
 
-                # Scan for file changes
-                current_scan = {}
-                for file_path in self._walk_files():
-                    try:
-                        stat = file_path.stat()
-                        current_scan[file_path] = (stat.st_mtime, stat.st_size)
-                    except (OSError, PermissionError):
-                        continue
+                # 3. Detect Ghost Intent (Pattern Rejection)
+                if rejection_signals := await self._detect_ghost_intent(last_scan, current_scan):
+                    for signal in rejection_signals:
+                        logger.info(f"👻 [GHOST INTENT]: Pattern rejection detected in {signal['path']}")
+                        
+                        reason = f"Ghost Deletion: {signal['entropy']} bytes removed."
+                        if signal.get("diff"):
+                            # Filter out small diffs to avoid noise
+                            if len(signal['diff']) > 50:
+                                reason = f"{reason}\nDeleted Logic Snippet:\n{signal['diff'][:1000]}"
 
-                # Detect changes
+                        if self.buffer:
+                            await self.buffer.ingest("rejection", {
+                                "id": f"ghost_{asyncio.get_event_loop().time()}",
+                                "file_path": str(signal['path']),
+                                "reason": reason
+                            })
+                        else:
+                            from side.storage.modules.strategic import StrategicStore
+                            from side.storage.modules.base import SovereignEngine
+                            strat_store = StrategicStore(SovereignEngine())
+                            strat_store.save_rejection(
+                                rejection_id=f"ghost_{asyncio.get_event_loop().time()}",
+                                file_path=str(signal['path']),
+                                reason=reason
+                            )
+
+                # 4. Detect Physical Changes
                 changed = set()
                 for path, (mtime, size) in current_scan.items():
                     if path not in last_scan:
@@ -129,7 +189,7 @@ class FileWatcher:
                         # Modified file
                         changed.add(path)
 
-                # Detect deletions
+                # 5. Detect Deletions
                 for path in last_scan:
                     if path not in current_scan:
                         changed.add(path)
@@ -141,14 +201,25 @@ class FileWatcher:
 
                 last_scan = current_scan
 
-                # Wait before next scan
-                await asyncio.sleep(1.0)
+                # Wait before next scan (Throttled for Performance)
+                await asyncio.sleep(5.0)
 
             except asyncio.CancelledError:
                 break
             except Exception as e:
                 logger.error(f"Error in watch loop: {e}", exc_info=True)
                 await asyncio.sleep(5.0)
+
+    def _get_scan_snapshot(self) -> dict:
+        """Takes a snapshot of the current file system state."""
+        current_scan = {}
+        for file_path in self._walk_files():
+            try:
+                stat = file_path.stat()
+                current_scan[file_path] = (stat.st_mtime, stat.st_size)
+            except (OSError, PermissionError):
+                continue
+        return current_scan
 
     def _walk_files(self) -> list[Path]:
         """Walk project files, respecting ignore patterns."""
@@ -192,6 +263,22 @@ class FileWatcher:
             pass
         return None
 
+    def _get_commit_message(self, commit_hash: str) -> str:
+        """Get commit message for hash."""
+        try:
+            result = subprocess.run(
+                ["git", "log", "-1", "--pretty=format:%s", commit_hash],
+                cwd=self.project_path,
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except:
+            pass
+        return ""
+
     async def _schedule_debounce(self) -> None:
         """Schedule debounced callback."""
         # Cancel existing debounce
@@ -232,3 +319,45 @@ class FileWatcher:
                     await result
             except Exception as e:
                 logger.error(f"Error in change callback: {e}", exc_info=True)
+
+    async def _detect_ghost_intent(self, old_scan: dict, new_scan: dict) -> list[dict]:
+        """
+        [HYPER-PERCEPTION]: Detects significant code deletions (Ghost Signals).
+        Returns a list of high-entropy deletion events.
+        """
+        signals = []
+        for path, (old_mtime, old_size) in old_scan.items():
+            if path in new_scan:
+                new_mtime, new_size = new_scan[path]
+                if new_size < old_size - 100: # Significant deletion (>100 bytes)
+                    # Extract diff for deeper context
+                    diff = self._get_git_diff_deletions(path)
+                    signals.append({
+                        "path": path,
+                        "entropy": old_size - new_size,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "diff": diff
+                    })
+        return signals
+
+    def _get_git_diff_deletions(self, file_path: Path) -> str:
+        """Extract deleted lines from git diff."""
+        try:
+            # We want only deleted lines (starting with -) excluding the --- line
+            result = subprocess.run(
+                ["git", "diff", "-U0", "HEAD", "--", str(file_path)],
+                cwd=self.project_path,
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            if result.returncode == 0:
+                # filter lines starting with - (but not --- or @)
+                deletions = [
+                    line[1:] for line in result.stdout.splitlines() 
+                    if line.startswith("-") and not line.startswith("---")
+                ]
+                return "\n".join(deletions)
+        except:
+            pass
+        return ""

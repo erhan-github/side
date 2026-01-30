@@ -26,7 +26,7 @@ class BillingService:
     def can_afford(self, project_id: str, action: SystemAction) -> bool:
         """Check if profile has enough tokens for the action."""
         try:
-            balance_data = self.db.get_token_balance(project_id)
+            balance_data = self.db.identity.get_token_balance(project_id)
             current = balance_data.get("balance", 0)
             cost = ACTION_COSTS.get(action, 0)
             
@@ -51,7 +51,7 @@ class BillingService:
                 
             # Deduct (negative update)
             # This handles atomicity in the DB layer
-            self.db.update_token_balance(project_id, -cost)
+            self.db.identity.update_token_balance(project_id, -cost)
             
             logger.info(f"💰 Charged {cost} SUs for {action.value}")
             return True

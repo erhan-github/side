@@ -11,7 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from side.storage.simple_db import SimplifiedDatabase
+from collections import deque
+from side.storage.modules.transient import OperationalStore
 
 logger = logging.getLogger(__name__)
 
@@ -25,16 +26,27 @@ class ContextTracker:
     - Git commits
     - Current branch
     - Focus areas (auth, API, frontend, etc.)
+    - Cognitive Flow (V_cognitive)
     """
 
-    def __init__(self, db: SimplifiedDatabase):
+    def __init__(self, operational: Any, strategic: Any = None, identity: Any = None):
         """
         Initialize context tracker.
 
         Args:
-            db: Database instance
+            operational: Operational store instance
+            strategic: Strategic store instance
+            identity: Identity store instance
         """
-        self.db = db
+        self.operational = operational
+        self.strategic = strategic
+        self.identity = identity
+        
+        # Cognitive State (Hyper-Perception V3)
+        self._last_active_time = datetime.now(timezone.utc)
+        self._window_seconds = 1800 # 30 Minute Sliding Window
+        # Samples: deque of (timestamp, duration, is_ide)
+        self._samples: deque[tuple[float, float, bool]] = deque()
 
         # Focus area patterns
         self._focus_patterns = {
@@ -67,7 +79,7 @@ class ContextTracker:
             ]
 
             # Get recent commits
-            recent_commits = self._get_recent_commits(project_path, limit=5)
+            recent_commits = await self._get_recent_commits(project_path, limit=5)
 
             # Get current branch
             current_branch = self._get_current_branch(project_path)
@@ -76,7 +88,7 @@ class ContextTracker:
             focus_area, confidence = self._detect_focus_area(recent_files, recent_commits)
 
             # Save to database
-            self.db.save_work_context(
+            self.operational.save_work_context(
                 project_path=str(project_path),
                 focus_area=focus_area,
                 recent_files=recent_files,
@@ -85,15 +97,18 @@ class ContextTracker:
                 confidence=confidence,
             )
 
+            # Update Cognitive Flow (Hyper-Perception)
+            await self._update_cognitive_flow()
+
             logger.info(
-                f"Updated context: {focus_area} (confidence: {confidence:.2f})"
+                f"Updated context: {focus_area} (confidence: {confidence:.2f}) | Flow: {self.operational.get_setting('cognitive_flow_score')}"
             )
 
         except Exception as e:
             logger.error(f"Error updating context: {e}", exc_info=True)
 
-    def _get_recent_commits(self, project_path: Path, limit: int = 5) -> list[dict[str, Any]]:
-        """Get recent git commits."""
+    async def _get_recent_commits(self, project_path: Path, limit: int = 5) -> list[dict[str, Any]]:
+        """Get recent git commits with Complexity Delta (T-003)."""
         try:
             result = subprocess.run(
                 [
@@ -118,17 +133,140 @@ class ContextTracker:
 
                 parts = line.split("|")
                 if len(parts) == 4:
+                    h = parts[0][:8]
                     commits.append({
-                        "hash": parts[0][:8],
+                        "hash": h,
                         "author": parts[1],
                         "message": parts[2],
                         "timestamp": int(parts[3]),
+                        "entropy": self._get_git_entropy(project_path, h),
+                        "signature": await self._get_semantic_signature(project_path, h, parts[2]) # T-007
                     })
 
             return commits
 
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return []
+
+    async def _deduct_su(self, action_key: str, project_id: str = "default"):
+        """Deducts SUs for high-value cognitive acts."""
+        if not self.identity:
+            return
+        try:
+            cost = self.identity.get_su_cost(action_key)
+            self.identity.update_token_balance(project_id, -cost)
+            logger.info(f"💰 [ECONOMY]: Deducted {cost} SU for {action_key}")
+        except Exception as e:
+            logger.warning(f"Economy Error: {e}")
+
+    async def _get_semantic_signature(self, project_path: Path, commit_hash: str, commit_msg: str = "") -> str:
+        """
+        [PROFOUND DNA]: Tiered Inference Protocol (T-007).
+        """
+        try:
+            # ... (Tier 0 filtering logic remains)
+            # TIER 0: Raw Heuristics (Zero Cost)
+            result = subprocess.run(
+                ["git", "show", "--name-only", "--format=", commit_hash],
+                cwd=project_path, capture_output=True, text=True, timeout=2
+            )
+            files = result.stdout.strip().split("\n")
+            
+            # Filter: Always ignore noise
+            if all(f.endswith((".lock", ".json", ".md", ".txt")) for f in files):
+                return "Routine Dependency/Doc Maintenance"
+
+            # Extract Modified Symbols
+            diff_result = subprocess.run(
+                ["git", "show", "--format=", commit_hash],
+                cwd=project_path, capture_output=True, text=True, timeout=3
+            )
+            raw_diff = diff_result.stdout
+            
+            # Tier 0 Language-Aware Regex (Python, JS, TS)
+            patterns = [
+                r"^[+-]\s*(?:def|class|async def)\s+([a-zA-Z_][a-zA-Z0-9_]*)", # Python
+                r"^[+-]\s*(?:export\s+)?(?:internal\s+)?(?:class|function|interface|type|const|let)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*[=:(]", # JS/TS
+            ]
+            symbols = []
+            import re
+            for pattern in patterns:
+                symbols.extend(re.findall(pattern, raw_diff, re.MULTILINE))
+            
+            symbols = sorted(list(set(symbols)))
+            symbol_str = f" [Modified: {', '.join(symbols)}]" if symbols else ""
+
+            # TIER 2: Strategic Distillation
+            # [VIBE-CODER-FIX]: Handle large diffs by chunking
+            full_diff_len = len(raw_diff)
+            window_size = 2000
+            
+            # If diff is huge, we only distilled the most 'Strategic' chunks
+            chunks = [raw_diff[i:i + window_size] for i in range(0, min(full_diff_len, 6000), window_size)]
+            
+            from side.llm.client import LLMClient
+            client = LLMClient()
+            
+            # Analyze the most relevant chunk
+            best_chunk = chunks[0]
+            for chunk in chunks:
+                if any(s in chunk for s in symbols):
+                    best_chunk = chunk
+                    break
+
+            # [INTENT-CORRELATION] Fetch active goals
+            goals = []
+            if self.strategic:
+                plans = self.strategic.list_plans(status="active")
+                goals = [p["title"] for p in plans[:3]]
+            
+            goal_str = f"ACTIVE GOALS: {', '.join(goals)}" if goals else ""
+
+            prompt = f"""Compare the DEVS MESSAGE with the ACTUAL DIFF. 
+            Identify the ARCHITECTURAL PIVOT and check against STRATEGIC GOALS.
+            
+            {goal_str}
+            MESSAGE: {commit_msg}
+            SYMBOLS: {symbols}
+            DIFF_WINDOW: {best_chunk}
+            """
+            signature = await client.complete_async(
+                messages=[{"role": "user", "content": prompt}],
+                system_prompt="Architecture Analyst. Be extremely concise.",
+                temperature=0.1
+            )
+            
+            # [BOOST-ECONOMY] Deduct SUs
+            await self._deduct_su("SEMANTIC_BOOST")
+            if goals and "DRIFT" in signature.upper():
+                await self._deduct_su("STRATEGIC_PIVOT")
+                
+            return f"{signature.strip()}{symbol_str}"
+            
+            return f"Routine Logic Mutation{symbol_str}"
+        except Exception as e:
+            return "Indeterminable State Mutation"
+
+    def _get_git_entropy(self, project_path: Path, commit_hash: str) -> dict[str, Any]:
+        """Analyses the 'Diff Pulse' of a commit to derive grounding DNA."""
+        try:
+            result = subprocess.run(
+                ["git", "show", "--numstat", "--format=", commit_hash],
+                cwd=project_path,
+                capture_output=True,
+                text=True,
+                timeout=2,
+            )
+            stats = {"added": 0, "deleted": 0, "files": 0}
+            for line in result.stdout.strip().split("\n"):
+                parts = line.split("\t")
+                if len(parts) >= 3:
+                    stats["added"] += int(parts[0]) if parts[0].isdigit() else 0
+                    stats["deleted"] += int(parts[1]) if parts[1].isdigit() else 0
+                    stats["files"] += 1
+            return stats
+        except:
+            return {}
 
     def _get_current_branch(self, project_path: Path) -> str | None:
         """Get current git branch."""
@@ -208,6 +346,81 @@ OUTPUT JSON:
         
         return "General Development", 0.3
 
+    async def _update_cognitive_flow(self) -> None:
+        """
+        [HYPER-PERCEPTION]: Detects if user is in 'Flow' or 'Search' mode.
+        Uses Mac-native osascript to check active window.
+        """
+        import sys
+        if sys.platform != "darwin":
+            return
+
+        try:
+            # Check active application
+            cmd = "osascript -e 'tell application \"System Events\" to get name of first process whose frontmost is true'"
+            process = await asyncio.create_subprocess_shell(
+                cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+            )
+            stdout, _ = await process.communicate()
+            active_app = stdout.decode().strip()
+
+            now = datetime.now(timezone.utc)
+            delta = (now - self._last_active_time).total_seconds()
+            self._last_active_time = now
+
+            ide_apps = ["Cursor", "Visual Studio Code", "Terminal", "iTerm2", "warp"]
+            ide_apps = ["Cursor", "Visual Studio Code", "Terminal", "iTerm2", "warp"]
+            browser_apps = ["Safari", "Google Chrome", "Arc", "Firefox"]
+
+            is_ide = active_app in ide_apps
+            is_browser = active_app in browser_apps
+
+            if is_ide or is_browser:
+                # Add sample to sliding window
+                import time
+                self._samples.append((time.time(), delta, is_ide))
+
+            # 1. SLIDING WINDOW PRUNING: Keep only last 30 mins
+            import time
+            horizon = time.time() - self._window_seconds
+            while self._samples and self._samples[0][0] < horizon:
+                self._samples.popleft()
+
+            # 2. CALCULATE V_COGNITIVE (The Focus Ratio)
+            t_ide = sum(s[1] for s in self._samples if s[2])
+            t_browser = sum(s[1] for s in self._samples if not s[2])
+            
+            total_window_time = t_ide + t_browser
+            v_cognitive = t_ide / total_window_time if total_window_time > 0 else 1.0
+            
+            # Normalize and Save
+            self.operational.set_setting("cognitive_flow_score", str(round(v_cognitive, 3)))
+            self.operational.set_setting("active_app", active_app)
+            
+            # 3. HEARTBEAT: Record activity for Midnight Learning
+            if delta < 5.0 and (is_ide or is_browser):
+                self.operational.set_setting("last_user_activity", str(time.time()))
+                
+        except Exception as e:
+            logger.debug(f"Cognitive Flow detection failed: {e}")
+
+    async def watch_forever(self, project_path: str | Path) -> None:
+        """
+        [SOVEREIGN PERCEPTION]: Continuous monitoring loop.
+        """
+        logger.info("🧠 [CONTEXT]: Starting continuous perception loop...")
+        while True:
+            try:
+                await self._update_cognitive_flow()
+                # We could add more perceptual checks here (e.g. mic volume, camera vision)
+                # but for V3 we stick to process and window context.
+                await asyncio.sleep(2) # Poll every 2s
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Perception loop error: {e}")
+                await asyncio.sleep(10)
+
     def get_current_context(self, project_path: str | Path) -> dict[str, Any] | None:
         """
         Get current work context for project.
@@ -218,4 +431,4 @@ OUTPUT JSON:
         Returns:
             Context dict or None if not found
         """
-        return self.db.get_latest_work_context(str(Path(project_path).resolve()))
+        return self.operational.get_latest_work_context(str(Path(project_path).resolve()))
