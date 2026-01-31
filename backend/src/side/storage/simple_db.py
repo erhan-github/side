@@ -19,6 +19,7 @@ from .modules.strategic import StrategicStore
 from .modules.identity import IdentityStore
 from .modules.forensic import ForensicStore
 from .modules.transient import OperationalStore
+from .modules.intent_fusion import IntentFusionStore
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,7 @@ class SimplifiedDatabase:
         self.strategic = StrategicStore(self.engine)
         self.forensic = ForensicStore(self.engine)
         self.operational = OperationalStore(self.engine)
+        self.intent_fusion = IntentFusionStore(self.engine)
 
         # Startup lifecycle
         self.engine.atomic_backup()
@@ -54,6 +56,7 @@ class SimplifiedDatabase:
             self.strategic.init_schema(conn)
             self.identity.init_schema(conn)
             self.forensic.init_schema(conn)
+            self.intent_fusion.init_schema(conn)
 
     def _run_migrations(self) -> None:
         """Handle CTO-level schema resilience."""

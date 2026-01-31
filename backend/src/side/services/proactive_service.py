@@ -29,7 +29,7 @@ class ProactiveService:
         """
         findings = []
         
-        # 1. Get Strategic Context from Monolith
+        # 1. Get Strategic Context from the Hub
         from side.storage.modules.base import SovereignEngine
         project_id = SovereignEngine.get_project_id(self.project_path)
         active_plans = self.strategic.list_plans(project_id, status="active")
@@ -74,7 +74,7 @@ class ProactiveService:
         [Software 2.0] Uses the LLM to judge if a technical signal is a strategic risk.
         Replaces the fragile Regex/Dictionary lookups with a Virtual CTO.
         """
-        # 1. Fetch Strategic Context (The Monolith)
+        # 1. Fetch Strategic Context (The Hub)
         from side.storage.modules.base import SovereignEngine
         project_id = SovereignEngine.get_project_id(self.project_path)
         active_plans = self.strategic.list_plans(project_id, status="active")

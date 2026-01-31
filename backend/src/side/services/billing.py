@@ -6,12 +6,12 @@ from side.storage.modules.base import InsufficientTokensError
 logger = logging.getLogger(__name__)
 
 class SystemAction(Enum):
-    MONOLITH_UPDATE = "monolith_update"
+    HUB_UPDATE = "hub_update"
     PLAN_UPDATE = "plan_update"
     
 # Cost Table (Token Price per Action)
 ACTION_COSTS = {
-    SystemAction.MONOLITH_UPDATE: 5,
+    SystemAction.HUB_UPDATE: 5,
     SystemAction.PLAN_UPDATE: 2
 }
 

@@ -16,7 +16,7 @@ CRITICAL: Do NOT call this for syntax help, debugging, or simple code generation
 
 Triggers:
 - "Side, should I use PostgreSQL or MongoDB?" (Tech Stack)
-- "Monolith or microservices?" (Architecture)
+- "Strategic Hub or microservices?" (Architecture)
 - "Should I focus on SEO or Ads?" (Growth)
 - "Is it time to fundraise?" (Business)
 - "Side, help me decide"
@@ -75,7 +75,7 @@ Triggers:
 - "My goals"
 - "Add a directive"
 
-Returns: Your Monolith-synced plan with deadlines and progress.
+Returns: Your Hub-synced plan with deadlines and progress.
 Speed: < 1 second""",
         inputSchema={
             "type": "object",
@@ -102,7 +102,7 @@ Triggers:
 - "Completed [goal]"
 - "Check off [goal]"
 
-Returns: Updated Monolith with progress.
+Returns: Updated Hub with progress.
 Speed: < 1 second""",
         inputSchema={
             "type": "object",
@@ -130,7 +130,7 @@ Triggers:
 - "Check for issues"
 - "Security scan"
 
-Returns: List of findings with severity and recommended actions. Updates the Monolith.
+Returns: List of findings with severity and recommended actions. Updates the Strategic Hub.
 Speed: < 5 seconds""",
         inputSchema={
             "type": "object",
@@ -192,7 +192,7 @@ Speed: < 5 seconds""",
         name="welcome",
         description="""Day 1 setup - automatically run on first use.
         
-Sets up Side for a new project:
+Sets up Side and creates the Strategic Hub for a new project:
 - Detects project name and stack
 - Creates .side/plan.md
 - Runs baseline audit

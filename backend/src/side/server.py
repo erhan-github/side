@@ -18,8 +18,11 @@ from .storage.modules.identity import IdentityStore
 from .storage.modules.strategic import StrategicStore
 from .storage.modules.forensic import ForensicStore
 from .storage.modules.transient import OperationalStore
-from .utils.crypto import shield
+from .intel.auto_intelligence import AutoIntelligence
+from .intel.log_scavenger import LogScavenger
+from .services.watcher_service import WatcherService
 import json
+import asyncio
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -156,6 +159,17 @@ class SovereignGovernor(threading.Thread):
             except Exception as e:
                 print(f"⚠️ Governor Error: {e}")
                 time.sleep(10)
+
+# ---------------------------------------------------------------------
+# CONTINUOUS SOVEREIGNTY (Automation & Scavenging)
+# ---------------------------------------------------------------------
+intel_core = AutoIntelligence(Path.cwd())
+scavenger = LogScavenger(forensic, Path.cwd())
+watcher = WatcherService(intel_core)
+
+# Start background listeners
+scavenger.start()
+watcher.start()
 
 # Activate Governor
 governor = SovereignGovernor(operational)
@@ -475,5 +489,9 @@ def recover_amnesia(context_query: str) -> str:
     ]
     return "\n".join(report)
 
-if __name__ == "__main__":
+def main():
+    """CLI Entry Point for the Sidelith Sovereign MCP Server."""
     mcp.run()
+
+if __name__ == "__main__":
+    main()

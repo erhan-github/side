@@ -137,7 +137,6 @@ class PulseEngine:
         # In a real app, this would be a POST to /api/v1/traces
         print(f"🔒 [ANONYMIZED & SCRUBBED]: Trace ID generated. Personal data redacted.")
         print(f"📡 [MESH SYNC]: Decision Trace pushed to Strategic Network Pool.")
-        print(f"📈 [COMPOUNDING]: This fix now informs the Global Precedent for 400,000+ nodes.")
         
         return True
 
@@ -196,10 +195,11 @@ class PulseEngine:
                     if "tokio" in content: fingerprint["frameworks"].add("tokio")
                     if "serde" in content: fingerprint["frameworks"].add("serde")
 
-        # 3. Scan Scale (Crude heuristic)
-        all_files = list(Path.cwd().glob("**/*"))
-        if len(all_files) > 500:
-            fingerprint["scale"] = "ENTERPRISE"
+        # 3. Scan Scale (Heuristic - Non-Blocking)
+        # OPTIMIZATION: Do NOT scan entire subtree in hot path.
+        # Just check if certain deep directories exist or use git count if available.
+        # For now, we assume SMALL to keep <5ms latency.
+        fingerprint["scale"] = "UNKNOWN" 
             
         # Convert sets to lists for JSON compatibility
         fingerprint["languages"] = sorted(list(fingerprint["languages"]))

@@ -71,7 +71,7 @@ def get_file_dna(path: Path) -> Dict[str, Any]:
             "type": path.suffix,
             "size": size,
             "lines": len(content.splitlines()),
-            "hash": hashlib.md5(content.encode()).hexdigest()[:8],
+            "hash": hashlib.sha256(content.encode()).hexdigest()[:16],
             "semantics": get_file_semantics(path, content)
         }
         

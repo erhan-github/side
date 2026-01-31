@@ -3,9 +3,11 @@ import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 import ast
+from datetime import datetime, timezone
 from side.intel.memory import MemoryManager
 from side.llm.client import LLMClient
 from side.utils.crypto import shield
+from side.intel.bridge import BrainBridge
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +34,13 @@ class AutoIntelligence:
         self.mmap = MmapStore(project_path)
         self.memory = MemoryManager(self.strategic, project_id=self.engine.get_project_id())
         
-        # [KAR-4]: Universal Brain Path (Default to .side/brain or ENV)
+        # [KAR-4]: Universal Brain Path Discovery
+        # Primary: Standard Antigravity Path (~/.gemini/antigravity/brain)
+        # Fallback: Environment Variable (for dev/CI)
         env_brain = os.getenv("SIDE_BRAIN_PATH")
-        self.brain_path = Path(env_brain) if env_brain else project_path / ".side" / "brain"
+        antigravity_brain = Path.home() / ".gemini" / "antigravity" / "brain"
+        
+        self.brain_path = Path(env_brain) if env_brain else antigravity_brain
 
     async def feed(self) -> Dict[str, Any]:
         """
@@ -42,7 +48,6 @@ class AutoIntelligence:
         Generates distributed .side/local.json context and rolls up to sovereign.json.
         """
         import json
-        from datetime import datetime, timezone
         from side.intel.fractal_indexer import run_fractal_scan
         
         # 1. Run the Fractal Scan (Distributed Indexing)
@@ -52,7 +57,7 @@ class AutoIntelligence:
         scan_duration = time.time() - start_time
         logger.info(f"🧠 [BRAIN]: Scan completed in {scan_duration:.2f}s.")
         
-        # 2. Rollup to Monolith (For v1/v2 Compatibility)
+        # 2. Rollup to Strategic Hub (For v1/v2 Compatibility)
         # We read the root local.json (ENCRYPTED) and wrap it as the Master Brain
         root_index_path = self.project_path / ".side" / "local.json"
         if not root_index_path.exists():
@@ -63,6 +68,11 @@ class AutoIntelligence:
         
         # 3. Construct the Sovereign Graph (Unified Intent Layer)
         project_id = self.engine.get_project_id()
+        
+        # [NEW]: Harvest Strategic Timeline from the Brain
+        # This provides the 'Event Clock' for Amnesia Recovery
+        bridge = BrainBridge(self.brain_path)
+        strategic_timeline = bridge.scan_nodes()
         
         # Ingest Strategic Intent (Plans & Directives)
         plans = self.strategic.list_plans(project_id)
@@ -91,7 +101,8 @@ class AutoIntelligence:
                 "mode": "Distributed"
             },
             "fractal_root": local_data,
-            "history_fragments": []
+            "history_fragments": [],
+            "strategic_timeline": strategic_timeline
         }
         
         # 4. Persist Master Index (ENCRYPTED)
@@ -125,6 +136,59 @@ class AutoIntelligence:
         
         logger.info(f"🧠 [BRAIN]: Fractal Feed complete. Root Checksum: {local_data.get('checksum')}")
         return sovereign_graph
+
+    async def incremental_feed(self, file_path: Path):
+        """
+        [KAR-8.2] Incremental Strategic Sync.
+        Handles instant ingestion of focused artifacts (task.md, walkthroughs).
+        """
+        logger.info(f"⚡ [BRAIN]: Incremental sync triggered for {file_path.name}")
+        
+        # 1. Surgical Harvest
+        if "task.md" in file_path.name or "WALKTHROUGH.md" in file_path.name:
+            # We refresh the Strategic Timeline in the master graph
+            bridge = BrainBridge(self.brain_path)
+            nodes = bridge.scan_nodes()
+            
+            sovereign_file = self.project_path / ".side" / "sovereign.json"
+            if sovereign_file.exists():
+                import json
+                raw = shield.unseal_file(sovereign_file)
+                data = json.loads(raw)
+                data["strategic_timeline"] = nodes
+                data["last_scan"] = datetime.now(timezone.utc).isoformat()
+                shield.seal_file(sovereign_file, json.dumps(data, indent=2))
+                logger.info("✨ [BRAIN]: Strategic Timeline synced to Sovereign Anchor.")
+            
+        # 2. DNA Harvest (Wisdom)
+        if file_path.suffix == ".md":
+             await self._harvest_single_doc(file_path)
+
+    async def _harvest_single_doc(self, file_path: Path):
+        """Harvests wisdom from a single markdown file."""
+        from side.utils.hashing import sparse_hasher
+        import uuid
+        try:
+            content = file_path.read_text()
+            sections = content.split("\n#")
+            project_id = self.engine.get_project_id()
+            
+            for section in sections:
+                if len(section.strip()) < 50: continue
+                sig_hash = sparse_hasher.fingerprint(section, salt=project_id)
+                fragment_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{file_path.name}:{sig_hash}"))
+                
+                with self.engine.connection() as conn:
+                    conn.execute("""
+                        INSERT OR REPLACE INTO public_wisdom (
+                            id, origin_node, category, signal_pattern, 
+                            signal_hash, wisdom_text, source_type, source_file, confidence
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (fragment_id, "local", "documentation", file_path.name,
+                          sig_hash, section[:1000].strip(), "documentation", str(file_path), 9))
+            logger.info(f"🦅 [DNA]: Harvested fragments from {file_path.name}")
+        except Exception as e:
+            logger.warning(f"Failed to harvest {file_path.name}: {e}")
 
     async def historic_feed(self, months: int = 12) -> List[Dict[str, Any]]:
         """

@@ -46,9 +46,19 @@ dependencies = [
     "sentry-sdk[fastapi]>=2.0.0",
     "posthog-python>=3.5.0",
     "openai>=1.0.0",
+    # Forensics tools - Auto-installed for security scanning
+    "semgrep>=1.45.0,<2.0.0",  # Primary polyglot security scanner
+    "bandit>=1.7.0,<2.0.0",     # Python-specific security depth
 ]
 
 [project.optional-dependencies]
+# Airgap mode: Full database encryption for HiTech/Enterprise tiers
+# Install with: pip install sidelith[airgap]
+airgap = [
+    "pysqlcipher3>=1.2.0",  # Full SQLite encryption (256-bit AES)
+    "keyring>=24.0.0",       # OS keychain integration
+]
+
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",

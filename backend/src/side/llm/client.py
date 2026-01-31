@@ -2,11 +2,12 @@
 Multi-Provider LLM Client.
 
 Supports:
-- Groq (Llama 3)
-- OpenAI (GPT-4)
-- Anthropic (Claude)
+- Groq (Primary Strategy)
+- Ollama (Airgap/Local Backup for High Tech)
 
-Auto-detects based on available environment variables.
+Strategic Readiness for:
+- Gemini (Future)
+- Claude (Future)
 """
 import logging
 import os
@@ -22,22 +23,18 @@ logger = logging.getLogger(__name__)
 
 class LLMProvider(Enum):
     GROQ = "groq"
-    OPENAI = "openai"
-    ANTHROPIC = "anthropic"
     OLLAMA = "ollama"
 
 
 # Provider-specific models
 PROVIDER_MODELS = {
     LLMProvider.GROQ: "llama-3.3-70b-versatile",
-    LLMProvider.OPENAI: "gpt-4o",
-    LLMProvider.ANTHROPIC: "claude-3-5-sonnet-20241022",
     LLMProvider.OLLAMA: "llama3",
 }
 
 # Fallback models for specific providers (Micro-Failover)
 PROVIDER_FALLBACKS = {
-    LLMProvider.GROQ: ["llama3-70b-8192", "mixtral-8x7b-32768"],
+    LLMProvider.GROQ: ["llama-3.1-70b-versatile", "llama3-70b-8192", "mixtral-8x7b-32768"],
 }
 
 
@@ -47,8 +44,8 @@ class LLMClient:
     """
     Unified client for LLM interactions.
     V1: Stable single-key mode.
-    V2 (Next Week): Managed Credit Pool activation.
-    V3 (Neural Link): Local Ollama Support.
+    V2: Managed Credit Pool [ACTIVE].
+    V3: Neural Link (Ollama).
     """
     
     def __init__(self, preferred_provider: Optional[str] = None, purpose: str = "reasoning"):
@@ -82,7 +79,6 @@ class LLMClient:
             self.pool = None
 
         try:
-            # [OLLAMA] Special handling for local provider (No Key Needed)
             # [OLLAMA] Special handling for local provider (No Key Needed)
             if provider_name == "ollama":
                 # AIRGAP TIER CHECK
@@ -119,14 +115,6 @@ class LLMClient:
                 from groq import Groq, AsyncGroq
                 self.client = Groq(api_key=api_key)
                 self.async_client = AsyncGroq(api_key=api_key)
-            elif provider_name == "openai":
-                from openai import OpenAI, AsyncOpenAI
-                self.client = OpenAI(api_key=api_key)
-                self.async_client = AsyncOpenAI(api_key=api_key)
-            elif provider_name == "anthropic":
-                from anthropic import Anthropic, AsyncAnthropic
-                self.client = Anthropic(api_key=api_key)
-                self.async_client = AsyncAnthropic(api_key=api_key)
             
             self.provider = LLMProvider(provider_name)
             self.model = PROVIDER_MODELS[self.provider]
@@ -148,7 +136,7 @@ class LLMClient:
             Path.cwd() / ".env",
         ]
         
-        ALLOWED_KEYS = ["SIDE_API_KEY", "SIDE_PROJECT_ID", "GROQ_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY"]
+        ALLOWED_KEYS = ["SIDE_API_KEY", "SIDE_PROJECT_ID", "GROQ_API_KEY"]
         
         for env_path in possible_paths:
             if env_path.exists():
@@ -206,43 +194,46 @@ class LLMClient:
                 if user_pref == "local":
                     logger.warning(f"🚫 [TIER LIMIT]: Local Engine requires High Tech or Enterprise tier.")
 
-        logger.info(f"🧠 [NEURAL ROUTING]: {tier.upper()} Tier. Engine: {resolved_preference.upper()}. Purpose: {self.purpose.upper()}")
+        logger.info(f"🧠 [NEURAL ROUTING]: {(tier or 'FREE').upper()} Tier. Engine: {resolved_preference.upper()}. Purpose: {self.purpose.upper()}")
 
         # 3. EXECUTION CHAIN
         if resolved_preference == "local":
             if self._init_provider("ollama"): return
-            logger.warning("⚠️ Local Engine unavailable. Sliding into Cloud Failover...")
+            logger.warning("⚠️ Local Engine unavailable. Sliding into Primary Cloud (Groq)...")
             
-        # Cloud Chain (Default or Fallback)
-        for provider in ["groq", "openai", "anthropic"]:
-            if self._init_provider(provider): return
+        # Primary Strategic Provider: Groq
+        if self._init_provider("groq"): return
                 
         # Final Fallback to Ollama (if not already tried)
         if resolved_preference != "local" and self._init_provider("ollama"):
             return
-
+            
     def is_available(self) -> bool:
         """Check if LLM is configured and available."""
         return self.client is not None
 
     def complete(self, messages, system_prompt, temperature=0.0, max_tokens=4096, model_override=None):
+        """
+        Execute completion with Managed Credit Pool rotation (V2 Active).
+        """
         try:
             actual_model = model_override or self.model
             
-            if self.provider == LLMProvider.ANTHROPIC:
-                response = self.client.messages.create(
-                    model=actual_model, max_tokens=max_tokens, temperature=temperature,
-                    system=system_prompt, messages=messages
-                )
-                return response.content[0].text
-            else:
-                all_messages = [{"role": "system", "content": system_prompt}] + messages
-                response = self.client.chat.completions.create(
-                    model=actual_model, messages=all_messages,
-                    temperature=temperature, max_tokens=max_tokens,
-                )
-                return response.choices[0].message.content
+            # Rotation Logic for Sync Completion
+            if self.pool and self.pool.is_healthy:
+                current_api_key = self.pool.get_next_key()
+                if current_api_key:
+                    self.client.api_key = current_api_key
+
+            all_messages = [{"role": "system", "content": system_prompt}] + messages
+            response = self.client.chat.completions.create(
+                model=actual_model, messages=all_messages,
+                temperature=temperature, max_tokens=max_tokens,
+            )
+            return response.choices[0].message.content
         except Exception as e:
+            # For direct mandates, we use the same robust failover for sync as well
+            logger.warning(f"🔄 Sync failure on {self.provider.value}, attempting strategic rotation...")
             return self._handle_error_sync(e, messages, system_prompt, temperature, max_tokens, model_override)
 
     def _handle_error_sync(self, e, messages, system_prompt, temperature, max_tokens, model_override):
@@ -268,25 +259,14 @@ class LLMClient:
                 # Note: This is client-specific. For Groq/OpenAI, we might need to re-instantiate or set .api_key
                 if self.provider == LLMProvider.GROQ:
                     self.async_client.api_key = current_api_key
-                elif self.provider == LLMProvider.OPENAI:
-                    self.async_client.api_key = current_api_key
-                elif self.provider == LLMProvider.ANTHROPIC:
-                    self.async_client.api_key = current_api_key
         
         try:
-            if self.provider == LLMProvider.ANTHROPIC:
-                response = await self.async_client.messages.create(
-                    model=actual_model, max_tokens=max_tokens, temperature=temperature,
-                    system=system_prompt, messages=messages
-                )
-                return response.content[0].text
-            else:
-                all_messages = [{"role": "system", "content": system_prompt}] + messages
-                response = await self.async_client.chat.completions.create(
-                    model=actual_model, messages=all_messages,
-                    temperature=temperature, max_tokens=max_tokens,
-                )
-                return response.choices[0].message.content
+            all_messages = [{"role": "system", "content": system_prompt}] + messages
+            response = await self.async_client.chat.completions.create(
+                model=actual_model, messages=all_messages,
+                temperature=temperature, max_tokens=max_tokens,
+            )
+            return response.choices[0].message.content
                 
         except Exception as e:
             error_str = str(e).lower()
@@ -316,9 +296,9 @@ class LLMClient:
                         return await self.complete_async(messages, system_prompt, temperature, max_tokens, model_override=next_model)
                 
             # --- MACRO-FAILOVER ---
+            # STRATEGIC MANDATE: Groq Only for Cloud, Ollama for local.
             fallback_chain = {
-               LLMProvider.GROQ: LLMProvider.OPENAI,
-               LLMProvider.OPENAI: LLMProvider.ANTHROPIC,
+               LLMProvider.GROQ: LLMProvider.OLLAMA,
                LLMProvider.OLLAMA: LLMProvider.GROQ
             }
             
@@ -328,7 +308,16 @@ class LLMClient:
 
             next_provider = fallback_chain.get(self.provider)
             if next_provider:
-                logger.warning(f"🛡️ [NEURAL FAILOVER]: {self.provider.value} -> {next_provider.value}. Fluid Transition.")
+                # Check for High Tech entitlement before switching to Ollama
+                if next_provider == LLMProvider.OLLAMA:
+                    project_id = SovereignEngine.get_project_id(".")
+                    profile = self.identity.get_profile(project_id)
+                    tier = profile.get("tier", "trial") if profile else "trial"
+                    if tier not in ["hitech", "enterprise"]:
+                         logger.critical(f"❌ [NEURAL COLLAPSE]: Total Failure. {e}")
+                         raise e
+
+                logger.warning(f"🛡️ [NEURAL FAILOVER]: {self.provider.value} -> {next_provider.value}. Strategic Shift.")
                 if self._init_provider(next_provider.value):
                     return await self.complete_async(messages, system_prompt, temperature, max_tokens, model_override)
             

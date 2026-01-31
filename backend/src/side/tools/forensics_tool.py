@@ -1,9 +1,10 @@
 import os
 import logging
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from side.tools.recursive_utils import partition, peek, grep, chunk_list
 from side.llm.client import LLMClient
+from side.intel.forensic_allowlist import allowlist
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +94,8 @@ class ForensicsTool:
                     findings.append(finding)
         
         # 4. Synthesize Results
-        return self._synthesize_report(findings, query)
+        report = self._synthesize_report(findings, query)
+        return report, findings
 
     def _find_files(self, patterns: List[str] = None) -> List[Path]:
         """Return a list of source code files."""
@@ -108,32 +110,140 @@ class ForensicsTool:
         return files
 
     async def _analyze_chunk(self, content: str, query: str) -> str:
-        """Ask LLM to find issues in a single chunk."""
-        prompt = f"""You are a Code Forensics Engine.
+        """Ask LLM to find issues in a single chunk with context-aware guidance."""
         
-Query: "{query}"
+        # Extract file paths from content to get context guidance
+        context_guidance = self._extract_context_guidance(content)
+        
+        prompt = f"""You are a Code Forensics Engine specializing in identifying REAL security vulnerabilities.
 
-Code Context:
+**Query**: "{query}"
+
+**Code Context**:
 {content}
 
-Task: Identify any CRITICAL issues related to the query.
-- Use line numbers.
-- Be extremely strict.
-- If nothing found, return "PASS".
-- If found, strictly format as: [FILE]: [LINE] - [ISSUE]
+{context_guidance}
+
+**Task**: Identify CRITICAL security issues (OWASP Top 10, hardcoded secrets, auth flaws).
+
+**CRITICAL Rules - Avoid False Positives**:
+
+✅ **Report These (Real Vulnerabilities)**:
+- Actual hardcoded API keys: `api_key = "sk_live_abc123"` (NOT environment variables)
+- SQL injection with unsanitized user input (NOT parameterized queries)
+- Missing authentication on PUBLIC endpoints (check if local-only/MCP server)
+- Passwords in plain text storage (NOT bcrypt hashes)
+
+❌ **DO NOT Report These (False Positives)**:
+- Regex patterns for DETECTING secrets (e.g., `PATTERNS = {{"OPENAI_KEY": r"sk-..."}}`) - these are DEFENSE tools
+- Environment variable usage (e.g., `os.getenv("API_KEY")`) - this is the CORRECT pattern
+- Null/empty checks (e.g., `if not text: return`) - this IS validation
+- TODO comments about future improvements - these are known tech debt
+- Lists of environment variable NAMES (e.g., `ALLOWED_KEYS = ["GROQ_API_KEY"]`) - not actual keys
+- In-memory stores with "replace with database" comments - acknowledged tech debt
+
+**Response Format**:
+- If NO real vulnerabilities found: return "PASS"
+- If found: `[FILE]: [LINE] - [SEVERITY] - [ISSUE]`
+- Include confidence score (HIGH/MEDIUM/LOW) based on context understanding
+
+**Remember**: Security tools that PREVENT vulnerabilities are not vulnerabilities themselves.
 """
         try:
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are a Code Forensics Engine.",
+                system_prompt="You are an expert security auditor who distinguishes real vulnerabilities from false positives.",
                 temperature=0.0
             )
             if "PASS" in response:
                 return None
-            return response
+            
+            # Phase 2: Verification - Check against allowlist
+            verified_response = self._verify_findings(response, content)
+            return verified_response if verified_response else None
+            
         except Exception as e:
             logger.error(f"❌ LLM Audit Failed for chunk: {e}")
             return None
+    
+    def _extract_context_guidance(self, content: str) -> str:
+        """Extract file paths and generate context guidance."""
+        import re
+        file_matches = re.findall(r'--- File: ([^\s]+) ---', content)
+        
+        if not file_matches:
+            return ""
+        
+        guidance_parts = []
+        for file_path in file_matches[:3]:  # Limit to first 3 files
+            guidance = allowlist.get_context_guidance(file_path)
+            if guidance:
+                guidance_parts.append(f"\n**Context for {file_path}**:\n{guidance}")
+        
+        return "\n".join(guidance_parts) if guidance_parts else ""
+    
+    def _verify_findings(self, findings_text: str, content: str) -> Optional[str]:
+        """Verify findings against allowlist to eliminate false positives."""
+        if not findings_text or findings_text.strip() == "PASS":
+            return None
+        
+        import re
+        # Parse findings in format: [FILE]: [LINE] - [ISSUE]
+        finding_pattern = r'\[([^\]]+)\]:\s*(\d+)\s*-\s*(.+)'
+        matches = re.findall(finding_pattern, findings_text)
+        
+        verified_findings = []
+        filtered_count = 0
+        
+        for file_path, line_str, issue_description in matches:
+            try:
+                line_num = int(line_str)
+                
+                # Extract code snippet from content
+                code_snippet = self._extract_code_snippet(content, file_path, line_num)
+                
+                # Check allowlist
+                safe_check = allowlist.check_safe_pattern(file_path, line_num, code_snippet)
+                
+                if safe_check:
+                    logger.info(f"🛡️ [FILTERED] False positive in {file_path}:{line_num} - {safe_check['reason']}")
+                    filtered_count += 1
+                    continue
+                
+                # This finding passed verification
+                verified_findings.append(f"[{file_path}]: {line_num} - {issue_description}")
+            except Exception as e:
+                logger.debug(f"Error parsing finding: {e}")
+                # If we can't parse it, include it to be safe
+                verified_findings.append(f"[{file_path}]: {line_str} - {issue_description}")
+        
+        if filtered_count > 0:
+            logger.info(f"✅ [ALLOWLIST] Filtered {filtered_count} false positives")
+        
+        return "\n".join(verified_findings) if verified_findings else None
+    
+    def _extract_code_snippet(self, content: str, file_path: str, line_num: int, context_lines: int = 3) -> str:
+        """Extract code snippet around a specific line from content."""
+        import re
+        
+        # Find the file section in content
+        file_marker = f"--- File: {file_path} ---"
+        if file_marker not in content:
+            return ""
+        
+        # Extract content for this file
+        file_start = content.find(file_marker)
+        next_file = content.find("--- File:", file_start + len(file_marker))
+        file_content = content[file_start:next_file] if next_file != -1 else content[file_start:]
+        
+        # Get lines around the target
+        lines = file_content.split('\n')
+        if line_num < len(lines):
+            start = max(0, line_num - context_lines - 1)
+            end = min(len(lines), line_num + context_lines)
+            return '\n'.join(lines[start:end])
+        
+        return file_content[:500]  # Fallback to first 500 chars
 
     def _synthesize_report(self, findings: List[str], query: str) -> str:
         if not findings:

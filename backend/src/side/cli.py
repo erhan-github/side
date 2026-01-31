@@ -126,10 +126,19 @@ def handle_graveyard(args):
     for entry in recent:
         print(f"   • [{entry.get('timestamp', 'N/A')}] {entry.get('action')} [Cost: {entry.get('cost_tokens', 0)} SU] -> {entry.get('outcome', 'PASS')}")
 
-def handle_monolith(args):
+def handle_hub(args):
+    from pathlib import Path
+    import asyncio
+    from side.tools.core import get_database
+    from side.services.hub import generate_hub
+    db = get_database()
+    
+    # 1. Evolve the Hub (Live Update)
+    print("🏛️  [HUB]: Evolving Strategic Hub...")
+    asyncio.run(generate_hub(db))
+    
     from side.utils.crypto import shield
     import json
-    from pathlib import Path
     
     engine = _get_engine()
     op_store = _get_transient(engine)
@@ -148,7 +157,7 @@ def handle_monolith(args):
         print(f"\n❌ [ERROR]: DNA Corruption detected: {e}")
         return
 
-    print("\n🏛️  [THE MONOLITH] - Unified Strategic HUD")
+    print("\n🏛️  [STRATEGIC HUB] - Unified Executive HUD")
     print("==========================================")
     print(f"📍  DESTINATION: {intent.get('latest_destination', 'Day 1000')}")
     print(f"🧬  COHERENCE:   98.2% (Standardized)")
@@ -178,6 +187,19 @@ def handle_monolith(args):
         if signal.get('tool') == 'scan': icon = "🛡️"
         if signal.get('tier') == 'critical': icon = "🔴"
         print(f"   {icon} {signal.get('action')}")
+
+    print("\n✅ Sovereign Hub Synced and Ready.")
+
+def handle_plan(args):
+    import asyncio
+    from side.tools.planning import handle_plan as planning_handler
+    
+    print(f"🎯 [PLAN]: Logging Directive: {args.goal}")
+    result = asyncio.run(planning_handler({
+        "goal": args.goal,
+        "due": args.due
+    }))
+    print("\n" + result)
 
     print("\n------------------------------------------")
     print("🛰️  ACTIVE MESH: [CONNECTED]")
@@ -312,10 +334,20 @@ def handle_strategy(args):
     print("---------------------------------------------------")
 
 def handle_airgap(args):
+    """Toggle Sovereign Airgap Mode (High Tech Tier Only)"""
     engine = _get_engine()
     op_store = _get_transient(engine)
     identity = _get_identity(engine)
     project_id = engine.get_project_id(".")
+    
+    # TIER CHECK: Only High Tech and Enterprise allowed
+    profile = identity.get_profile(project_id) or {}
+    tier = profile.get("tier", "trial")
+    
+    if tier not in ["hitech", "enterprise"]:
+        print("❌ [ACCESS DENIED]: Air-gap mode requires High Tech tier.")
+        print("💡 Upgrade at: https://sidelith.com/pricing#hightech")
+        return
     
     if args.state == "on":
         op_store.set_setting("airgap_enabled", "true")
@@ -390,12 +422,17 @@ def handle_mirror(args):
     active_app = op_store.get_setting("active_app", "N/A")
     
     design_pattern = profile.get("design_pattern", "declarative")
-    is_airgapped = "ENABLED 🛡️" if profile.get("is_airgapped") else "DISABLED 🌐"
+    tier = profile.get("tier", "trial")
     
     print("\n🪞 [SOVEREIGN MIRROR] - Real-time Perception Dashboard")
     print("---------------------------------------------------")
     print(f"🧬 [PROJECT ERA]:      {design_pattern.upper()}")
-    print(f"🔒 [AIRGAP STATUS]:    {is_airgapped}")
+    
+    # Only show airgap status to High Tech and Enterprise tiers
+    if tier in ["hitech", "enterprise"]:
+        is_airgapped = "ENABLED 🛡️" if profile.get("is_airgapped") else "DISABLED 🌐"
+        print(f"🔒 [AIRGAP STATUS]:    {is_airgapped}")
+    
     print(f"📡 [SILICON PULSE]:     {float(pulse_score):.2f} (Hardware Friction)")
     print(f"🧠 [COGNITIVE FLOW]:    {float(flow_score):.2f} (Focus Balance)")
     print(f"🕰️ [TEMPORAL VELOCITY]: {float(velocity):.2f} (Git Rhythm)")
@@ -617,8 +654,13 @@ def main():
     # Graveyard Command (Multi-Repo Activity)
     subparsers.add_parser("graveyard", help="View cross-project activity and decision logs")
     
-    # Monolith Command (Unified HUD)
-    subparsers.add_parser("monolith", help="Launch the Unified Sovereign HUD")
+    # Strategic Hub Command (Unified HUD)
+    subparsers.add_parser("hub", help="Launch and update the Unified Strategic Hub")
+
+    # Plan Command (Directive Management)
+    plan_parser = subparsers.add_parser("plan", help="Manage strategic directives and goals")
+    plan_parser.add_argument("--goal", required=True, help="The goal or directive to log")
+    plan_parser.add_argument("--due", default="Soon", help="Due date for the goal")
 
     # Report Command
     subparsers.add_parser("report", help="Generate Sovereign Daily Digest")
@@ -628,6 +670,11 @@ def main():
     feed_parser.add_argument("path", nargs="?", default=".", help="Project path to feed")
     feed_parser.add_argument("--historic", action="store_true", help="Mine Git history for Strategic Wisdom (V2.1)")
     feed_parser.add_argument("--months", type=int, default=12, help="Months of history to mine (default: 12)")
+
+    # Audit Command (New)
+    audit_parser = subparsers.add_parser("audit", help="Run a deep forensic audit on the codebase")
+    audit_parser.add_argument("dimension", nargs="?", default="general", choices=["general", "security", "performance", "architecture"], help="Audit dimension")
+    audit_parser.add_argument("--severity", default="critical,high,medium", help="Filter by severity (critical,high,medium,low,info,all)")
 
     # Strategy Command (Ask the Brain)
     strat_parser = subparsers.add_parser("strategy", help="Ask a strategic question using the Sovereign Context")
@@ -708,7 +755,7 @@ def main():
         "pulse": handle_pulse,
         "fix": handle_fix,
         "graveyard": handle_graveyard,
-        "monolith": handle_monolith,
+        "hub": handle_hub,
         "report": handle_report,
         "certify": handle_certify,
         "feed": handle_feed,
@@ -730,6 +777,21 @@ def main():
 
     if args.command in handlers:
         handlers[args.command](args)
+    elif args.command == "audit":
+        import asyncio
+        from side.tools.audit import handle_run_audit
+        severity = args.severity
+        if severity == "all":
+            severity = "critical,high,medium,low,info"
+        result = asyncio.run(handle_run_audit({
+            "dimension": args.dimension,
+            "severity": severity
+        }))
+        print("\n" + result)
+    elif args.command == "plan":
+        handle_plan(args)
+    elif args.command == "hub":
+        handle_hub(args)
     else:
         parser.print_help()
 

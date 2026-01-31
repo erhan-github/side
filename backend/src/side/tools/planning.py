@@ -13,35 +13,35 @@ from side.utils.errors import handle_tool_errors
 from side.instrumentation.engine import InstrumentationEngine
 from side.services.billing import BillingService, SystemAction
 from side.utils.paths import get_side_dir, get_repo_root
-from side.services.monolith import generate_monolith
+from side.services.hub import generate_hub
 
 logger = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# THE MONOLITH PARADIGM: Higher-Dimensional Strategic Sovereignty
+# THE STRATEGIC HUB: Higher-Dimensional Strategic Sovereignty
 # ═══════════════════════════════════════════════════════════════════════════
-MONOLITH_NAME = "MONOLITH.md"
+HUB_NAME = "HUB.md"
 
-def _soften_monolith(path: Path):
-    """Temporarily unlock the Monolith for evolution."""
+def _soften_hub(path: Path):
+    """Temporarily unlock the Hub for evolution."""
     try:
         if path.exists():
             os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
     except Exception as e:
-        logger.debug(f"Monolith softening skipped: {e}")
+        logger.debug(f"Hub softening skipped: {e}")
 
-def _harden_monolith(path: Path):
-    """Seal the Monolith after evolution (Read-only for all)."""
+def _harden_hub(path: Path):
+    """Seal the Hub after evolution (Read-only for all)."""
     try:
         if path.exists():
             os.chmod(path, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
     except Exception as e:
-        logger.debug(f"Monolith hardening skipped: {e}")
+        logger.debug(f"Hub hardening skipped: {e}")
 
 @handle_tool_errors
 async def handle_check(arguments: dict[str, Any]) -> str:
     """
-    Side fulfills a directive and evolves the Monolith.
+    Side fulfills a directive and evolves the Strategic Hub.
     The user communicates intent; Side executes and records.
     """
     db = get_database()
@@ -66,8 +66,8 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     billing = BillingService(db)
     pk = db.get_project_id()
     try:
-        if billing.can_afford(pk, SystemAction.MONOLITH_UPDATE):
-            billing.charge(pk, SystemAction.MONOLITH_UPDATE, "check", {"plan_id": matching['id']})
+        if billing.can_afford(pk, SystemAction.HUB_UPDATE):
+            billing.charge(pk, SystemAction.HUB_UPDATE, "check", {"plan_id": matching['id']})
     except Exception as e:
         logger.warning(f"Billing failed for check: {e}")
     
@@ -89,16 +89,17 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     except Exception as e:
         logger.error(f"Failed to log check activity: {e}")
     
-    # Evolve the Monolith
-    await generate_monolith(db)
+    # Evolve the Hub
+    from side.services.hub import generate_hub
+    await generate_hub(db)
     
-    return f"✅ **Directive Fulfilled:** {matching['title']}\nThe Monolith has evolved."
+    return f"✅ **Directive Fulfilled:** {matching['title']}\nThe Strategic Hub has evolved."
 
 
 @handle_tool_errors
 async def handle_plan(arguments: dict[str, Any]) -> str:
     """
-    The Strategic Monolith: Sovereign Machine Intelligence.
+    The Strategic Hub: Sovereign Machine Intelligence.
     """
     db = get_database()
     auto_intel = get_auto_intel()
@@ -134,7 +135,7 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
             except Exception as e:
                 logger.error(f"Failed to log auto-completion: {e}")
             
-            output += f"🎉 **MONOLITH SYNC: Directive Fulfilled**\n"
+            output += f"🎉 **HUB SYNC: Directive Fulfilled**\n"
             output += f"Ref: \"{d['goal_title']}\"\n"
             output += f"Evidence: `{d['commit_message'][:50]}...`\n\n"
     
@@ -153,8 +154,8 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         billing = BillingService(db)
         pk = db.get_project_id()
         try:
-             if billing.can_afford(pk, SystemAction.MONOLITH_UPDATE):
-                 billing.charge(pk, SystemAction.MONOLITH_UPDATE, "plan", {"plan_id": goal_id})
+             if billing.can_afford(pk, SystemAction.HUB_UPDATE):
+                 billing.charge(pk, SystemAction.HUB_UPDATE, "plan", {"plan_id": goal_id})
         except Exception as e:
             logger.warning(f"Billing failed for plan: {e}")
         
@@ -178,10 +179,10 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         
         output += f"📎 **DIRECTIVE LOGGED:** [{plan_type.upper()}] {goal_text}\n"
 
-    # 3. Evolve and Seal the Monolith
-    monolith_path = await generate_monolith(db)
-    if monolith_path:
-        output += f"🏛️ **MONOLITH EVOLVED:** {monolith_path}\n"
+    # 3. Evolve and Seal the Hub
+    hub_path = await generate_hub(db)
+    if hub_path:
+        output += f"🏛️ **HUB EVOLVED:** {hub_path}\n"
     
     all_plans = db.strategic.list_plans(project_id=project_id)
     output += format_plan(all_plans)
@@ -189,10 +190,10 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
     return output
 
 
-async def _generate_monolith_file(db) -> str | None:
+async def _generate_hub_file(db) -> str | None:
     """Delegated to service."""
-    return await generate_monolith(db)
+    return await generate_hub(db)
 
 async def _generate_ledger_file(db) -> str | None:
-    """Legacy alias redirecting to Monolith."""
-    return await generate_monolith(db)
+    """Legacy alias redirecting to Strategic Hub."""
+    return await generate_hub(db)

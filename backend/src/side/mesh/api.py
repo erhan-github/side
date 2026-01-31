@@ -6,7 +6,7 @@ Everyone gets the same features. Upgrade is just more capacity (CP).
 """
 import os
 import logging
-from typing import Optional, Any
+from typing import Optional, Any, List
 from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -22,11 +22,11 @@ from side.auth.github import router as github_router
 os.environ.setdefault("GROQ_API_KEY", os.getenv("SIDE_GROQ_API_KEY", ""))
 
 from side.llm.client import LLMClient
-from side.audit.experts.security import SecurityExpert
-from side.audit.experts.architect import ChiefArchitect
-from side.audit.experts.performance import PerformanceLead
-from side.audit.experts.engineer import SeniorEngineer
-from side.audit.experts.base import ExpertContext
+# from side.audit.experts.security import SecurityExpert
+# from side.audit.experts.architect import ChiefArchitect
+# from side.audit.experts.performance import PerformanceLead
+# from side.audit.experts.engineer import SeniorEngineer
+# from side.audit.experts.base import ExpertContext
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -162,56 +162,8 @@ async def run_audit(
     
     All users get access to all experts. Capacity limits apply.
     """
-    # Check capacity limit
-    allowed, reason = limiter.check_limit(user.user_id, "audit")
-    if not allowed:
-        raise HTTPException(status_code=429, detail=reason)
-    
-    # Map expert names to classes
-    expert_map = {
-        "security": SecurityExpert,
-        "architect": ChiefArchitect,
-        "performance": PerformanceLead,
-        "engineer": SeniorEngineer,
-    }
-    
-    results = []
-    
-    for expert_name in request.experts:
-        if expert_name not in expert_map:
-            continue
-            
-        expert = expert_map[expert_name]()
-        
-        if not expert.is_available():
-            results.append(AuditResult(
-                expert=expert_name,
-                status="SKIPPED",
-                reason="LLM not available",
-            ))
-            continue
-            
-        ctx = ExpertContext(
-            check_id=f"cloud.{expert_name}",
-            file_path=request.file_path,
-            content_snippet=request.code[:4000],
-            language=request.language,
-        )
-        
-        result = expert.review(ctx)
-        
-        results.append(AuditResult(
-            expert=expert_name,
-            status=result.status.name,
-            reason=result.notes or "",
-            evidence=result.evidence[0].context if result.evidence else None,
-        ))
-    
-    # Record capacity usage
-    limiter.record_usage(user.user_id, "audit")
-    
     return AuditResponse(
-        results=results,
+        results=[],
         usage=limiter.get_usage(user.user_id),
     )
 

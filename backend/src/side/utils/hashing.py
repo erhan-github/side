@@ -40,7 +40,7 @@ class SparseSimHash:
             # Hash feature to bit-length using md5 for stability
             # [SILO]: Incorporate salt into the feature hash
             feature_to_hash = f"{salt}:{feature}" if salt else feature
-            h = int(hashlib.md5(feature_to_hash.encode()).hexdigest(), 16)
+            h = int(hashlib.sha256(feature_to_hash.encode()).hexdigest(), 16)
             
             for i in range(self.bits):
                 bitmask = 1 << i

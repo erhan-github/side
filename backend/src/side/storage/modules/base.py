@@ -26,6 +26,10 @@ class SovereignEngine:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         
+        # Always enforce permissions on existing databases (Security hardening)
+        if self.db_path.exists():
+            self.harden_permissions()
+        
         # Initialize sub-stores
         from side.storage.modules.strategic import StrategicStore
         from side.storage.modules.forensic import ForensicStore
@@ -39,19 +43,16 @@ class SovereignEngine:
     def connection(self) -> Generator[sqlite3.Connection, None, None]:
         """
         Create a thread-safe SQLite connection with optimized pragmas.
+        Auto-enables SQLCipher for HiTech/Enterprise tiers.
         """
+        # Check if tier qualifies for SQLCipher
+        use_encryption = self._should_use_encryption()
+        
         try:
-            conn = sqlite3.connect(
-                self.db_path, 
-                timeout=30.0,
-                check_same_thread=False
-            )
-            conn.row_factory = sqlite3.Row
-            
-            # Optimize for speed and resilience
-            conn.execute("PRAGMA journal_mode=WAL") 
-            conn.execute("PRAGMA synchronous=NORMAL")
-            conn.execute("PRAGMA foreign_keys=ON")
+            if use_encryption:
+                conn = self._create_encrypted_connection()
+            else:
+                conn = self._create_standard_connection()
             
             try:
                 yield conn
@@ -70,6 +71,55 @@ class SovereignEngine:
             if "database or disk is full" in str(e).lower():
                 logger.critical(f"FATAL: Could not open database. Disk full at {self.db_path}.")
             raise
+    
+    def _should_use_encryption(self) -> bool:
+        """Check if current tier qualifies for SQLCipher encryption."""
+        try:
+            # Check tier from existing profile (if exists)
+            if not self.db_path.exists():
+                return False  # New DB, use standard until tier established
+            
+            # Quick check without full store initialization
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.execute("SELECT tier FROM profile LIMIT 1")
+            row = cursor.fetchone()
+            conn.close()
+            
+            if row and row[0] in ("high_tech", "enterprise"):
+                # Check if SQLCipher is available
+                try:
+                    from side.security.sqlcipher import SQLCipherManager
+                    return SQLCipherManager(self.db_path).is_available
+                except ImportError:
+                    return False
+            return False
+        except Exception:
+            return False
+    
+    def _create_standard_connection(self) -> sqlite3.Connection:
+        """Create standard SQLite connection."""
+        conn = sqlite3.connect(
+            self.db_path, 
+            timeout=30.0,
+            check_same_thread=False
+        )
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        return conn
+    
+    def _create_encrypted_connection(self) -> sqlite3.Connection:
+        """Create SQLCipher encrypted connection for HiTech/Enterprise."""
+        try:
+            from side.security.sqlcipher import SQLCipherManager
+            manager = SQLCipherManager(self.db_path)
+            conn = manager.connect()
+            logger.info("🔒 [SOVEREIGN]: Using SQLCipher encryption (HiTech/Enterprise tier)")
+            return conn
+        except Exception as e:
+            logger.warning(f"🔒 [SOVEREIGN]: SQLCipher unavailable, falling back to standard: {e}")
+            return self._create_standard_connection()
 
     def check_integrity(self) -> bool:
         """Run a forensic SQLite integrity check."""

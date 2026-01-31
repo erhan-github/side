@@ -1,7 +1,7 @@
 """
 Welcome tool handler - Day 1 Magic.
 
-Sets up Side and creates the Strategic Monolith for a new project.
+Sets up Side and creates the Strategic Hub for a new project.
 """
 import os
 import logging
@@ -10,7 +10,7 @@ from pathlib import Path
 
 from side.onboarding import run_onboarding, is_side_initialized, detect_project_name, detect_stack
 # from side.audit.memory import AuditMemory, AuditSnapshot
-from side.tools.planning import _generate_monolith_file
+from side.tools.planning import _generate_hub_file
 from side.tools.core import get_database
 from datetime import datetime
 
@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 
 async def handle_welcome(arguments: dict[str, Any]) -> str:
     """
-    Day 1 magic - set up Side and create the Strategic Monolith.
+    Day 1 magic - set up Side and create the Strategic Hub.
     
     - Detects project name and stack
-    - Creates .side/MONOLITH.md (the Sovereign Dashboard)
+    - Creates .side/HUB.md (the Sovereign Dashboard)
     - Runs baseline audit
     - Stores initial snapshot
     """
@@ -33,9 +33,9 @@ async def handle_welcome(arguments: dict[str, Any]) -> str:
         project_name = detect_project_name(Path(project_path))
         stack = detect_stack(Path(project_path))
         
-        # Ensure Monolith exists
+        # Ensure Strategic Hub exists
         db = get_database()
-        monolith_path = await _generate_monolith_file(db)
+        hub_path = await _generate_hub_file(db)
         
         # Get latest health
         # memory = AuditMemory(project_path)
@@ -50,7 +50,7 @@ async def handle_welcome(arguments: dict[str, Any]) -> str:
 **Latest Score**: {progress['last_score']}%
 **Change**: {progress['message']}
 
-Your **Monolith** is at `.side/MONOLITH.md`
+Your **Strategic Hub** is at `.side/HUB.md`
 
 **What would you like to do?**
 - Say "Side, audit my code" to check health
@@ -63,7 +63,7 @@ Your **Monolith** is at `.side/MONOLITH.md`
 
 **Stack**: {', '.join(stack)}
 
-Your **Monolith** is at `.side/MONOLITH.md`
+Your **Strategic Hub** is at `.side/HUB.md`
 
 Say "Side, audit my code" to get your first health score!
 """
@@ -85,9 +85,9 @@ Say "Side, audit my code" to get your first health score!
     # )
     # memory.save_snapshot(snapshot)
     
-    # Generate the Monolith
+    # Generate the Strategic Hub
     db = get_database()
-    monolith_path = await _generate_monolith_file(db)
+    hub_path = await _generate_hub_file(db)
     
     return f"""
 ## 👋 Welcome to Sidelith.
@@ -96,16 +96,16 @@ I've initialized the technical context for this project:
 
 **📁 Project**: {result['project_name']}
 **🔧 Stack**: {', '.join(result['stack'])}
-**⬛ Context**: `.side/MONOLITH.md`
+**⬛ Context**: `.side/HUB.md`
 
 ### How it works:
 
-Sidelith maintains a persistent state in `MONOLITH.md`. It tracks your:
+Sidelith maintains a persistent state in `HUB.md`. It tracks your:
 - Codebase health and logic flow
 - Active goals and constraints
 - Decision history (to prevent regressions)
 
-> **Don't edit the Monolith manually.** Update it via command:
+> **Don't edit the Hub manually.** Update it via command:
 > - `lith log goal: Launch by February`
 > - `lith audit`
 > - `lith status`

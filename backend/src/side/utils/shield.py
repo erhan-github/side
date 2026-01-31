@@ -24,24 +24,39 @@ class SovereignShield:
     @classmethod
     def scrub(cls, text: str) -> str:
         """
-        Redacts all identified secrets and PII from the text.
+        Redacts all identified secrets and PII from the text with Tier-2 Context Awareness.
         """
-        if not text:
-            return text
+        if not text: return text
             
         scrubbed = text
+        
+        # 1. Known Patterns (Fast Regex)
         for label, pattern in cls.PATTERNS.items():
             if label == "GENERIC_SECRET":
-                # For generic secrets, we only want to redact the value part
                 def redact_value(match):
-                    full_match = match.group(0)
-                    secret_value = match.group(1)
-                    return full_match.replace(secret_value, f"<{label}_REDACTED>")
+                    return match.group(0).replace(match.group(1), f"<{label}_REDACTED>")
                 scrubbed = re.sub(pattern, redact_value, scrubbed)
             else:
                 scrubbed = re.sub(pattern, f"<{label}_REDACTED>", scrubbed)
                 
+        # 2. Entropy Check (Shannon) for Unknown Secrets (Slower, High Precision)
+        # We scan for high-entropy strings that look like keys but missed regex
+        # Heuristic: strings > 20 chars, no spaces, mixed case + numbers
+        words = scrubbed.split()
+        for word in words:
+            if len(word) > 20 and not word.startswith("<"):
+                # Rough entropy check (Hex tokens often ~3.5-4.0)
+                if cls._calculate_entropy(word) > 3.5:
+                     scrubbed = scrubbed.replace(word, "<HIGH_ENTROPY_SECRET_REDACTED>")
+                     
         return scrubbed
+
+    @staticmethod
+    def _calculate_entropy(s: str) -> float:
+        import math
+        prob = [float(s.count(c)) / len(s) for c in dict.fromkeys(list(s))]
+        entropy = - sum([p * math.log(p) / math.log(2.0) for p in prob])
+        return entropy
 
     @classmethod
     def anonymize_path(cls, path: str, project_path: str) -> str:

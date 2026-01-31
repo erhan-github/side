@@ -162,9 +162,25 @@ class OperationalStore:
         with self.engine.connection() as conn:
             stats = {}
             tables = ["profile", "plans", "decisions", "learnings", "work_context", "query_cache", "activities", "audits"]
+            # SC-SECURITY: Avoid f-strings in SQL to satisfy taint analysis
+            TABLE_COUNTS = {
+                "profile": "SELECT COUNT(*) as count FROM profile",
+                "plans": "SELECT COUNT(*) as count FROM plans",
+                "decisions": "SELECT COUNT(*) as count FROM decisions",
+                "learnings": "SELECT COUNT(*) as count FROM learnings",
+                "work_context": "SELECT COUNT(*) as count FROM work_context",
+                "query_cache": "SELECT COUNT(*) as count FROM query_cache",
+                "activities": "SELECT COUNT(*) as count FROM activities",
+                "audits": "SELECT COUNT(*) as count FROM audits",
+                "mesh_nodes": "SELECT COUNT(*) as count FROM mesh_nodes",
+                "telemetry_alerts": "SELECT COUNT(*) as count FROM telemetry_alerts"
+            }
             for table in tables:
+                query = TABLE_COUNTS.get(table)
+                if not query:
+                    continue
                 try:
-                    row = conn.execute(f"SELECT COUNT(*) as count FROM {table}").fetchone()
+                    row = conn.execute(query).fetchone()
                     stats[f"{table}_count"] = row["count"] if row else 0
                 except sqlite3.OperationalError:
                     stats[f"{table}_count"] = 0

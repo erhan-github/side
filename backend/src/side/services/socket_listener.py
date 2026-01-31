@@ -38,8 +38,8 @@ class SocketListenerService:
                 path=str(self.socket_path)
             )
             
-            # Set permissions so any local process can write
-            os.chmod(self.socket_path, 0o666)
+            # Set permissions: Owner-only for security (CWE-732)
+            os.chmod(self.socket_path, 0o600)
             
             # Use a background task to keep the server running if needed, 
             # though start_unix_server handles the loop.

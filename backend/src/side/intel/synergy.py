@@ -103,9 +103,10 @@ class SynergyEngine:
 
 def run_synergy_sync(project_path: Path):
     """Entry point for wisdom synchronization."""
+    import asyncio
     try:
         engine = SynergyEngine(project_path)
-        return engine.harvest_mesh_wisdom()
+        return asyncio.run(engine.harvest_mesh_wisdom())
     except Exception as e:
         logger.error(f"❌ [SYNERGY_ERROR]: Sync failed: {e}")
         return 0

@@ -45,6 +45,28 @@ class ForensicStore:
             conn.execute("ALTER TABLE audits ADD COLUMN score FLOAT DEFAULT 0.0")
         except sqlite3.OperationalError:
             pass
+        
+        # Migration: Add structured finding columns for Semgrep integration
+        try:
+            conn.execute("ALTER TABLE audits ADD COLUMN rule_id TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE audits ADD COLUMN cwe_id TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE audits ADD COLUMN confidence TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE audits ADD COLUMN explanation TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE audits ADD COLUMN suggested_fix TEXT")
+        except sqlite3.OperationalError:
+            pass
 
         # ─────────────────────────────────────────────────────────────
         # CORE TABLE 8: WORK_CONTEXT - Active work tracking
