@@ -6,8 +6,8 @@ export default function Home() {
             {/* 1. HERO SECTION */}
             <section className="w-full max-w-6xl px-6 pt-32 pb-20 flex flex-col items-center text-center z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm text-subtle mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <span className="w-2 h-2 rounded-full bg-neon animate-pulse" />
-                    <span>Sovereign Neural Link v1.1 Active</span>
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span>They fight for Models. <span className="text-white font-bold ml-1">We win on Memory.</span></span>
                 </div>
 
                 <h1 className="text-hero font-heading font-medium tracking-tight mb-6 bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both">
@@ -143,7 +143,7 @@ export default function Home() {
                     </h2>
                     <p className="text-xl md:text-2xl text-white/60 max-w-3xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500">
                         What if you could mathematically guarantee context? <br />
-                        The <b>Sovereign Healing Loop</b> fixes the broken AI coding cycle.
+                        The <b>Reinforcement Loop</b> resolves the broken AI coding cycle.
                     </p>
                 </div>
 
@@ -327,7 +327,7 @@ export default function Home() {
                         </div>
                         <h3 className="text-2xl font-bold text-white mb-4">Vector Initialization</h3>
                         <p className="text-white/60 text-lg leading-relaxed max-w-sm">
-                            <b>The thought is the first artifact.</b> <br /><br />
+                            <b>"Thought" is a physical vector.</b> <br /><br />
                             We don't wait for your keystrokes to finish. Sidelith captures the <b>High-Dimensional Intent</b> of your request the moment it enters the buffer. <br /><br />
                             <i>"Zero-Latency Perception."</i>
                         </p>
