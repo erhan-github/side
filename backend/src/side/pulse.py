@@ -12,17 +12,10 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-class PulseStatus(Enum):
-    SECURE = "SECURE"
-    DRIFT = "DRIFT"
-    VIOLATION = "VIOLATION"
+from side.models.physics import PulseStatus, PulseResult
 
-@dataclass
-class PulseResult:
-    status: PulseStatus
-    latency_ms: float
-    violations: List[str]
-    context: Dict
+# [MIGRATED]: PulseStatus and PulseResult are now Pydantic Models in side.models.physics
+
 
 @dataclass
 class DynamicRule:
@@ -325,8 +318,12 @@ class PulseEngine:
             for rule in dynamic_rules:
                 if rule.scope == "CODE":
                     err = self._execute_rule(rule, file_content, target_file)
-                    if err: violations.append(err)
-
+                    if err: 
+                        violations.append(err)
+                        # CRITICAL BUG FIX (Red Team): 
+                        # Dynamic rules were not blocking. Now checking level.
+                        if rule.level in ["CRITICAL", "BLOCKING", "IMMUTABLE"]:
+                            status = PulseStatus.VIOLATION
             # 2. Gold Standard Check
             gold_error = self.verify_gold_standard(target_file, file_content)
             if gold_error:
@@ -361,7 +358,7 @@ class PulseEngine:
 
         # TRUST CALIBRATION LOGIC
         if violations and status == PulseStatus.SECURE:
-             status = PulseStatus.DRIFT
+             status = PulseStatus.VIOLATION if is_strict else PulseStatus.DRIFT
 
         if status == PulseStatus.VIOLATION and not is_strict:
              status = PulseStatus.DRIFT
