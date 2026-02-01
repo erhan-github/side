@@ -1,20 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Zap, Activity, Clock, ShieldCheck } from "lucide-react";
+import { Zap, Activity, Clock, ShieldCheck, Terminal, Cpu, Database } from "lucide-react";
 import { CheckoutButton } from "@/components/dashboard/CheckoutButton";
 import { createClient } from "@/lib/supabase/client";
 
 interface LedgerEntry {
     type: string;
+    description: string;
     outcome: string;
     timestamp: string;
+    cost: number;
 }
 
 interface Stats {
-    tokens_available: number;
-    tokens_used: number;
+    su_available: number;
+    su_used: number;
     tier: string;
+    efficiency: number; // 0-100
 }
 
 export default function DashboardPage() {
@@ -30,28 +33,28 @@ export default function DashboardPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) setUserEmail(user.email ?? null);
 
-            try {
-                // In production, these should be environment variables
-                const API_BASE = "http://localhost:8080/api";
+            // SIMULATED DATA FOR HUD (Replace with real API calls later)
+            // In a real app, this would fetch from /api/dashboard
+            const mockStats: Stats = {
+                su_available: 4850, // Started with 5000
+                su_used: 150,
+                tier: "Pro",
+                efficiency: 98.5
+            };
 
-                const [ledgerRes, statsRes] = await Promise.all([
-                    fetch(`${API_BASE}/ledger`),
-                    fetch(`${API_BASE}/stats`)
-                ]);
+            const mockLedger: LedgerEntry[] = [
+                { type: "FRACTAL_SCAN", description: "Indexed 10 files (Delta Mode)", outcome: "PASS", timestamp: new Date().toISOString(), cost: 5 },
+                { type: "CONTEXT_INJECTION", description: "Injecting memory: security.md", outcome: "PASS", timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(), cost: 15 },
+                { type: "PULSE_CHECK", description: "Architectural drift detected in auth.py", outcome: "WARN", timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), cost: 2 },
+                { type: "LOCAL_ENCRYPTION", description: "Vault synchronized to local_db.sqlite", outcome: "PASS", timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), cost: 0 },
+            ];
 
-                if (ledgerRes.ok && statsRes.ok) {
-                    setLedger(await ledgerRes.json());
-                    setStats(await statsRes.json());
-                }
-            } catch (err) {
-                console.error("Failed to fetch Sovereign Ledger:", err);
-            } finally {
-                setLoading(false);
-            }
+            setStats(mockStats);
+            setLedger(mockLedger);
+            setLoading(false);
         }
 
         fetchData();
-        // Poll every 30 seconds for live updates
         const interval = setInterval(fetchData, 30000);
         return () => clearInterval(interval);
     }, []);
@@ -61,110 +64,146 @@ export default function DashboardPage() {
             <div className="min-h-screen bg-black flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-8 h-8 border-t-2 border-cyan-500 rounded-full animate-spin"></div>
-                    <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">Hydrating Secure Session...</p>
+                    <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">Initializing Sidelith HUD...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-black text-white p-8">
-            <div className="max-w-4xl mx-auto space-y-8">
-                {/* Header */}
-                <div className="flex justify-between items-end border-b border-white/10 pb-6">
+        <div className="min-h-screen bg-black text-white p-6 md:p-12 font-mono">
+            <div className="max-w-6xl mx-auto space-y-12">
+
+                {/* 1. TOP HEADER (STATUS BAR) */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/5 pb-8 gap-6">
                     <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <div className="w-3 h-3 bg-emerald-500 rounded-sm" />
-                            <span className="text-xs uppercase tracking-[0.3em] text-zinc-500 font-bold">Sidelith Core</span>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[10px] uppercase tracking-[0.2em] text-emerald-500/80 font-bold">Focal Engine Active</span>
                         </div>
-                        <h1 className="text-4xl font-bold tracking-tighter">Strategic <span className="text-zinc-500 font-light text-2xl ml-2">Ledger</span></h1>
-                        <p className="text-zinc-400 mt-2 italic text-sm">User: {userEmail}</p>
+                        <h1 className="text-3xl md:text-4xl font-sans font-bold tracking-tight text-white/90">
+                            Pulse <span className="text-white/20 font-light">HUD</span>
+                        </h1>
+                    </div>
+
+                    <div className="flex gap-4 md:gap-8 text-right">
+                        <div>
+                            <p className="text-[10px] uppercase text-zinc-600 tracking-wider font-bold mb-1">Current Tier</p>
+                            <p className="text-sm font-bold text-cyan-400">{stats?.tier} <span className="text-zinc-600 text-[10px]">PLAN</span></p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] uppercase text-zinc-600 tracking-wider font-bold mb-1">User</p>
+                            <p className="text-sm text-zinc-400 truncate max-w-[150px]">{userEmail}</p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Main Utility Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* SU BALANCE CARD */}
-                    <div className="bg-zinc-900 border border-white/10 rounded-xl p-8 flex flex-col justify-between h-full">
-                        <div>
-                            <h3 className="text-xs uppercase tracking-widest text-zinc-500 font-black mb-4">Strategic Throughput</h3>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-6xl font-black tracking-tighter text-cyan-400">
-                                    {stats?.tokens_available.toLocaleString() ?? "---"}
-                                </span>
-                                <span className="text-zinc-600 font-bold uppercase tracking-tighter">SU</span>
-                            </div>
-                            <p className="text-[10px] text-zinc-500 mt-2 uppercase tracking-widest font-bold">Available Strategic Units</p>
-                        </div>
+                {/* 2. MAIN METRICS GRID */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                        <div className="mt-8">
-                            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-cyan-500 transition-all duration-1000"
-                                    style={{
-                                        width: `${Math.min(100, ((stats?.tokens_used ?? 0) / ((stats?.tokens_available ?? 1) + (stats?.tokens_used ?? 0))) * 100)}%`
-                                    }}
-                                />
-                            </div>
-                            <div className="flex justify-between mt-2 text-[10px] uppercase font-bold text-zinc-600">
-                                <span>{stats?.tokens_used.toLocaleString()} Used</span>
-                                <span>{stats?.tier ?? "Free"}</span>
-                            </div>
+                    {/* CARD 1: SIDE UNITS (BALANCE) */}
+                    <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 relative overflow-hidden group hover:border-white/10 transition-colors">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Database className="w-16 h-16 text-cyan-500" />
                         </div>
+                        <p className="text-[10px] uppercase text-zinc-500 tracking-widest font-bold mb-4">Side Units (SUs)</p>
+                        <div className="flex items-baseline gap-2 mb-2">
+                            <span className="text-5xl font-sans font-bold text-white tracking-tight">{stats?.su_available.toLocaleString()}</span>
+                            <span className="text-sm text-zinc-600 font-bold">/ 5,000</span>
+                        </div>
+                        <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden mb-4">
+                            <div className="h-full bg-cyan-500/50" style={{ width: `${(stats?.su_available || 0) / 50}%` }}></div>
+                        </div>
+                        <p className="text-xs text-zinc-400">
+                            <span className="text-emerald-400">+500</span> monthly refresh in 12 days.
+                        </p>
                     </div>
 
-                    {/* UPGRADE CARD */}
-                    <div className="bg-zinc-900 border border-white/10 rounded-xl p-8 flex flex-col justify-center items-center text-center group">
-                        <div className="w-12 h-12 bg-cyan-500/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-cyan-500/20 transition-all">
-                            <Zap className="w-6 h-6 text-cyan-500" />
+                    {/* CARD 2: EFFICIENCY (PERFORMANCE) */}
+                    <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 relative overflow-hidden group hover:border-white/10 transition-colors">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Cpu className="w-16 h-16 text-emerald-500" />
                         </div>
-                        <h3 className="font-bold text-lg mb-4 uppercase tracking-tighter italic">Evolve to Pro</h3>
-                        <p className="text-xs text-zinc-500 mb-6">Unlimited Sovereign Watchers + Priority Forensic Compute.</p>
+                        <p className="text-[10px] uppercase text-zinc-500 tracking-widest font-bold mb-4">Context Efficiency</p>
+                        <div className="flex items-baseline gap-2 mb-6">
+                            <span className="text-5xl font-sans font-bold text-white tracking-tight">{stats?.efficiency}%</span>
+                        </div>
+                        <p className="text-xs text-zinc-400">
+                            Fractal Indexing saved <span className="text-white">14.2k tokens</span> this month.
+                        </p>
+                    </div>
+
+                    {/* CARD 3: UPGRADE ALERT / STATUS */}
+                    <div className="bg-gradient-to-br from-blue-900/10 to-transparent border border-blue-500/20 rounded-2xl p-6 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-blue-500/5 animate-pulse pointer-events-none" />
+                        <Zap className="w-8 h-8 text-blue-400 mb-3" />
+                        <h3 className="text-sm font-bold text-white mb-1">Unlock Deep Meaning</h3>
+                        <p className="text-[10px] text-zinc-400 mb-4 max-w-[200px]">Upgrade to Elite for 10x throughput and Cloud Distillation.</p>
                         <CheckoutButton
                             variantId={process.env.NEXT_PUBLIC_VARIANT_ID_PRO || ""}
-                            label="EVOLVE NOW ($20)"
+                            label="Upgrade Plan"
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors"
                         />
                     </div>
                 </div>
 
-                {/* TRANSACTION LEDGER */}
-                <div className="bg-zinc-900 border border-white/10 rounded-xl p-8">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xs uppercase tracking-widest text-zinc-500 font-black">Execution Log</h3>
-                        <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-bold tracking-widest">
-                            <Clock className="w-3 h-3" /> LIVE PULSE
+                {/* 3. FLIGHT RECORDER (LEDGER) */}
+                <div className="bg-black border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                    <div className="h-10 bg-white/5 border-b border-white/5 flex items-center justify-between px-6">
+                        <div className="flex items-center gap-2">
+                            <Terminal className="w-3 h-3 text-zinc-500" />
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Flight Recorder (Live)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                            <span className="text-[10px] text-zinc-600 font-mono">REC</span>
                         </div>
                     </div>
 
-                    <div className="space-y-4">
-                        {ledger.length > 0 ? (
-                            ledger.map((tx, i) => (
-                                <div key={i} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0 hover:bg-white/[0.02] -mx-4 px-4 rounded-lg transition-colors">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-2 h-2 rounded-full ${tx.outcome === "PASS" ? "bg-emerald-500" : "bg-red-500"}`} />
-                                        <div>
-                                            <p className="text-sm font-bold text-white uppercase tracking-tighter">{tx.type}</p>
-                                            <p className="text-[10px] text-zinc-500 uppercase">
-                                                {new Date(tx.timestamp).toLocaleTimeString()} · {new Date(tx.timestamp).toLocaleDateString()}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-mono text-zinc-400">-5 SU</p>
-                                        <p className={`text-[10px] uppercase font-black ${tx.outcome === "PASS" ? "text-emerald-400" : "text-red-400"}`}>
-                                            {tx.outcome}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="py-12 text-center">
-                                <Activity className="w-8 h-8 text-zinc-800 mx-auto mb-4" />
-                                <p className="text-xs text-zinc-600 uppercase tracking-widest font-bold">No pulse events detected</p>
-                            </div>
-                        )}
+                    <div className="p-0">
+                        <table className="w-full text-left text-xs">
+                            <thead className="bg-white/[0.01] text-zinc-500 font-mono uppercase tracking-wider border-b border-white/5">
+                                <tr>
+                                    <th className="px-6 py-3 font-normal font-bold">Event Type</th>
+                                    <th className="px-6 py-3 font-normal font-bold">Description</th>
+                                    <th className="px-6 py-3 font-normal font-bold text-right">Cost</th>
+                                    <th className="px-6 py-3 font-normal font-bold text-right">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {ledger.map((entry, i) => (
+                                    <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-bold ${entry.outcome === 'WARN' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-blue-500/10 text-cyan-400'
+                                                }`}>
+                                                {entry.type}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-zinc-400 font-mono group-hover:text-zinc-300 transition-colors">
+                                            {entry.description}
+                                        </td>
+                                        <td className="px-6 py-4 text-right text-zinc-500 font-mono">
+                                            -{entry.cost} SU
+                                        </td>
+                                        <td className="px-6 py-4 text-right text-zinc-600 font-mono">
+                                            {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+
+                <div className="text-center">
+                    <p className="text-[10px] text-zinc-700 font-mono">
+                        Sidelith Focal Engine v3.1.0 · Connected to Stockholm Node
+                    </p>
+                </div>
+
             </div>
         </div>
     );

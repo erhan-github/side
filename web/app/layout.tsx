@@ -12,6 +12,12 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
+import { JetBrains_Mono } from "next/font/google";
+const mono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: {
     default: "Side | Sovereign Intelligence Layer",
@@ -36,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${outfit.variable} antialiased`}
+        className={`${inter.variable} ${outfit.variable} ${mono.variable} antialiased`}
         suppressHydrationWarning
       >
         <GlobalErrorBoundary>

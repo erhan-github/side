@@ -4,7 +4,7 @@
 
 Sidelith is the **Sovereign Middleware** that sits between You and your AI tools (Cursor, VS Code, CLI). It doesn't replace them; it **feeds** them.
 
-We act as your **Local Chief of Staff**, managing:
+We act as your **Sovereign Neural Link**, managing:
 1.  **Context**: We proactively load the *right* files and strategy before you even ask.
 2.  **Memory**: We remember your architectural decisions so you don't have to repeat them.
 3.  **Security**: We sanitize your code *before* it hits the cloud.
