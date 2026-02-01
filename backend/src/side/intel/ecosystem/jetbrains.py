@@ -59,11 +59,28 @@ class JetBrainsBridge:
                 plugin_version=payload.get("pluginVersion", "0.0.0")
             )
             
-            # Here we would normally inject this into the AdaptiveContextEngine
-            # via a queue or direct call.
+            # Refactor: Use Phoenix Protocol (ForensicStore)
+            # We treat IDE context updates as 'Work Context' signals for Layer 2 RAM.
+            from side.storage.modules.base import SovereignEngine
+            from side.storage.modules.forensic import ForensicStore
+            from pathlib import Path
+            
+            engine = SovereignEngine()
+            forensic = ForensicStore(engine)
+            
+            # Save as active work context
+            forensic.save_work_context(
+                project_path=str(Path(ctx.project_path)),
+                focus_area=ctx.file_path,
+                recent_files=[ctx.file_path],
+                recent_commits=[], # IDE doesn't send commits yet
+                current_branch="unknown",
+                confidence=1.0
+            )
+            
             self.last_context = ctx
             
-            logger.debug(f"🔌 [JETBRAINS]: Context Updated: {ctx.file_path} @ {ctx.caret_offset}")
+            logger.debug(f"🔌 [JETBRAINS]: Context Updated & Synced to Ledger: {ctx.file_path}")
             return "ACK"
         except Exception as e:
             logger.error(f"JetBrains Ingest Error: {e}")

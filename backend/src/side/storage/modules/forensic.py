@@ -12,8 +12,9 @@ from .base import SovereignEngine, InsufficientTokensError
 logger = logging.getLogger(__name__)
 
 class ForensicStore:
-    def __init__(self, engine: SovereignEngine):
+    def __init__(self, engine: SovereignEngine, post_log_hook: Optional[callable] = None):
         self.engine = engine
+        self.post_log_hook = post_log_hook
         with self.engine.connection() as conn:
             self.init_schema(conn)
 
@@ -194,6 +195,13 @@ class ForensicStore:
                         "UPDATE profile SET token_balance = token_balance - ? WHERE id = ?",
                         (cost_tokens, project_id)
                     )
+
+        # Trigger Sync Hook (The Karpathy Protocol)
+        if self.post_log_hook:
+            try:
+                self.post_log_hook()
+            except Exception as e:
+                logger.warning(f"Forensic post_log_hook failed: {e}")
 
     def get_recent_activities(self, project_id: str, limit: int = 20) -> list[dict[str, Any]]:
         """Get recent activities."""

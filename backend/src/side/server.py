@@ -21,19 +21,40 @@ from .storage.modules.transient import OperationalStore
 from .intel.auto_intelligence import AutoIntelligence
 from .intel.log_scavenger import LogScavenger
 from .services.watcher_service import WatcherService
+from .utils.crypto import shield
 import json
 import asyncio
 import time
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Setup
 mcp = FastMCP("Sidelith Sovereign")
 engine = SovereignEngine()
 identity = IdentityStore(engine)
 strategic = StrategicStore(engine)
-forensic = ForensicStore(engine)
 operational = OperationalStore(engine)
+intel = AutoIntelligence(Path.cwd())
+
+# [KARPATHY PROTOCOL]: Deep Sync Hook
+# Whenever the Ledger is updated, we refresh the Sovereign Weights (sovereign.json)
+def run_checkpoint_sync():
+    import asyncio
+    try:
+        # Check if we are in an event loop (FastMCP runs in one)
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.create_task(intel.sync_checkpoint())
+        else:
+            asyncio.run(intel.sync_checkpoint())
+    except Exception as e:
+        # Fallback for worker threads
+        asyncio.run(intel.sync_checkpoint())
+
+forensic = ForensicStore(engine, post_log_hook=run_checkpoint_sync)
 
 # ---------------------------------------------------------------------
 # SOVEREIGN GOVERNOR (Resource Defense)
@@ -461,33 +482,62 @@ def check_safety(code: str, filename: str = "snippet.py") -> str:
 @mcp.tool()
 def recover_amnesia(context_query: str) -> str:
     """
-    Amnesia Recovery: Force-injects the derived project strategy back into the LLM.
-    Use this when the LLM is lost or hallucinating architectural decisions.
+    [KARPATHY PROTOCOL]: Amnesia Recovery via Checkpoint-Resume.
+    Treats the project as a neural network: sovereign.json (Weights) + Ledger (Gradients).
     
     Args:
         context_query: The specific problem the LLM is failing to solve due to 'Amnesia'.
     """
-    from side.intel.auto_intelligence import AutoIntelligence
-    intel = AutoIntelligence(Path.cwd())
-    dna = intel.get_condensed_dna() # Real derived DNA
-    
-    # 1. DEBIT WALLET (Strategic Recovery Cost)
-    project_id = SovereignEngine.get_project_id(".")
-    forensic.log_activity(project_id=project_id, tool="AMNESIA_RECOVERY", action="restore_order", cost_tokens=50)
-    
-    report = [
-        "🧠 [AMNESIA RECOVERY ENGAGED]",
-        "---------------------------------------------------",
-        f"ISSUE: {context_query}",
-        "---------------------------------------------------",
-        "🦅 [SOVEREIGN DNA INJECTION]:",
-        dna,
-        "---------------------------------------------------",
-        "⚡ [INSTRUCTION]: LLM, you are now re-synced with the CODE Reality.",
-        "Stop hallucinating. Trust the DNA over your generic weights.",
-        "---------------------------------------------------"
-    ]
-    return "\n".join(report)
+    try:
+        project_id = SovereignEngine.get_project_id(".")
+        sovereign_file = Path.cwd() / ".side" / "sovereign.json"
+        
+        # 1. LOAD CHECKPOINT (The Weights)
+        if not sovereign_file.exists():
+            asyncio.run(intel.sync_checkpoint())
+        
+        raw_weights = shield.unseal_file(sovereign_file)
+        weights = json.loads(raw_weights)
+        
+        # 2. REPLAY GRADIENTS (The History)
+        gradients = intel.get_episodic_context(limit=15)
+        
+        # 3. SURGICAL ATTENTION (Layer 3)
+        attention = intel.get_surgical_context(context_query, limit=2)
+        
+        checkpoint_time = weights.get("last_scan", "")
+        
+        report = [
+            "🧠 [SOVEREIGN RECOVERY]: Checkpoint-Resume Protocol Engaged",
+            "=========================================================",
+            f"QUERY: {context_query}",
+            "=========================================================",
+            "💾 [MODEL CHECKPOINT]: (sovereign.json Weights)",
+            f"Version: {weights.get('version')}",
+            f"State Timestamp: {checkpoint_time}",
+            "Architectural Focus:",
+            json.dumps(weights.get("intent", {}).get("objectives", []), indent=2),
+            "---------------------------------------------------------",
+            "🎞️ [EPISODIC GRADIENTS]: (Ledger-derived History)",
+            gradients,
+            "---------------------------------------------------------",
+            "🔬 [SURGICAL ATTENTION]: (Live Code Focus)",
+            attention,
+            "=========================================================",
+            "⚡ [INSTRUCTION]: LLM, you have been rebooted with the Sovereign Weights (Truth) and Episodic Gradients (Time).",
+            "1. Weights = Current State of the Repository.",
+            "2. Gradients = Recent intent vectors and historical friction.",
+            "3. Attention = Surgical code focus to prevent drift.",
+            "Resume strategic execution immediately. Focus on the 'Architectural Focus' identified above."
+        ]
+        
+        # Log the recovery event
+        forensic.log_activity(project_id=project_id, tool="AMNESIA_RECOVERY", action="checkpoint_resume", cost_tokens=50)
+        
+        return "\n".join(report)
+    except Exception as e:
+        logger.error(f"Recovery failed: {e}")
+        return f"🚨 [RECOVERY FAILURE]: {e}"
 
 def main():
     """CLI Entry Point for the Sidelith Sovereign MCP Server."""
