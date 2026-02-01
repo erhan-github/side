@@ -47,7 +47,6 @@ class AutoIntelligence:
         Actively scans the repository using the Fractal Engine (Protocol v3).
         Generates distributed .side/local.json context and rolls up to sovereign.json.
         """
-        import json
         from side.intel.fractal_indexer import run_fractal_scan
         
         # 1. Run the Fractal Scan (Distributed Indexing)
@@ -57,29 +56,39 @@ class AutoIntelligence:
         scan_duration = time.time() - start_time
         logger.info(f"🧠 [BRAIN]: Scan completed in {scan_duration:.2f}s.")
         
-        # 2. Rollup to Strategic Hub (For v1/v2 Compatibility)
-        # We read the root local.json (ENCRYPTED) and wrap it as the Master Brain
+        # 2. Re-gen the Checkpoint (The Weights)
+        sovereign_graph = await self.sync_checkpoint()
+        
+        # 5. Harvest Documentation DNA [KAR-4]
+        await self._harvest_documentation_dna()
+        
+        # 6. [INTEL-4] Sync Mmap Store for NEON Acceleration
+        await self._sync_mmap_wisdom()
+        
+        return sovereign_graph
+
+    async def sync_checkpoint(self) -> Dict[str, Any]:
+        """
+        [KARPATHY PROTOCOL]: Serializes the current 'Weights' to sovereign.json.
+        Acts as the Model Checkpoint for Amnesia Recovery.
+        """
+        import json
+        
+        # 1. Load context from fractal root
         root_index_path = self.project_path / ".side" / "local.json"
-        if not root_index_path.exists():
-            return {"error": "Fractal Scan Failed"}
-            
-        raw_data = shield.unseal_file(root_index_path)
-        local_data = json.loads(raw_data)
+        local_data = {}
+        if root_index_path.exists():
+            raw_data = shield.unseal_file(root_index_path)
+            local_data = json.loads(raw_data)
         
-        # 3. Construct the Sovereign Graph (Unified Intent Layer)
         project_id = self.engine.get_project_id()
-        
-        # [NEW]: Harvest Strategic Timeline from the Brain
-        # This provides the 'Event Clock' for Amnesia Recovery
         bridge = BrainBridge(self.brain_path)
         strategic_timeline = bridge.scan_nodes()
         
-        # Ingest Strategic Intent (Plans & Directives)
+        # 2. Gather State (The Weights)
         plans = self.strategic.list_plans(project_id)
         objectives = [p for p in plans if p['type'] == 'objective' and p['status'] != 'done']
         tasks = [p for p in plans if p['type'] == 'task' and p['status'] != 'done']
-        
-        # Ingest Recent Intel (Silicon Pulse & Activity)
         activities = self.forensic.get_recent_activities(project_id, limit=10)
         
         sovereign_graph = {
@@ -87,7 +96,7 @@ class AutoIntelligence:
             "version": "3.1.0 (Unified HUD Edition)",
             "last_scan": datetime.now(timezone.utc).isoformat(),
             "dna": {
-                "detected_stack": ["M2 Pro Accelerated"], # Todo: Extract from tree/hardware.py
+                "detected_stack": ["M2 Pro Accelerated"], 
                 "primary_languages": []
             },
             "intent": {
@@ -105,15 +114,16 @@ class AutoIntelligence:
             "strategic_timeline": strategic_timeline
         }
         
-        # 4. Persist Master Index (ENCRYPTED)
+        # 3. Persist Master Checkpoint (The Weights)
         sovereign_file = self.project_path / ".side" / "sovereign.json"
         sovereign_file.parent.mkdir(parents=True, exist_ok=True)
         shield.seal_file(sovereign_file, json.dumps(sovereign_graph, indent=2))
         
-        # 5. Harvest Documentation DNA [KAR-4]
-        await self._harvest_documentation_dna()
-        
-        # 6. [INTEL-4] Sync Mmap Store for NEON Acceleration
+        logger.debug("💾 [CHECKPOINT]: Sovereign Weights serialized.")
+        return sovereign_graph
+
+    async def _sync_mmap_wisdom(self):
+        """Syncs public wisdom to Mmap Store for NEON acceleration."""
         try:
             wisdom = self.strategic.list_public_wisdom()
             fragments = []
@@ -121,7 +131,6 @@ class AutoIntelligence:
                 sig_hash = w.get('signal_hash')
                 w_id = w.get('id')
                 if sig_hash is not None and w_id:
-                    # Convert UUID string to 16-byte buffer
                     import uuid
                     try:
                         uuid_obj = uuid.UUID(w_id)
@@ -133,9 +142,7 @@ class AutoIntelligence:
                  self.mmap.sync_from_ledger(fragments)
         except Exception as e:
             logger.warning(f"MMAP Sync Failed: {e}")
-        
-        logger.info(f"🧠 [BRAIN]: Fractal Feed complete. Root Checksum: {local_data.get('checksum')}")
-        return sovereign_graph
+
 
     async def incremental_feed(self, file_path: Path):
         """
@@ -455,6 +462,11 @@ class AutoIntelligence:
         """
         context_parts = []
         
+        # 0. SOVEREIGN ANCHOR (The Boot Disk)
+        anchor_path = self.project_path / "SOVEREIGN_ANCHOR.md"
+        if anchor_path.exists():
+             context_parts.append(f"⚓ [SOVEREIGN ANCHOR]:\n{anchor_path.read_text()}")
+
         # 1. ARTIFACT INJECTION (The Strategy)
         # We look for key markdown files in the Brain or Root
         artifacts = ["VISION.md", "STRATEGY.md", "ARCHITECTURE.md"]
@@ -500,6 +512,236 @@ class AutoIntelligence:
             return summary
         except Exception as e:
             return f"Strategic DNA extraction failed: {e}"
+
+    def _walk_fractal_tree(self, path: Path, prefix: str = "") -> str:
+        """
+        Recursively walks the distributed Fractal Index to build a Merkle Tree.
+        """
+        import json
+        tree_out = ""
+        index_path = path / ".side" / "local.json"
+        
+        if not index_path.exists():
+            return tree_out
+            
+        try:
+            raw = shield.unseal_file(index_path)
+            data = json.loads(raw)
+            files = sorted(data.get("context", {}).get("files", []), key=lambda x: x['name'])
+            children = sorted(data.get("context", {}).get("children", {}).items())
+            
+            # 1. Render Files
+            for i, f in enumerate(files):
+                is_last_item = (i == len(files) - 1) and not children
+                connector = "└── " if is_last_item else "├── "
+                f_hash = f.get('hash', 'no_hash')[:8]
+                tree_out += f"{prefix}{connector}{f['name']} [{f_hash}]\n"
+                
+            # 2. Render Children (Sub-directories)
+            for i, (name, checksum) in enumerate(children):
+                is_last_child = (i == len(children) - 1)
+                connector = "└── " if is_last_child else "├── "
+                tree_out += f"{prefix}{connector}{name}/ [Merkle: {checksum[:8]}]\n"
+                
+                # Recursive Step
+                new_prefix = prefix + ("    " if is_last_child else "│   ")
+                tree_out += self._walk_fractal_tree(path / name, new_prefix)
+                
+            return tree_out
+        except Exception as e:
+            return f"{prefix}└── [ERROR: {e}]\n"
+
+    def _get_raw_schemas(self) -> str:
+        """
+        [CODE-FIRST TRUTH]: Generates JSON Schemas directly from Pydantic Models.
+        """
+        import json
+        try:
+            from side.models.intent import ConversationSession
+            from side.models.physics import PulseResult
+            from side.models.ledger import LedgerEntry
+            from side.models.brain import SovereignGraph
+            
+            schemas = []
+            
+            models = [
+                ("INTENT", ConversationSession),
+                ("PHYSICS", PulseResult),
+                ("LEDGER", LedgerEntry),
+                ("BRAIN", SovereignGraph)
+            ]
+            
+            for name, model in models:
+                try:
+                    # Generate Schema
+                    schema_dict = model.model_json_schema()
+                    schema_str = json.dumps(schema_dict, indent=2)
+                    schemas.append(f"# --- {name} (Pydantic V2) ---\n{schema_str}")
+                except Exception as e:
+                    schemas.append(f"# [ERROR] Could not generate schema for {name}: {e}")
+                    
+            return "\n\n".join(schemas)
+            
+        except ImportError as e:
+            return f"# [CRITICAL ERROR] Model Import Failed: {e}"
+
+    def get_episodic_context(self, limit: int = 15) -> str:
+        """
+        [PHOENIX PROTOCOL]: Retrieves the 'RAM' (Recent Context) from the Ledger.
+        Uses EpisodicProjector to build a coherent narrative of the last few events.
+        """
+        try:
+            from side.intel.episodic_projector import EpisodicProjector
+            projector = EpisodicProjector(self.forensic, self.strategic)
+            return projector.get_episode_stream(limit=limit)
+        except Exception as e:
+            return f"## [RAM ERROR]: Failed to load episodic context: {e}"
+
+    def get_surgical_context(self, query: str, limit: int = 3) -> str:
+        """
+        [PHOENIX PROTOCOL LAYER 3]: Surgical Attention.
+        Scans the Live Filesystem (rglob) for files matching the user's query.
+        Returns the content of the most relevant code files.
+        """
+        try:
+            # 2. Dynamic Search (Live Codebase) - Replaces static Fractal Map lookup
+            # Heuristic: Find files with exact or partial name match
+            candidates = []
+            q_lower = query.lower()
+            
+            # Use rglob for recursive search. 
+            # Limit to likely code directories to avoid finding random stuff in node_modules or .git
+            # We search from project root but filter later or just search specific subdirs
+            search_roots = ["backend/src", "web/app", "web/lib", "web/components"]
+            
+            for root in search_roots:
+                p = self.project_path / root
+                if not p.exists(): continue
+                
+                for f in p.rglob("*"):
+                    if not f.is_file(): continue
+                    name = f.name.lower()
+                    path_str = str(f).lower()
+                    
+                    score = 0
+                    if q_lower == name: score = 100
+                    elif q_lower in name: score = 50
+                    elif q_lower in path_str and f.suffix in ['.py', '.ts', '.tsx']: score = 10
+                    
+                    if score > 0:
+                        rel_path = f.relative_to(self.project_path)
+                        candidates.append((score, str(rel_path)))
+            
+            # Sort by score descending
+            candidates.sort(key=lambda x: x[0], reverse=True)
+            # Deduplicate by path
+            seen = set()
+            unique_candidates = []
+            for score, path in candidates:
+                if path not in seen:
+                    unique_candidates.append((score, path))
+                    seen.add(path)
+            
+            top_files = unique_candidates[:limit]
+            
+            if not top_files:
+                return f"- [LAYER 3]: No direct code matches found for '{query}' in the Live File System."
+                
+            # 3. Fetch Content
+            output = [f"## 3. SURGICAL CONTEXT (Matched '{query}'):"]
+            for _, rel_path in top_files:
+                full_path = self.project_path / rel_path
+                if full_path.exists():
+                    # Cap context at 2000 chars per file to save tokens
+                    content = full_path.read_text()[:2000]
+                    output.append(f"\n### FILE: {rel_path}\n```\n{content}\n...\n```")
+            
+            return "\n".join(output)
+            
+        except Exception as e:
+            return f"- [LAYER 3 ERROR]: Surgical retrieval failed: {e}"
+
+    def _get_operational_reality(self) -> str:
+        """
+        Derives the 'Truth' from the actual code metrics, not user plans.
+        Source: Git Log (History) + Git Status (Now).
+        """
+        try:
+            import subprocess
+            
+            # 1. Recent History (What we ACTUALLY did)
+            cmd_log = ["git", "log", "-n", "5", "--pretty=format:%h %s (%cr)"]
+            log_out = subprocess.check_output(cmd_log, cwd=self.project_path, text=True).strip()
+            
+            # 2. current Friction (What is bleeding right now)
+            cmd_status = ["git", "status", "-s"]
+            status_out = subprocess.check_output(cmd_status, cwd=self.project_path, text=True).strip()
+            
+            # Format nicely
+            reality = "**Recent Commits (The Vector):**\n"
+            for line in log_out.splitlines():
+                reality += f"- {line}\n"
+                
+            reality += "\n**Active Measures (The Now):**\n"
+            if status_out:
+                for line in status_out.splitlines()[:10]: # Limit to 10
+                    reality += f"- {line}\n"
+            else:
+                reality += "- Clean Working Tree (Steady State).\n"
+                
+            return reality
+        except Exception as e:
+            return f"- [ERROR] Could not derive Operational Reality: {e}"
+
+    def generate_anchor(self) -> str:
+        """
+        [KAR-9] The Sovereign Anchor (Boot Disk).
+        Generates a Zero-Fake, Cryptographic Blueprint.
+        """
+        import json
+        
+        project_id = self.engine.get_project_id()
+        # REPLACED: strategy_content = self._get_active_strategy()
+        operational_truth = self._get_operational_reality()
+        
+        merkle_tree = f". [{project_id}]\n"
+        merkle_tree += self._walk_fractal_tree(self.project_path)
+        
+        schemas = self._get_raw_schemas()
+        
+        anchor_content = f"""# SOVEREIGN ANCHOR: {project_id}
+> **Generated:** {datetime.now(timezone.utc).isoformat()}
+> **Purpose:** LLM Boot Disk (Forensic Reality)
+> **Verification:** SHA-256 Merkle Proof & Live Schema
+
+## 1. OPERATIONAL REALITY (The Truth)
+*Source: Git Forensic Log (Objective)*
+{operational_truth}
+
+## 2. DATA SOVEREIGNTY (The Law)
+*Source: Live Codebase (Verified)*
+```python
+{schemas}
+```
+
+## 3. FRACTAL REALITY (The Map)
+*Merkle Tree Snapshot*
+```text
+{merkle_tree}
+```
+
+## 4. SYSTEM PROMPTS (The Instruction)
+- **Role:** You represent the Sovereign Will of the repository.
+- **Priority:** Trust the Code (Objective) over the Plan (Subjective).
+- **Style:** Zero-Latency, High-Precision, No Fluff.
+
+---
+*Use this anchor to re-align your weights with the Sovereign Reality.*
+"""
+        anchor_path = self.project_path / "SOVEREIGN_ANCHOR.md"
+        anchor_path.write_text(anchor_content)
+        logger.info(f"⚓ [ANCHOR]: Forensic Sovereign Anchor dropped at {anchor_path}")
+        return str(anchor_path)
 
     async def recovery_pass(self) -> None:
         """
