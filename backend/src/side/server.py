@@ -43,7 +43,7 @@ strategic = engine.strategic
 forensic = engine.forensic
 operational = engine.operational
 
-intel = AutoIntelligence(Path.cwd())
+intel = AutoIntelligence(Path.cwd(), engine=engine)
 
 # ---------------------------------------------------------------------
 # DIMENSION 5: THE SOVEREIGN GOVERNOR (Resources)

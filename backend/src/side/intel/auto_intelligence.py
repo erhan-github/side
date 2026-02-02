@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import time
 from pathlib import Path
@@ -8,6 +9,9 @@ from side.intel.memory import MemoryManager
 from side.llm.client import LLMClient
 from side.utils.crypto import shield
 from side.intel.bridge import BrainBridge
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from side.storage.modules.base import SovereignEngine
 
 logger = logging.getLogger(__name__)
 
@@ -20,16 +24,13 @@ class AutoIntelligence:
     3. Past Failures (Ledger).
     """
 
-    def __init__(self, project_path: Path, buffer=None):
+    def __init__(self, project_path: Path, engine: SovereignEngine, buffer=None):
         import os
-        from side.storage.modules.base import SovereignEngine
-        from side.storage.modules.strategic import StrategicStore
-        from side.storage.modules.forensic import ForensicStore
         from side.storage.modules.mmap_store import MmapStore
         self.project_path = project_path
-        self.engine = SovereignEngine()
-        self.strategic = StrategicStore(self.engine)
-        self.forensic = ForensicStore(self.engine)
+        self.engine = engine
+        self.strategic = engine.strategic
+        self.forensic = engine.forensic
         self.buffer = buffer
         self.mmap = MmapStore(project_path)
         self.memory = MemoryManager(self.strategic, project_id=self.engine.get_project_id())
