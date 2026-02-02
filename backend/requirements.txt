@@ -18,3 +18,4 @@ psutil>=5.9.0
 semgrep>=1.45.0,<2.0.0
 bandit>=1.7.0,<2.0.0
 cryptography>=42.0.0
+numpy>=1.24.0
