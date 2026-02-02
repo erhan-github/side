@@ -133,7 +133,20 @@ class ForensicStore:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_averted_project ON averted_disasters(project_id)")
+        # ─────────────────────────────────────────────────────────────
+        # [LAYER 4] CORE TABLE 14: OBSERVATIONS - Strategic Facts
+        # ─────────────────────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS observations (
+                id TEXT PRIMARY KEY,
+                content TEXT NOT NULL,
+                context_tags JSON,
+                confidence FLOAT DEFAULT 0.0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_verified_at TIMESTAMP
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_observations_content ON observations(content)")
 
     def log_averted_disaster(self, project_id: str, reason: str, su_saved: int = 50, technical_debt: str | None = None) -> None:
         """

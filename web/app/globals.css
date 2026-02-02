@@ -13,47 +13,45 @@
 
   /* Sovereign Color Palette (Stockholm Midnight) */
   --color-void: #050505;
-  /* True Void */
   --color-void-lite: #0a0a0a;
-  /* Void Highlight */
   --color-stockholm-blue: #3B82F6;
 
   /* Primary Accents */
   --color-neon: #00ffff;
-  /* Cyber Cyan */
   --color-signal: #10b981;
-  /* Emerald Signal */
   --color-danger: #EF4444;
-  /* Forensic Red */
 
   --color-glass-border: rgba(255, 255, 255, 0.08);
 
-  /* Fluid Typography (The Sovereign Scale - Refined) */
-  /* Fluid Typography (The Sovereign Scale - Refined for Readability) */
+  /* The Sovereign Scale (Golden Ratio) */
   --text-hero: clamp(4rem, 9vw, 7rem);
+  /* H1 Display */
   --text-h1: clamp(3rem, 7vw, 5rem);
-  --text-h2: clamp(2.25rem, 6vw, 4rem);
-  --text-body: clamp(1.125rem, 1.5vw, 1.25rem);
-  /* Base 18px - 20px */
-  --text-mono-sm: 0.95rem;
-  /* ~15px */
+  /* H1 Standard */
+  --text-h2: clamp(2.25rem, 5vw, 3.5rem);
+  /* H2 Section */
+  --text-h3: clamp(1.5rem, 3vw, 2rem);
+  /* H3 Card */
+  --text-body-lg: clamp(1.125rem, 1.5vw, 1.25rem);
+  --text-body: 1rem;
+  --text-mono: 0.875rem;
 
-  /* Spacing Primitives */
+  /* Spacing Primitives (Vertical Rhythm) */
+  --spacing-section: clamp(3rem, 6vw, 5rem);
+  /* 80px Desktop / 48px Mobile */
+  --spacing-atomic: 1rem;
+
+  /* Fallback Spacing */
   --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;
-  --spacing-3: 0.75rem;
   --spacing-4: 1rem;
-  --spacing-6: 1.5rem;
   --spacing-8: 2rem;
-  --spacing-12: 3rem;
   --spacing-16: 4rem;
-  --spacing-24: 6rem;
   --spacing-32: 8rem;
 
   /* Surface Detailing */
   --shadow-premium: 0 0 40px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 20px rgba(0, 255, 255, 0.15);
-  /* Cyan Glow */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
@@ -95,13 +93,73 @@
     line-height: 1.1;
   }
 
-  /* Utilities */
+  /* Semantic Typography Utilities */
+  .text-hero {
+    font-size: var(--text-hero);
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    /* Bold */
+    font-family: var(--font-heading);
+  }
+
+  .text-h1 {
+    font-size: var(--text-h1);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    font-family: var(--font-heading);
+  }
+
+  .text-h2 {
+    font-size: var(--text-h2);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    font-weight: 600;
+    font-family: var(--font-heading);
+  }
+
+  .text-h3 {
+    font-size: var(--text-h3);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+    font-family: var(--font-heading);
+  }
+
+  .text-body-lg {
+    font-size: var(--text-body-lg);
+    line-height: 1.6;
+    font-family: var(--font-sans);
+  }
+
+  .text-body {
+    font-size: var(--text-body);
+    line-height: 1.6;
+    font-family: var(--font-sans);
+  }
+
+  .text-mono {
+    font-size: var(--text-mono);
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+  }
+
+  /* Semantic Utilities */
   .text-subtle {
     @apply text-zinc-500 font-medium;
   }
 }
 
 @layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .section-spacing {
+    @apply py-12;
+    /* ~100px gap between sections (48px + 48px) */
+  }
 
   /* Glassmorphism */
   .glass-panel {

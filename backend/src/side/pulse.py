@@ -307,7 +307,7 @@ class PulseEngine:
         
         anchor = self._load_anchor()
         if not anchor:
-            return PulseResult(PulseStatus.DRIFT, 0.0, ["Anchor Not Found"], {})
+            return PulseResult(status=PulseStatus.DRIFT, latency_ms=0.0, violations=["Anchor Not Found"], context={})
 
         # 1. Load Dynamic Rules (The Scaling Layer)
         dynamic_rules = self._load_dynamic_rules()
@@ -366,7 +366,7 @@ class PulseEngine:
 
         end_time = time.perf_counter()
         latency = (end_time - start_time) * 1000.0
-        return PulseResult(status, latency, violations, {"total_rules": len(dynamic_rules)})
+        return PulseResult(status=status, latency_ms=latency, violations=violations, context={"total_rules": len(dynamic_rules)})
 
     def certify_repo(self) -> Dict:
         """

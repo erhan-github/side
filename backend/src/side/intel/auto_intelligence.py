@@ -693,55 +693,47 @@ class AutoIntelligence:
         except Exception as e:
             return f"- [ERROR] Could not derive Operational Reality: {e}"
 
-    def generate_anchor(self) -> str:
+    async def optimize_weights(self) -> dict:
         """
-        [KAR-9] The Sovereign Anchor (Boot Disk).
-        Generates a Zero-Fake, Cryptographic Blueprint.
+        [LAYER 4]: Optimizes Sovereign Weights (sovereign.json).
+        Triggers Strategic Observer to distill facts.
         """
         import json
+        from side.intel.observer import StrategicObserver
         
         project_id = self.engine.get_project_id()
-        # REPLACED: strategy_content = self._get_active_strategy()
-        operational_truth = self._get_operational_reality()
         
-        merkle_tree = f". [{project_id}]\n"
-        merkle_tree += self._walk_fractal_tree(self.project_path)
+        # 1. Update sovereign.json (The Weights)
+        # We ensure the file exists and has the latest schema pointers
+        sovereign_path = self.project_path / ".side" / "sovereign.json"
         
-        schemas = self._get_raw_schemas()
+        if not sovereign_path.exists():
+            weights = {
+                "version": "4.0.0 (Observer Edition)",
+                "project_id": project_id,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "intent": {},
+                "metrics": {}
+            }
+        else:
+            weights = json.loads(shield.unseal_file(sovereign_path))
+            
+        weights["last_scan"] = datetime.now(timezone.utc).isoformat()
         
-        anchor_content = f"""# SOVEREIGN ANCHOR: {project_id}
-> **Generated:** {datetime.now(timezone.utc).isoformat()}
-> **Purpose:** LLM Boot Disk (Forensic Reality)
-> **Verification:** SHA-256 Merkle Proof & Live Schema
-
-## 1. OPERATIONAL REALITY (The Truth)
-*Source: Git Forensic Log (Objective)*
-{operational_truth}
-
-## 2. DATA SOVEREIGNTY (The Law)
-*Source: Live Codebase (Verified)*
-```python
-{schemas}
-```
-
-## 3. FRACTAL REALITY (The Map)
-*Merkle Tree Snapshot*
-```text
-{merkle_tree}
-```
-
-## 4. SYSTEM PROMPTS (The Instruction)
-- **Role:** You represent the Sovereign Will of the repository.
-- **Priority:** Trust the Code (Objective) over the Plan (Subjective).
-- **Style:** Zero-Latency, High-Precision, No Fluff.
-
----
-*Use this anchor to re-align your weights with the Sovereign Reality.*
-"""
-        anchor_path = self.project_path / "SOVEREIGN_ANCHOR.md"
-        anchor_path.write_text(anchor_content)
-        logger.info(f"⚓ [ANCHOR]: Forensic Sovereign Anchor dropped at {anchor_path}")
-        return str(anchor_path)
+        # 2. Trigger Strategic Observer (The Compiler)
+        observer = StrategicObserver(self.forensic)
+        new_facts = await observer.distill_observations(project_id, limit=20)
+        
+        if "metrics" not in weights:
+            weights["metrics"] = {}
+        weights["metrics"]["recent_facts"] = new_facts
+        
+        # Save Weights
+        # We use a shielded write to prevent corruption
+        shield.seal_file(sovereign_path, json.dumps(weights, indent=2))
+        logger.info(f"⚓ [WEIGHTS]: Optimized sovereign.json (Facts: +{new_facts})")
+        
+        return weights
 
     async def recovery_pass(self) -> None:
         """

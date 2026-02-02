@@ -49,6 +49,7 @@ dependencies = [
     # Forensics tools - Auto-installed for security scanning
     "semgrep>=1.45.0,<2.0.0",  # Primary polyglot security scanner
     "bandit>=1.7.0,<2.0.0",     # Python-specific security depth
+    "numpy>=1.26.0",            # Mmap acceleration
 ]
 
 [project.optional-dependencies]
