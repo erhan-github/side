@@ -20,6 +20,43 @@ class StrategicStore:
     def init_schema(self, conn):
         """Initialize strategic tables."""
         # ─────────────────────────────────────────────────────────────
+        # VIRTUAL TABLE: FTS5 SHADOW INDEX (Hybrid Lite)
+        # ─────────────────────────────────────────────────────────────
+        try:
+            conn.execute("""
+                CREATE VIRTUAL TABLE IF NOT EXISTS public_wisdom_fts USING fts5(
+                    id, 
+                    wisdom_text, 
+                    category, 
+                    signal_pattern,
+                    tokenize='porter uni'
+                )
+            """)
+            # Triggers ensure the FTS index is always in sync with the main table
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS public_wisdom_ai AFTER INSERT ON public_wisdom BEGIN
+                    INSERT INTO public_wisdom_fts(id, wisdom_text, category, signal_pattern) 
+                    VALUES (new.id, new.wisdom_text, new.category, new.signal_pattern);
+                END;
+            """)
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS public_wisdom_ad AFTER DELETE ON public_wisdom BEGIN
+                    DELETE FROM public_wisdom_fts WHERE id = old.id;
+                END;
+            """)
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS public_wisdom_au AFTER UPDATE ON public_wisdom BEGIN
+                    UPDATE public_wisdom_fts SET 
+                        wisdom_text = new.wisdom_text,
+                        category = new.category,
+                        signal_pattern = new.signal_pattern
+                    WHERE id = old.id;
+                END;
+            """)
+        except Exception as e:
+             logger.warning(f"FTS5 setup for public_wisdom failed: {e}")
+
+        # ─────────────────────────────────────────────────────────────
         # CORE TABLE 1: PLANS - Strategic Roadmap
         # ─────────────────────────────────────────────────────────────
         conn.execute("""
@@ -455,6 +492,37 @@ class StrategicStore:
                 ).fetchall()
             else:
                 rows = conn.execute("SELECT * FROM public_wisdom ORDER BY created_at DESC").fetchall()
+            return [dict(row) for row in rows]
+
+    def search_wisdom(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """
+        [Active Recall]: Search architectural wisdom using FTS5 (Hybrid Lite).
+        """
+        with self.engine.connection() as conn:
+            try:
+                # FTS5 Match
+                safe_query = query.replace('"', '""').replace("'", "''")
+                rows = conn.execute(f"""
+                    SELECT w.* 
+                    FROM public_wisdom_fts fts
+                    JOIN public_wisdom w ON fts.id = w.id
+                    WHERE public_wisdom_fts MATCH '{safe_query}'
+                    ORDER BY rank
+                    LIMIT ?
+                """, (limit,)).fetchall()
+                if rows:
+                    return [dict(row) for row in rows]
+            except Exception:
+                pass
+                
+            # Fallback
+            q = f"%{query}%"
+            rows = conn.execute("""
+                SELECT * FROM public_wisdom 
+                WHERE wisdom_text LIKE ? OR signal_pattern LIKE ?
+                ORDER BY confidence DESC
+                LIMIT ?
+            """, (q, q, limit)).fetchall()
             return [dict(row) for row in rows]
 
     # ─────────────────────────────────────────────────────────────

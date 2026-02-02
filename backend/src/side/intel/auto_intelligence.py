@@ -473,25 +473,39 @@ class AutoIntelligence:
              context_parts.append(f"⚓ [SOVEREIGN ANCHOR]:\n{anchor_path.read_text()}")
 
         # 1. ARTIFACT INJECTION (The Strategy)
-        # We look for key markdown files in the Brain or Root
         artifacts = ["VISION.md", "STRATEGY.md", "ARCHITECTURE.md"]
         for art in artifacts:
-             # Check root
              p = self.project_path / art
              if p.exists():
-                 context_parts.append(f"📜 [{art}]:\n{p.read_text()[:2000]}...") # Cap at 2k chars
-             
-             # Check brain
-             # We might iterate over UUID folders if we knew the ID, but for now scan recursively?
-             # Simple heuristic: Look in the generic brain folder if it existed, but here we assume root for Strategy.
+                 context_parts.append(f"📜 [{art}]:\n{p.read_text()[:4000]}...")
         
-        # 2. MEMORY RECALL (The Wisdom)
-        query = f"{topic} {active_file}" if topic else str(active_file)
-        memories = self.memory.recall(query)
+        # 2. ACTIVE RECALL (The Hybrid Lite Search)
+        # We query the new FTS5 stores for relevant patterns/wisdom
+        search_q = f"{topic} {active_file}" if topic else str(active_file)
+        if search_q and len(search_q) > 3:
+            # A. Architectural Wisdom
+            wisdom_hits = self.strategic.search_wisdom(search_q, limit=3)
+            if wisdom_hits:
+                w_text = "\n".join([f"- {w['wisdom_text']} (Confidence: {w['confidence']})" for w in wisdom_hits])
+                context_parts.append(f"🧠 [ARCHITECTURAL WISDOM]:\n{w_text}")
+            
+            # B. Verified Patterns (Golden Scripts)
+            try:
+                from side.storage.modules.patterns import PatternStore
+                pat_store = PatternStore(self.engine)
+                pat_hits = pat_store.search_patterns(search_q, limit=2)
+                if pat_hits:
+                    p_text = "\n".join([f"- {p['intent']}: {json.dumps(p['tool_sequence'])}" for p in pat_hits])
+                    context_parts.append(f"✨ [VERIFIED PATTERNS]:\n{p_text}")
+            except Exception as e:
+                logger.warning(f"Pattern recall failed: {e}")
+
+        # 3. MEMORY RECALL (The Legacy Facts)
+        memories = self.memory.recall(search_q)
         if memories:
             context_parts.append(memories)
 
-        # 3. ACTIVE FILE (The Focus) - managed by caller usually, but we can add meta-data
+        # 4. ACTIVE FILE (The Focus)
         if active_file:
              context_parts.append(f"📍 [ACTIVE FOCUS]: User is working on '{active_file}'.")
 
