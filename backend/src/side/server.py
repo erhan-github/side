@@ -245,14 +245,23 @@ async def root_health(request: Request):
     })
 
 def main():
+    import uvicorn
     port = int(os.getenv("PORT", 8000))
-    transport = os.getenv("MCP_TRANSPORT", "sse") # Default to SSE for container logic
+    host = os.getenv("HOST", "0.0.0.0")
+    transport = os.getenv("MCP_TRANSPORT", "sse") 
     
     start_background_services()
     
     if transport == "sse":
-        logger.info(f"🚀 [SOVEREIGN]: Starting SSE Server on port {port}...")
-        mcp.run(transport="sse")
+        logger.info(f"🚀 [SOVEREIGN]: Starting SSE Server on {host}:{port} (Proxy Hardened)...")
+        # Direct uvicorn call to ensure proxy headers are respected
+        uvicorn.run(
+            mcp._app, 
+            host=host, 
+            port=port, 
+            proxy_headers=True, 
+            forwarded_allow_ips="*"
+        )
     else:
         mcp.run(transport="stdio")
 
