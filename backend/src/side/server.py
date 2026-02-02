@@ -37,6 +37,13 @@ port = int(os.getenv("PORT", 8000))
 host = "0.0.0.0" # Always bind to all interfaces in production
 
 mcp = FastMCP("Sidelith Sovereign", port=port, host=host)
+
+# [DIAGNOSTIC]: Add Transparent Proxy Middleware
+@mcp.custom_route("/{path:path}", methods=["GET", "POST", "OPTIONS"])
+async def debug_middleware(request: Request, path: str):
+    logger.info(f"🌐 [INBOUND]: {request.method} /{path} | Headers: {dict(request.headers)}")
+    # We return None so FastMCP continues to its own handlers
+    return None
 engine = SovereignEngine()
 
 # Consolidated Registry: Use engine-provided instances to prevent redundant migrations
@@ -134,9 +141,10 @@ def start_background_services():
     Ensures the main server binds to its port first.
     """
     logger.info("📡 [STARTUP]: Launching Sovereign background services...")
-    governor = SovereignGovernor()
-    governor.start()
-    return governor
+    # governor = SovereignGovernor()
+    # governor.start()
+    logger.warning("👮 [GOVERNOR]: Temporarily DISABLED for diagnostic audit.")
+    return None
 
 # ---------------------------------------------------------------------
 # RESOURCES (Read-Only State)
@@ -227,11 +235,13 @@ async def health_check(request: Request):
     Railway Health Probe.
     Returns 200 OK to allow container rotation.
     """
+    logger.info(f"🩺 [HEALTH]: Probe received from {request.client.host}")
     return JSONResponse({
         "status": "ok",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "instance": os.getenv("RAILWAY_REPLICA_ID", "local"),
-        "mcp_type": "sse"
+        "mcp_type": "sse",
+        "headers": dict(request.headers) # Transparency for proxy debugging
     })
 
 @mcp.custom_route("/", methods=["GET"])
