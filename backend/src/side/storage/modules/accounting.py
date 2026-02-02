@@ -51,7 +51,8 @@ class AccountingStore:
 
         current_balance = self.get_balance(project_id)
         if current_balance < amount:
-            logger.warning(f"🏦 [ECONOMY]: Insufficient SUs for project {project_id}. Required: {amount}, Available: {current_balance}")
+            masked_id = f"{project_id[:4]}...{project_id[-4:]}" if len(project_id) > 8 else project_id
+            logger.warning(f"🏦 [ECONOMY]: Insufficient SUs for project {masked_id}. Required: {amount}, Available: {current_balance}")
             return False
 
         with self.engine.connection() as conn:
@@ -64,7 +65,8 @@ class AccountingStore:
                 VALUES (?, ?, ?, ?)
             """, (str(uuid.uuid4()), project_id, amount, reason))
             
-        logger.info(f"🏦 [ECONOMY]: Deducted {amount} SUs from {project_id}. Reason: {reason}. New Balance: {new_balance}")
+        masked_id = f"{project_id[:4]}...{project_id[-4:]}" if len(project_id) > 8 else project_id
+        logger.info(f"🏦 [ECONOMY]: Deducted {amount} SUs from {masked_id}. Reason: {reason}. New Balance: {new_balance}")
         return True
 
     def get_history(self, project_id: str, limit: int = 20) -> List[Dict[str, Any]]:
