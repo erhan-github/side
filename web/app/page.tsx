@@ -510,6 +510,93 @@ export default function Home() {
 
             </section>
 
+
+            {/* 4. GOVERNANCE LAYER (Trust & Compliance) */}
+            <section className="section-spacing w-full max-w-6xl px-6 mb-24 relative z-10">
+                <div className="p-1 rounded-3xl bg-gradient-to-r from-transparent via-white/10 to-transparent">
+                    <div className="bg-[#0a0a0a] rounded-[22px] border border-white/5 p-8 md:p-12 overflow-hidden relative">
+                        {/* Background Splashes */}
+                        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/5 blur-[100px] rounded-full pointer-events-none" />
+
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+
+                            {/* Left: Text */}
+                            <div className="text-center md:text-left max-w-lg">
+                                <div className="inline-flex items-center gap-2 mb-4">
+                                    <Shield size={16} className="text-emerald-500" />
+                                    <span className="text-emerald-500 font-mono text-xs font-bold tracking-widest uppercase">The Governance Layer</span>
+                                </div>
+                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                                    Built for the <span className="text-white/50">Paranoid</span>.
+                                </h2>
+                                <p className="text-lg text-white/60 leading-relaxed mb-8">
+                                    We don't sell "Privacy Policies". We sell <b>Architecture</b>. <br />
+                                    Sidelith is engineered to operate in hostile, regulated environments without modification.
+                                </p>
+                                <div className="flex flex-col md:flex-row gap-4 justify-center md:justify-start">
+                                    <div className="flex items-center gap-2 text-xs font-mono text-white/40">
+                                        <Check size={14} className="text-emerald-500" /> NO CLOUD RETENTION
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs font-mono text-white/40">
+                                        <Check size={14} className="text-emerald-500" /> NO MODEL TRAINING
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Wrapper: Badges + Disclosure */}
+                            <div className="flex flex-col items-center md:items-end w-full md:w-auto">
+                                <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
+
+                                    {/* Badge 1: AES-256 */}
+                                    <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/30 transition-colors group text-center min-w-[160px]">
+                                        <div className="w-10 h-10 mx-auto rounded-full bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                            <Lock size={18} className="text-emerald-400" />
+                                        </div>
+                                        <h4 className="text-white font-bold text-sm mb-1">AES-256 GCM</h4>
+                                        <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono">ENCRYPTION</p>
+                                    </div>
+
+                                    {/* Badge 2: HIPAA */}
+                                    <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-blue-500/30 transition-colors group text-center min-w-[160px]">
+                                        <div className="w-10 h-10 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                            <Activity size={18} className="text-blue-400" />
+                                        </div>
+                                        <h4 className="text-white font-bold text-sm mb-1">HIPAA</h4>
+                                        <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono">ELIGIBLE ARCH</p>
+                                    </div>
+
+                                    {/* Badge 3: SOC 2 */}
+                                    <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-purple-500/30 transition-colors group text-center min-w-[160px]">
+                                        <div className="w-10 h-10 mx-auto rounded-full bg-purple-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                            <Database size={18} className="text-purple-400" />
+                                        </div>
+                                        <h4 className="text-white font-bold text-sm mb-1">SOC 2 Type II</h4>
+                                        <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono">ALIGNED CONTROLS</p>
+                                    </div>
+
+                                    {/* Badge 4: GDPR */}
+                                    <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-amber-500/30 transition-colors group text-center min-w-[160px]">
+                                        <div className="w-10 h-10 mx-auto rounded-full bg-amber-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                            <Globe size={18} className="text-amber-400" />
+                                        </div>
+                                        <h4 className="text-white font-bold text-sm mb-1">GDPR</h4>
+                                        <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono">ZERO RETENTION</p>
+                                    </div>
+
+                                </div>
+
+                                {/* Disclosure Note */}
+                                <div className="mt-4 text-center md:text-right max-w-[350px]">
+                                    <p className="text-[10px] text-white/40 leading-relaxed font-mono">
+                                        * Architecture verified internally. Independent third-party attestation (SOC 2 Type II) is scheduled for Q4 2026.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* 5. PRICING (Usage Based) */}
             <section className="section-spacing w-full max-w-6xl px-6">
                 <div className="text-center mb-16">
