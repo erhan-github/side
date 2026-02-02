@@ -51,9 +51,8 @@ if __name__ == "__main__":
 
         mcp.run(
             transport="sse", 
-            port=port, 
             host="0.0.0.0",
-            uvicorn_config={"timeout_graceful_shutdown": 30}
+            # port logic handled by Uvicorn from env or internal defaults
         )
     else:
         # Default to stdio for local MCP integration (Cursor/VSCode)
