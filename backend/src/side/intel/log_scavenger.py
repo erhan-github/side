@@ -3,6 +3,7 @@ import os
 import time
 import logging
 import threading
+import collections
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from side.storage.modules.forensic import ForensicStore
@@ -28,6 +29,9 @@ class LogScavenger:
         # Paths to scavenge
         self.xcode_root = Path.home() / "Library/Developer/Xcode/DerivedData"
         self.nextjs_root = project_path / "web" / ".next"
+        
+        # Buffers for "Crime Scene"Context (Last 50 lines)
+        self.generic_buffer = collections.deque(maxlen=50)
         
     def start(self):
         """Starts the scavenging threads."""
@@ -135,12 +139,20 @@ class LogScavenger:
                                 f.seek(previous_size)
                                 new_content = f.read()
                                 
-                                # Heuristic: "Traceback", "Error:", "Exception"
-                                if "Traceback" in new_content or "Error:" in new_content or "Exception" in new_content:
-                                    self._log_friction("GENERIC", "RUNTIME_ERROR", {
-                                        "file": log_file.name,
-                                        "snippet": new_content[:200]
-                                    })
+                                # Split lines for granular analysis
+                                lines = new_content.splitlines()
+                                for line in lines:
+                                    self.generic_buffer.append(line)
+                                    
+                                    # Heuristic: "Traceback", "Error:", "Exception"
+                                    if "Traceback" in line or "Error:" in line or "Exception" in line:
+                                        # Capture the "Crime Scene" (Last 50 lines)
+                                        crime_scene = list(self.generic_buffer)
+                                        self._log_friction("GENERIC", "RUNTIME_ERROR", {
+                                            "file": log_file.name,
+                                            "snippet": line,
+                                            "context": crime_scene # The smoking gun + breadcrumbs
+                                        })
                         
                         seen_sizes[log_file] = current_size
                     except Exception:
