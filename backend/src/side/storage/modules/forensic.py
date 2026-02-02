@@ -158,7 +158,8 @@ class ForensicStore:
                 INSERT INTO averted_disasters (id, project_id, reason, su_saved, technical_debt_averted)
                 VALUES (?, ?, ?, ?, ?)
             """, (str(uuid.uuid4()), project_id, reason, su_saved, technical_debt))
-        logger.info(f"🛡️ [ROI]: Averted Disaster Logged: {reason} (Saved {su_saved} SU)")
+        masked_id = f"{project_id[:4]}...{project_id[-4:]}" if len(project_id) > 8 else project_id
+        logger.info(f"🛡️ [ROI]: Averted Disaster Logged for project {masked_id}: {reason} (Saved {su_saved} SU)")
 
     def log_activity(self, project_id: str, tool: str, action: str, 
                      cost_tokens: int = 0, tier: str = 'free', 

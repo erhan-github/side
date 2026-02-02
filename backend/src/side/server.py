@@ -230,14 +230,12 @@ async def health_check(request: Request):
     return JSONResponse({
         "status": "ok",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "instance": os.getenv("RAILWAY_REPLICA_ID", "local"),
         "mcp_type": "sse"
     })
 
 @mcp.custom_route("/", methods=["GET"])
 async def root_health(request: Request):
     """Fallback root endpoint."""
-    logger.info(f"🌍 [ROOT]: Request from {request.client.host} | Headers: {dict(request.headers)}")
     return JSONResponse({
         "status": "ok",
         "service": "Sidelith Sovereign",

@@ -97,6 +97,9 @@ class IdentityStore:
 
     def update_profile(self, project_id: str, profile_data: dict[str, Any]) -> None:
         """Update the Sovereign Identity Profile."""
+        # Mask project_id in warnings
+        masked_id = f"{project_id[:4]}...{project_id[-4:]}" if len(project_id) > 8 else project_id
+        
         tech_stack = safe_get(profile_data, "tech_stack")
         if not tech_stack:
             tech_stack = {
@@ -204,7 +207,8 @@ class IdentityStore:
                     if not row:
                         raise InsufficientTokensError("Profile not found.")
                     current = row["token_balance"]
-                    raise InsufficientTokensError(f"Insufficient SUs. Have {current}, need {abs(amount)}.")
+                    masked_id = f"{project_id[:4]}...{project_id[-4:]}" if len(project_id) > 8 else project_id
+                    raise InsufficientTokensError(f"Insufficient SUs for project {masked_id}. Have {current}, need {abs(amount)}.")
             else:
                 conn.execute(
                     "UPDATE profile SET token_balance = token_balance + ? WHERE id = ?",
