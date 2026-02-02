@@ -14,11 +14,24 @@ export default function LoginPage() {
         setError("");
 
         try {
+            // [Check for CLI Redirect]
+            const params = new URLSearchParams(window.location.search);
+            const cliRedirect = params.get("cli_redirect");
+
             const supabase = createClient();
+
+            // If CLI redirect exists, we append it to the callback URL
+            let redirectUrl = `${window.location.origin}/api/auth/callback`;
+            if (cliRedirect) {
+                redirectUrl += `?next=${encodeURIComponent(cliRedirect)}`;
+            } else {
+                redirectUrl += `?next=/dashboard`;
+            }
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: "github",
                 options: {
-                    redirectTo: `${window.location.origin}/api/auth/callback`,
+                    redirectTo: redirectUrl,
                 },
             });
 

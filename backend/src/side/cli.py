@@ -126,69 +126,7 @@ def handle_graveyard(args):
     for entry in recent:
         print(f"   • [{entry.get('timestamp', 'N/A')}] {entry.get('action')} [Cost: {entry.get('cost_tokens', 0)} SU] -> {entry.get('outcome', 'PASS')}")
 
-def handle_hub(args):
-    from pathlib import Path
-    import asyncio
-    from side.tools.core import get_database
-    from side.services.hub import generate_hub
-    db = get_database()
-    
-    # 1. Evolve the Hub (Live Update)
-    print("🏛️  [HUB]: Evolving Strategic Hub...")
-    asyncio.run(generate_hub(db))
-    
-    from side.utils.crypto import shield
-    import json
-    
-    engine = _get_engine()
-    op_store = _get_transient(engine)
-    global_stats = op_store.get_global_stats()
-    
-    brain_path = Path(".side/sovereign.json")
-    if not brain_path.exists():
-        print("\n❌ [ERROR]: Sovereign Brain not found. Run 'side feed' first.")
-        return
 
-    try:
-        raw_dna = shield.unseal_file(brain_path)
-        dna = json.loads(raw_dna)
-        intent = dna.get("intent", {})
-    except Exception as e:
-        print(f"\n❌ [ERROR]: DNA Corruption detected: {e}")
-        return
-
-    print("\n🏛️  [STRATEGIC HUB] - Unified Executive HUD")
-    print("==========================================")
-    print(f"📍  DESTINATION: {intent.get('latest_destination', 'Day 1000')}")
-    print(f"🧬  COHERENCE:   98.2% (Standardized)")
-    print(f"🧠  GLOBAL MEM:  {global_stats['total_profiles']} Profiles | {global_stats['total_size_mb']:.2f} MB")
-    print("==========================================")
-    
-    print("\n🧭  NORTH STAR (Objectives)")
-    objectives = intent.get("objectives", [])
-    if not objectives:
-        print("   * No long-term objectives set.")
-    for obj in objectives:
-        print(f"   [ ] **{obj.get('title')}**")
-        
-    print("\n🔨  ACTIVE DIRECTIVES (Tasks)")
-    tasks = intent.get("directives", [])
-    if not tasks:
-        print("   * No immediate directives.")
-    for task in tasks:
-        print(f"   [ ] {task.get('title')}")
-
-    print("\n🧠  RECENT INTEL (Silicon Pulse)")
-    intel = intent.get("intel_signals", [])
-    if not intel:
-        print("   * No high-entropy signals detected.")
-    for signal in intel:
-        icon = "🔹"
-        if signal.get('tool') == 'scan': icon = "🛡️"
-        if signal.get('tier') == 'critical': icon = "🔴"
-        print(f"   {icon} {signal.get('action')}")
-
-    print("\n✅ Sovereign Hub Synced and Ready.")
 
 def handle_plan(args):
     import asyncio
@@ -207,80 +145,99 @@ def handle_plan(args):
     print("------------------------------------------")
 
 def handle_report(args):
-    from side.utils.soul import StrategicSoul
-    import json
-    
-    engine = _get_engine()
-    identity = _get_identity(engine)
-    forensic = _get_forensic(engine)
-    
-    project_id = engine.get_project_id(".")
-    stats = identity.get_profile(project_id)
-    
-    print("\n🦅 SOVEREIGN WALLET")
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    
-    balance = identity.get_token_balance(project_id)
-    su_balance = balance.get('balance', 0)
-    tier = balance.get('tier', 'trial').upper()
-    
-    print(f"💰 BALANCE:  {su_balance:,} SUs")
-    print(f"🔱 TIER:     {tier}")
-    print(f"💳 BILLING:  https://sidelith.com/account")
-    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    
-    print("\n📡 RECENT INTELLIGENCE & ROI")
-    activities = forensic.get_recent_activities(project_id, limit=20)
-    has_signals = False
-    risks_averted = 0
-    
-    for act in activities:
-         payload = json.loads(act['payload']) if isinstance(act['payload'], str) else act['payload']
-         if act['action'] == 'TERMINAL_EXEC' and payload.get('status') == 'FAIL':
-             risks_averted += 1
-         if act['action'] == 'FORENSIC_AUDIT' and payload.get('score', 0) < 100:
-             risks_averted += 1
-    
-    print(f"📈 VALUE GENERATED: {risks_averted} Critical Risks Averted this session.")
-    print("-" * 55)
+    print("\nMoved to Dashboard: http://localhost:3000/dashboard")
+    print("The CLI report has been deprecated in favor of the real-time Web HUD.")
 
-    processed_count = 0
-    for act in activities:
-        if processed_count >= 5: break
+def handle_hub(args):
+    print("\nMoved to Dashboard: http://localhost:3000/dashboard")
+    print("The Strategic Hub is now a visual interface.")
+
+def handle_login(args):
+    import webbrowser
+    import os
+    from side.utils.auth_server import start_auth_server
+    
+    # [ENVIRONMENT CONFIG]
+    # Default to Staging/Production for Release Candidates
+    AUTH_DOMAIN = "https://strong-cooperation-staging.up.railway.app"
+    
+    # Developer Override
+    if os.environ.get("SOVEREIGN_ENV") == "dev":
+        AUTH_DOMAIN = "http://localhost:3999"
+    
+    PORT = 54321
+    REDIRECT_URI = f"http://localhost:{PORT}/callback"
+    LOGIN_URL = f"{AUTH_DOMAIN}/login?cli_redirect={REDIRECT_URI}"
+    API_URL = f"{AUTH_DOMAIN}/api/me"
+    
+    print("🔐 [SOVEREIGN AUTH]: Initiating Secure Handshake...")
+    print(f"👉 Connecting to: {AUTH_DOMAIN}")
+    print(f"👉 Opening browser: {LOGIN_URL}")
+    webbrowser.open(LOGIN_URL)
+    
+    print("⏳ Waiting for authentication...")
+    
+    # Start ephemeral server to catch the callback
+    tokens = start_auth_server(port=PORT)
+    
+    if tokens and tokens.get("access_token"):
+        print("\n✅ [SUCCESS]: Identity Verified.")
+        print("⏳ Fetching Sovereign Profile...")
+        
+        # Fetch Real Profile from Web
+        import urllib.request
+        import json
         
         try:
-            payload = json.loads(act['payload']) if isinstance(act['payload'], str) else act['payload']
-            timestamp = act.get('timestamp', 'Just Now')[:16]
-            
-            if act['action'] == 'TERMINAL_EXEC' and payload.get('status') == 'FAIL':
-                has_signals = True
-                processed_count += 1
-                cmd = payload.get('command')
-                code = payload.get('exit_code')
+            req = urllib.request.Request(
+                API_URL, 
+                headers={
+                    "Authorization": f"Bearer {tokens['access_token']}",
+                    "Content-Type": "application/json"
+                }
+            )
+            with urllib.request.urlopen(req) as res:
+                profile_data = json.load(res)
                 
-                from side.tools.forensics_tool import ForensicFinding
-                details = f"Command '{cmd}' failed (Exit: {code})"
-                finding = ForensicFinding(
-                     type="TERMINAL_FAIL",
-                     message=details,
-                     severity="HIGH",
-                     file_path="terminal"
-                )
-                print(f"   [{timestamp}] 🚨 {finding.message}")
-                
-            elif act['action'] == 'FORENSIC_AUDIT':
-                has_signals = True
-                processed_count += 1
-                score = payload.get('score', 0)
-                print(f"   [{timestamp}] 🛡️  Audit Score: {score}/100")
-        
-        except Exception:
-            continue
+            engine = _get_engine()
+            identity = _get_identity(engine)
+            project_id = engine.get_project_id(".")
             
-    if not has_signals:
-        print("   (System Stable. No Anomalies Logged.)")
+            # Update Identity with Real Data
+            identity.update_profile(project_id, {
+                "tier": profile_data.get("tier", "trial"),
+                "token_balance": profile_data.get("tokens_monthly", 500) - profile_data.get("tokens_used", 0),
+                "tokens_monthly": profile_data.get("tokens_monthly", 500),
+                "access_token": tokens["access_token"],
+                "refresh_token": tokens.get("refresh_token"),
+                "email": profile_data.get("email")
+            })
+            
+            print(f"   👤 User:    {profile_data.get('email')}")
+            print(f"   🔱 Tier:    {profile_data.get('tier', 'trial').upper()}")
+            print(f"   💰 Balance: {profile_data.get('tokens_monthly', 500):,} SUs")
+            print("   Context: Sovereign Identity Stored locally.")
+            
+        except Exception as e:
+            print(f"\n⚠️ [WARNING]: Could not fetch profile details: {e}")
+            print("   Falling back to local session storage only.")
+            # Still save the token so connection works
+            engine = _get_engine()
+            identity = _get_identity(engine)
+            project_id = engine.get_project_id(".")
+            identity.update_profile(project_id, {
+                "access_token": tokens["access_token"],
+                "refresh_token": tokens.get("refresh_token")
+            })
 
-    print("\n✅ Sovereign Velocity Optimal.")
+    else:
+        print("\n❌ [FAILURE]: Authentication timed out or was denied.")
+
+def handle_train(args):
+    print("\nCloud Training coming soon.")
+    print("Local training has been disabled to preserve battery life.")
+
+
 
 def handle_certify(args):
     from side.pulse import pulse
@@ -459,13 +416,7 @@ def handle_prune(args):
     removed = asyncio.run(intel.prune_wisdom())
     print(f"✅ [SUCCESS]: Pruned {removed} obsolete fragments. Sovereign Brain is optimized.")
 
-def handle_train(args):
-    from pathlib import Path
-    if args.export:
-        from side.intel.trainer import generate_training_data
-        generate_training_data(Path("."))
-    else:
-        print("⚠️ Specify --export to generate a fine-tuning dataset.")
+
 
 def handle_recovery(args):
     from pathlib import Path
@@ -544,53 +495,38 @@ def handle_synergy(args):
             print(f"   💡 {w['wisdom_text']}")
             print("-" * 60)
 
-def handle_login(args):
-    print("🔐 [Sovereign Auth]: Authenticating...")
-    key = args.key
-    tier = "trial"
-    grant = 0
-    
-    if key and key.startswith("side_pro"):
-        tier = "pro"
-        grant = 5000
-        print("✅ [SUCCESS]: Activated PRO Tier. (5,000 SUs/mo)")
-    elif key and key.startswith("side_elite"):
-        tier = "elite"
-        grant = 25000
-        print("✅ [SUCCESS]: Activated ELITE Tier. (25,000 SUs/mo)")
-    elif key and key.startswith("side_hitech"):
-        tier = "hitech"
-        grant = 10000
-        print("✅ [SUCCESS]: Activated HIGH TECH Tier. (Airgap Enabled)")
-    else:
-        tier = "trial"
-        grant = 500
-        print("✅ [SUCCESS]: Activated TRIAL Tier. (500 SU Grant)")
-        
-    engine = _get_engine()
-    identity = _get_identity(engine)
-    project_id = engine.get_project_id(".")
-    identity.update_profile(project_id, {
-        "tier": tier,
-        "token_balance": grant,
-        "tokens_monthly": grant
-    })
-    
-    print(f"   Wallet Balance: {grant} SUs")
-    print("   Identity stored in Sovereign DB and `~/.side/credentials`.")
+
 
 def handle_connect(args):
     print("🔌 [Sovereign Connect]: Detecting Environment...")
     from pathlib import Path
     import json
     import time
+    import shutil
+    import sys
     
+    # [SOVEREIGN RESOLUTION]: Find the absolute path to the Sovereign Server.
+    # Editors (Cursor/Code) often run with a different PATH than the terminal.
+    # We must lock the 'sidelith-serve' binary to the current verified environment.
+    server_bin = shutil.which("sidelith-serve")
+    
+    if server_bin:
+        cmd = server_bin
+        cmd_args = []
+        print(f"   🎯 Resolved Server Bin: {cmd}")
+    else:
+        # Fallback to the current python interpreter
+        cmd = sys.executable
+        cmd_args = ["-m", "side.server"]
+        print(f"   ⚠️ 'sidelith-serve' not in PATH. Fallback to: {cmd} -m side.server")
+
     claude_config_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
     server_config = {
-        "command": "sidelith-serve",
-        "args": [],
+        "command": cmd,
+        "args": cmd_args,
         "env": {
-            "PYTHONUNBUFFERED": "1"
+            "PYTHONUNBUFFERED": "1",
+            "SOVEREIGN_MODE": "1"
         }
     }
 
@@ -626,6 +562,23 @@ def handle_connect(args):
     print(json.dumps(config, indent=2))
     print("---------------------------------------------------------------")
 
+def handle_audit(args):
+    """Deep Forensic Audit Wrapper"""
+    import asyncio
+    from side.tools.audit import handle_run_audit
+    
+    print(f"🕵️ [AUDIT]: Starting Deep Scan (Dimension: {args.dimension})...")
+    
+    severity = args.severity
+    if severity == "all":
+        severity = "critical,high,medium,low,info"
+        
+    result = asyncio.run(handle_run_audit({
+        "dimension": args.dimension,
+        "severity": severity
+    }))
+    print(result)
+
 def main():
     import argparse
     import json
@@ -654,16 +607,20 @@ def main():
     # Graveyard Command (Multi-Repo Activity)
     subparsers.add_parser("graveyard", help="View cross-project activity and decision logs")
     
-    # Strategic Hub Command (Unified HUD)
-    subparsers.add_parser("hub", help="Launch and update the Unified Strategic Hub")
+
 
     # Plan Command (Directive Management)
     plan_parser = subparsers.add_parser("plan", help="Manage strategic directives and goals")
     plan_parser.add_argument("--goal", required=True, help="The goal or directive to log")
     plan_parser.add_argument("--due", default="Soon", help="Due date for the goal")
 
-    # Report Command
-    subparsers.add_parser("report", help="Generate Sovereign Daily Digest")
+    # Redirects (Tombstones)
+    subparsers.add_parser("report", help="[MOVED] Generate Sovereign Daily Digest")
+    subparsers.add_parser("hub", help="[MOVED] Launch Unified Strategic Hub")
+    subparsers.add_parser("login", help="[MOVED] Activate your Sovereign Tier")
+    subparsers.add_parser("train", help="[MOVED] Synthesize fine-tuning data")
+
+
 
     # Feed Command (Build Context)
     feed_parser = subparsers.add_parser("feed", help="Ingest codebase and build Sovereign Identity (sovereign.json)")
@@ -681,8 +638,7 @@ def main():
     strat_parser.add_argument("question", help="The strategic question to ask")
 
     # Login Command (Tier Activation)
-    login_parser = subparsers.add_parser("login", help="Activate your Sovereign Tier")
-    login_parser.add_argument("--key", help="License Key (Leave empty for Trial)")
+
 
     # Connect Command (MCP Setup)
     subparsers.add_parser("connect", help="Generate MCP Configuration for IDEs")
@@ -694,9 +650,7 @@ def main():
     # Prune Command (Neural Decay)
     subparsers.add_parser("prune", help="Optimize Sovereign Memory by purging the 'Dead Wisdom'")
 
-    # Train Command (Phase II-C: Software 2.0)
-    train_parser = subparsers.add_parser("train", help="Synthesize fine-tuning data from Sovereign Memory")
-    train_parser.add_argument("--export", action="store_true", help="Generate JSONL training pairs")
+
 
     # Airgap Command
     airgap_parser = subparsers.add_parser("airgap", help="Toggle Sovereign Airgap Mode (100%% Offline)")
@@ -746,7 +700,7 @@ def main():
     synergy_subparsers = synergy_parser.add_subparsers(dest="synergy_command", help="Synergy actions")
     synergy_subparsers.add_parser("sync", help="Harvest architectural wisdom from the Universal Mesh")
     synergy_subparsers.add_parser("wisdom", help="List all inherited strategic patterns")
-    
+
     args = parser.parse_args()
     
     # [OBSESSION DAY I] Standard commands dispatch for <10ms Cold Start
@@ -755,8 +709,11 @@ def main():
         "pulse": handle_pulse,
         "fix": handle_fix,
         "graveyard": handle_graveyard,
-        "hub": handle_hub,
         "report": handle_report,
+        "hub": handle_hub,
+        "login": handle_login,
+        "train": handle_train,
+
         "certify": handle_certify,
         "feed": handle_feed,
         "strategy": handle_strategy,
@@ -765,33 +722,20 @@ def main():
         "mirror": handle_mirror,
         "watch": handle_watch,
         "prune": handle_prune,
-        "train": handle_train,
+
         "recovery": handle_recovery,
         "export": handle_export,
         "import": handle_import,
         "mesh": handle_mesh,
         "synergy": handle_synergy,
-        "login": handle_login,
-        "connect": handle_connect
+
+        "connect": handle_connect,
+        "audit": handle_audit,
+        "plan": handle_plan
     }
 
     if args.command in handlers:
         handlers[args.command](args)
-    elif args.command == "audit":
-        import asyncio
-        from side.tools.audit import handle_run_audit
-        severity = args.severity
-        if severity == "all":
-            severity = "critical,high,medium,low,info"
-        result = asyncio.run(handle_run_audit({
-            "dimension": args.dimension,
-            "severity": severity
-        }))
-        print("\n" + result)
-    elif args.command == "plan":
-        handle_plan(args)
-    elif args.command == "hub":
-        handle_hub(args)
     else:
         parser.print_help()
 

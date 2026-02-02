@@ -10,12 +10,29 @@ export async function GET(request: Request) {
 
     if (code) {
         const supabase = await createClient()
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code) // Capture data for tokens
+
         if (!error) {
             const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
             const isLocalEnv = process.env.NODE_ENV === 'development'
+
+            // [CLI REDIRECT LOGIC]
+            // If 'next' is an absolute URL (starts with http), we assume it's a CLI/External redirect.
+            // We append the tokens to the URL so the CLI can capture them.
+            if (next.startsWith('http')) {
+                const session = data.session;
+                const redirectUrl = new URL(next);
+                if (session) {
+                    redirectUrl.searchParams.set('access_token', session.access_token);
+                    if (session.refresh_token) {
+                        redirectUrl.searchParams.set('refresh_token', session.refresh_token);
+                    }
+                }
+                return NextResponse.redirect(redirectUrl.toString())
+            }
+
+            // Normal Dashboard Redirect
             if (isLocalEnv) {
-                // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
                 return NextResponse.redirect(`${origin}${next}`)
             } else if (forwardedHost) {
                 return NextResponse.redirect(`https://${forwardedHost}${next}`)
