@@ -30,7 +30,11 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 # Setup
-mcp = FastMCP("Sidelith Sovereign")
+# [Deployment] Allow dynamic port binding (Railway/Heroku/Fly)
+port = int(os.getenv("PORT", 8000))
+host = "0.0.0.0" # Always bind to all interfaces in production
+
+mcp = FastMCP("Sidelith Sovereign", port=port, host=host)
 engine = SovereignEngine()
 identity = IdentityStore(engine)
 strategic = StrategicStore(engine)
