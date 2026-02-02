@@ -125,9 +125,16 @@ class SovereignGovernor(threading.Thread):
         except Exception:
             pass
 
-# Start Governor
-governor = SovereignGovernor()
-governor.start()
+# Background Services Management
+def start_background_services():
+    """
+    Controlled startup of non-blocking background logic.
+    Ensures the main server binds to its port first.
+    """
+    logger.info("📡 [STARTUP]: Launching Sovereign background services...")
+    governor = SovereignGovernor()
+    governor.start()
+    return governor
 
 # ---------------------------------------------------------------------
 # RESOURCES (Read-Only State)
@@ -209,6 +216,7 @@ def query_wisdom(topic: str) -> str:
     return json.dumps(results, indent=2)
 
 def main():
+    start_background_services()
     mcp.run()
 
 if __name__ == "__main__":

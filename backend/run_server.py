@@ -50,6 +50,10 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"⚠️ Health check injection failed: {e}")
 
+        # Start background services (Governor, Pulse, etc.)
+        from side.server import start_background_services
+        start_background_services()
+
         mcp.run(
             transport="sse", 
             # host/port logic handled by Uvicorn from env or internal defaults
