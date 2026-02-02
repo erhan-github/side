@@ -4,7 +4,7 @@ import asyncio
 from pathlib import Path
 
 # Add src to path for absolute imports
-src_path = str(Path(__file__).parent / "src")
+src_path = str(Path(__file__).parent.parent / "backend" / "src")
 if src_path not in sys.path:
     sys.path.append(src_path)
 
