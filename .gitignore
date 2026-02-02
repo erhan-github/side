@@ -28,3 +28,4 @@ readings/
 .sovereignignore
 .side-id
 investor/
+.side/logs/

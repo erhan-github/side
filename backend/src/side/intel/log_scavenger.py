@@ -200,9 +200,10 @@ class LogScavenger:
             action=f"capture_{source.lower()}_signal",
             cost_tokens=0, # FREE: System signals must never be dropped
             payload={
-                "source": source,
-                "type": event_type,
-                "data": payload,
+                "source": source.upper(), # XCODE, ANDROID, DOCKER
+                "type": event_type,       # CRASH, ERROR, WARNING
+                "raw_data": payload,      # The raw log line/object
+                "normalized_error": str(payload.get("error") or payload.get("log") or payload.get("snippet") or "Unknown Error"),
                 "timestamp": time.time()
             }
         )
