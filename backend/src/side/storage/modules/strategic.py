@@ -28,8 +28,7 @@ class StrategicStore:
                     id, 
                     wisdom_text, 
                     category, 
-                    signal_pattern,
-                    tokenize='porter uni'
+                    signal_pattern
                 )
             """)
             # Triggers ensure the FTS index is always in sync with the main table
