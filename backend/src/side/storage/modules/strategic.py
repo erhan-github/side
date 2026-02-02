@@ -19,41 +19,7 @@ class StrategicStore:
 
     def init_schema(self, conn):
         """Initialize strategic tables."""
-        # ─────────────────────────────────────────────────────────────
-        # VIRTUAL TABLE: FTS5 SHADOW INDEX (Hybrid Lite)
-        # ─────────────────────────────────────────────────────────────
-        try:
-            conn.execute("""
-                CREATE VIRTUAL TABLE IF NOT EXISTS public_wisdom_fts USING fts5(
-                    id, 
-                    wisdom_text, 
-                    category, 
-                    signal_pattern
-                )
-            """)
-            # Triggers ensure the FTS index is always in sync with the main table
-            conn.execute("""
-                CREATE TRIGGER IF NOT EXISTS public_wisdom_ai AFTER INSERT ON public_wisdom BEGIN
-                    INSERT INTO public_wisdom_fts(id, wisdom_text, category, signal_pattern) 
-                    VALUES (new.id, new.wisdom_text, new.category, new.signal_pattern);
-                END;
-            """)
-            conn.execute("""
-                CREATE TRIGGER IF NOT EXISTS public_wisdom_ad AFTER DELETE ON public_wisdom BEGIN
-                    DELETE FROM public_wisdom_fts WHERE id = old.id;
-                END;
-            """)
-            conn.execute("""
-                CREATE TRIGGER IF NOT EXISTS public_wisdom_au AFTER UPDATE ON public_wisdom BEGIN
-                    UPDATE public_wisdom_fts SET 
-                        wisdom_text = new.wisdom_text,
-                        category = new.category,
-                        signal_pattern = new.signal_pattern
-                    WHERE id = old.id;
-                END;
-            """)
-        except Exception as e:
-             logger.warning(f"FTS5 setup for public_wisdom failed: {e}")
+
 
         # ─────────────────────────────────────────────────────────────
         # CORE TABLE 1: PLANS - Strategic Roadmap
@@ -172,6 +138,42 @@ class StrategicStore:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # ─────────────────────────────────────────────────────────────
+        # VIRTUAL TABLE: FTS5 SHADOW INDEX (Hybrid Lite)
+        # ─────────────────────────────────────────────────────────────
+        try:
+            conn.execute("""
+                CREATE VIRTUAL TABLE IF NOT EXISTS public_wisdom_fts USING fts5(
+                    id, 
+                    wisdom_text, 
+                    category, 
+                    signal_pattern
+                )
+            """)
+            # Triggers ensure the FTS index is always in sync with the main table
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS public_wisdom_ai AFTER INSERT ON public_wisdom BEGIN
+                    INSERT INTO public_wisdom_fts(id, wisdom_text, category, signal_pattern) 
+                    VALUES (new.id, new.wisdom_text, new.category, new.signal_pattern);
+                END;
+            """)
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS public_wisdom_ad AFTER DELETE ON public_wisdom BEGIN
+                    DELETE FROM public_wisdom_fts WHERE id = old.id;
+                END;
+            """)
+            conn.execute("""
+                CREATE TRIGGER IF NOT EXISTS public_wisdom_au AFTER UPDATE ON public_wisdom BEGIN
+                    UPDATE public_wisdom_fts SET 
+                        wisdom_text = new.wisdom_text,
+                        category = new.category,
+                        signal_pattern = new.signal_pattern
+                    WHERE id = old.id;
+                END;
+            """)
+        except Exception as e:
+             logger.warning(f"FTS5 setup for public_wisdom failed: {e}")
         # ─────────────────────────────────────────────────────────────
         # CORE TABLE 7: MEMORY - Long-Term Unstructured Facts [KAR-6.19]
         # ─────────────────────────────────────────────────────────────
