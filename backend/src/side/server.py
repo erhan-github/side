@@ -36,10 +36,13 @@ host = "0.0.0.0" # Always bind to all interfaces in production
 
 mcp = FastMCP("Sidelith Sovereign", port=port, host=host)
 engine = SovereignEngine()
-identity = IdentityStore(engine)
-strategic = StrategicStore(engine)
-forensic = ForensicStore(engine)
-operational = OperationalStore(engine)
+
+# Consolidated Registry: Use engine-provided instances to prevent redundant migrations
+identity = engine.identity
+strategic = engine.strategic
+forensic = engine.forensic
+operational = engine.operational
+
 intel = AutoIntelligence(Path.cwd())
 
 # ---------------------------------------------------------------------
@@ -57,6 +60,8 @@ class SovereignGovernor(threading.Thread):
         self.high_cpu_duration = 0
         self.project_root = Path.cwd()
         self.pulse_path = self.project_root / ".side" / "pulse.json"
+        self.last_pulse_time = 0
+        self.last_status = None
         
     def run(self):
         process = psutil.Process(os.getpid())
@@ -86,17 +91,22 @@ class SovereignGovernor(threading.Thread):
                     logger.warning(f"🚨 [GOVERNOR]: Sustained CPU usage ({cpu}%). Throttling...")
                     time.sleep(1) # Self-throttle
                     
-                # 3. Pulse Telemetry (Dimension 26)
-                self._update_pulse(cpu, mem)
+                # 3. Pulse Telemetry (IO Optimized: Write only on change or every 10s)
+                now = time.time()
+                status = "HEALTHY" if cpu < 5.0 else "BUSY"
+                if status != self.last_status or (now - self.last_pulse_time) > 10:
+                    self._update_pulse(cpu, mem, status)
+                    self.last_pulse_time = now
+                    self.last_status = status
                 
             except Exception as e:
                 logger.error(f"Governor Error: {e}")
                 time.sleep(5)
 
-    def _update_pulse(self, cpu, mem):
+    def _update_pulse(self, cpu, mem, status):
         try:
             data = {
-                "status": "HEALTHY" if cpu < 5.0 else "BUSY",
+                "status": status,
                 "telemetry": {
                     "cpu_percent": round(cpu, 1),
                     "ram_mb": round(mem / 1024 / 1024, 1),

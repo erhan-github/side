@@ -34,10 +34,14 @@ class SovereignEngine:
         from side.storage.modules.strategic import StrategicStore
         from side.storage.modules.forensic import ForensicStore
         from side.storage.modules.accounting import AccountingStore
+        from side.storage.modules.identity import IdentityStore
+        from side.storage.modules.transient import OperationalStore
         
         self.strategic = StrategicStore(self)
         self.forensic = ForensicStore(self)
         self.accounting = AccountingStore(self)
+        self.identity = IdentityStore(self)
+        self.operational = OperationalStore(self)
 
     @contextmanager
     def connection(self) -> Generator[sqlite3.Connection, None, None]:
