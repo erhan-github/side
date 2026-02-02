@@ -125,8 +125,12 @@ class LogScavenger:
         
         while not self.stop_event.is_set():
             try:
-                # Watch for error.log, debug.log, or *.err
-                log_files = list(self.project_path.glob("*.log")) + list(self.project_path.glob("*.err"))
+                # Watch for error.log, debug.log, or *.err AND the Black Box
+                log_files = (
+                    list(self.project_path.glob("*.log")) + 
+                    list(self.project_path.glob("*.err")) +
+                    list((self.project_path / ".side" / "logs").glob("*.log"))
+                )
                 
                 for log_file in log_files:
                     try:
@@ -142,6 +146,10 @@ class LogScavenger:
                                 # Split lines for granular analysis
                                 lines = new_content.splitlines()
                                 for line in lines:
+                                    # [CRITICAL] Anti-Recursion: Ignore our own logs!
+                                    if "[LOG_SCAVENGER]" in line:
+                                        continue
+                                        
                                     self.generic_buffer.append(line)
                                     
                                     # Heuristic: "Traceback", "Error:", "Exception"
