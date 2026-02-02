@@ -2,6 +2,8 @@ import os
 import sys
 import asyncio
 from pathlib import Path
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 # Add src to path for absolute imports
 # FIXED: Pointing to Sidelith Prime Universal Server
@@ -32,21 +34,20 @@ if __name__ == "__main__":
         print(f"🚀 Starting Sidelith over SSE on port {port}...")
         
         # [Railway Fix] Inject /health endpoint for deployment stability
+        # [Railway Fix] Inject /health endpoint via FastMCP custom_route API
         try:
-            # Access underlying FastAPI app
-            app = getattr(mcp, "_fastapi_app", getattr(mcp, "fastapi_app", None))
-            if app:
-                from datetime import datetime
-                @app.get("/health")
-                async def health_check():
-                    return {"status": "ok", "timestamp": str(datetime.now())}
-                
-                @app.get("/")
-                async def root_health():
-                    return {"status": "ok", "service": "Sidelith Sovereign"}
-                print("✅ Injected /health and / endpoints for Railway.")
-            else:
-                print("⚠️ Could not find underlying FastAPI app to inject health checks.")
+            from datetime import datetime
+            
+            # Using the official decorator instead of monkey patching
+            @mcp.custom_route("/health", methods=["GET"])
+            async def health_check(request: Request):
+                return JSONResponse({"status": "ok", "timestamp": str(datetime.now())})
+
+            @mcp.custom_route("/", methods=["GET"])
+            async def root_health(request: Request):
+                return JSONResponse({"status": "ok", "service": "Sidelith Sovereign"})
+
+            print("✅ Injected /health and / endpoints via FastMCP custom_route.")
         except Exception as e:
             print(f"⚠️ Health check injection failed: {e}")
 
