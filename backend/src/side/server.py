@@ -13,6 +13,8 @@ from .storage.modules.strategic import StrategicStore
 from .storage.modules.forensic import ForensicStore
 from .storage.modules.transient import OperationalStore
 from .intel.auto_intelligence import AutoIntelligence
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 from .intel.log_scavenger import LogScavenger
 from .services.watcher_service import WatcherService
 from .utils.crypto import shield
@@ -215,9 +217,43 @@ def query_wisdom(topic: str) -> str:
     results = operational.search_mesh_wisdom(topic)
     return json.dumps(results, indent=2)
 
+# ---------------------------------------------------------------------
+# INFRASTRUCTURE (Deployment & Health)
+# ---------------------------------------------------------------------
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request: Request):
+    """
+    Railway Health Probe.
+    Returns 200 OK to allow container rotation.
+    """
+    return JSONResponse({
+        "status": "ok",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "instance": os.getenv("RAILWAY_REPLICA_ID", "local"),
+        "mcp_type": "sse"
+    })
+
+@mcp.custom_route("/", methods=["GET"])
+async def root_health(request: Request):
+    """Fallback root endpoint."""
+    return JSONResponse({
+        "status": "ok",
+        "service": "Sidelith Sovereign",
+        "version": "1.0.1-OPTIMIZED"
+    })
+
 def main():
+    port = int(os.getenv("PORT", 8000))
+    transport = os.getenv("MCP_TRANSPORT", "sse") # Default to SSE for container logic
+    
     start_background_services()
-    mcp.run()
+    
+    if transport == "sse":
+        logger.info(f"🚀 [SOVEREIGN]: Starting SSE Server on port {port}...")
+        mcp.run(transport="sse")
+    else:
+        mcp.run(transport="stdio")
 
 if __name__ == "__main__":
     main()
