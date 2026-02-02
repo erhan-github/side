@@ -60,7 +60,8 @@ class AutoIntelligence:
         sovereign_graph = await self.sync_checkpoint()
         
         # 5. Harvest Documentation DNA [KAR-4]
-        await self._harvest_documentation_dna()
+        # [PURGE]: Unstructured text excluded per 'Code-Only' Doctrine.
+        # await self._harvest_documentation_dna()
         
         # 6. [INTEL-4] Sync Mmap Store for NEON Acceleration
         await self._sync_mmap_wisdom()
@@ -91,36 +92,39 @@ class AutoIntelligence:
         tasks = [p for p in plans if p['type'] == 'task' and p['status'] != 'done']
         activities = self.forensic.get_recent_activities(project_id, limit=10)
         
-        sovereign_graph = {
-            "$schema": "./backend/src/side/schema/sovereign.schema.json",
-            "version": "3.1.0 (Unified HUD Edition)",
-            "last_scan": datetime.now(timezone.utc).isoformat(),
-            "dna": {
-                "detected_stack": ["M2 Pro Accelerated"], 
-                "primary_languages": []
-            },
-            "intent": {
-                "objectives": objectives,
-                "directives": tasks,
-                "latest_destination": "Peru Summit v1.0",
-                "intel_signals": activities
-            },
-            "stats": {
-                "nodes": len(local_data.get("context", {}).get("files", [])),
-                "mode": "Distributed"
-            },
-            "fractal_root": local_data,
-            "history_fragments": [],
-            "strategic_timeline": strategic_timeline
-        }
+        # [SOVEREIGN GAVEL]: Enforce Pydantic V2 Strictness
+        from side.models.brain import SovereignGraph, BrainStats, DNA, IntentSnapshot
+        
+        # Construct Policy Object
+        graph_obj = SovereignGraph(
+            version="3.1.0 (Unified HUD Edition)",
+            last_scan=datetime.now(timezone.utc),
+            dna=DNA(
+                detected_stack=["M2 Pro Accelerated"],
+                primary_languages=[]
+            ),
+            stats=BrainStats(
+                nodes=len(local_data.get("context", {}).get("files", [])),
+                mode="Distributed"
+            ),
+            intent=IntentSnapshot(
+                objectives=objectives,
+                directives=tasks,
+                latest_destination="Peru Summit v1.0",
+                intel_signals=activities
+            ),
+            fractal_root=local_data,
+            history_fragments=[],
+            strategic_timeline=strategic_timeline
+        )
         
         # 3. Persist Master Checkpoint (The Weights)
         sovereign_file = self.project_path / ".side" / "sovereign.json"
         sovereign_file.parent.mkdir(parents=True, exist_ok=True)
-        shield.seal_file(sovereign_file, json.dumps(sovereign_graph, indent=2))
+        shield.seal_file(sovereign_file, graph_obj.model_dump_json(indent=2))
         
-        logger.debug("💾 [CHECKPOINT]: Sovereign Weights serialized.")
-        return sovereign_graph
+        logger.debug("💾 [CHECKPOINT]: Sovereign Weights serialized (STRICT).")
+        return graph_obj.model_dump()
 
     async def _sync_mmap_wisdom(self):
         """Syncs public wisdom to Mmap Store for NEON acceleration."""
@@ -168,8 +172,9 @@ class AutoIntelligence:
                 logger.info("✨ [BRAIN]: Strategic Timeline synced to Sovereign Anchor.")
             
         # 2. DNA Harvest (Wisdom)
-        if file_path.suffix == ".md":
-             await self._harvest_single_doc(file_path)
+        # [PURGE]: Unstructured .md files are no longer harvested.
+        # if file_path.suffix == ".md":
+        #      await self._harvest_single_doc(file_path)
 
     async def _harvest_single_doc(self, file_path: Path):
         """Harvests wisdom from a single markdown file."""

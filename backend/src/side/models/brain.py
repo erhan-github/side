@@ -34,6 +34,12 @@ class FractalNode(BaseModel):
     digest: str # SHA-256
     semantics: Optional[FractalSemantics] = None
     
+class IntentSnapshot(BaseModel):
+    objectives: List[Dict[str, Any]] = Field(default_factory=list)
+    directives: List[Dict[str, Any]] = Field(default_factory=list)
+    intel_signals: List[Dict[str, Any]] = Field(default_factory=list)
+    latest_destination: str = "Unknown"
+
 class SovereignGraph(BaseModel):
     """
     The Indexed Brain of a Sidelith-managed Project.
@@ -43,7 +49,12 @@ class SovereignGraph(BaseModel):
     last_scan: datetime = Field(default_factory=datetime.now)
     dna: DNA = Field(default_factory=DNA)
     stats: BrainStats
-    nodes: List[FractalNode] = Field(default_factory=list)
+    
+    # The Intent Layer
+    intent: IntentSnapshot = Field(default_factory=IntentSnapshot)
+    
+    # The Fractal Layer (Raw Distributed Index)
+    fractal_root: Dict[str, Any] = Field(default_factory=dict)
     
     # Context
     history_fragments: List[Dict[str, Any]] = Field(default_factory=list)

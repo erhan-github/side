@@ -33,6 +33,30 @@ SIGNALS = {
     "Tailwind": re.compile(r'tailwind', re.IGNORECASE),
     "React": re.compile(r'react', re.IGNORECASE),
     "Zustand": re.compile(r'zustand', re.IGNORECASE),
+    "Zustand": re.compile(r'zustand', re.IGNORECASE),
+}
+
+# --- KARPATHY FILTERING PROTOCOL ---
+# "Code is Truth. Docs are Noise."
+KARPATHY_DENY_EXTENSIONS = {
+    ".md", ".markdown", ".txt", ".rst", ".adoc",
+    ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
+    ".lock", ".map"
+}
+
+# The "Control Plane" Exceptions
+KARPATHY_ALLOW_FILES = {
+    "task.md",
+    "walkthrough.md",
+    "implementation_plan.md",
+    ".cursorrules",
+    ".editorconfig",
+    "package.json", 
+    "pyproject.toml",
+    "Dockerfile",
+    "docker-compose.yml",
+    "requirements.txt",
+    ".gitignore"
 }
 
 from side.services.ignore import SovereignIgnore
@@ -75,9 +99,9 @@ def get_file_dna(path: Path) -> Dict[str, Any]:
             "semantics": get_file_semantics(path, content)
         }
         
-        # Strategic Capture: Capture first few lines of main files
-        if path.name in ["STRATEGY.md", "README.md", "ARCHITECTURE.md"]:
-            dna["brief"] = content[:1000]
+        # [PURGE]: 'Strategic Capture' removed. Files are only indexed for Structure, not Text.
+        # if path.name in ["STRATEGY.md", "README.md", "ARCHITECTURE.md"]:
+        #     dna["brief"] = content[:1000]
             
         return dna
     except Exception:
@@ -107,7 +131,24 @@ def generate_local_index(directory: Path) -> Dict[str, Any]:
     with ThreadPoolExecutor(max_workers=8) as executor:
         items_to_scan = [item for item in directory.iterdir() if not ignore_service.should_ignore(item)]
         
-        file_items = [i for i in items_to_scan if i.is_file()]
+        file_items = []
+        for i in items_to_scan:
+            if not i.is_file():
+                continue
+                
+            # [KARPATHY FILTER]: Apply the "Signal Only" logic
+            # 1. Allow Exception List explicitly
+            if i.name in KARPATHY_ALLOW_FILES:
+                file_items.append(i)
+                continue
+                
+            # 2. Deny Noise Extensions
+            if i.suffix in KARPATHY_DENY_EXTENSIONS:
+                continue
+                
+            # 3. Default Allow (Code)
+            file_items.append(i)
+
         dna_results = list(executor.map(get_file_dna, file_items))
         
         for dna in dna_results:
