@@ -254,8 +254,9 @@ def main():
     if transport == "sse":
         logger.info(f"🚀 [SOVEREIGN]: Starting SSE Server on {host}:{port} (Proxy Hardened)...")
         # Standard production config for behind-proxy Uvicorn
+        # Using the correct attribute for FastMCP's starlette app
         uvicorn.run(
-            mcp._app, 
+            mcp.sse_app, 
             host=host, 
             port=port, 
             proxy_headers=True, 

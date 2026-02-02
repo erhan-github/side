@@ -189,7 +189,8 @@ class ForensicStore:
                     row = conn.execute("SELECT token_balance FROM profile WHERE id = ?", (project_id,)).fetchone()
                     balance = row['token_balance'] if row else 0
                     if balance < cost_tokens:
-                        logger.warning(f"🚫 Hard Stop: Insufficient tokens for {project_id}")
+                        masked_id = f"{project_id[:4]}...{project_id[-4:]}" if len(project_id) > 8 else project_id
+                        logger.warning(f"🚫 Hard Stop: Insufficient tokens for {masked_id}")
                         continue # Skip this one but keep going with the batch
 
                 # SEAL SENSITIVE PAYLOAD
@@ -336,7 +337,8 @@ class ForensicStore:
             
             for (pid, tool), events in bursts.items():
                 if len(events) >= 5: # Threshold for a 'Significant Burst'
-                    logger.info(f"✨ [DISTILL]: Found burst of {len(events)} events for {tool} in {pid}")
+                    masked_pid = f"{pid[:4]}...{pid[-4:]}" if len(pid) > 8 else pid
+                    logger.info(f"✨ [DISTILL]: Found burst of {len(events)} events for {tool} in {masked_pid}")
                     # Distill into a strategic fragment
                     summaries.append({
                         "project_id": pid,
