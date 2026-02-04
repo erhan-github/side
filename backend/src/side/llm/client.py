@@ -14,7 +14,7 @@ import os
 from enum import Enum
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-from side.storage.modules.base import SovereignEngine
+from side.storage.modules.base import ContextEngine
 from side.storage.modules.identity import IdentityStore
 from side.storage.modules.transient import OperationalStore
 
@@ -57,7 +57,7 @@ class LLMClient:
         self.purpose = purpose # "reasoning" or "intelligence"
         
         # SFO Sprint: No Fat Architecture
-        self.engine = SovereignEngine()
+        self.engine = ContextEngine()
         self.identity = IdentityStore(self.engine)
         self.operational = OperationalStore(self.engine)
         
@@ -83,7 +83,7 @@ class LLMClient:
             if provider_name == "ollama":
                 # AIRGAP TIER CHECK
                 # We must query the identity store directly to verify entitlement
-                project_id = SovereignEngine.get_project_id(".")
+                project_id = ContextEngine.get_project_id(".")
                 profile = self.identity.get_profile(project_id)
                 tier = profile.get("tier", "trial") if profile else "trial"
                 
@@ -163,7 +163,7 @@ class LLMClient:
         3. User Tier (HiTech/Enterprise vs Standard)
         4. User Preference (Settings Toggle)
         """
-        project_id = SovereignEngine.get_project_id(".")
+        project_id = ContextEngine.get_project_id(".")
         profile = self.identity.get_profile(project_id)
         tier = profile.get("tier", "trial") if profile else "trial"
         
@@ -225,7 +225,11 @@ class LLMClient:
                 if current_api_key:
                     self.client.api_key = current_api_key
 
-            all_messages = [{"role": "system", "content": system_prompt}] + messages
+            from side.utils.shield import shield
+            scrubbed_system = shield.scrub(system_prompt)
+            scrubbed_messages = [{"role": m["role"], "content": shield.scrub(m["content"])} for m in messages]
+            
+            all_messages = [{"role": "system", "content": scrubbed_system}] + scrubbed_messages
             response = self.client.chat.completions.create(
                 model=actual_model, messages=all_messages,
                 temperature=temperature, max_tokens=max_tokens,
@@ -261,7 +265,11 @@ class LLMClient:
                     self.async_client.api_key = current_api_key
         
         try:
-            all_messages = [{"role": "system", "content": system_prompt}] + messages
+            from side.utils.shield import shield
+            scrubbed_system = shield.scrub(system_prompt)
+            scrubbed_messages = [{"role": m["role"], "content": shield.scrub(m["content"])} for m in messages]
+            
+            all_messages = [{"role": "system", "content": scrubbed_system}] + scrubbed_messages
             response = await self.async_client.chat.completions.create(
                 model=actual_model, messages=all_messages,
                 temperature=temperature, max_tokens=max_tokens,
@@ -310,7 +318,7 @@ class LLMClient:
             if next_provider:
                 # Check for High Tech entitlement before switching to Ollama
                 if next_provider == LLMProvider.OLLAMA:
-                    project_id = SovereignEngine.get_project_id(".")
+                    project_id = ContextEngine.get_project_id(".")
                     profile = self.identity.get_profile(project_id)
                     tier = profile.get("tier", "trial") if profile else "trial"
                     if tier not in ["hitech", "enterprise"]:

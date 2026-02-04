@@ -53,9 +53,9 @@ class NeuralShield:
 
     def _get_or_create_master_key(self) -> bytes:
         """Retrieves or generates a machine-persisted master key."""
-        from side.storage.modules.base import SovereignEngine
+        from side.storage.modules.base import ContextEngine
         from side.storage.modules.transient import OperationalStore
-        engine = SovereignEngine()
+        engine = ContextEngine()
         op_store = OperationalStore(engine)
         key_str = op_store.get_setting("neural_shield_key")
         

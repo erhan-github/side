@@ -1,5 +1,5 @@
 """
-Sovereign Base Engine - Core SQLite Connectivity.
+Core Intelligence Engine - SQLite Persistence Layer.
 """
 
 import sqlite3
@@ -15,7 +15,7 @@ class InsufficientTokensError(Exception):
     """Raised when the user has run out of Strategic Units (SU)."""
     pass
 
-class SovereignEngine:
+class ContextEngine:
     """
     Core engine handling SQLite lifecycle and resiliency.
     """
@@ -36,12 +36,14 @@ class SovereignEngine:
         from side.storage.modules.accounting import AccountingStore
         from side.storage.modules.identity import IdentityStore
         from side.storage.modules.transient import OperationalStore
+        from side.storage.modules.pattern_store import PatternStore
         
         self.strategic = StrategicStore(self)
         self.forensic = ForensicStore(self)
         self.accounting = AccountingStore(self)
         self.identity = IdentityStore(self)
         self.operational = OperationalStore(self)
+        self.wisdom = PatternStore(self)
 
     @contextmanager
     def connection(self) -> Generator[sqlite3.Connection, None, None]:
@@ -119,14 +121,14 @@ class SovereignEngine:
             from side.security.sqlcipher import SQLCipherManager
             manager = SQLCipherManager(self.db_path)
             conn = manager.connect()
-            logger.info("🔒 [SOVEREIGN]: Using SQLCipher encryption (HiTech/Enterprise tier)")
+            logger.info("🔒 [ENGINE]: Using SQLCipher encryption (P2P/Enterprise tier)")
             return conn
         except Exception as e:
             logger.warning(f"🔒 [SOVEREIGN]: SQLCipher unavailable, falling back to standard: {e}")
             return self._create_standard_connection()
 
     def check_integrity(self) -> bool:
-        """Run a forensic SQLite integrity check."""
+        """Run a technical SQLite integrity check."""
         try:
             with self.connection() as conn:
                 result = conn.execute("PRAGMA integrity_check;").fetchone()
@@ -159,8 +161,9 @@ class SovereignEngine:
     @staticmethod
     def get_project_id(project_path: str | Path | None = None) -> str:
         """Persists project ID in a hidden file for stable isolation."""
-        if project_path is None:
-            project_path = Path.cwd()
+        from side.utils.paths import get_repo_root
+        if project_path is None or str(project_path) == ".":
+            project_path = get_repo_root()
         else:
             project_path = Path(project_path)
             

@@ -38,10 +38,17 @@ class SideConfig:
     llm_api_key: str | None = None  # Set via GROQ_API_KEY env var
 
 
-    # Sources
     enabled_sources: list[str] = field(
         default_factory=lambda: ["hackernews", "lobsters", "github"]
     )
+
+    # Service Throttling & Synchronization
+    service_audit_interval: int = 86400  # 24 hours
+    watcher_debounce: float = 2.0        # Seconds
+    watcher_high_io_threshold: int = 50  # Events per 10s before circuit break
+    buffer_flush_interval: int = 60      # Seconds
+    heartbeat_interval: int = 30         # Seconds
+    verification_window_hours: int = 1   # Baseline ground truth window
 
     def __post_init__(self) -> None:
         """Initialize after creation."""

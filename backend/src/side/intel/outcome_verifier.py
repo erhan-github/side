@@ -37,8 +37,9 @@ class OutcomeVerifier:
             return VerifiedOutcome.UNVERIFIABLE # Session still open?
             
         # 1. Define Verification Window (e.g., 1 hour after fix)
+        from side.config import config
         window_start = session.ended_at
-        window_end = window_start + timedelta(hours=1)
+        window_end = window_start + timedelta(hours=config.verification_window_hours)
         
         # 2. Check Forensic Audits for Errors
         # We look for high-severity audits in the project window

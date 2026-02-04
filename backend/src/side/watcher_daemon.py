@@ -13,7 +13,7 @@ sys.path.append(str(project_root))
 
 # from side.forensic_audit.runner import ForensicAuditRunner (DELETED)
 # from side.intel.intelligence_store import IntelligenceStore (DELETED)
-from side.storage.modules.base import SovereignEngine
+from side.storage.modules.base import ContextEngine
 from side.storage.modules.forensic import ForensicStore
 # from side.common.telemetry import monitor (DELETED)
 
@@ -21,7 +21,7 @@ class SidelithEventHandler(FileSystemEventHandler):
     """
     Handles file system events, triggers forensic audits, AND records the Event Clock.
     """
-    def __init__(self, engine: SovereignEngine, forensic: ForensicStore, loop: asyncio.AbstractEventLoop, project_id: str):
+    def __init__(self, engine: ContextEngine, forensic: ForensicStore, loop: asyncio.AbstractEventLoop, project_id: str):
         self.engine = engine
         self.forensic = forensic
         self.loop = loop
@@ -30,6 +30,12 @@ class SidelithEventHandler(FileSystemEventHandler):
         self.debounce_seconds = 2.0
         self.last_chronicle_time = time.time()
         self.CHRONICLE_INTERVAL = 3600 # 1 Hour
+        
+        # [HARDENING]: Event Storm Circuit Breaker
+        self.event_window: list[float] = []
+        self.window_size = 10.0 # seconds
+        self.quiet_mode = False
+        self.quiet_until = 0.0
 
     def on_modified(self, event: FileSystemEvent):
         if event.is_directory:
@@ -49,7 +55,11 @@ class SidelithEventHandler(FileSystemEventHandler):
                 self.loop
             )
 
-        # 2. Handle File Modification
+        # 2. Circuit Breaker Check
+        if self._check_event_storm():
+            return
+
+        # 3. Handle File Modification
         last = self.last_scan_time.get(filepath, 0)
         if now - last > self.debounce_seconds:
             self.last_scan_time[filepath] = now
@@ -57,6 +67,30 @@ class SidelithEventHandler(FileSystemEventHandler):
                 self._process_event(filepath),
                 self.loop
             )
+
+    def _check_event_storm(self) -> bool:
+        """Detects high-IO situations (npm install, etc) and throttles observation."""
+        now = time.time()
+        
+        # Recovery
+        if self.quiet_mode:
+            if now > self.quiet_until:
+                self.quiet_mode = False
+                print("🛡️ [WATCHER]: IO High Load subsided. Resuming Deep Awareness.")
+            else:
+                return True
+
+        # Track window
+        self.event_window = [ts for ts in self.event_window if now - ts < self.window_size]
+        self.event_window.append(now)
+        
+        from side.config import config
+        if len(self.event_window) > config.watcher_high_io_threshold:
+            self.quiet_mode = True
+            self.quiet_until = now + 30.0 # 30s Silence
+            print(f"⚠️ [WATCHER]: High IO detected ({len(self.event_window)} events/10s). Entering Quiet Mode for 30s.")
+            return True
+        return False
 
     async def _trigger_rolling_chronicle(self):
         """
@@ -157,9 +191,9 @@ async def start_watcher(path: str):
             print("🍃 [POLITE]: Background priority set (os.nice).")
     except Exception as e:
         print(f"⚠️ Could not set process niceness: {e}")
-    engine = SovereignEngine()
+    engine = ContextEngine()
     forensic = ForensicStore(engine)
-    project_id = SovereignEngine.get_project_id(str(path_obj))
+    project_id = ContextEngine.get_project_id(str(path_obj))
     loop = asyncio.get_running_loop()
     
     event_handler = SidelithEventHandler(engine, forensic, loop, project_id)
