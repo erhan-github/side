@@ -1,16 +1,18 @@
+```python
 import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, Any, List
+from .base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
 class AccountingStore:
     """
-    Manages the 'Sovereign Economy'.
+    Manages the 'Context Economy'.
     Tracks SU (Service Unit) balance and deductions.
     """
-    def __init__(self, engine):
+    def __init__(self, engine: ContextEngine):
         self.engine = engine
         self._ensure_table()
 

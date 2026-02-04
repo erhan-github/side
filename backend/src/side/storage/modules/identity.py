@@ -7,12 +7,12 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from side.utils.helpers import safe_get
-from .base import SovereignEngine, InsufficientTokensError
+from .base import ContextEngine, InsufficientTokensError
 
 logger = logging.getLogger(__name__)
 
 class IdentityStore:
-    def __init__(self, engine: SovereignEngine):
+    def __init__(self, engine: ContextEngine):
         self.engine = engine
         with self.engine.connection() as conn:
             self.init_schema(conn)
@@ -32,8 +32,8 @@ class IdentityStore:
                 business_model TEXT,
                 target_raise TEXT,
                 tech_stack JSON,
-                tier TEXT DEFAULT 'trial',
-                token_balance INTEGER DEFAULT 500,
+                tier TEXT DEFAULT 'hobby',
+                token_balance INTEGER DEFAULT 500, -- Aligns with PricingModel.LIMITS[Tier.HOBBY]
                 tokens_monthly INTEGER DEFAULT 0,
                 tokens_used INTEGER DEFAULT 0,
                 design_pattern TEXT DEFAULT 'declarative', -- [KAR-3]: Declarative vs Imperative
@@ -41,6 +41,14 @@ class IdentityStore:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        
+        # [MIGRATION]: Add Token-Level Granularity [User Request]
+        try:
+            conn.execute("ALTER TABLE profile ADD COLUMN input_tokens INTEGER DEFAULT 0")
+            conn.execute("ALTER TABLE profile ADD COLUMN output_tokens INTEGER DEFAULT 0")
+            conn.execute("ALTER TABLE profile ADD COLUMN reasoning_tokens INTEGER DEFAULT 0")
+            logger.info("MIGRATION: Added Token Granularity columns to profile")
+        except: pass
         
         # ─────────────────────────────────────────────────────────────
         # PRIVACY TABLE: CONSENTS - User Opt-Ins
@@ -70,18 +78,26 @@ class IdentityStore:
         """)
         
         # Seed default values
+        # Seed default values from Single Source of Truth
+        from side.models.pricing import ActionCost
+        
+        # [KARPATHY SUMMIT]: Purge legacy jargon if exists
+        old_keys = ('CORE_REFACT', 'AUTH_SHIFT', 'FORENSIC_AUDIT', 'SHELL_COMMAND', 
+                    'GHOST_REFACTOR', 'SEMANTIC_BOOST', 'STRATEGIC_PIVOT')
+        conn.execute(f"DELETE FROM su_valuation WHERE action_key IN {old_keys}")
+
         defaults = [
-            ('CORE_REFACT', 50, 'Architectural refactor'),
-            ('AUTH_SHIFT', 30, 'Authentication logic change'),
-            ('FORENSIC_AUDIT', 10, 'Deep forensic analysis'),
-            ('SHELL_COMMAND', 1, 'Real-time terminal ingestion'),
-            ('RED_TEST_GEN', 25, 'Generative QA reproduction script'),
-            ('GHOST_REFACTOR', 100, 'Background worktree refactor experiment'),
-            ('SEMANTIC_BOOST', 15, 'High-fidelity architectural audit'),
-            ('STRATEGIC_PIVOT', 50, 'Strategic goal drift detection')
+            ('LOGIC_MUTATION', ActionCost.LOGIC_MUTATION, 'Architectural refactor'),
+            ('IDENTITY_RECONFIG', ActionCost.IDENTITY_RECONFIG, 'Identity Rotation/Migration'),
+            ('FORENSIC_PULSE', ActionCost.FORENSIC_PULSE, 'Forensic-level static analysis'),
+            ('SIGNAL_CAPTURE', ActionCost.SIGNAL_CAPTURE, 'Passive terminal friction capture'),
+            ('HUB_EVOLVE', ActionCost.HUB_EVOLVE, 'Strategic Hub update (plan/check)'),
+            ('CONTEXT_BOOST', ActionCost.CONTEXT_BOOST, 'Context Densification (Fractal Index)'),
+            ('STRATEGIC_ALIGN', ActionCost.STRATEGIC_ALIGN, 'Strategic goal alignment'),
+            ('WELCOME', ActionCost.WELCOME, 'Administrative Bootstrap')
         ]
         conn.executemany(
-            "INSERT OR IGNORE INTO su_valuation (action_key, su_cost, description) VALUES (?, ?, ?)",
+            "INSERT OR REPLACE INTO su_valuation (action_key, su_cost, description) VALUES (?, ?, ?)",
             defaults
         )
 
@@ -231,6 +247,35 @@ class IdentityStore:
         with self.engine.connection() as conn:
             row = conn.execute("SELECT COUNT(*) as count FROM profile").fetchone()
             return row["count"] if row else 0
+
+    def charge_action(self, project_id: str, action_key: str) -> bool:
+        """
+        [ECONOMY]: Deducts SUs for a specific Action.
+        Returns True if successful, False if insufficient funds.
+        """
+        with self.engine.connection() as conn:
+            # 1. Get Cost
+            cost_row = conn.execute(
+                "SELECT su_cost FROM su_valuation WHERE action_key = ?", 
+                (action_key,)
+            ).fetchone()
+            cost = cost_row["su_cost"] if cost_row else 0 # Use column name access from RowFactory
+            
+            if cost == 0: return True # Free action
+            
+            # 2. Check Balance
+            row = conn.execute("SELECT token_balance FROM profile WHERE id = ?", (project_id,)).fetchone()
+            if not row: return False # No profile
+            
+            balance = row["token_balance"]
+            if balance < cost:
+                return False # Insufficient Funds
+                
+            # 3. Deduct
+            new_balance = balance - cost
+            conn.execute("UPDATE profile SET token_balance = ? WHERE id = ?", (new_balance, project_id))
+            
+            return True
 
     def get_su_cost(self, action_key: str) -> int:
         """Get the SU cost for a specific action."""

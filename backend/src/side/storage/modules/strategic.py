@@ -1,17 +1,15 @@
-"""
-Sovereign Strategic Store - Plans, Decisions, & Learnings.
-"""
+Strategic Store - Plans, Decisions, & Learnings.
 
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from side.utils.crypto import shield
-from .base import SovereignEngine
+from .base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
 class StrategicStore:
-    def __init__(self, engine: SovereignEngine):
+    def __init__(self, engine: ContextEngine):
         self.engine = engine
         # Self-Initialize Schema and Migrations
         with self.engine.connection() as conn:
@@ -121,16 +119,16 @@ class StrategicStore:
         """)
         
         # ─────────────────────────────────────────────────────────────
-        # CORE TABLE 6: PUBLIC_WISDOM - Architectural Patterns
+        # CORE TABLE 6: PUBLIC_PATTERNS - Architectural Patterns
         # ─────────────────────────────────────────────────────────────
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS public_wisdom (
+            CREATE TABLE IF NOT EXISTS public_patterns (
                 id TEXT PRIMARY KEY,
                 origin_node TEXT,
                 category TEXT, -- e.g. 'pattern', 'anti-pattern'
                 signal_pattern TEXT, -- The triggering signal (e.g. 'auth_bypass')
                 signal_hash INTEGER,
-                wisdom_text TEXT NOT NULL,
+                pattern_text TEXT NOT NULL,
                 confidence INTEGER DEFAULT 5,
                 source_type TEXT DEFAULT 'mesh',
                 source_file TEXT,
@@ -144,36 +142,36 @@ class StrategicStore:
         # ─────────────────────────────────────────────────────────────
         try:
             conn.execute("""
-                CREATE VIRTUAL TABLE IF NOT EXISTS public_wisdom_fts USING fts5(
+                CREATE VIRTUAL TABLE IF NOT EXISTS public_patterns_fts USING fts5(
                     id, 
-                    wisdom_text, 
+                    pattern_text, 
                     category, 
                     signal_pattern
                 )
             """)
             # Triggers ensure the FTS index is always in sync with the main table
             conn.execute("""
-                CREATE TRIGGER IF NOT EXISTS public_wisdom_ai AFTER INSERT ON public_wisdom BEGIN
-                    INSERT INTO public_wisdom_fts(id, wisdom_text, category, signal_pattern) 
-                    VALUES (new.id, new.wisdom_text, new.category, new.signal_pattern);
+                CREATE TRIGGER IF NOT EXISTS public_patterns_ai AFTER INSERT ON public_patterns BEGIN
+                    INSERT INTO public_patterns_fts(id, pattern_text, category, signal_pattern) 
+                    VALUES (new.id, new.pattern_text, new.category, new.signal_pattern);
                 END;
             """)
             conn.execute("""
-                CREATE TRIGGER IF NOT EXISTS public_wisdom_ad AFTER DELETE ON public_wisdom BEGIN
-                    DELETE FROM public_wisdom_fts WHERE id = old.id;
+                CREATE TRIGGER IF NOT EXISTS public_patterns_ad AFTER DELETE ON public_patterns BEGIN
+                    DELETE FROM public_patterns_fts WHERE id = old.id;
                 END;
             """)
             conn.execute("""
-                CREATE TRIGGER IF NOT EXISTS public_wisdom_au AFTER UPDATE ON public_wisdom BEGIN
-                    UPDATE public_wisdom_fts SET 
-                        wisdom_text = new.wisdom_text,
+                CREATE TRIGGER IF NOT EXISTS public_patterns_au AFTER UPDATE ON public_patterns BEGIN
+                    UPDATE public_patterns_fts SET 
+                        pattern_text = new.pattern_text,
                         category = new.category,
                         signal_pattern = new.signal_pattern
                     WHERE id = old.id;
                 END;
             """)
         except Exception as e:
-             logger.warning(f"FTS5 setup for public_wisdom failed: {e}")
+             logger.warning(f"FTS5 setup for public_patterns failed: {e}")
         # ─────────────────────────────────────────────────────────────
         # CORE TABLE 7: MEMORY - Long-Term Unstructured Facts [KAR-6.19]
         # ─────────────────────────────────────────────────────────────
@@ -197,15 +195,15 @@ class StrategicStore:
             conn.execute("ALTER TABLE rejections ADD COLUMN signal_hash INTEGER")
         except: pass
         try:
-            conn.execute("ALTER TABLE public_wisdom ADD COLUMN source_type TEXT DEFAULT 'mesh'")
+            conn.execute("ALTER TABLE public_patterns ADD COLUMN source_type TEXT DEFAULT 'mesh'")
         except: pass
         try:
-            conn.execute("ALTER TABLE public_wisdom ADD COLUMN source_file TEXT")
+            conn.execute("ALTER TABLE public_patterns ADD COLUMN source_file TEXT")
         except: pass
         
-        # [STRATEGIC AUDIT] Add is_pinned to prevent over-aggressive Neural Decay
+        # [TECHNICAL AUDIT] Add is_pinned to prevent over-aggressive Neural Decay
         # Explicit calls to avoid f-string injection patterns for Semgrep
-        for table in ["plans", "learnings", "rejections", "public_wisdom"]:
+        for table in ["plans", "learnings", "rejections", "public_patterns"]:
             try:
                 if table == "plans":
                     conn.execute("ALTER TABLE plans ADD COLUMN is_pinned INTEGER DEFAULT 0")
@@ -213,23 +211,23 @@ class StrategicStore:
                     conn.execute("ALTER TABLE learnings ADD COLUMN is_pinned INTEGER DEFAULT 0")
                 elif table == "rejections":
                     conn.execute("ALTER TABLE rejections ADD COLUMN is_pinned INTEGER DEFAULT 0")
-                elif table == "public_wisdom":
-                    conn.execute("ALTER TABLE public_wisdom ADD COLUMN is_pinned INTEGER DEFAULT 0")
+                elif table == "public_patterns":
+                    conn.execute("ALTER TABLE public_patterns ADD COLUMN is_pinned INTEGER DEFAULT 0")
             except: pass
             
         logger.info("MIGRATION: StrategicStore schema sync check complete.")
 
         try:
-            conn.execute("ALTER TABLE public_wisdom ADD COLUMN signal_hash INTEGER")
-            logger.info("MIGRATION: Added signal_hash to public_wisdom")
+            conn.execute("ALTER TABLE public_patterns ADD COLUMN signal_hash INTEGER")
+            logger.info("MIGRATION: Added signal_hash to public_patterns")
         except: pass
 
         conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_project ON rejections(project_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_hash ON rejections(instruction_hash)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_rejections_signal_hash ON rejections(signal_hash)")
 
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_public_wisdom_signal ON public_wisdom(signal_pattern)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_public_wisdom_hash ON public_wisdom(signal_hash)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_public_patterns_signal ON public_patterns(signal_pattern)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_public_patterns_hash ON public_patterns(signal_hash)")
 
 
     def save_plan(self, project_id: str, plan_id: str, title: str, plan_type: str = "goal",
@@ -452,13 +450,13 @@ class StrategicStore:
             ).fetchall()
             return [dict(row) for row in rows]
 
-    def save_public_wisdom(self, wisdom_id: str, wisdom_text: str, origin_node: str | None = None,
+    def save_public_pattern(self, pattern_id: str, pattern_text: str, origin_node: str | None = None,
                            category: str | None = None, signal_pattern: str | None = None,
                            confidence: int = 5, **kwargs) -> None:
-        """Save a single architectural wisdom fragment."""
-        self.save_public_wisdom_batch([{
-            'id': wisdom_id,
-            'text': wisdom_text,
+        """Save a single architectural pattern fragment."""
+        self.save_public_patterns_batch([{
+            'id': pattern_id,
+            'text': pattern_text,
             'origin': origin_node,
             'category': category,
             'pattern': signal_pattern,
@@ -466,48 +464,48 @@ class StrategicStore:
             'signal_hash': kwargs.get("signal_hash")
         }])
 
-    def save_public_wisdom_batch(self, wisdom_list: List[Dict[str, Any]]) -> None:
-        """Save multiple wisdom fragments in a single transaction."""
+    def save_public_patterns_batch(self, pattern_list: List[Dict[ Any]]) -> None:
+        """Save multiple pattern fragments in a single transaction."""
         with self.engine.connection() as conn:
-            for w in wisdom_list:
+            for p in pattern_list:
                 conn.execute(
                     """
-                    INSERT INTO public_wisdom (id, origin_node, category, signal_pattern, signal_hash, wisdom_text, confidence)
+                    INSERT INTO public_patterns (id, origin_node, category, signal_pattern, signal_hash, pattern_text, confidence)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
-                        wisdom_text = excluded.wisdom_text,
+                        pattern_text = excluded.pattern_text,
                         signal_hash = excluded.signal_hash,
                         confidence = excluded.confidence
                     """,
-                    (w['id'], w.get('origin'), w.get('category'), w.get('pattern'), 
-                     w.get('signal_hash'), w['text'], w.get('confidence', 5)),
+                    (p['id'], p.get('origin'), p.get('category'), p.get('pattern'), 
+                     p.get('signal_hash'), p['text'], p.get('confidence', 5)),
                 )
 
-    def list_public_wisdom(self, signal_pattern: str | None = None) -> List[Dict[str, Any]]:
-        """Retrieve public wisdom, optionally filtered by architectural signal."""
+    def list_public_patterns(self, signal_pattern: str | None = None) -> List[Dict[str, Any]]:
+        """Retrieve public patterns, optionally filtered by architectural signal."""
         with self.engine.connection() as conn:
             if signal_pattern:
                 rows = conn.execute(
-                    "SELECT * FROM public_wisdom WHERE signal_pattern = ? ORDER BY confidence DESC",
+                    "SELECT * FROM public_patterns WHERE signal_pattern = ? ORDER BY confidence DESC",
                     (signal_pattern,)
                 ).fetchall()
             else:
-                rows = conn.execute("SELECT * FROM public_wisdom ORDER BY created_at DESC").fetchall()
+                rows = conn.execute("SELECT * FROM public_patterns ORDER BY created_at DESC").fetchall()
             return [dict(row) for row in rows]
 
-    def search_wisdom(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def search_patterns(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
-        [Active Recall]: Search architectural wisdom using FTS5 (Hybrid Lite).
+        [Active Recall]: Search architectural patterns using FTS5 (Hybrid Lite).
         """
         with self.engine.connection() as conn:
             try:
                 # FTS5 Match
                 safe_query = query.replace('"', '""').replace("'", "''")
                 rows = conn.execute(f"""
-                    SELECT w.* 
-                    FROM public_wisdom_fts fts
-                    JOIN public_wisdom w ON fts.id = w.id
-                    WHERE public_wisdom_fts MATCH '{safe_query}'
+                    SELECT p.* 
+                    FROM public_patterns_fts fts
+                    JOIN public_patterns p ON fts.id = p.id
+                    WHERE public_patterns_fts MATCH '{safe_query}'
                     ORDER BY rank
                     LIMIT ?
                 """, (limit,)).fetchall()
@@ -519,8 +517,8 @@ class StrategicStore:
             # Fallback
             q = f"%{query}%"
             rows = conn.execute("""
-                SELECT * FROM public_wisdom 
-                WHERE wisdom_text LIKE ? OR signal_pattern LIKE ?
+                SELECT * FROM public_patterns 
+                WHERE pattern_text LIKE ? OR signal_pattern LIKE ?
                 ORDER BY confidence DESC
                 LIMIT ?
             """, (q, q, limit)).fetchall()

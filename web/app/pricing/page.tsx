@@ -50,7 +50,7 @@ export default function PricingPage() {
                             </div>
                             <div className="mb-6 p-3 rounded-xl bg-zinc-500/10 border border-zinc-500/20">
                                 <p className="text-zinc-400 text-sm font-medium flex items-center gap-2">
-                                    <Check className="w-4 h-4" /> 50 SUs/month
+                                    <Check className="w-4 h-4" /> 500 SUs / MO
                                 </p>
                             </div>
                             <div className="flex-grow">
@@ -89,7 +89,7 @@ export default function PricingPage() {
                             </div>
                             <div className="mb-6 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
                                 <p className="text-cyan-400 text-sm font-medium flex items-center gap-2">
-                                    <Check className="w-4 h-4" /> 500 SUs/month
+                                    <Check className="w-4 h-4" /> 5,000 SUs / MO
                                 </p>
                             </div>
                             <div className="flex-grow">
@@ -131,7 +131,7 @@ export default function PricingPage() {
                             </div>
                             <div className="mb-6 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
                                 <p className="text-purple-400 text-sm font-medium flex items-center gap-2">
-                                    <Check className="w-4 h-4" /> 2,500 SUs/month
+                                    <Check className="w-4 h-4" /> 25,000 SUs / MO
                                 </p>
                             </div>
                             <div className="flex-grow">
@@ -157,14 +157,35 @@ export default function PricingPage() {
                             />
                         </div>
 
-                        {/* Business - Team */}
+                        {/* High Tech - Custom */}
                         <div className="relative p-8 rounded-3xl border border-white/10 bg-zinc-900/50 flex flex-col hover:border-white/20 transition-colors duration-300">
                             <div className="mb-6">
-                                <h3 className="text-xl font-bold tracking-tight mb-2 flex items-center gap-2 text-white uppercase tracking-widest">Business</h3>
-                                <p className="text-zinc-400 text-sm italic">For organizations</p>
+                                <h3 className="text-xl font-bold tracking-tight mb-2 flex items-center gap-2 text-white uppercase tracking-widest">High Tech</h3>
+                                <p className="text-zinc-400 text-sm italic">For IP-Sensitive Enterprises</p>
                             </div>
-                            <div className="mb-12 flex-grow flex items-center justify-center">
+                            <div className="mb-8 flex flex-col justify-center h-20">
                                 <span className="text-4xl font-bold tracking-tighter text-white">Custom</span>
+                                <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mt-1">ABSOLUTE SOVEREIGNTY</span>
+                            </div>
+                            <div className="flex-grow">
+                                <ul className="space-y-3 mb-8 text-sm text-zinc-400">
+                                    <li className="flex items-center gap-3">
+                                        <Check className="w-4 h-4 text-white shrink-0" />
+                                        <span className="text-zinc-300">Airgap Mode (Ollama, Azure & Custom)</span>
+                                    </li>
+                                    <li className="flex items-center gap-3">
+                                        <Check className="w-4 h-4 text-white shrink-0" />
+                                        <span className="text-zinc-300">Sovereign Pulse</span>
+                                    </li>
+                                    <li className="flex items-center gap-3">
+                                        <Check className="w-4 h-4 text-white shrink-0" />
+                                        <span className="text-zinc-300">Fractal Memory</span>
+                                    </li>
+                                    <li className="flex items-center gap-3">
+                                        <Check className="w-4 h-4 text-white shrink-0" />
+                                        <span className="text-zinc-300">Neural Logic Graph</span>
+                                    </li>
+                                </ul>
                             </div>
                             <a
                                 href="mailto:hq@sidelith.com"

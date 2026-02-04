@@ -4,15 +4,18 @@ Sovereign Forensic Store - Audits, Activities, & Work Context.
 
 import json
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone, timedelta
+from typing import Dict, Any, List, Optional
+from side.models.forensic import Activity
+from side.intel.forensic_allowlist import is_allowed_project
+from pathlib import Path
 from side.utils.crypto import shield
-from .base import SovereignEngine, InsufficientTokensError
+from .base import ContextEngine, InsufficientTokensError
 
 logger = logging.getLogger(__name__)
 
 class ForensicStore:
-    def __init__(self, engine: SovereignEngine, post_log_hook: Optional[callable] = None):
+    def __init__(self, engine: ContextEngine, post_log_hook: Optional[callable] = None):
         self.engine = engine
         self.post_log_hook = post_log_hook
         with self.engine.connection() as conn:
@@ -365,6 +368,34 @@ class ForensicStore:
             if count > 0:
                 logger.info(f"🧹 Pruned {count} activities older than {days} days.")
             return count
+
+    def prune_stale_assets(self, root_path: Path, days: int = 30) -> int:
+        """
+        Dimension 34: Asset Purging.
+        Deletes old .side/local.json files that haven't been modified in 'days'.
+        """
+        count = 0
+        cutoff = datetime.now() - timedelta(days=days)
+        
+        try:
+            import os
+            for dirpath, dirnames, filenames in os.walk(root_path):
+                if ".side" in dirnames:
+                    side_dir = Path(dirpath) / ".side"
+                    local_json = side_dir / "local.json"
+                    if local_json.exists():
+                        mtime = datetime.fromtimestamp(local_json.stat().st_mtime)
+                        if mtime < cutoff:
+                            logger.info(f"🧹 [PURGE]: Removing stale context at {local_json}")
+                            local_json.unlink()
+                            count += 1
+                            # If .side is empty, remove it
+                            if not any(side_dir.iterdir()):
+                                side_dir.rmdir()
+        except Exception as e:
+            logger.error(f"Purge Error: {e}")
+            
+        return count
 
     def distill_forensic_memory(self, days: int = 14) -> Dict[str, int]:
         """

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from side.utils.helpers import safe_get
 
-from .modules.base import SovereignEngine, InsufficientTokensError
+from .modules.base import ContextEngine, InsufficientTokensError
 from .modules.strategic import StrategicStore
 from .modules.identity import IdentityStore
 from .modules.forensic import ForensicStore
@@ -33,7 +33,7 @@ class SimplifiedDatabase:
     """
 
     def __init__(self, db_path: str | Path | None = None):
-        self.engine = SovereignEngine(db_path)
+        self.engine = ContextEngine(db_path)
         self.db_path = self.engine.db_path
         
         # Initialize sub-stores (The Source of Truth)
@@ -64,5 +64,5 @@ class SimplifiedDatabase:
         logger.info(f"Sidelith Sovereign Schema: v{version}")
 
     def get_project_id(self, project_path: str | Path | None = None) -> str:
-        """Delegates to SovereignEngine for stable isolation."""
-        return SovereignEngine.get_project_id(project_path)
+        """Delegates to ContextEngine for stable isolation."""
+        return ContextEngine.get_project_id(project_path)
