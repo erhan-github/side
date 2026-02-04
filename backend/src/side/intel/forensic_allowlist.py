@@ -184,3 +184,10 @@ class ForensicAllowlist:
 
 # Singleton instance
 allowlist = ForensicAllowlist()
+
+def is_allowed_project(project_path: str) -> bool:
+    """
+    Checks if a project is allowed for forensic analysis.
+    Default: True (Allow all local projects).
+    """
+    return True

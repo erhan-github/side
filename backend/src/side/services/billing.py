@@ -5,14 +5,16 @@ from side.storage.modules.base import InsufficientTokensError
 
 logger = logging.getLogger(__name__)
 
+from side.models.pricing import ActionCost
+
 class SystemAction(Enum):
     HUB_UPDATE = "hub_update"
     PLAN_UPDATE = "plan_update"
     
-# Cost Table (Token Price per Action)
+# Cost Table (Primary Source of Economy)
 ACTION_COSTS = {
-    SystemAction.HUB_UPDATE: 5,
-    SystemAction.PLAN_UPDATE: 2
+    SystemAction.HUB_UPDATE: ActionCost.HUB_EVOLVE,
+    SystemAction.PLAN_UPDATE: ActionCost.HUB_EVOLVE # Simplified
 }
 
 class BillingService:

@@ -61,11 +61,11 @@ class JetBrainsBridge:
             
             # Refactor: Use Phoenix Protocol (ForensicStore)
             # We treat IDE context updates as 'Work Context' signals for Layer 2 RAM.
-            from side.storage.modules.base import SovereignEngine
+            from side.storage.modules.base import ContextEngine
             from side.storage.modules.forensic import ForensicStore
             from pathlib import Path
             
-            engine = SovereignEngine()
+            engine = ContextEngine()
             forensic = ForensicStore(engine)
             
             # Save as active work context

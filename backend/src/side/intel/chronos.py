@@ -9,13 +9,13 @@ import json
 import uuid
 import time
 from typing import List, Dict, Any, Optional
-from datetime import datetime, timezone
-from side.storage.modules.base import SovereignEngine
+from datetime import datetime, timezone, timedelta
+from side.storage.modules.base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
 class ChronosStore:
-    def __init__(self, engine: SovereignEngine):
+    def __init__(self, engine: ContextEngine):
         self.engine = engine
         with self.engine.connection() as conn:
             self._init_schema(conn)

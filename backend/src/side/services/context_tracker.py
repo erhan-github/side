@@ -13,6 +13,7 @@ from typing import Any
 
 from collections import deque
 from side.storage.modules.transient import OperationalStore
+from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -222,14 +223,20 @@ class ContextTracker:
             
             goal_str = f"ACTIVE GOALS: {', '.join(goals)}" if goals else ""
 
-            prompt = f"""Compare the DEVS MESSAGE with the ACTUAL DIFF. 
-            Identify the ARCHITECTURAL PIVOT and check against STRATEGIC GOALS.
+            prompt = f"""
+Compare the DEVS MESSAGE with the ACTUAL DIFF. Identify the ARCHITECTURAL PIVOT.
             
-            {goal_str}
-            MESSAGE: {commit_msg}
-            SYMBOLS: {symbols}
-            DIFF_WINDOW: {best_chunk}
-            """
+CONTEXT (Active Goals):
+{goal_str}
+
+INPUT:
+MESSAGE: {commit_msg}
+SYMBOLS: {symbols}
+DIFF: {best_chunk}
+
+TASK:
+Output a concise (one-sentence) summary of the architectural change.
+"""
             signature = await client.complete_async(
                 messages=[{"role": "user", "content": prompt}],
                 system_prompt="Architecture Analyst. Be extremely concise.",
@@ -328,12 +335,8 @@ OUTPUT JSON:
                 temperature=0.1
             )
             
-            import json
-            # Heuristic JSON parsing
-            start = response.find("{")
-            end = response.rfind("}") + 1
-            if start != -1 and end != -1:
-                data = json.loads(response[start:end])
+            data = extract_json(response)
+            if data:
                 return data.get("focus", "General Development"), float(data.get("confidence", 0.5))
                 
         except Exception as e:

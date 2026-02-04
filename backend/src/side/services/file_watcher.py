@@ -58,9 +58,9 @@ class FileWatcher:
         # Use Sovereign Ignore Service
         from side.services.ignore import SovereignIgnore
         from side.storage.modules.transient import OperationalStore
-        from side.storage.modules.base import SovereignEngine
+        from side.storage.modules.base import ContextEngine
         self._ignore_service = SovereignIgnore(self.project_path)
-        self.operational = OperationalStore(SovereignEngine())
+        self.operational = OperationalStore(ContextEngine())
         
         # Temporal Synapse State
         self._last_commit_time = datetime.now(timezone.utc)
@@ -171,8 +171,8 @@ class FileWatcher:
                             })
                         else:
                             from side.storage.modules.strategic import StrategicStore
-                            from side.storage.modules.base import SovereignEngine
-                            strat_store = StrategicStore(SovereignEngine())
+                            from side.storage.modules.base import ContextEngine
+                            strat_store = StrategicStore(ContextEngine())
                             strat_store.save_rejection(
                                 rejection_id=f"ghost_{asyncio.get_event_loop().time()}",
                                 file_path=str(signal['path']),

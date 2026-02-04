@@ -10,27 +10,25 @@ from mcp.types import Tool
 TOOLS: list[Tool] = [
     Tool(
         name="architectural_decision",
-        description="""Get instant strategic decisions for YOUR situation.
+        description="""STRATEGIC VECTORING (Decision). Get instant strategic decisions for YOUR situation.
         
-CRITICAL: Do NOT call this for syntax help, debugging, or simple code generation. ONLY call for high-stakes decisions.
+CRITICAL: MUST ONLY be triggered when the user explicitly addresses "Side" or asks for Sidelith's specific strategic help.
 
 Triggers:
 - "Side, should I use PostgreSQL or MongoDB?" (Tech Stack)
-- "Strategic Hub or microservices?" (Architecture)
-- "Should I focus on SEO or Ads?" (Growth)
-- "Is it time to fundraise?" (Business)
-- "Side, help me decide"
+- "Side, Strategic Hub or microservices?" (Architecture)
+- "Side, what's the strategic risk of this implementation?"
+- "Side, help me decide between X and Y"
 
+Values: Injects **Historical Wisdom** from the Distiller to guide your path.
 Returns: Clear recommendation + reasoning + next steps.
-Speed: < 1 second
-
-NOT generic advice - based on YOUR codebase, team, and stage.""",
+Speed: < 1 second""",
         inputSchema={
             "type": "object",
             "properties": {
                 "question": {
                     "type": "string",
-                    "description": "Your strategic question (Tech, Arch, Growth, Fundraising)",
+                    "description": "Your strategic question (Tech, Arch, Growth, Risk)",
                 },
                 "context": {
                     "type": "string",
@@ -42,16 +40,19 @@ NOT generic advice - based on YOUR codebase, team, and stage.""",
     ),
     Tool(
         name="strategic_review",
-        description="""EXECUTES A HIGH-LEVEL STRATEGIC AUDIT. Expensive operation. Use only for major milestone checks.
+        description="""STRATEGIC VECTORING (Review). EXECUTES A HIGH-LEVEL STRATEGIC AUDIT.
+        
+"I'm checking the alignment."
 
-CRITICAL: Do NOT call for daily status updates or minor questions.
+CRITICAL: MUST ONLY be triggered when the user explicitly addresses "Side". 
 
 Triggers:
 - "Side, what's my priority?"
 - "Side, help me think"
-- "What should I focus on?"
-- "Audit my strategy"
+- "Side, are we drifting from the mission?"
+- "Side, audit my strategy"
 
+Values: Professional accountability. Injects **Historical Wisdom** into the Agent.
 Returns: Prioritized actions, relevant articles, reasoning.
 Speed: < 2 seconds""",
         inputSchema={
@@ -67,13 +68,12 @@ Speed: < 2 seconds""",
     ),
     Tool(
         name="plan",
-        description="""Create or view your strategic directives.
+        description="""STRATEGIC VECTORING (Planning). Create or view your strategic directives.
 
 Triggers:
 - "Side, log a goal: [goal]"
 - "Side, what's my roadmap?"
-- "My goals"
-- "Add a directive"
+- "Side, add a directive"
 
 Returns: Your Hub-synced plan with deadlines and progress.
 Speed: < 1 second""",
@@ -94,13 +94,12 @@ Speed: < 1 second""",
     ),
     Tool(
         name="check",
-        description="""Mark a directive as fulfilled.
+        description="""STRATEGIC VECTORING (Alignment). Mark a directive as fulfilled.
 
 Triggers:
 - "Side, I finished [goal]"
 - "Side, done with [goal]"
-- "Completed [goal]"
-- "Check off [goal]"
+- "Side, completed [goal]"
 
 Returns: Updated Hub with progress.
 Speed: < 1 second""",
@@ -122,20 +121,47 @@ Speed: < 1 second""",
     ),
     Tool(
         name="run_audit",
-        description="""Run a forensic audit on your codebase.
+        description="""FORENSIC PULSE. "I'm checking the vitals."
+        
+Scans your codebase via static analysis for security leaks or anti-patterns.
 
 Triggers:
 - "Side, audit my code"
+- "Side, check for anti-patterns"
+- "Side, run a forensic pulse"
 - "Side, how's my codebase?"
-- "Check for issues"
-- "Security scan"
 
-Returns: List of findings with severity and recommended actions. Updates the Strategic Hub.
+Value: Not just a scan—it **harvests anti-patterns** into your local Wisdom Store.
+Returns: List of findings with severity and recommended actions. 
 Speed: < 5 seconds""",
         inputSchema={
             "type": "object",
             "properties": {},
             "required": [],
+        },
+    ),
+    Tool(
+        name="reindex_dna",
+        description="""CONTEXT DENSIFICATION. "I'm building the project soul."
+        
+Multi-threaded indexing of your repository DNA via tree-sitter.
+
+Triggers:
+- "Side, re-index the project DNA"
+- "Side, update your architectural awareness"
+- "Context densification"
+
+Value: Moving from "text-matching" to "architectural awareness".
+Returns: Stats on processed nodes.
+Speed: < 10 seconds""",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Optional path to index (defaults to root)",
+                },
+            },
         },
     ),
     Tool(
@@ -164,27 +190,6 @@ Speed: < 5 seconds""",
                 }
             },
             "required": ["finding_type"]
-        },
-    ),
-    Tool(
-        name="generate_repro",
-        description="""Generates a reproduction test case (Red Test) for a specific finding.
-        
-        Triggers:
-        - "Generate a repro for this issue"
-        - "Prove this bug exists"
-        - "Write a test for finding X"
-        
-        Returns: Path to the generated pytest file.""",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "finding": {
-                    "type": "object",
-                    "description": "The full finding object/dict to generate a test for.",
-                }
-            },
-            "required": ["finding"],
         },
     ),
     # Note: simulate_users is now an alias for simulate. Only expose one tool.

@@ -5,12 +5,12 @@ from pathlib import Path
 # Add backend/src to path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from side.storage.modules.base import SovereignEngine
+from side.storage.modules.base import ContextEngine
 from side.storage.modules.transient import OperationalStore
 
 def get_spc():
     try:
-        engine = SovereignEngine()
+        engine = ContextEngine()
         ops = OperationalStore(engine)
         
         spc = ops.get_setting("sovereign_perception_coefficient") or "0.8"

@@ -93,12 +93,13 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     from side.services.hub import generate_hub
     await generate_hub(db)
     
-    return f"✅ **Directive Fulfilled:** {matching['title']}\nThe Strategic Hub has evolved."
+    return f"✅ [STRATEGIC VECTORING]: Directive fulfilled. The Strategic Hub has evolved."
 
 
 @handle_tool_errors
 async def handle_plan(arguments: dict[str, Any]) -> str:
     """
+    STRATEGIC VECTORING (Planning).
     The Strategic Hub: Sovereign Machine Intelligence.
     """
     db = get_database()
@@ -109,7 +110,7 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
     
     output = ""
     
-    # 1. Auto-Detection via Git
+    # 1. Auto-Detection via Git DNA
     project_id = db.get_project_id()
     pending_goals = db.strategic.list_plans(project_id=project_id, status="active")
     if pending_goals:
@@ -123,7 +124,7 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
                 db.forensic.log_activity(
                     project_id=db.get_project_id(),
                     tool="plan",
-                    action=f"Auto-completed: {d['goal_title'][:40]}{'...' if len(d['goal_title']) > 40 else ''}",
+                    action=f"Auto-alignment: {d['goal_title'][:40]}{'...' if len(d['goal_title']) > 40 else ''}",
                     cost_tokens=0,
                     tier=profile.get('tier', 'free') if profile else 'free',
                     payload={
@@ -135,11 +136,11 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
             except Exception as e:
                 logger.error(f"Failed to log auto-completion: {e}")
             
-            output += f"🎉 **HUB SYNC: Directive Fulfilled**\n"
+            output += f"🎉 [HUB SYNC]: Directive Fulfilled via Git DNA\n"
             output += f"Ref: \"{d['goal_title']}\"\n"
             output += f"Evidence: `{d['commit_message'][:50]}...`\n\n"
     
-    # 2. Add new directive (Agency Command)
+    # 2. Add new directive (Intention Capture)
     if goal_text:
         goal_id = str(uuid.uuid4())[:8]
         goal_lower = goal_text.lower()
@@ -150,23 +151,14 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         
         db.strategic.save_plan(project_id=project_id, plan_id=goal_id, title=goal_text, plan_type=plan_type, due_date=due_date)
         
-        # BILLING: Charge for New Directive
-        billing = BillingService(db)
-        pk = db.get_project_id()
-        try:
-             if billing.can_afford(pk, SystemAction.HUB_UPDATE):
-                 billing.charge(pk, SystemAction.HUB_UPDATE, "plan", {"plan_id": goal_id})
-        except Exception as e:
-            logger.warning(f"Billing failed for plan: {e}")
-        
         # LOG NEW PLAN
         try:
             profile = db.identity.get_profile(db.get_project_id())
             db.forensic.log_activity(
                 project_id=db.get_project_id(),
                 tool="plan",
-                action=f"Added {plan_type}: {goal_text[:50]}{'...' if len(goal_text) > 50 else ''}",
-                cost_tokens=0,  # Free for now
+                action=f"INTENTION CAPTURE: {goal_text[:50]}{'...' if len(goal_text) > 50 else ''}",
+                cost_tokens=0,
                 tier=profile.get('tier', 'free') if profile else 'free',
                 payload={
                     "plan_id": goal_id,
@@ -177,12 +169,12 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         except Exception as e:
             logger.error(f"Failed to log plan activity: {e}")
         
-        output += f"📎 **DIRECTIVE LOGGED:** [{plan_type.upper()}] {goal_text}\n"
+        output += f"📎 [INTENTION CAPTURED]: [{plan_type.upper()}] {goal_text}\n"
 
     # 3. Evolve and Seal the Hub
     hub_path = await generate_hub(db)
     if hub_path:
-        output += f"🏛️ **HUB EVOLVED:** {hub_path}\n"
+        output += f"🏛️ [HUB EVOLVED]: {hub_path}\n"
     
     all_plans = db.strategic.list_plans(project_id=project_id)
     output += format_plan(all_plans)

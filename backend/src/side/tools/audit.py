@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any
 from side.tools.forensics import SemgrepAdapter, Finding
 
+from side.utils.paths import get_repo_root
+
 logger = logging.getLogger(__name__)
 
 async def handle_run_audit(arguments: dict[str, Any]) -> str:
@@ -35,7 +37,15 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     
     dimension = arguments.get('dimension', 'general')
     severity_filter = arguments.get('severity', 'high,medium,critical').upper().split(',')
-    project_path = Path(".")
+    project_path = get_repo_root()
+    
+    # [ECONOMY]: Charge for Forensic Audit (10 SUs)
+    from side.tools.core import get_database
+    db = get_database()
+    project_id = db.get_project_id()
+    
+    if not db.identity.charge_action(project_id, "FORENSIC_PULSE"):
+        return "🚫 [INSUFFICIENT FUNDS]: Forensic Pulse requires 10 SUs. Run 'side login' or upgrade."
     
     # 1. Detect Languages
     languages = detect_primary_languages(project_path)
@@ -58,8 +68,8 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     if "kotlin" in languages:
         adapters.append(DetektAdapter(project_path))
     
-    print(f"🛡️  Initiating Forensic Scan (Languages: {', '.join(languages)})...")
-    print(f"🎯 Filter: Severity in {severity_filter}")
+    print(f"🛡️  [FORENSIC PULSE]: Initiating scan across {', '.join(languages)} DNA...")
+    print(f"🎯 [ALIGNMENT]: Filter: Severity in {severity_filter}")
     
     # 3. Handle JIT Installation
     active_adapters = []
@@ -68,19 +78,19 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
             active_adapters.append(adapter)
         else:
             # Agentic JIT: Attempt to install any missing tool directly relevant to detected languages
-            print(f"📦 [JIT]: Installing missing tool '{adapter.get_tool_name()}'...")
+            print(f"📦 [SOVEREIGN JIT]: Installing missing forensic probe '{adapter.get_tool_name()}'...")
             if adapter.install():
                 active_adapters.append(adapter)
             else:
                 # If install fails (e.g. no npm/brew), falling back to degraded warning
-                print(f"❌ [DEGRADED]: Tool '{adapter.get_tool_name()}' install failed.")
+                print(f"❌ [DEGRADED]: Forensic probe '{adapter.get_tool_name()}' install failed.")
                 print(f"💡 {adapter.get_install_instructions()}")
 
     if not active_adapters:
-        return "❌ Error: No auditing tools available and auto-install failed. Please install Semgrep: pip install semgrep"
+        return "❌ [ERROR]: All forensic probes failed. Please install Semgrep: pip install semgrep"
 
     # 3. Run Scans in Parallel
-    print(f"🔍 Running {len(active_adapters)} tools in parallel...")
+    print(f"🔍 [SCANNING]: Engaging {len(active_adapters)} probes in parallel...")
     tasks = [adapter.scan() for adapter in active_adapters]
     results = await asyncio.gather(*tasks)
     
@@ -92,9 +102,9 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
         all_findings.extend(filtered)
     
     if not all_findings:
-        return "✅ **Forensics Clean:** No issues found matching your filters."
+        return "✅ [FORENSIC PULSE]: Project vitals are clean. No mission-critical issues found."
 
-    print(f"🧠 [SYNTHESIS]: Analyzing top 20/{len(all_findings)} issues with LLM...")
+    print(f"🧠 [WISDOM DISTILLER]: Distilling top 20/{len(all_findings)} findings into patterns...")
     from side.tools.forensics import ForensicSynthesizer
     synthesizer = ForensicSynthesizer()
     
@@ -141,7 +151,16 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
             except Exception as e:
                 logger.warning(f"Failed to save finding: {e}")
     
-    # 6. Generate report
+    # 6. Wisdom Distillation (Phase 6)
+    try:
+        print("🍯 [HARVESTING]: Extracting anti-patterns for your Wisdom Store...")
+        from side.intel.wisdom_distiller import WisdomDistiller
+        distiller = WisdomDistiller(engine.wisdom)
+        await distiller.distill_audit_findings(all_findings)
+    except Exception as e:
+        logger.warning(f"Wisdom distillation failed: {e}")
+
+    # 7. Generate report
     report = _generate_report(all_findings, dimension, severity_filter)
     
     logger.info(f"✅ Saved {saved_count}/{len(all_findings)} findings from {len(active_adapters)} tools")
@@ -160,19 +179,19 @@ def _generate_report(findings: list[Finding], dimension: str, severity_filter: l
         by_severity[severity].append(finding)
     
     lines = []
-    lines.append(f"🕵️ **Forensics Alert: {len(findings)} Issues Detected**")
-    lines.append(f"🎯 *Dimension: {dimension.upper()} | Filter: {', '.join(severity_filter)}*")
+    lines.append(f"🛡️ **FORENSIC PULSE: {len(findings)} Issues Detected**")
+    lines.append(f"🎯 *Dimension: {dimension.upper()} | Wisdom Distiller: ACTIVE*")
     lines.append("")
     
     # Show breakdown by severity
     for severity in ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]:
         if severity in by_severity:
             count = len(by_severity[severity])
-            emoji = {"CRITICAL": "🚨", "HIGH": "⚠️", "MEDIUM": "⚡", "LOW": "ℹ️", "INFO": "💡"}
+            emoji = {"CRITICAL": "🛑", "HIGH": "⚠️", "MEDIUM": "⚡", "LOW": "ℹ️", "INFO": "💡"}
             lines.append(f"{emoji.get(severity, '•')} **{severity}**: {count} issues")
     
     lines.append("")
-    lines.append("**Top Issues:**")
+    lines.append("**Top High-Density Findings:**")
     
     # Show top 5 findings with synthesis
     for i, finding in enumerate(findings[:5], 1):
@@ -182,16 +201,16 @@ def _generate_report(findings: list[Finding], dimension: str, severity_filter: l
         
         impact = finding.metadata.get("strategic_impact") if finding.metadata else None
         if impact:
-            lines.append(f"   🎯 **Strategic Impact**: {impact}")
+            lines.append(f"   🎯 **INTENTION IMPACT**: {impact}")
             
         if finding.cwe_id:
-            lines.append(f"   - {finding.cwe_id} | Tool: {finding.tool}")
+            lines.append(f"   - {finding.cwe_id} | Probe: {finding.tool}")
     
     if len(findings) > 5:
-        lines.append(f"   ... and {len(findings) - 5} more issues.")
+        lines.append(f"   ... and {len(findings) - 5} more issues harvested into Wisdom Store.")
     
     lines.append("")
-    lines.append("> **Next Steps**: Run `side hub` to see remediation directives.")
+    lines.append("> **Next Steps**: View your refined [Strategic Hub](.side/HUB.md) for remediation directives.")
     
     return "\n".join(lines)
 

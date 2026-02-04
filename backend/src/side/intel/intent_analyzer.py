@@ -9,8 +9,22 @@ import logging
 from typing import List, Optional, Dict, Any, Set
 from datetime import datetime, timezone
 
-from side.intel.conversation_session import ConversationSession, IntentSignal, IntentSignalType, SimilarSession
+from side.models.intent import (
+    IntentCategory,
+    ClaimedOutcome,
+    VerifiedOutcome,
+    ConversationSession,
+    IntentSignal,
+    IntentSignalType
+)
 from side.storage.simple_db import SimplifiedDatabase
+
+# Helper for Jaccard results
+from dataclasses import dataclass
+@dataclass
+class SimilarSession:
+    session: ConversationSession
+    similarity: float
 
 logger = logging.getLogger(__name__)
 

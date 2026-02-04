@@ -1,6 +1,6 @@
 """
-Sovereign Episodic Projector - The 'Hippocampus' of Sidelith.
-Responsible for re-constructing the 'RAM' (Recent Context) from the Forensic Ledger.
+Timeline Projector - Session Context History.
+Provides an audit-safe summary of recent activity for LLM context.
 """
 
 from typing import List, Dict, Any
@@ -16,10 +16,10 @@ class EpisodicProjector:
         self.forensic = forensic
         self.strategic = strategic
 
-    def get_episode_stream(self, project_id: str = "global", limit: int = 15) -> str:
+    def get_session_history(self, project_id: str = "global", limit: int = 15) -> str:
         """
-        [PHOENIX PROTOCOL LAYER 2]: Generates the 'Previously On...' summary.
-        Fetches raw events and distills them into a coherent narrative vector.
+        [CONTEXT RECOVERY]: Generates a summary of recent sessions.
+        Fetches events and summarizes them into a narrative format.
         """
         try:
             # 1. Fetch Recent Activities (The Raw Stream)
@@ -31,7 +31,7 @@ class EpisodicProjector:
             work_ctx = self.forensic.get_latest_work_context(str(Path.cwd()))
             
             # 3. Construct the Narrative
-            report = ["## 2. EPISODIC STREAM (RAM - Recent History)"]
+            report = ["## 2. SESSION TIMELINE (Recent History)"]
             
             if work_ctx:
                 age = work_ctx['detected_at']
@@ -70,4 +70,4 @@ class EpisodicProjector:
             return "\n".join(report)
             
         except Exception as e:
-            return f"## [ERROR] Failed to load Episodic RAM: {e}"
+            return f"## [ERROR] Failed to load Session History: {e}"

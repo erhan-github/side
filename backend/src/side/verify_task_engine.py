@@ -2,14 +2,14 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
-from side.storage.modules.base import SovereignEngine
+from side.storage.modules.base import ContextEngine
 from side.storage.modules.transient import OperationalStore
 from side.workers.queue import JobQueue
 from side.workers.decomposer import TaskDecomposer
 
 def verify():
     # 1. Setup
-    engine = SovereignEngine()
+    engine = ContextEngine()
     op_store = OperationalStore(engine)
     queue = JobQueue(op_store)
     decomposer = TaskDecomposer(queue, "test_project")

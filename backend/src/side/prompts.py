@@ -12,7 +12,7 @@ from mcp.types import (
     TextContent,
 )
 
-from side.storage.modules.base import SovereignEngine
+from side.storage.modules.base import ContextEngine
 from side.storage.modules.forensic import ForensicStore
 from side.storage.modules.strategic import StrategicStore
 from side.storage.modules.transient import OperationalStore
@@ -23,13 +23,13 @@ logger = logging.getLogger("side-mcp")
 class DynamicPromptManager:
     def __init__(self):
         # SFO Sprint: No Fat Architecture
-        self.engine = SovereignEngine()
+        self.engine = ContextEngine()
         self.forensic = ForensicStore(self.engine)
         self.strategic = StrategicStore(self.engine)
         self.operational = OperationalStore(self.engine)
         self.identity = IdentityStore(self.engine)
         self.project_path = Path.cwd()
-        self.project_id = SovereignEngine.get_project_id(self.project_path)
+        self.project_id = ContextEngine.get_project_id(self.project_path)
 
     def get_prompts(self) -> list[Prompt]:
         prompts = [

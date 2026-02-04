@@ -2,7 +2,7 @@ import logging
 import hashlib
 from pathlib import Path
 from typing import List, Dict, Any
-from side.storage.modules.base import SovereignEngine
+from side.storage.modules.base import ContextEngine
 from side.storage.modules.strategic import StrategicStore
 from side.storage.modules.transient import OperationalStore
 
@@ -11,22 +11,22 @@ logger = logging.getLogger(__name__)
 class SynergyEngine:
     """
     The 'Collective Intelligence' Layer.
-    Identifies shared signals between Projects and harvests Public Wisdom.
+    Identifies shared signals between Projects and harvests Technical Patterns.
     """
     def __init__(self, project_path: Path, buffer=None):
         self.project_path = Path(project_path).resolve()
-        self.engine = SovereignEngine()
+        self.engine = ContextEngine()
         self.strategic = StrategicStore(self.engine)
         self.operational = OperationalStore(self.engine)
         self.buffer = buffer
-        self.project_id = SovereignEngine.get_project_id(self.project_path)
+        self.project_id = ContextEngine.get_project_id(self.project_path)
 
     def identify_signals(self) -> List[str]:
         """Harvest architectural signals from the current project."""
         signals = []
         # Signal 1: Core Frameworks (Detected via deps or folder structure)
         if (self.project_path / "web").exists(): signals.append("React/NextJS")
-        if (self.project_path / "backend" / "src" / "side").exists(): signals.append("Sovereign/Sidelith")
+        if (self.project_path / "backend" / "src" / "side").exists(): signals.append("Core/Sidelith")
         if (self.project_path / "package.json").exists(): signals.append("NodeJS")
         
         # Signal 2: Database Patterns
@@ -34,12 +34,9 @@ class SynergyEngine:
         
         return signals
 
-    async def harvest_mesh_wisdom(self):
+    async def harvest_mesh_patterns(self):
         """
-        Pulls relevant strategic wisdom from other nodes using Sparse Semantic Similarity.
-        [Software 2.0]: Replaces keyword matching with bit-level fingerprints.
-        [PAL-3]: Respects Airgap security silos.
-        [STRATEGIC PIVOT]: Blocks local 'Strategic Intent' sharing. Only Technical Patterns (React, JS, etc.) are synchronized.
+        Pulls relevant technical patterns from other nodes using Sparse Semantic Similarity.
         """
         from side.utils.hashing import sparse_hasher
         from side.storage.modules.identity import IdentityStore
@@ -73,12 +70,12 @@ class SynergyEngine:
                 if res.get('category') == 'strategic-intent':
                     continue
                     
-                wisdom_id = hashlib.sha256(f"{res['type']}:{res['title']}:{res.get('detail', '')}".encode()).hexdigest()[:12]
+                pattern_id = hashlib.sha256(f"{res['type']}:{res['title']}:{res.get('detail', '')}".encode()).hexdigest()[:12]
                 
                 # Filter for high-value technical patterns
                 if self.buffer:
-                    await self.buffer.ingest("wisdom", {
-                        "id": wisdom_id,
+                    await self.buffer.ingest("patterns", {
+                        "id": pattern_id,
                         "text": f"Inherited Technical Pattern: {res['title']}. (Similarity: {res['similarity']})",
                         "origin": res.get('node', 'unknown'),
                         "category": res.get('category', 'technical-pattern'),
@@ -87,7 +84,7 @@ class SynergyEngine:
                     })
                 else:
                     # Sync fallback
-                    self.strategic.save_public_wisdom(
+                    self.strategic.save_public_pattern(
                         wisdom_id=wisdom_id,
                         wisdom_text=f"Inherited Technical Pattern: {res['title']}. (Similarity: {res['similarity']})",
                         origin_node=res.get('node', 'unknown'),
@@ -102,11 +99,11 @@ class SynergyEngine:
         return harvest_count
 
 def run_synergy_sync(project_path: Path):
-    """Entry point for wisdom synchronization."""
+    """Entry point for pattern synchronization."""
     import asyncio
     try:
         engine = SynergyEngine(project_path)
-        return asyncio.run(engine.harvest_mesh_wisdom())
+        return asyncio.run(engine.harvest_mesh_patterns())
     except Exception as e:
         logger.error(f"❌ [SYNERGY_ERROR]: Sync failed: {e}")
         return 0

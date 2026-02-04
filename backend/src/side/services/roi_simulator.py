@@ -2,6 +2,7 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 from side.services.unified_buffer import UnifiedBuffer
+from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -21,25 +22,24 @@ class ROISimulatorService:
         """
         try:
             # TIER 2: Strategic Simulation (Gated Call)
-            prompt = f"""You are a Senior Project Manager & Financial Analyst.
+            prompt = f"""
+A developer just fixed this problem: "{problem}"
+The resolution was: "{resolution}"
             
-            A developer just fixed this problem: "{problem}"
-            The resolution was: "{resolution}"
+TASK:
+Simulate the "World Without This Fix". If this problem reached production:
+1. How many ENGINEERING HOURS would it take to find and fix?
+2. What is the RISK (None, Low, Medium, High, Critical)?
+3. What is the ESTIMATED COST (in USD, assuming $150/hr)?
             
-            TASK:
-            Simulate the "World Without This Fix". If this problem reached production:
-            1. How many ENGINEERING HOURS would it take to find and fix?
-            2. What is the RISK (None, Low, Medium, High, Critical)?
-            3. What is the ESTIMATED COST (in USD, assuming $150/hr)?
-            
-            OUTPUT JSON:
-            {{
-                "hours_saved": float,
-                "risk_level": "string",
-                "cost_saved": float,
-                "why": "one sentence explanation"
-            }}
-            """
+Output strictly JSON:
+{{
+    "hours_saved": float,
+    "risk_level": "string",
+    "cost_saved": float,
+    "why": "one sentence explanation"
+}}
+"""
             from side.llm.client import LLMClient
             client = LLMClient()
             response = await client.complete_async(
@@ -48,17 +48,13 @@ class ROISimulatorService:
                 temperature=0.1
             )
             
-            import json
-            # Heuristic JSON parsing
-            start = response.find("{")
-            end = response.rfind("}") + 1
-            if start != -1 and end != -1:
-                data = json.loads(response[start:end])
+            data = extract_json(response)
+            if data:
                 
-                # [ROI_LEDGER] Commit to the Unified Buffer
-                await self.buffer.ingest("wisdom", {
+                # [IMPACT_LOG] Commit to the Unified Buffer
+                await self.buffer.ingest("insights", {
                     "tool": "roi_simulator",
-                    "action": "averted_disaster_ledger",
+                    "action": "averted_disaster_log",
                     "payload": {
                         "problem": problem,
                         "simulated_impact": data,

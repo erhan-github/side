@@ -14,27 +14,30 @@ from side.tools.welcome import handle_welcome
 from side.storage.simple_db import SimplifiedDatabase, InsufficientTokensError
 from side.tools.core import get_database
 
-logger = logging.getLogger(__name__)
+from side.models.pricing import ActionCost
 
-# Costs for different tool types
+# Costs for different tool types (Aligned with Sovereign Economy)
 TOOL_COSTS = {
-    "architectural_decision": 1,
-    "strategic_review": 1,
-    "plan": 1,
-    "check": 1,
-    "run_audit": 1,
-    "welcome": 0,
+    "architectural_decision": ActionCost.STRATEGIC_ALIGN,
+    "strategic_review": ActionCost.STRATEGIC_ALIGN,
+    "plan": ActionCost.HUB_EVOLVE,
+    "check": ActionCost.HUB_EVOLVE,
+    "run_audit": ActionCost.FORENSIC_PULSE,
+    "reindex_dna": ActionCost.CONTEXT_BOOST,
+    "welcome": ActionCost.WELCOME,
 }
 
 
 async def handle_tool_call(name: str, arguments: dict[str, Any]) -> str:
     """Route tool calls to appropriate handlers."""
+    from side.tools.indexing import handle_reindex_dna
     handlers = {
         "architectural_decision": handle_decide,
         "strategic_review": handle_strategy,
         "plan": handle_plan,
         "check": handle_check,
         "run_audit": handle_run_audit,
+        "reindex_dna": handle_reindex_dna,
         "welcome": handle_welcome,
     }
 
@@ -42,12 +45,6 @@ async def handle_tool_call(name: str, arguments: dict[str, Any]) -> str:
         from side.tools.verification import VerificationTool
         tool = VerificationTool()
         result = await tool.run(arguments)
-        return result.content
-        
-    if name == "generate_repro":
-        from side.tools.verification import VerificationTool
-        tool = VerificationTool()
-        result = await tool.generate_repro(arguments)
         return result.content
 
 

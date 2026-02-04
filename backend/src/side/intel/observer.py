@@ -1,7 +1,5 @@
-"""
-[LAYER 4] Strategic Observer - The Fact Compiler.
-Distills raw Ledger streams into high-fidelity "Observations" (Facts).
-"""
+[LAYER 4] Activity Distiller - The Activity Log Compiler.
+Distills raw transaction streams into high-fidelity "Observations" (Facts).
 
 import logging
 import json
@@ -10,6 +8,7 @@ from typing import List, Dict, Any
 from datetime import datetime, timezone
 from side.storage.modules.forensic import ForensicStore
 from side.llm.client import LLMClient
+from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ class StrategicObserver:
 
     async def distill_observations(self, project_id: str, limit: int = 20) -> int:
         """
-        Scans recent ledger activities and extracts new "Invariant Facts".
+        Scans recent activity logs and extracts new "Invariant Facts".
         """
         activities = self.forensic.get_recent_activities(project_id, limit=limit)
         if not activities:
@@ -33,25 +32,26 @@ class StrategicObserver:
         ])
         
         prompt = f"""
-        You are the Strategic Observer. Your job is to extract INVARIANT FACTS from the activity stream.
+Analyze the provided activity stream and extract INVARIANT FACTS.
         
-        Rules:
-        1. Ignore transient noise (file reads, minor edits).
-        2. Focus on ARCHITECTURAL DECISIONS (e.g., "User added Tailwind", "Auth is via Supabase").
-        3. Extract User Preferences (e.g., "User prefers Pydantic V2").
-        
-        Stream:
-        {stream_text}
-        
-        Output JSON:
-        [
-            {{
-                "content": "Fact description",
-                "tags": ["tag1", "tag2"],
-                "confidence": 0.9
-            }}
-        ]
-        """
+RULES:
+1. Ignore transient noise (file reads, minor edits).
+2. Focus on ARCHITECTURAL DECISIONS (e.g., "User added Tailwind", "Auth is via Supabase").
+3. Extract User Preferences (e.g., "User prefers Pydantic V2").
+4. Output strictly a JSON list of objects.
+
+Stream:
+{stream_text}
+
+Format:
+[
+    {{
+        "content": "Fact description",
+        "tags": ["tag1", "tag2"],
+        "confidence": 0.9
+    }}
+]
+"""
         
         try:
             response = await self.llm.complete_async(
@@ -60,14 +60,16 @@ class StrategicObserver:
                 temperature=0.1
             )
             
-            facts = self._parse_json(response)
+            facts = extract_json(response)
+            if not facts or not isinstance(facts, list):
+                 return 0
             count = 0
             for fact in facts:
                 if self._store_observation(fact):
                     count += 1
             
             if count > 0:
-                logger.info(f"👁️ [OBSERVER]: Distilled {count} new facts from the stream.")
+                logger.info(f"👁️ [DISTILLER]: Extracted {count} new facts from the activity log.")
             return count
             
         except Exception as e:

@@ -7,7 +7,7 @@ HANDOVER NOTE: Resource URIs use the 'side://' scheme.
 """
 
 from mcp.server.fastmcp import FastMCP
-from .storage.modules.base import SovereignEngine
+from side.storage.modules.base import ContextEngine
 from .storage.modules.identity import IdentityStore
 from .storage.modules.strategic import StrategicStore
 from .storage.modules.forensic import ForensicStore
@@ -16,7 +16,7 @@ from .intel.auto_intelligence import AutoIntelligence
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from .intel.log_scavenger import LogScavenger
-from .services.watcher_service import WatcherService
+# from .services.watcher_service import WatcherService (DELETED)
 from .utils.crypto import shield
 import json
 import asyncio
@@ -37,7 +37,7 @@ port = int(os.getenv("PORT", 8000))
 host = "0.0.0.0" # Always bind to all interfaces in production
 
 mcp = FastMCP("Sidelith Sovereign", port=port, host=host)
-engine = SovereignEngine()
+engine = ContextEngine()
 
 # Consolidated Registry: Use engine-provided instances to prevent redundant migrations
 identity = engine.identity
@@ -155,9 +155,15 @@ def get_sovereign_context() -> str:
         mandates = strategic.list_decisions(category="mandate")
         rejections = strategic.list_rejections(limit=10)
         
+        # 2. Wisdom Injection (Phase 6)
+        # Search for wisdom relevant to the current repository DNA
+        # Using a default 'global' hash for now, in real use this would be derived from the current focus
+        wisdom_suggestions = engine.wisdom.suggest_wisdom(context_hash="dna:primary")
+        
         context = {
             "mandates": [m["answer"] for m in mandates],
             "rejections": [f"Avoid repeating error in {r['file_path']}: {r['rejection_reason']}" for r in rejections],
+            "wisdom": wisdom_suggestions,
             "sovereign_status": "ACTIVE",
             "generated_at": datetime.now(timezone.utc).isoformat()
         }
@@ -212,9 +218,10 @@ def record_intent(action: str, outcome: str) -> str:
 @mcp.tool()
 def query_wisdom(topic: str) -> str:
     """
-    [The Research]: Semantic search over historical context.
+    [The Research]: Semantic search over historical wisdom (Patterns & Anti-patterns).
     """
-    results = operational.search_mesh_wisdom(topic)
+    # Use the new PatternStore for suggestions
+    results = engine.wisdom.suggest_wisdom(topic)
     return json.dumps(results, indent=2)
 
 # ---------------------------------------------------------------------
@@ -233,13 +240,22 @@ async def health_check(request: Request):
         "mcp_type": "sse"
     })
 
+@mcp.custom_route("/version", methods=["GET"])
+async def get_version(request: Request):
+    """Returns the current architectural version."""
+    return JSONResponse({
+        "version": "1.1.0-REFINED",
+        "codename": "WisdomDistiller",
+        "mesh_status": "Sovereign"
+    })
+
 @mcp.custom_route("/", methods=["GET"])
 async def root_health(request: Request):
     """Fallback root endpoint."""
     return JSONResponse({
         "status": "ok",
         "service": "Sidelith Sovereign",
-        "version": "1.0.1-OPTIMIZED"
+        "version": "1.1.0-REFINED"
     })
 
 def main():

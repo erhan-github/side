@@ -2,34 +2,49 @@ from typing import Any
 from pathlib import Path
 from side.llm.client import LLMClient
 from side.intel.auto_intelligence import AutoIntelligence
+from side.storage.modules.base import ContextEngine
 
-# Helper to find project root (Assume we are running inside backend/src)
-# In real prod, this is passed via args or env
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+from side.utils.paths import get_repo_root
+
+# Centralized root resolution
+PROJECT_ROOT = get_repo_root()
 
 async def handle_decide(args: dict[str, Any]) -> str:
     """Handle architectural_decision tool."""
     question = args.get("question")
     base_context = args.get("context", "")
     
-    # Auto-Inject Sovereign Context
-    intel = AutoIntelligence(PROJECT_ROOT)
-    sovereign_context = intel.gather_context(topic=question)
+    # [ECONOMY]: Charge for Strategic Decision (50 SUs)
+    from side.tools.core import get_database, get_auto_intel
+    db = get_database()
+    project_id = db.get_project_id()
+    
+    if not db.identity.charge_action(project_id, "STRATEGIC_ALIGN"):
+        return "🚫 [INSUFFICIENT FUNDS]: Strategic Alignment requires 50 SUs. Run 'side login' or upgrade."
+    
+    # Auto-Inject Strategic Context
+    intel = get_auto_intel()
+    # We pass the question as topic and the base_context as active_file if it looks like a path
+    active_file = base_context if "/" in base_context or "." in base_context else None
+    project_context = intel.gather_context(topic=question, active_file=active_file)
     
     llm = LLMClient()
-    prompt = f"Question: {question}\nUser Context: {base_context}\n\nProvide a strategic architectural decision."
+    prompt = f"🎯 Strategic Question: {question}\n🛠️ Operational Context: {base_context}\n\nProvide a high-density architectural decision anchored in technical reality."
     
     system_prompt = intel.enrich_system_prompt(
-        "You are a Principal Software Architect.", 
-        sovereign_context
+        "You are a Strategic Architect (VECTORING). "
+        "Analyze the provided technical context and project knowledge base to deliver a grounded architectural decision. "
+        "Your goal is to provide a decision that minimizes long-term technical debt and maximizes technical alignment.", 
+        project_context
     )
     
     try:
-        return await llm.complete_async(
+        response = await llm.complete_async(
             messages=[{"role": "user", "content": prompt}],
             system_prompt=system_prompt,
             temperature=0.3
         )
+        return response
     except Exception as e:
         return f"🚫 Architectural decision failed due to neural outage: {e}"
 
@@ -37,22 +52,33 @@ async def handle_strategy(args: dict[str, Any]) -> str:
     """Handle strategic_review tool."""
     base_context = args.get("context", "")
     
-    intel = AutoIntelligence(PROJECT_ROOT)
-    sovereign_context = intel.gather_context(topic=base_context)
+    from side.tools.core import get_database, get_auto_intel
+    db = get_database()
+    project_id = db.get_project_id()
+    
+    if not db.identity.charge_action(project_id, "STRATEGIC_ALIGN"):
+        return "🚫 [INSUFFICIENT FUNDS]: Strategic Alignment requires 50 SUs. Run 'side login' or upgrade."
+    
+    intel = get_auto_intel()
+    active_file = base_context if "/" in base_context or "." in base_context else None
+    project_context = intel.gather_context(topic="strategic review", active_file=active_file)
     
     llm = LLMClient()
-    prompt = f"User Context: {base_context}\n\nConduct a strategic review of the current direction."
+    prompt = f"🔍 Review Context: {base_context}\n\nConduct a high-density Strategic Review of the current project state. Identify potential project-drift or architectural bottlenecks."
     
     system_prompt = intel.enrich_system_prompt(
-        "You are a Strategic Advisor.", 
-        sovereign_context
+        "You are a Strategic Architect (VECTORING). "
+        "Analyze the project knowledge base for technical drift and outcome alignment. "
+        "Use the provided context to guide the path forward with high-fidelity technical advice.", 
+        project_context
     )
     
     try:
-        return await llm.complete_async(
+        response = await llm.complete_async(
             messages=[{"role": "user", "content": prompt}],
             system_prompt=system_prompt,
             temperature=0.3
         )
+        return response
     except Exception as e:
         return f"🚫 Strategic review unavailable: {e}"

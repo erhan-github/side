@@ -15,8 +15,8 @@ UUID_SIZE = 16
 
 class MmapStore:
     """
-    [INTEL-4] Memory-Mapped High-Frequency Store.
-    Provides zero-copy binary access to Strategic DNA for NEON/AMX acceleration.
+    [INTEL-4] Memory-Mapped Context Store.
+    Provides zero-copy binary access to model fragments for accelerated processing.
     """
 
     def __init__(self, project_path: Path):

@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 
 class UnifiedBuffer:
     """
-    [KAR-12] Sovereign Unified Buffer: The High-Frequency Pulse.
+    Unified Buffer: High-Frequency Context Sync.
     Aggregates strategic, forensic, and operational signals into a single 
-    asynchronous stream to maintain 0ms developer burden.
+    asynchronous stream to maintain low-latency developer workflow.
     """
     
     def __init__(self, stores: Dict[str, Any], flush_interval: float = 2.0, max_buffer_size: int = 1000):
@@ -97,7 +97,7 @@ class UnifiedBuffer:
                 return 0.9
         
         # 2. Defensiveness (Rejections & Wisdom)
-        if category in ["rejection", "wisdom"]:
+        if category in ["rejection", "patterns", "insights"]:
             return 0.9
             
         # 3. Structural Updates
@@ -157,10 +157,10 @@ class UnifiedBuffer:
                 await asyncio.to_thread(self.stores['operational'].register_mesh_nodes_batch, mesh_nodes)
                 flushed_in_batch += len(mesh_nodes)
                 
-            # 4. Public Wisdom
-            if wisdom := current_buffer.get("wisdom"):
-                await asyncio.to_thread(self.stores['strategic'].save_public_wisdom_batch, wisdom)
-                flushed_in_batch += len(wisdom)
+            # 4. Technical Patterns
+            if patterns := current_buffer.get("insights") or current_buffer.get("wisdom"):
+                await asyncio.to_thread(self.stores['strategic'].save_public_patterns_batch, patterns)
+                flushed_in_batch += len(patterns)
 
             self.signals_flushed += flushed_in_batch
             

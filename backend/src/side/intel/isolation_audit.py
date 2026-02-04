@@ -2,7 +2,7 @@ import logging
 import sqlite3
 from pathlib import Path
 from typing import List, Dict, Any
-from side.storage.modules.base import SovereignEngine
+from side.storage.modules.base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +13,8 @@ class IsolationAuditor:
     """
     def __init__(self, project_path: Path):
         self.project_path = Path(project_path).resolve()
-        self.engine = SovereignEngine()
-        self.project_id = SovereignEngine.get_project_id(self.project_path)
+        self.engine = ContextEngine()
+        self.project_id = ContextEngine.get_project_id(self.project_path)
 
     def run_leak_audit(self) -> Dict[str, Any]:
         """

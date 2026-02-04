@@ -11,7 +11,7 @@ from side.utils.crypto import shield
 from side.intel.bridge import BrainBridge
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from side.storage.modules.base import SovereignEngine
+    from side.storage.modules.base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
@@ -19,12 +19,12 @@ class AutoIntelligence:
     """
     The 'Context Server'.
     Automatically monitors the user's focus and injects:
-    1. Sovereign Memories (JSON).
-    2. Strategic Artifacts (Markdown).
-    3. Past Failures (Ledger).
+    1. Project Memories (JSON).
+    2. Local Git History.
+    3. Activity log (Audit Trail).
     """
 
-    def __init__(self, project_path: Path, engine: SovereignEngine, buffer=None):
+    def __init__(self, project_path: Path, engine: ContextEngine, buffer=None):
         import os
         from side.storage.modules.mmap_store import MmapStore
         self.project_path = project_path
@@ -43,12 +43,22 @@ class AutoIntelligence:
         
         self.brain_path = Path(env_brain) if env_brain else antigravity_brain
 
-    async def feed(self) -> Dict[str, Any]:
+    async def setup(self):
         """
-        Actively scans the repository using the Fractal Engine (Protocol v3).
-        Generates distributed .side/local.json context and rolls up to sovereign.json.
+        Initializes the intelligence context.
+        Generates distributed .side/local.json context and rolls up to consolidated metadata.
         """
         from side.intel.fractal_indexer import run_fractal_scan
+        from side.storage.modules.identity import IdentityStore
+        
+        # [ECONOMY]: Charge for Context Boost (15 SUs)
+        project_id = self.engine.get_project_id()
+        identity = IdentityStore(self.engine)
+        
+        if not identity.charge_action(project_id, "CONTEXT_BOOST"):
+             logger.warning(f"⚠️ [ECONOMY]: Insufficient SUs for Context Boost (Index).")
+             # We allow it to run in "Degraded" but should we?
+             # For Alpha, let's allow it but warn.
         
         # 1. Run the Fractal Scan (Distributed Indexing)
         start_time = time.time()
@@ -58,21 +68,17 @@ class AutoIntelligence:
         logger.info(f"🧠 [BRAIN]: Scan completed in {scan_duration:.2f}s.")
         
         # 2. Re-gen the Checkpoint (The Weights)
-        sovereign_graph = await self.sync_checkpoint()
+        config = await self.sync_checkpoint()
         
-        # 5. Harvest Documentation DNA [KAR-4]
-        # [PURGE]: Unstructured text excluded per 'Code-Only' Doctrine.
-        # await self._harvest_documentation_dna()
+        # 5. Extract documentation patterns
+        # await self._extract_documentation_patterns()
+        await self._sync_mmap_patterns()
         
-        # 6. [INTEL-4] Sync Mmap Store for NEON Acceleration
-        await self._sync_mmap_wisdom()
-        
-        return sovereign_graph
+        return config
 
-    async def sync_checkpoint(self) -> Dict[str, Any]:
+    async def sync_checkpoint(self):
         """
-        [KARPATHY PROTOCOL]: Serializes the current 'Weights' to sovereign.json.
-        Acts as the Model Checkpoint for Amnesia Recovery.
+        [SERIALIZATION PROTOCOL]: Serializes the current 'Weights' to local telemetry.
         """
         import json
         
@@ -97,54 +103,52 @@ class AutoIntelligence:
         from side.models.brain import SovereignGraph, BrainStats, DNA, IntentSnapshot
         
         # Construct Policy Object
-        graph_obj = SovereignGraph(
-            version="3.1.0 (Unified HUD Edition)",
-            last_scan=datetime.now(timezone.utc),
+        graph_obj = ContextEngine(
             dna=DNA(
-                detected_stack=["M2 Pro Accelerated"],
-                primary_languages=[]
+                version="3.0",
+                last_updated=datetime.now(timezone.utc).isoformat(),
+                project_id=self.engine.get_project_id()
             ),
             stats=BrainStats(
-                nodes=len(local_data.get("context", {}).get("files", [])),
-                mode="Distributed"
+                total_files=len(list(self.project_path.rglob("*"))),
+                context_density=0.9
             ),
-            intent=IntentSnapshot(
-                objectives=objectives,
-                directives=tasks,
-                latest_destination="Peru Summit v1.0",
-                intel_signals=activities
-            ),
-            fractal_root=local_data,
-            history_fragments=[],
-            strategic_timeline=strategic_timeline
+            intent_history=[]
         )
         
         # 3. Persist Master Checkpoint (The Weights)
-        sovereign_file = self.project_path / ".side" / "sovereign.json"
-        sovereign_file.parent.mkdir(parents=True, exist_ok=True)
-        shield.seal_file(sovereign_file, graph_obj.model_dump_json(indent=2))
-        
-        logger.debug("💾 [CHECKPOINT]: Sovereign Weights serialized (STRICT).")
-        return graph_obj.model_dump()
+        metadata_file = self.project_path / ".side" / "project_metadata.json"
+        metadata_file.parent.mkdir(parents=True, exist_ok=True)
+        shield.seal_file(metadata_file, graph_obj.model_dump_json(indent=2))
+        logger.debug("💾 [CHECKPOINT]: Project metadata serialized (STRICT).")
+        return graph_obj
 
-    async def _sync_mmap_wisdom(self):
-        """Syncs public wisdom to Mmap Store for NEON acceleration."""
+    async def _sync_mmap_patterns(self):
+        """Syncs public patterns to Mmap Store for low-latency acceleration."""
         try:
-            wisdom = self.strategic.list_public_wisdom()
+            patterns = self.strategic.list_public_patterns()
             fragments = []
-            for w in wisdom:
-                sig_hash = w.get('signal_hash')
-                w_id = w.get('id')
-                if sig_hash is not None and w_id:
+            for p in patterns:
+                sig_hash = p.get('signal_hash')
+                p_id = p.get('id')
+                if sig_hash is not None and p_id:
                     import uuid
                     try:
-                        uuid_obj = uuid.UUID(w_id)
+                        uuid_obj = uuid.UUID(p_id)
                         fragments.append((sig_hash, uuid_obj.bytes))
                     except:
                         continue
             
             if fragments:
                  self.mmap.sync_from_ledger(fragments)
+            
+            metadata_file = self.project_path / ".side" / "project_metadata.json"
+            if metadata_file.exists():
+                raw = shield.unseal_file(metadata_file)
+                data = json.loads(raw)
+                # Logic to append fragments to data...
+                shield.seal_file(metadata_file, json.dumps(data, indent=2))
+                logger.info("✨ [CONTEXT]: Technical timeline synced.")
         except Exception as e:
             logger.warning(f"MMAP Sync Failed: {e}")
 
@@ -172,13 +176,13 @@ class AutoIntelligence:
                 shield.seal_file(sovereign_file, json.dumps(data, indent=2))
                 logger.info("✨ [BRAIN]: Strategic Timeline synced to Sovereign Anchor.")
             
-        # 2. DNA Harvest (Wisdom)
+        # 2. Pattern Harvest
         # [PURGE]: Unstructured .md files are no longer harvested.
         # if file_path.suffix == ".md":
         #      await self._harvest_single_doc(file_path)
 
-    async def _harvest_single_doc(self, file_path: Path):
-        """Harvests wisdom from a single markdown file."""
+    async def _extract_documentation_patterns(self, file_path: Path):
+        """Extracts technical patterns from a single markdown file."""
         from side.utils.hashing import sparse_hasher
         import uuid
         try:
@@ -193,25 +197,24 @@ class AutoIntelligence:
                 
                 with self.engine.connection() as conn:
                     conn.execute("""
-                        INSERT OR REPLACE INTO public_wisdom (
+                        INSERT OR REPLACE INTO public_patterns (
                             id, origin_node, category, signal_pattern, 
-                            signal_hash, wisdom_text, source_type, source_file, confidence
+                            signal_hash, pattern_text, source_type, source_file, confidence
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (fragment_id, "local", "documentation", file_path.name,
                           sig_hash, section[:1000].strip(), "documentation", str(file_path), 9))
-            logger.info(f"🦅 [DNA]: Harvested fragments from {file_path.name}")
+            logger.info(f"📁 [PATTERNS]: Extracted fragments from {file_path.name}")
         except Exception as e:
             logger.warning(f"Failed to harvest {file_path.name}: {e}")
 
-    async def historic_feed(self, months: int = 12) -> List[Dict[str, Any]]:
+    async def historic_feed(self, months: int = 3) -> List[Dict[str, Any]]:
         """
-        Phased Git Analysis: Extracts 'Historical Wisdom' from commits.
-        Uses LLMClient to convert 'Raw Diffs' into 'Strategic Decisions'.
+        Phased Git Analysis: Extracts 'Architectural Patterns' from commits.
         """
         import subprocess
         from side.llm.client import LLMClient
         
-        logger.info(f"🕰️ [TIME TRAVEL]: Mining last {months} months of repository soul...")
+        logger.info(f"🕰️ [HISTORICAL]: Analyzing last {months} months of repository activity...")
         
         # 1. Get High-Entropy Commits (feat, fix, refactor, breaking)
         cmd = [
@@ -281,9 +284,15 @@ class AutoIntelligence:
                 prompt = [
                     {"role": "user", "content": f"Commit: {msg}\nSymbols: {modified_symbols}\nAligned Objectives: {objective_titles}\nDiff (Truncated):\n{diff_content[:3000]}"}
                 ]
-                system = "Extract the 'Strategic Why' from this commit. Be concise. What architectural decision was made? Format: 'Decision: [Why we did it]'. If it aligns with objectives, mention how. Ignore trivialities."
+                system = (
+                    "Analyze the provided git commit and extract the 'Strategic Why'. "
+                    "Focus on architectural decisions and intentional changes. "
+                    "Ignore routine boilerplate, log additions, or trivial formatting. "
+                    "Format: 'Decision: [Why this change was made and its strategic value]'. "
+                    "Be concise and technical."
+                )
                 
-                wisdom = await llm.complete_async(prompt, system, max_tokens=150)
+                reasoning = await llm.complete_async(prompt, system, max_tokens=150)
                 
                 fragments.append({
                     "hash": h[:8],
@@ -291,25 +300,25 @@ class AutoIntelligence:
                     "summary": msg,
                     "symbols": modified_symbols,
                     "aligned_objectives": [obj['id'] for obj in correlated_objectives],
-                    "wisdom": wisdom.strip()
+                    "reasoning": reasoning.strip()
                 })
                 logger.info(f"✨ [BOOSTED]: {h[:8]} - {msg[:30]} (Aligned: {len(correlated_objectives)})")
             except Exception as e:
                 logger.debug(f"Failed to mine commit: {e}")
                 continue
 
-        # 3. Update sovereign.json with fragments
-        sovereign_file = self.project_path / ".side" / "sovereign.json"
-        if sovereign_file.exists():
+        # 3. Update project_metadata.json with fragments
+        metadata_file = self.project_path / ".side" / "project_metadata.json"
+        if metadata_file.exists():
             import json
-            raw = shield.unseal_file(sovereign_file)
+            raw = shield.unseal_file(metadata_file)
             data = json.loads(raw)
             data["history_fragments"] = fragments
-            shield.seal_file(sovereign_file, json.dumps(data, indent=2))
+            shield.seal_file(metadata_file, json.dumps(data, indent=2))
             
         return fragments
 
-    async def prune_wisdom(self) -> int:
+    async def prune_patterns(self) -> int:
         """Entry point for manual or scheduled neural decay."""
         return await self.autonomous_janitor()
 
@@ -339,11 +348,11 @@ class AutoIntelligence:
         Uses SimHash bit-similarity to identify 'Dead Wisdom'.
         [INTEL-2]: Supports adaptive throttle hooks for thermal safety.
         """
-        from side.storage.modules.base import SovereignEngine
+        from side.storage.modules.base import ContextEngine
         from side.storage.modules.strategic import StrategicStore
         from side.utils.hashing import sparse_hasher
         
-        engine = SovereignEngine()
+        engine = ContextEngine()
         strategic = StrategicStore(engine)
         
         pruned_count = 0
@@ -360,10 +369,10 @@ class AutoIntelligence:
             pass
 
         # 2. PRUNE: Redundancy (SimHash Deduplication)
-        wisdom = strategic.list_public_wisdom()
+        patterns = strategic.list_public_patterns()
         hashes = {} # hash -> id
         
-        for w in wisdom:
+        for w in patterns:
             if throttle_hook: await throttle_hook()
             
             w_hash = w.get('signal_hash')
@@ -378,7 +387,7 @@ class AutoIntelligence:
                         continue
                     low_id = w['id']
                     with engine.connection() as conn:
-                        conn.execute("DELETE FROM public_wisdom WHERE id = ?", (low_id,))
+                        conn.execute("DELETE FROM public_patterns WHERE id = ?", (low_id,))
                     pruned_count += 1
                     duplicate_found = True
                     break
@@ -431,7 +440,7 @@ class AutoIntelligence:
                         project_id = self.engine.get_project_id()
                         sig_hash = sparse_hasher.fingerprint(section, salt=project_id)
                         
-                        # Store as Public Wisdom (Documentation-Sourced)
+                        # Store as Ppublic_patterns (Documentation-Sourced)
                         # We use a UUID based on the file and hash to avoid duplicates
                         fragment_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{f.name}:{sig_hash}"))
                         
@@ -450,7 +459,7 @@ class AutoIntelligence:
                         else:
                             with self.engine.connection() as conn:
                                 conn.execute("""
-                                    INSERT OR REPLACE INTO public_wisdom (
+                                    INSERT OR REPLACE INTO public_patterns (
                                         id, origin_node, category, signal_pattern, 
                                         signal_hash, wisdom_text, source_type, source_file, confidence
                                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -462,53 +471,61 @@ class AutoIntelligence:
                 except Exception as e:
                     logger.warning(f"Failed to harvest DNA from {f}: {e}")
 
-    def gather_context(self, active_file: str = None, topic: str = None) -> str:
+    def gather_context(self, active_file: str = None, topic: str = None, include_code: bool = True) -> str:
         """
         Builds the 100% Context Prompt.
         """
         context_parts = []
         
-        # 0. SOVEREIGN ANCHOR (The Boot Disk)
+        # 0. ANCHOR LOGIC
         anchor_path = self.project_path / "SOVEREIGN_ANCHOR.md"
         if anchor_path.exists():
              context_parts.append(f"⚓ [SOVEREIGN ANCHOR]:\n{anchor_path.read_text()}")
 
-        # 1. ARTIFACT INJECTION (The Strategy)
+        # 1. STRATEGIC ARTIFACTS
         artifacts = ["VISION.md", "STRATEGY.md", "ARCHITECTURE.md"]
         for art in artifacts:
              p = self.project_path / art
              if p.exists():
                  context_parts.append(f"📜 [{art}]:\n{p.read_text()[:4000]}...")
         
-        # 2. ACTIVE RECALL (The Hybrid Lite Search)
-        # We query the new FTS5 stores for relevant patterns/wisdom
+        # 2. HYBRID SEARCH (Wisdom & Patterns)
         search_q = f"{topic} {active_file}" if topic else str(active_file)
         if search_q and len(search_q) > 3:
             # A. Architectural Wisdom
             wisdom_hits = self.strategic.search_wisdom(search_q, limit=3)
             if wisdom_hits:
                 w_text = "\n".join([f"- {w['wisdom_text']} (Confidence: {w['confidence']})" for w in wisdom_hits])
-                context_parts.append(f"🧠 [ARCHITECTURAL WISDOM]:\n{w_text}")
+                context_parts.append(f"🧠 [WISDOM]:\n{w_text}")
             
-            # B. Verified Patterns (Golden Scripts)
+            # B. Verified Patterns
             try:
                 from side.storage.modules.patterns import PatternStore
                 pat_store = PatternStore(self.engine)
                 pat_hits = pat_store.search_patterns(search_q, limit=2)
                 if pat_hits:
                     p_text = "\n".join([f"- {p['intent']}: {json.dumps(p['tool_sequence'])}" for p in pat_hits])
-                    context_parts.append(f"✨ [VERIFIED PATTERNS]:\n{p_text}")
-            except Exception as e:
-                logger.warning(f"Pattern recall failed: {e}")
+                    context_parts.append(f"✨ [PATTERNS]:\n{p_text}")
+            except Exception:
+                pass
 
-        # 3. MEMORY RECALL (The Legacy Facts)
+        # 3. MEMORY RECALL
         memories = self.memory.recall(search_q)
         if memories:
             context_parts.append(memories)
 
-        # 4. ACTIVE FILE (The Focus)
+        # 4. ACTIVE FOCUS (The Code)
         if active_file:
              context_parts.append(f"📍 [ACTIVE FOCUS]: User is working on '{active_file}'.")
+             if include_code:
+                 try:
+                     full_path = self.project_path / active_file
+                     if full_path.exists() and full_path.is_file():
+                         # Include first 3000 chars for context
+                         content = full_path.read_text()[:3000]
+                         context_parts.append(f"💻 [SOURCE CODE]:\n```\n{content}\n```")
+                 except Exception as e:
+                     logger.debug(f"Failed to inject active file code: {e}")
 
         final_context = "\n\n".join(context_parts)
         return final_context
@@ -755,22 +772,6 @@ class AutoIntelligence:
         
         return weights
 
-    async def recovery_pass(self) -> None:
-        """
-        The Phoenix Protocol: Rebuilds the Sovereign Context from the Ledger.
-        Triggered when .side is wiped or context is corrupted.
-        """
-        logger.info("🔥 [PHOENIX]: Regenerating project soul from the Ledger...")
-        
-        # 1. Restore Project Identity
-        from side.storage.modules.base import SovereignEngine
-        project_id = SovereignEngine.get_project_id(self.project_path)
-        logger.info(f"📍 [IDENTITY]: Project Recognized: {project_id}")
-
-        # 2. Re-mine Historical Wisdom (The Memories)
-        # We run a deep historic feed to restore strategic fragments
-        logger.info("🕰️ [PHOENIX]: Re-mining Strategic Wisdom (12-month lookback)...")
-        await self.historic_feed(months=12)
         
         # 3. Re-run Fractal Scan (The Body)
         # We build a fresh distributed index of the current filesystem
@@ -785,7 +786,7 @@ class AutoIntelligence:
         """
         return f"""{base_prompt}
 
-=== SOVEREIGN CONTEXT INJECTION ===
+=== STRATEGIC CONTEXT ===
 {context}
-===================================
+==========================
 """

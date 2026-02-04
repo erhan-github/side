@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sidelith"
-version = "1.0.0"
+version = "1.1.0"
 description = "Palantir-level strategic intelligence for your IDE."
 readme = "README.md"
 license = "MIT"
@@ -44,7 +44,7 @@ dependencies = [
     "sqlmodel>=0.0.14",
     "supabase>=2.4.0",
     "sentry-sdk[fastapi]>=2.0.0",
-    "posthog-python>=3.5.0",
+    "posthog>=3.5.0",
     "openai>=1.0.0",
     # Forensics tools - Auto-installed for security scanning
     "semgrep>=1.45.0,<2.0.0",  # Primary polyglot security scanner

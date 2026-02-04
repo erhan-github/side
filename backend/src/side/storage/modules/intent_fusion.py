@@ -1,17 +1,19 @@
 """
-Intent Fusion Store - Antigravity Session & Signal Storage.
+Intent Fusion Store - Session & Signal Storage for Sidelith.
 """
 
 import logging
 import json
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from .base import SovereignEngine
+from side.utils.shield import shield
+from .base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
 class IntentFusionStore:
-    def __init__(self, engine: SovereignEngine):
+    def __init__(self, engine: ContextEngine
+):
         self.engine = engine
         with self.engine.connection() as conn:
             self.init_schema(conn)
@@ -92,7 +94,8 @@ class IntentFusionStore:
                     session_data['started_at'],
                     session_data['ended_at'],
                     session_data['duration_seconds'],
-                    session_data['raw_intent'],
+                    # [SEALING]: Scrub and Tag intent before DB persistence
+                    f"sealed:{shield.scrub(session_data['raw_intent'])}",
                     json.dumps(session_data['intent_vector']),
                     session_data['intent_category'],
                     session_data['claimed_outcome'],

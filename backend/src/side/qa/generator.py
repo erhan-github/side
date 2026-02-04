@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 from side.llm.client import LLMClient
+from side.utils.llm_helpers import clean_code_block
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +74,10 @@ Write a SELF-CONTAINED Python script (using pytest) that attempts to REPRODUCE t
             logger.info(f"🧬 Generating Red Test for {issue_type}...")
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are a Forensic Code Auditor. Your output must be a strictly compliant, standalone Python reproduction script. \nRULES:\n1. Must run with `pytest`.\n2. No markdown blocks.\n3. Include a `if __name__ == '__main__':` block.\n4. Handle imports gracefully (mock if missing).",
+                system_prompt="You are a QA Automation Engineer. Output ONLY the standalone Python script. No markdown blocks.",
                 temperature=0.1
             )
-            return self._clean_code(response)
+            return clean_code_block(response)
         except Exception as e:
             logger.error(f"❌ Failed to generate Red Test: {e}")
             return f"# [RED TEST FAILURE]\n# Error generating repro: {e}\n# Please manually verify {context_files}"

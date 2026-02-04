@@ -2,6 +2,7 @@ import logging
 from typing import List, Dict, Any
 from .base import Finding
 from side.llm.client import LLMClient
+from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -64,16 +65,25 @@ Code:
 """)
 
         system_prompt = """
-You are Sidelith, a world-class security engineer and strategic architect.
-Your task is to analyze raw security scanner findings and provide:
-1. EXPLANATION: A concise, one-sentence explanation of why this is dangerous in this specific context.
-2. SUGGESTED_FIX: A precise code snippet that resolves the issue correctly. 
-3. PRIORITIZATION: A strategic assessment of impact.
+You are a Security Architect. 
+Your task is to analyze security scanner findings and provide:
+1. EXPLANATION: A concise, one-sentence explanation of the danger in this specific context.
+2. SUGGESTED_FIX: Precise code that resolves the issue.
+3. PRIORITIZATION: Assessment of strategic impact.
 
-Format your response as a JSON list of objects, one for each finding, with keys:
-"explanation" (string), "suggested_fix" (string - just the code), "strategic_impact" (string)
+RULES:
+- Be technical and direct.
+- Output strictly JSON objects.
+- Ensure fixes are idiomatic and safe.
 
-Be direct, technical, and avoid fluff. Focus on high-confidence remediation.
+Format:
+[
+  {
+    "explanation": "string",
+    "suggested_fix": "string",
+    "strategic_impact": "string"
+  }
+]
 """
 
         user_prompt = f"Analyze these {len(findings)} findings and provide synthesis:\n\n" + "\n".join(findings_context)
@@ -82,28 +92,11 @@ Be direct, technical, and avoid fluff. Focus on high-confidence remediation.
         
         try:
             response_text = await self.llm.complete_async(messages, system_prompt)
-            # Parse the JSON response
-            import json
-            import re
+            synthesis_data = extract_json(response_text)
             
-            # Robust JSON extraction
-            # 1. Try to find the first '[' and last ']'
-            start_idx = response_text.find('[')
-            end_idx = response_text.rfind(']')
-            
-            if start_idx != -1 and end_idx != -1:
-                json_str = response_text[start_idx:end_idx + 1]
-                # Fix common LLM escaping issues
-                json_str = json_str.replace('\\', '\\\\') # Escape backslashes
-                json_str = json_str.replace('\\\\"', '\\"') # Unescape already escaped quotes
-                
-                try:
-                    synthesis_data = json.loads(json_str)
-                except json.JSONDecodeError:
-                    # Try without extra escaping if that failed
-                    synthesis_data = json.loads(response_text[start_idx:end_idx + 1])
-            else:
-                synthesis_data = json.loads(response_text)
+            if not synthesis_data or not isinstance(synthesis_data, list):
+                 logger.warning(f"⚠️ Failed to extract valid JSON list for synthesis.")
+                 return findings
 
             # Map back to findings
             for i, data in enumerate(synthesis_data):

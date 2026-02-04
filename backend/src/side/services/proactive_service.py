@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 from side.storage.modules.strategic import StrategicStore
+from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +31,8 @@ class ProactiveService:
         findings = []
         
         # 1. Get Strategic Context from the Hub
-        from side.storage.modules.base import SovereignEngine
-        project_id = SovereignEngine.get_project_id(self.project_path)
+        from side.storage.modules.base import ContextEngine
+        project_id = ContextEngine.get_project_id(self.project_path)
         active_plans = self.strategic.list_plans(project_id, status="active")
         
         # 2. Scan for Technical Signals (TODO, HACK, FIXME)
@@ -75,34 +76,37 @@ class ProactiveService:
         Replaces the fragile Regex/Dictionary lookups with a Virtual CTO.
         """
         # 1. Fetch Strategic Context (The Hub)
-        from side.storage.modules.base import SovereignEngine
-        project_id = SovereignEngine.get_project_id(self.project_path)
+        from side.storage.modules.base import ContextEngine
+        project_id = ContextEngine.get_project_id(self.project_path)
         active_plans = self.strategic.list_plans(project_id, status="active")
         context_str = "\n".join([f"- {p['title']}" for p in active_plans])
         
-        prompt = f"""You are the 'Provocateur' - a ruthless CTO AI.
+        prompt = f"""
+Analyze if this technical comment represents a strategic risk.
         
 STRATEGIC CONTEXT (Current Goals):
 {context_str}
 
-THE FINDING (Technical Signale):
+THE FINDING:
 File: {file_path}:{line_no}
 Comment: "{comment}"
 
 YOUR MISSION:
 Analyze if this comment represents:
 1. **Vision Drift**: Building features we didn't plan?
-2. **Reinventing the Wheel**: Building something that exists as OSS? (OSS Leverage)
+2. **Reinventing the Wheel**: Building something that exists as OSS?
 3. **Dead End**: Implementing a pattern we explicitly rejected?
 4. **Strategic Risk**: A 'HACK' in a critical path?
 
 OUTPUT:
-If this is minor/irrelevant, output NONE.
-If this is a strategic violation, output a JSON:
+If minor/irrelevant, output NONE.
+If it is a strategic violation, output strictly a JSON object.
+
+Format:
 {{
     "type": "drift|leverage|risk",
     "severity": "high|medium",
-    "message": "A provocative, concise roast explaining why this is a bad idea and what to do instead."
+    "message": "A concise, technical explanation of the risk and remediation."
 }}
 """
         try:
@@ -112,20 +116,14 @@ If this is a strategic violation, output a JSON:
             # Temperature 0.3 for consistent but creative roasts.
             response = await client.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are Sidelith's Strategic Conscience. You are concise, brutal, and helpful.",
+                system_prompt="You are a Strategic Auditor. Be concise and technical.",
                 temperature=0.3
             )
             
-            # Simple parsing of the potential JSON response
-            import json
-            if "NONE" in response:
+            if "NONE" in response.upper():
                 return None
             
-            # Try to find JSON blob
-            start = response.find("{")
-            end = response.rfind("}") + 1
-            if start != -1 and end != -1:
-                return json.loads(response[start:end])
+            return extract_json(response)
                 
         except Exception as e:
             logger.warning(f"Provocateur failed: {e}")

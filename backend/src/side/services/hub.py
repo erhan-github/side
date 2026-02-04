@@ -36,8 +36,8 @@ async def generate_hub(db: Any) -> str:
     # 3. Generate Markdown
     lines = [
         "# Sidelith Strategic Hub\n",
-        f"*Sovereign Strategic Identity for {project_id}*\n",
-        "## 🎯 Current Objectives\n"
+        f"*Sovereign Strategic Identity for {project_id} (INTENTION FIREWALL ENABLED)*\n",
+        "## 🎯 Strategic Objectives\n"
     ]
     
     objectives = [p for p in plans if p.get('type') == 'objective' and p.get('status') != 'done']
@@ -45,18 +45,18 @@ async def generate_hub(db: Any) -> str:
         lines.append(f"- [ ] **{obj['title']}** (ID: `{obj['id']}`)")
     
     if friction:
-        lines.append("\n## ⚠️ Strategic Friction & Remediation\n")
-        lines.append("Review these identified bottlenecks and apply remediation directives.\n")
+        lines.append("\n## ⚠️ Strategic Friction & Forensic Remediation\n")
+        lines.append("These bottlenecks have been harvested by the **Wisdom Distiller**. Apply these directives to realign.\n")
         for issue in friction:
             severity = issue.get('severity', 'INFO')
-            emoji = "🚨" if severity in ['CRITICAL', 'VIOLATION'] else "🟠"
+            emoji = "🛑" if severity in ['CRITICAL', 'VIOLATION'] else "🟠"
             lines.append(f"### {emoji} {issue.get('message', 'Unknown Friction')}")
             lines.append(f"- **File**: `{issue.get('file_path', 'Global')}`")
-            lines.append(f"- **Severity**: `{severity}`")
+            lines.append(f"- **Outcome**: `FORENSIC_PULSE` Detection")
             
             # Generate Remediation Directive (The "Pasteable Prompt" value)
-            lines.append("\n> **Remediation Directive**:")
-            lines.append(f"> Paste this into your LLM box to fix: `Side, fix the {severity} issue in {issue.get('file_path')}: {issue.get('message')}. Ensure architectural invariants are preserved.`\n")
+            lines.append("\n> **Strategic Directive**:")
+            lines.append(f"> Paste this into your LLM box: `Side, fix the {severity} friction in {issue.get('file_path')}: {issue.get('message')}. Maintain architectural intent.`\n")
 
     lines.append("\n## 🚀 Active Milestones\n")
     milestones = [p for p in plans if p.get('type') == 'milestone' and p.get('status') != 'done']

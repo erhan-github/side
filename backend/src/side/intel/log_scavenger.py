@@ -7,7 +7,7 @@ import collections
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from side.storage.modules.forensic import ForensicStore
-from side.storage.modules.base import SovereignEngine
+from side.storage.modules.base import ContextEngine
 from side.intel.scavengers.mobile import AndroidScavenger
 from side.intel.scavengers.docker import DockerScavenger
 import asyncio
@@ -211,14 +211,23 @@ class LogScavenger:
             time.sleep(10)
 
     def _log_friction(self, source: str, event_type: str, payload: dict):
-        """Persists a friction signal to the Sovereign Ledger."""
-        project_id = SovereignEngine.get_project_id(self.project_path)
+        """Persists a friction signal to the Sovereign Ledger. Charges 1 SU."""
+        project_id = ContextEngine.get_project_id(self.project_path)
+        
+        # [ECONOMY]: Charge 1 SU for Signal Capture (Log Event)
+        from side.storage.modules.identity import IdentityStore
+        identity = IdentityStore(self.forensic.engine)
+        
+        # If charge fails (insufficient SUs), we still log it as FREE (grace period)
+        # or we could skip it. For now, we charge.
+        identity.charge_action(project_id, "SIGNAL_CAPTURE")
+        
         logger.info(f"🚨 [LOG_SCAVENGER]: Captured {source} {event_type} Friction.")
         self.forensic.log_activity(
             project_id=project_id,
             tool="LOG_SCAVENGER",
             action=f"capture_{source.lower()}_signal",
-            cost_tokens=0, # FREE: System signals must never be dropped
+            cost_tokens=1, 
             payload={
                 "source": source.upper(), # XCODE, ANDROID, DOCKER
                 "type": event_type,       # CRASH, ERROR, WARNING
@@ -230,7 +239,7 @@ class LogScavenger:
 
 if __name__ == "__main__":
     # Test Standalone
-    engine = SovereignEngine()
+    engine = ContextEngine()
     forensic = ForensicStore(engine)
     scavenger = LogScavenger(forensic, Path.cwd())
     scavenger.start()

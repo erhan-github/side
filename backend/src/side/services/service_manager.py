@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-from side.storage.modules.base import SovereignEngine
+from side.storage.modules.base import ContextEngine
 from side.storage.modules.identity import IdentityStore
 from side.storage.modules.strategic import StrategicStore
 from side.storage.modules.forensic import ForensicStore
@@ -40,7 +40,7 @@ class ServiceManager:
             project_path: Path to project to monitor
         """
         self.project_path = Path(project_path).resolve()
-        self.engine = SovereignEngine()
+        self.engine = ContextEngine()
         self.identity = IdentityStore(self.engine)
         self.strategic = StrategicStore(self.engine)
         self.forensic = ForensicStore(self.engine)
@@ -48,6 +48,7 @@ class ServiceManager:
         
         # [KAR-6.12] Initialize Unified Buffer
         from side.services.unified_buffer import UnifiedBuffer
+        from side.config import config
         self.buffer = UnifiedBuffer({
             'strategic': self.strategic,
             'forensic': self.forensic,
@@ -73,7 +74,7 @@ class ServiceManager:
                 run_project_audit(self.project_path)
             except Exception as e:
                 logger.error(f"Isolation audit failed: {e}")
-            await asyncio.sleep(86400) # 24 hours
+            await asyncio.sleep(config.service_audit_interval) # Configurable interval
 
     async def start(self) -> None:
         """Start all background services."""
@@ -231,7 +232,7 @@ class ServiceManager:
         from side.services.supabase_sync import SupabaseSyncService
 
         # SFO Sprint: No Fat Architecture - passing direct stores
-        project_id = SovereignEngine.get_project_id(self.project_path)
+        project_id = ContextEngine.get_project_id(self.project_path)
 
         sync_service = SupabaseSyncService(self.operational, self.identity, project_id)
         
@@ -261,7 +262,7 @@ class ServiceManager:
         from side.services.signal_auditor import SignalAuditorService
         
         self.tasks = [] # Initialize list to hold background tasks
-        project_id = SovereignEngine.get_project_id(self.project_path)
+        project_id = ContextEngine.get_project_id(self.project_path)
         
         # 0. File Watcher (Sovereign Events)
         from side.services.file_watcher import FileWatcher
@@ -404,7 +405,7 @@ class ServiceManager:
                         logger.warning(f"Service {name} is unhealthy")
 
                 # Wait before next check
-                await asyncio.sleep(30)  # Check every 30 seconds
+                await asyncio.sleep(config.heartbeat_interval)  # Configurable check
 
             except asyncio.CancelledError:
                 break
