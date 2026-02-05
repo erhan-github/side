@@ -33,21 +33,25 @@ class IdentityStore:
                 target_raise TEXT,
                 tech_stack JSON,
                 tier TEXT DEFAULT 'hobby',
-                token_balance INTEGER DEFAULT 500, -- Aligns with PricingModel.LIMITS[Tier.HOBBY]
-                tokens_monthly INTEGER DEFAULT 0,
+                token_balance INTEGER DEFAULT 500,
+                tokens_monthly INTEGER DEFAULT 500,
                 tokens_used INTEGER DEFAULT 0,
-                design_pattern TEXT DEFAULT 'declarative', -- [KAR-3]: Declarative vs Imperative
-                is_airgapped INTEGER DEFAULT 0,            -- [PAL-3]: 1 = Local Only, 0 = Mesh Allowed
+                premium_count INTEGER DEFAULT 0, -- Count of strategic actions
+                cycle_ended_at TIMESTAMP, -- Legacy typo fix placeholder
+                design_pattern TEXT DEFAULT 'declarative',
+                is_airgapped INTEGER DEFAULT 0,
+                access_token TEXT, -- [SOVEREIGN LOCKDOWN]: The trackable sk- key
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         
         # [MIGRATION]: Add Token-Level Granularity [User Request]
         try:
-            conn.execute("ALTER TABLE profile ADD COLUMN input_tokens INTEGER DEFAULT 0")
-            conn.execute("ALTER TABLE profile ADD COLUMN output_tokens INTEGER DEFAULT 0")
-            conn.execute("ALTER TABLE profile ADD COLUMN reasoning_tokens INTEGER DEFAULT 0")
-            logger.info("MIGRATION: Added Token Granularity columns to profile")
+            conn.execute("ALTER TABLE profile ADD COLUMN premium_count INTEGER DEFAULT 0")
+            conn.execute("ALTER TABLE profile ADD COLUMN cycle_started_at TIMESTAMP")
+            conn.execute("ALTER TABLE profile ADD COLUMN cycle_ends_at TIMESTAMP")
+            conn.execute("ALTER TABLE profile ADD COLUMN access_token TEXT")
+            logger.info("MIGRATION: Added access_token and billing columns to profile")
         except: pass
         
         # ─────────────────────────────────────────────────────────────
@@ -132,8 +136,8 @@ class IdentityStore:
                 INSERT INTO profile (
                     id, name, company, domain, stage, business_model, 
                     target_raise, tech_stack, tier, token_balance, tokens_monthly, tokens_used,
-                    design_pattern, is_airgapped, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    design_pattern, is_airgapped, access_token, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = COALESCE(excluded.name, name),
                     company = COALESCE(excluded.company, company),
@@ -148,6 +152,7 @@ class IdentityStore:
                     tokens_used = COALESCE(excluded.tokens_used, tokens_used),
                     design_pattern = COALESCE(excluded.design_pattern, design_pattern),
                     is_airgapped = COALESCE(excluded.is_airgapped, is_airgapped),
+                    access_token = COALESCE(excluded.access_token, access_token),
                     updated_at = excluded.updated_at
                 """,
                 (
@@ -165,6 +170,7 @@ class IdentityStore:
                     profile_data.get("tokens_used"),
                     profile_data.get("design_pattern", "declarative"),
                     1 if profile_data.get("is_airgapped") else 0,
+                    profile_data.get("access_token"),
                     datetime.now(timezone.utc).isoformat()
                 )
             )
@@ -192,6 +198,7 @@ class IdentityStore:
                     "tech_stack": tech_stack,
                     "design_pattern": row["design_pattern"],
                     "is_airgapped": bool(row["is_airgapped"]),
+                    "access_token": row["access_token"],
                     "updated_at": row["updated_at"]
                 }
             return None
@@ -227,8 +234,8 @@ class IdentityStore:
                     raise InsufficientTokensError(f"Insufficient SUs for project {masked_id}. Have {current}, need {abs(amount)}.")
             else:
                 conn.execute(
-                    "UPDATE profile SET token_balance = token_balance + ? WHERE id = ?",
-                    (amount, project_id)
+                    "UPDATE profile SET token_balance = token_balance + ?, tokens_used = tokens_used + ? WHERE id = ?",
+                    (amount, abs(amount) if amount < 0 else 0, project_id)
                 )
             
             row = conn.execute("SELECT token_balance FROM profile WHERE id = ?", (project_id,)).fetchone()
@@ -300,3 +307,87 @@ class IdentityStore:
                 """,
                 (action_key, cost, description)
             )
+
+    def get_cursor_usage_summary(self, project_id: str) -> dict[str, Any]:
+        """Provides a Cursor-like usage breakdown."""
+        with self.engine.connection() as conn:
+            row = conn.execute(
+                "SELECT tier, token_balance, tokens_monthly, tokens_used, premium_count, cycle_started_at, cycle_ends_at FROM profile WHERE id = ?",
+                (project_id,)
+            ).fetchone()
+            
+            if not row:
+                return {"error": "Profile not found"}
+            
+            # [RESET CHECK]: Transparently ensure cycle is current
+            self.check_and_reset_cycle(project_id)
+            
+            # Re-fetch after possible reset
+            row = conn.execute(
+                "SELECT tier, token_balance, tokens_monthly, tokens_used, premium_count, cycle_started_at, cycle_ends_at FROM profile WHERE id = ?",
+                (project_id,)
+            ).fetchone()
+
+            from side.models.pricing import PricingModel, Tier
+            tier = Tier(row["tier"])
+            
+            return {
+                "tier_label": PricingModel.LABELS[tier],
+                "tokens_remaining": row["token_balance"],
+                "tokens_monthly": row["tokens_monthly"],
+                "tokens_used": row["tokens_used"],
+                "premium_requests": row["premium_count"],
+                "premium_limit": PricingModel.LIMITS[tier],
+                "cycle_ends_at": row["cycle_ends_at"],
+                "is_exhausted": row["token_balance"] <= 0
+            }
+
+    def check_and_reset_cycle(self, project_id: str):
+        """Resets monthly usage if the cycle has expired."""
+        with self.engine.connection() as conn:
+            row = conn.execute("SELECT cycle_ends_at, tier FROM profile WHERE id = ?", (project_id,)).fetchone()
+            if not row or not row["cycle_ends_at"]:
+                # Initialize new cycle if missing
+                self._initialize_cycle(project_id)
+                return
+
+            end_date = datetime.fromisoformat(row["cycle_ends_at"])
+            if datetime.now(timezone.utc) > end_date:
+                logger.info(f"🔄 [BILLING]: Resetting cycle for {project_id}")
+                from side.models.pricing import PricingModel, Tier
+                tier = Tier(row["tier"])
+                new_limit = PricingModel.get_limit(tier)
+                
+                new_start = datetime.now(timezone.utc).isoformat()
+                from datetime import timedelta
+                new_end = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+                
+                conn.execute(
+                    """
+                    UPDATE profile SET 
+                        tokens_used = 0, 
+                        premium_count = 0,
+                        token_balance = ?, 
+                        tokens_monthly = ?,
+                        cycle_started_at = ?, 
+                        cycle_ends_at = ? 
+                    WHERE id = ?
+                    """,
+                    (new_limit, new_limit, new_start, new_end, project_id)
+                )
+
+    def _initialize_cycle(self, project_id: str):
+        """Initializes a 30-day billing cycle for a new profile."""
+        with self.engine.connection() as conn:
+            from datetime import timedelta
+            now = datetime.now(timezone.utc).isoformat()
+            future = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+            conn.execute(
+                "UPDATE profile SET cycle_started_at = ?, cycle_ends_at = ? WHERE id = ?",
+                (now, future, project_id)
+            )
+
+    def increment_premium_count(self, project_id: str):
+        """Explicitly tracks high-value premium actions."""
+        with self.engine.connection() as conn:
+            conn.execute("UPDATE profile SET premium_count = premium_count + 1 WHERE id = ?", (project_id,))

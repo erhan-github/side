@@ -1,4 +1,6 @@
+"""
 Strategic Store - Plans, Decisions, & Learnings.
+"""
 
 import logging
 from datetime import datetime, timezone
@@ -464,7 +466,7 @@ class StrategicStore:
             'signal_hash': kwargs.get("signal_hash")
         }])
 
-    def save_public_patterns_batch(self, pattern_list: List[Dict[ Any]]) -> None:
+    def save_public_patterns_batch(self, pattern_list: List[Dict[str, Any]]) -> None:
         """Save multiple pattern fragments in a single transaction."""
         with self.engine.connection() as conn:
             for p in pattern_list:

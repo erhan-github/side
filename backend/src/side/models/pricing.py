@@ -21,10 +21,10 @@ class PricingModel:
 
     # Display Names
     LABELS = {
-        Tier.HOBBY: "Hobby",
-        Tier.PRO: "Pro",
-        Tier.ELITE: "Elite",
-        Tier.HITECH: "High Tech"
+        Tier.HOBBY: "Sovereign Node",
+        Tier.PRO: "Mesh Network",
+        Tier.ELITE: "Sovereign Network",
+        Tier.HITECH: "Universal Grid"
     }
 
     @classmethod

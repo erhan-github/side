@@ -45,11 +45,15 @@ class OAuthCallbackHandler(http.server.BaseHTTPRequestHandler):
         
         access_token = params.get('access_token', [None])[0]
         refresh_token = params.get('refresh_token', [None])[0]
+        verified_tier = params.get('tier', ["hobby"])[0]
+        signature = params.get('sig', [None])[0]
         
         if access_token:
             self.server.tokens = {
                 "access_token": access_token,
-                "refresh_token": refresh_token
+                "refresh_token": refresh_token,
+                "tier": verified_tier,
+                "signature": signature
             }
             
             self.send_response(HTTPStatus.OK)

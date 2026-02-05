@@ -69,7 +69,7 @@ class IntentFusionStore:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_signals_type ON intent_signals(signal_type)")
 
     def save_session_dict(self, session_data: Dict[str, Any]) -> None:
-        """Save a conversation session from a dictionary (e.g., from dataclass.to_dict())."""
+        """Save a conversation session with AES-256 field-level encryption."""
         with self.engine.connection() as conn:
             conn.execute(
                 """
@@ -94,8 +94,8 @@ class IntentFusionStore:
                     session_data['started_at'],
                     session_data['ended_at'],
                     session_data['duration_seconds'],
-                    # [SEALING]: Scrub and Tag intent before DB persistence
-                    f"sealed:{shield.scrub(session_data['raw_intent'])}",
+                    # [AES-256 SEALING]: Authenticated encryption for sensitive intents
+                    shield.seal(session_data['raw_intent']),
                     json.dumps(session_data['intent_vector']),
                     session_data['intent_category'],
                     session_data['claimed_outcome'],
@@ -106,13 +106,17 @@ class IntentFusionStore:
             )
 
     def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Retrieve a session by ID."""
+        """Retrieve a session by ID with AES-256 decryption."""
         with self.engine.connection() as conn:
             row = conn.execute("SELECT * FROM conversation_sessions WHERE session_id = ?", (session_id,)).fetchone()
             if not row:
                 return None
             
             d = dict(row)
+            # [AES-256 UNSEALING]
+            if d['raw_intent']:
+                d['raw_intent'] = shield.unseal(d['raw_intent'])
+
             # Parse JSON fields
             try: d['intent_vector'] = json.loads(d['intent_vector']) 
             except: d['intent_vector'] = []

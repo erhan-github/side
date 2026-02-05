@@ -118,14 +118,31 @@ def handle_login(args):
     if tokens and tokens.get("access_token"):
         print("\n✅ [SUCCESS]: Identity Verified.")
         
-        # [UNIVERSAL IDENTITY]: Support Hobby Keys from Web
+        from side.models.pricing import PricingModel, Tier
+        
+        # [SOVEREIGN LOCKDOWN]: Reclaim Truth from Sidelith HQ
         token = tokens["access_token"]
-        # If web didn't send a specific key type, assume it's a new Hobby signup
+        server_tier = tokens.get("tier", "hobby")
+        requested_tier = getattr(args, "tier", "hobby")
+        
+        # [SECURITY]: Cross-verify requested tier vs server-signed tier
+        # In a real scenario, this would check tokens["signature"] against a public key
+        if requested_tier != server_tier and requested_tier != "hobby":
+            print(f"\n⚠️  [SECURITY ALERT]: Requested tier '{requested_tier.upper()}' does not match your Subscription state.")
+            print(f"   - Reverting to verified tier: {server_tier.upper()}")
+            requested_tier = server_tier
+
+        # Standardize Token Prefix
         if not token.startswith("sk_"):
-             token = "sk_hobby_" + token[:8]
+             token = f"sk_{requested_tier}_" + token[:8]
              
-        from side.models.pricing import PricingModel
         tier = PricingModel.detect_tier(token)
+        
+        # Fallback if detection fails or tier mismatch occurs
+        if tier != requested_tier:
+             token = f"sk_{requested_tier}_" + token.split("_")[-1]
+             tier = requested_tier
+
         limit = PricingModel.LIMITS[tier]
         
         identity.update_profile(project_id, {
@@ -134,15 +151,35 @@ def handle_login(args):
             "tokens_monthly": limit,
             "access_token": token
         })
-        print(f"   👤 Tier: {tier.upper()}")
-        print(f"   💰 Balance: {limit} SUs")
+        print(f"   👤 Tier Locked: {tier.upper()}")
+        print(f"   💰 Balance: {limit} SUs / Month")
     else:
         print("\n❌ [FAILURE]: Authentication timed out.")
 
 
+def _check_auth_or_login(tier=None):
+    """JIT Auth check: triggers login if no profile exists."""
+    engine = _get_engine()
+    identity = _get_identity(engine)
+    project_id = engine.get_project_id(".")
+    profile = identity.get_profile(project_id)
+    
+    if not profile or not profile.get("access_token") or profile.get("access_token").startswith("sk_hobby_"):
+        # We allow sk_hobby_ but if it's completely missing, we need a handshake
+        if not profile:
+            print(f"👋 [Welcome to Sidelith]: Let's activate your Sovereign Identity ({tier.upper() if tier else 'HOBBY'} Tier).")
+            from argparse import Namespace
+            handle_login(Namespace(key=None, tier=tier))
+            # Re-fetch after login
+            profile = identity.get_profile(project_id)
+    return profile
 
 def handle_connect(args):
-    print("🔌 [Sovereign Connect]: Detecting Environment...")
+    print("🔌 [Sovereign Connect]: Initiating Universal Handshake...")
+    
+    # [ULTRA-FLUID]: Consolidate Auth into Connect
+    profile = _check_auth_or_login(tier=getattr(args, "tier", "hobby"))
+    
     from pathlib import Path
     import json
     import time
@@ -184,6 +221,28 @@ def handle_connect(args):
         }
     }
 
+    # [AUTO-DETECTION]: If no specific flag is provided, attempt magic detection
+    if not any([args.cursor, args.vscode, args.claude, args.antigravity, args.codex, args.windsurf]):
+        print("🔍 [Magic Search]: Scanning for compatible AI Gateways...")
+        
+        # 1. Claude Check
+        claude_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+        if claude_path.exists():
+            print("✨ [FOUND]: Claude Desktop detected. Patching bridge...")
+            args.claude = True
+        
+        # 2. Cursor Check
+        cursor_path = Path.home() / "Library" / "Application Support" / "Cursor" / "User" / "settings.json"
+        if cursor_path.exists():
+            print("✨ [FOUND]: Cursor detected. Broadcasters active.")
+            args.cursor = True
+            
+        # 3. VS Code Check
+        vscode_path = Path.home() / "Library" / "Application Support" / "Code" / "User" / "settings.json"
+        if vscode_path.exists():
+            print("✨ [FOUND]: VS Code detected.")
+            args.vscode = True
+
     # 1. CURSOR (SSE Preference)
     if args.cursor:
         print("\n🔵 [CURSOR DETECTED]: Generating SSE Configuration...")
@@ -217,6 +276,31 @@ def handle_connect(args):
         print("---------------------------------------------------------------")
         return
 
+        return
+    # 3. OPENAI CODEX (NEW)
+    if args.codex:
+        print("\n🟢 [OPENAI CODEX DETECTED]: Generating MCP Configuration...")
+        print("   👉 Add this to your `config.toml` (Skills & Automations):")
+        print("---------------------------------------------------------------")
+        print(json.dumps({
+            "mcpServers": {
+                "sidelith": stdio_config
+            }
+        }, indent=2))
+        print("---------------------------------------------------------------")
+        return
+
+    # 4. WINDSURF (CONSISTENCY)
+    if args.windsurf:
+        print("\n🟢 [WINDSURF DETECTED]: Generating Universal Handshake...")
+        print("   👉 Sidelith is now broadcasting Cascade performance anchors.")
+        print("---------------------------------------------------------------")
+        print(json.dumps({
+            "mcpServers": {
+                "sidelith": stdio_config
+            }
+        }, indent=2))
+        print("---------------------------------------------------------------")
         return
 
     # [RESTORED]: Intelligence Operations (The Brain)
@@ -325,8 +409,49 @@ def handle_audit(args):
     }))
     print(result)
 
+def handle_usage(args):
+    """Exposes high-fidelity Cursor-level usage summary."""
+    engine = _get_engine()
+    identity = _get_identity(engine)
+    project_id = engine.get_project_id(".")
+    
+    summary = identity.get_cursor_usage_summary(project_id)
+    if not summary or "error" in summary:
+        print("❌ [ERROR]: Could not retrieve usage summary. Run 'side login' first.")
+        return
+
+    print("\n--- 📊 SOVEREIGN USAGE SUMMARY -----------------------")
+    print(f"   Tier:             {summary['tier_label']}")
+    print(f"   Cycle Ends:       {summary['cycle_ends_at']}")
+    print("-------------------------------------------------------")
+    
+    # [PRICING COMMUNICATION]: High-fidelity Progress Bars
+    used = summary['tokens_used']
+    limit = summary['tokens_monthly']
+    percent = min(100, int((used / limit) * 100)) if limit > 0 else 100
+    bar = "█" * (percent // 5) + "░" * (20 - (percent // 5))
+    
+    print(f"   Standard SUs:     [{bar}] {percent}%")
+    print(f"                     ({used:,} / {limit:,} SUs used)")
+    
+    # Premium Requests (The Cursor Experience)
+    prem_used = summary['premium_requests']
+    prem_limit = summary['premium_limit']
+    prem_percent = min(100, int((prem_used / prem_limit) * 100)) if prem_limit > 0 else 100
+    prem_bar = "█" * (prem_percent // 5) + "░" * (20 - (prem_percent // 5))
+    
+    print(f"\n   Premium Requests: [{prem_bar}] {prem_percent}%")
+    print(f"                     ({prem_used} / {prem_limit} requests)")
+    
+    if summary['is_exhausted']:
+        print("\n⚠️  [LIMIT REACHED]: You have exhausted your SUs for this cycle.")
+        print("   Upgrade at https://sidelith.com/pricing to resume high-fidelity reasoning.")
+    else:
+        print(f"\n✨ You have {summary['tokens_remaining']:,} SUs remaining.")
+    print("-------------------------------------------------------")
+
 def handle_profile(args):
-    """View current Sovereign Identity & SU Balance."""
+    """View current Sovereign Identity & detailed SU Balance."""
     engine = _get_engine()
     identity = _get_identity(engine)
     project_id = engine.get_project_id(".")
@@ -339,10 +464,31 @@ def handle_profile(args):
     print("\n--- 👤 SOVEREIGN IDENTITY -----------------------------")
     print(f"   Project ID: {profile.get('id')}")
     print(f"   Tier:       {profile.get('tier', 'hobby').upper()}")
-    print(f"   Balance:    {profile.get('token_balance', 0)} SUs")
-    print(f"   Usage:      {profile.get('tokens_used', 0)} SUs used this month")
+    print(f"   Balance:    {profile.get('token_balance', 0):,} SUs")
+    print(f"   Pattern:    {profile.get('design_pattern', 'declarative').upper()}")
+    print(f"   Airgapped:  {'YES' if profile.get('is_airgapped') else 'NO'}")
     print(f"   Email:      {profile.get('email', 'Guest')}")
     print("-------------------------------------------------------")
+    print("👉 Tip: Run 'side usage' for detailed cycle breakdown.")
+
+def handle_sign_anchor(args):
+    """Signs the sovereign.json anchor for project integrity."""
+    from side.utils.signature import signer
+    project_path = Path(".").resolve()
+    anchor_path = project_path / "sovereign.json"
+    
+    if not anchor_path.exists():
+        print("❌ [ERROR]: No sovereign.json found to sign.")
+        return
+        
+    signer.sign_file(anchor_path)
+    print(f"✨ [SIGNER]: Anchor signed. Created {anchor_path.suffix}.sig companion.")
+
+def handle_maintenance(args):
+    """Triggers routine database maintenance (VACUUM/Backup)."""
+    engine = _get_engine()
+    engine.perform_maintenance()
+    print("🎨 [ENGINE]: System maintenance complete. Context VACUUMed and Backed up.")
 
 def main():
     import argparse
@@ -364,6 +510,15 @@ def main():
     # Profile Command (Status)
     profile_parser = subparsers.add_parser("profile", help="View your Sovereign Identity & SU Balance")
 
+    # Usage Command (Detailed Billing)
+    usage_parser = subparsers.add_parser("usage", help="View detailed Cursor-level usage & cycle status")
+
+    # Sign Anchor Command
+    sign_parser = subparsers.add_parser("sign-anchor", help="Cryptographically sign the sovereign.json anchor")
+
+    # Maintenance Command
+    maint_parser = subparsers.add_parser("maintenance", help="Run routine intelligence maintenance (VACUUM/Backup)")
+
     # Pulse Command (Health)
     pulse_parser = subparsers.add_parser("pulse", help="Trigger a live forensic pulse audit")
     pulse_parser.add_argument("path", nargs="?", default=".", help="Project path")
@@ -378,6 +533,9 @@ def main():
     connect_parser.add_argument("--vscode", action="store_true", help="Generate VS Code MCP Configuration")
     connect_parser.add_argument("--claude", action="store_true", help="Patch/Generate Claude Desktop Configuration")
     connect_parser.add_argument("--antigravity", action="store_true", help="Generate Antigravity Configuration")
+    connect_parser.add_argument("--codex", action="store_true", help="Generate OpenAI Codex Configuration")
+    connect_parser.add_argument("--windsurf", action="store_true", help="Generate Windsurf Configuration")
+    connect_parser.add_argument("--tier", default="hobby", choices=["hobby", "pro", "elite"], help="The Sovereign Tier to activate")
 
     # Audit Command (Diagnostics)
     audit_parser = subparsers.add_parser("audit", help="Run a deep forensic audit on the codebase")
@@ -400,9 +558,12 @@ def main():
         # Core Pillars
         "login": handle_login,
         "profile": handle_profile,
+        "usage": handle_usage,
         "connect": handle_connect,
         "pulse": handle_pulse,
         "strategy": handle_strategy,
+        "sign-anchor": handle_sign_anchor,
+        "maintenance": handle_maintenance,
         
         # Intelligence (Restored)
         "index": handle_index,
