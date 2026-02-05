@@ -6,17 +6,17 @@ export default function PrivacyPage() {
         <div className="min-h-screen bg-black text-zinc-400 font-sans p-8 md:p-24 selection:bg-white/10">
             <div className="max-w-3xl mx-auto">
                 <Link href="/" className="mb-6 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
-                    <ChevronRight className="w-4 h-4 rotate-180" /> Back to Sidemcp.com
+                    <ChevronRight className="w-4 h-4 rotate-180" /> Back to Sidelith.com
                 </Link>
 
                 <h1 className="text-4xl font-bold text-white mb-8 tracking-tight">Privacy Policy</h1>
 
                 <div className="space-y-6 text-sm leading-relaxed">
-                    <p className="text-zinc-500 font-mono">Last Updated: January 18, 2026</p>
+                    <p className="text-zinc-500 font-mono">Last Updated: February 4, 2026</p>
 
                     <section>
                         <h2 className="text-xl font-semibold text-white mb-3">1. Local-First Philosophy</h2>
-                        <p>At Side AI, we believe strategic intelligence shouldn't cost you your privacy. Your code never leaves your machine. Side.ai operates as a local MCP server. We only sync anonymized metadata (project hashes, decision summaries) to our global synchronization layer in Supabase to enable the dashboard features.</p>
+                        <p>At Sidelith, we believe strategic intelligence shouldn't cost you your privacy. Your code never leaves your machine. Sidelith operates as a local MCP server. We only sync anonymized metadata (project hashes, decision summaries) to our global synchronization layer in Supabase to enable the dashboard features.</p>
                     </section>
 
                     <section>

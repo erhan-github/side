@@ -1,4 +1,4 @@
-import { ArrowRight, Terminal, Shield, Zap, Cpu, Database, Command, Check, Activity, Lock, Globe, Sparkles } from "lucide-react";
+import { ArrowRight, Terminal, Shield, Zap, Cpu, Database, Command, Check, Activity, Lock, Globe, Sparkles, Bot, Monitor, Wind } from "lucide-react";
 import { InstallWidget } from "../components/InstallWidget";
 
 export default function Home() {
@@ -507,9 +507,59 @@ export default function Home() {
                         </div>
                     </div>
                 </div>
-
             </section>
 
+
+            {/* 4. PERFORMANCE SUBSTRATE (Speed & Efficiency) */}
+            <section className="section-spacing w-full max-w-6xl px-6 mb-24 relative z-10">
+                <div className="text-center mb-16">
+                    <div className="inline-block px-4 py-1.5 rounded-full border border-amber-500/20 bg-amber-500/5 text-amber-500 font-mono text-xs tracking-widest uppercase mb-6">
+                        The Silicon Velocity
+                    </div>
+                    <h2 className="text-hero mb-4 text-white">
+                        The <span className="text-amber-500">Performance</span> Substrate.
+                    </h2>
+                    <p className="text-body-lg text-white/60">Built for high-velocity software engineering.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                    {/* Card 1: Latency */}
+                    <div className="p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group overflow-hidden relative">
+                        <div className="text-4xl font-bold text-amber-500 font-mono mb-4">&lt;1ms</div>
+                        <h3 className="text-xl font-bold text-white mb-2">Lookup Latency</h3>
+                        <p className="text-white/50 leading-relaxed text-sm">
+                            Powered by a <b>Zero-Copy Mmap</b> substrate. Context arrives faster than your IDE can render it.
+                        </p>
+                        <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <Zap size={120} />
+                        </div>
+                    </div>
+
+                    {/* Card 2: Leakage */}
+                    <div className="p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group overflow-hidden relative">
+                        <div className="text-4xl font-bold text-white font-mono mb-4">0%</div>
+                        <h3 className="text-xl font-bold text-white mb-2">Cloud Leakage</h3>
+                        <p className="text-white/50 leading-relaxed text-sm">
+                            Intent Fusion occurs entirely in-memory. No telemetry. No outbound patterns. Total isolation by default.
+                        </p>
+                        <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <Shield size={120} />
+                        </div>
+                    </div>
+
+                    {/* Card 3: Overhead */}
+                    <div className="p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group overflow-hidden relative">
+                        <div className="text-4xl font-bold text-emerald-500 font-mono mb-4">&lt;5%</div>
+                        <h3 className="text-xl font-bold text-white mb-2">CPU Headroom</h3>
+                        <p className="text-white/50 leading-relaxed text-sm">
+                            A polite background daemon. Architectural integrity shouldn't cost you your battery life.
+                        </p>
+                        <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <Cpu size={120} />
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* 4. GOVERNANCE LAYER (Trust & Compliance) */}
             <section className="section-spacing w-full max-w-6xl px-6 mb-24 relative z-10">
@@ -524,21 +574,21 @@ export default function Home() {
                             <div className="text-center md:text-left max-w-lg">
                                 <div className="inline-flex items-center gap-2 mb-4">
                                     <Shield size={16} className="text-emerald-500" />
-                                    <span className="text-emerald-500 font-mono text-xs font-bold tracking-widest uppercase">The Governance Layer</span>
+                                    <span className="text-emerald-500 font-mono text-xs font-bold tracking-widest uppercase">The Sovereign Shield</span>
                                 </div>
                                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                                    Built for the <span className="text-white/50">Paranoid</span>.
+                                    Localism is <span className="text-white/50">Security</span>.
                                 </h2>
                                 <p className="text-lg text-white/60 leading-relaxed mb-8">
-                                    We don't sell "Privacy Policies". We sell <b>Architecture</b>. <br />
-                                    Sidelith is engineered to operate in hostile, regulated environments without modification.
+                                    We don't sell "Privacy Policies". We sell <b>Hardened Infrastructure</b>. <br />
+                                    Sidelith utilizes <b>Ed25519 Anchor Signing</b> and <b>AES-256-GCM</b> to ensure your project context remains a cryptographic silo.
                                 </p>
                                 <div className="flex flex-col md:flex-row gap-4 justify-center md:justify-start">
                                     <div className="flex items-center gap-2 text-xs font-mono text-white/40">
-                                        <Check size={14} className="text-emerald-500" /> NO CLOUD RETENTION
+                                        <Check size={14} className="text-emerald-500" /> SEALED IDENTITY (.side-id)
                                     </div>
                                     <div className="flex items-center gap-2 text-xs font-mono text-white/40">
-                                        <Check size={14} className="text-emerald-500" /> NO MODEL TRAINING
+                                        <Check size={14} className="text-emerald-500" /> SIGNED ANCHOR TRUTH
                                     </div>
                                 </div>
                             </div>
@@ -547,22 +597,22 @@ export default function Home() {
                             <div className="flex flex-col items-center md:items-end w-full md:w-auto">
                                 <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
 
-                                    {/* Badge 1: AES-256 */}
+                                    {/* Badge 1: AES-256-GCM */}
                                     <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/30 transition-colors group text-center min-w-[160px]">
                                         <div className="w-10 h-10 mx-auto rounded-full bg-emerald-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                             <Lock size={18} className="text-emerald-400" />
                                         </div>
-                                        <h4 className="text-white font-bold text-sm mb-1">AES-256 GCM</h4>
-                                        <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono">ENCRYPTION</p>
+                                        <h4 className="text-white font-bold text-sm mb-1">AES-256-GCM</h4>
+                                        <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono">FIELD-LEVEL SEALING</p>
                                     </div>
 
-                                    {/* Badge 2: HIPAA */}
+                                    {/* Badge 2: ED25519 */}
                                     <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-blue-500/30 transition-colors group text-center min-w-[160px]">
                                         <div className="w-10 h-10 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                            <Activity size={18} className="text-blue-400" />
+                                            <Check size={18} className="text-blue-400" />
                                         </div>
-                                        <h4 className="text-white font-bold text-sm mb-1">HIPAA</h4>
-                                        <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono">ELIGIBLE ARCH</p>
+                                        <h4 className="text-white font-bold text-sm mb-1">ED25519</h4>
+                                        <p className="text-[10px] text-white/40 uppercase tracking-wider font-mono">ANCHOR SIGNING</p>
                                     </div>
 
                                     {/* Badge 3: SOC 2 */}
@@ -597,17 +647,108 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* 5. PRICING (Usage Based) */}
+            {/* 5. THE INTELLIGENCE MESH (Integrations) */}
+            <section className="section-spacing w-full max-w-6xl px-6 mb-24 relative z-10">
+                <div className="text-center mb-16">
+                    <div className="inline-block px-4 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 font-mono text-xs tracking-widest uppercase mb-6">
+                        The Universal Substrate
+                    </div>
+                    <h2 className="text-hero mb-4 text-white">
+                        The <span className="text-blue-500">Intelligence</span> Mesh.
+                    </h2>
+                    <p className="text-body-lg text-white/60 max-w-2xl mx-auto">
+                        Sidelith isn't a replacement for your favorite AI. <br />
+                        It's the <b>Secure Fabric</b> that connects them all.
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Antigravity (THE BRAIN) */}
+                    <div className="p-8 rounded-3xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-all group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-40 transition-opacity">
+                            <Command size={48} />
+                        </div>
+                        <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform">
+                            <Cpu size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">Antigravity</h3>
+                        <p className="text-xs text-white/40 mb-4 font-mono">SOVEREIGN STRATEGIC ENGINE</p>
+                        <p className="text-white/60 text-sm leading-relaxed">
+                            Sidelith's internal reasoning core. For deep architectural analysis and high-dimension strategic audits.
+                        </p>
+                    </div>
+
+                    {/* Claude Digital */}
+                    <div className="p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group">
+                        <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-6 group-hover:scale-110 transition-transform">
+                            <Bot size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">Claude Desktop</h3>
+                        <p className="text-xs text-white/40 mb-4 font-mono">SOVEREIGN MCP PATCHING</p>
+                        <p className="text-white/60 text-sm leading-relaxed">
+                            Auto-patches your local environment to deliver deep codebase context to Anthropic's flagship agent through a secure stdio bridge.
+                        </p>
+                    </div>
+
+                    {/* Gemini / Google */}
+                    <div className="p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group">
+                        <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
+                            <Sparkles size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">Gemini CLI</h3>
+                        <p className="text-xs text-white/40 mb-4 font-mono">STRATEGIC GOOGLE LOOP</p>
+                        <p className="text-white/60 text-sm leading-relaxed">
+                            Links your local project DNA to Google's reasoning models via the Sovereign Strategic network.
+                        </p>
+                    </div>
+
+                    {/* Cursor */}
+                    <div className="p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group">
+                        <div className="w-12 h-12 rounded-xl bg-zinc-500/10 flex items-center justify-center text-zinc-300 mb-6 group-hover:scale-110 transition-transform">
+                            <Monitor size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">Cursor IDE</h3>
+                        <p className="text-xs text-white/40 mb-4 font-mono">DEEP AGENTIC BINDING</p>
+                        <p className="text-white/60 text-sm leading-relaxed">
+                            The standard for high-fidelity coding. Sidelith provides the zero-latency memory substrate.
+                        </p>
+                    </div>
+
+                    {/* Windsurf (Universal) */}
+                    <div className="p-8 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group">
+                        <div className="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 mb-6 group-hover:scale-110 transition-transform">
+                            <Wind size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">Windsurf</h3>
+                        <p className="text-xs text-white/40 mb-4 font-mono">CASCADE CONNECTIVITY</p>
+                        <p className="text-white/60 text-sm leading-relaxed">
+                            Native support for Windsurf's agentic loop. Delivers zero-latency performance anchors to the editor.
+                        </p>
+                    </div>
+
+                    {/* OpenAI Codex (NEW) */}
+                    <div className="p-8 rounded-3xl border border-green-500/10 bg-green-500/[0.02] hover:bg-green-500/[0.04] transition-all group">
+                        <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-400 mb-6 group-hover:scale-110 transition-transform">
+                            <Database size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">OpenAI Codex</h3>
+                        <p className="text-xs text-green-400/60 mb-4 font-mono">MULTI-AGENT CONTROL</p>
+                        <p className="text-white/60 text-sm leading-relaxed">
+                            Integration with the new macOS Codex app. Link your context to OpenAI's orchestration plane.
+                        </p>
+                    </div>
+                </div>
+            </section>
             <section className="section-spacing w-full max-w-6xl px-6">
                 <div className="text-center mb-16">
-                    <h2 className="text-h2 mb-4">Pay for Intelligence.</h2>
-                    <p className="text-body-lg text-white/60">Scalable Side Units (SUs) for your semantic operations.</p>
+                    <h2 className="text-hero mb-4 text-white">Scale for <span className="text-amber-500">Intelligence</span>.</h2>
+                    <p className="text-body-lg text-white/60">Deterministic capacity for your semantic operations.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2">
                     {/* Hobby */}
                     <div className="p-6 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] transition-colors flex flex-col h-full">
-                        <div className="text-mono text-zinc-500 mb-4">Hobby</div>
+                        <div className="text-mono text-zinc-500 mb-4 uppercase tracking-[0.2em] text-[10px] font-bold">Hobby</div>
                         <div className="text-h3 mb-1 text-white">$0 <span className="text-sm font-sans text-white/40">/ mo</span></div>
                         <div className="text-mono text-[10px] text-white/40 mb-6 tracking-wider">500 SUs / MO</div>
                         <p className="text-xs text-white/50 mb-6 min-h-[40px]">Perfect for individuals.</p>
@@ -616,13 +757,13 @@ export default function Home() {
                             <li className="flex gap-2 items-center"><Check size={14} className="text-white/20" /> Fractal Memory</li>
                             <li className="flex gap-2 items-center"><Check size={14} className="text-white/20" /> Neural Logic Graph</li>
                         </ul>
-                        <button className="w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-medium text-sm transition-colors border border-white/5">Get Started</button>
+                        <a href="#install-widget" className="w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-medium text-sm transition-colors border border-white/5 flex items-center justify-center">Get Started</a>
                     </div>
 
                     {/* Pro */}
                     <div className="p-6 rounded-xl border border-blue-500/30 bg-blue-500/[0.03] relative overflow-hidden group flex flex-col h-full">
                         <div className="absolute top-0 right-0 px-3 py-1 bg-blue-500 text-[10px] font-bold text-white">POPULAR</div>
-                        <div className="text-mono text-blue-400 mb-4">Pro</div>
+                        <div className="text-mono text-blue-400 mb-4 uppercase tracking-[0.2em] text-[10px] font-bold">Pro</div>
                         <div className="text-h3 mb-1 text-white">$20 <span className="text-sm font-sans text-white/40">/ mo</span></div>
                         <div className="text-mono text-[10px] text-white/40 mb-6 tracking-wider">5,000 SUs / MO</div>
                         <p className="text-xs text-white/50 mb-6 min-h-[40px]">Standard for Professionals.</p>
@@ -631,12 +772,12 @@ export default function Home() {
                             <li className="flex gap-2 items-center"><Check size={14} className="text-blue-500" /> Fractal Memory</li>
                             <li className="flex gap-2 items-center"><Check size={14} className="text-blue-500" /> Neural Logic Graph</li>
                         </ul>
-                        <button className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium text-sm transition-colors shadow-lg shadow-blue-500/20">Get Started</button>
+                        <a href="#install-widget" className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium text-sm transition-colors shadow-lg shadow-blue-500/20 flex items-center justify-center">Get Started</a>
                     </div>
 
                     {/* Elite */}
                     <div className="p-6 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] transition-colors flex flex-col h-full">
-                        <div className="text-mono text-zinc-500 mb-4">Elite</div>
+                        <div className="text-mono text-zinc-500 mb-4 uppercase tracking-[0.2em] text-[10px] font-bold">Elite</div>
                         <div className="text-h3 mb-1 text-white">$60 <span className="text-sm font-sans text-white/40">/ mo</span></div>
                         <div className="text-mono text-[10px] text-white/40 mb-6 tracking-wider">25,000 SUs / MO</div>
                         <p className="text-xs text-white/50 mb-6 min-h-[40px]">For Power Users.</p>
@@ -645,12 +786,12 @@ export default function Home() {
                             <li className="flex gap-2 items-center"><Check size={14} className="text-white/20" /> Fractal Memory</li>
                             <li className="flex gap-2 items-center"><Check size={14} className="text-white/20" /> Neural Logic Graph</li>
                         </ul>
-                        <button className="w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-medium text-sm transition-colors border border-white/5">Get Started</button>
+                        <a href="#install-widget" className="w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-medium text-sm transition-colors border border-white/5 flex items-center justify-center">Get Started</a>
                     </div>
 
                     {/* High Tech */}
                     <div className="p-6 rounded-xl border border-purple-500/20 bg-purple-500/[0.02] hover:bg-purple-500/[0.04] transition-colors flex flex-col h-full">
-                        <div className="text-mono text-purple-400 mb-4">High Tech</div>
+                        <div className="text-mono text-purple-400 mb-4 uppercase tracking-[0.2em] text-[10px] font-bold">High Tech</div>
                         <div className="text-h3 mb-1 text-white">Custom <span className="text-sm font-sans text-white/40"></span></div>
                         <div className="text-mono text-[10px] text-white/40 mb-6 tracking-wider">ABSOLUTE SOVEREIGNTY</div>
                         <p className="text-xs text-white/50 mb-6 min-h-[40px]">For IP-Sensitive Enterprises.</p>
@@ -672,17 +813,14 @@ export default function Home() {
                         </div>
                         <div>
                             <h4 className="text-sm font-bold text-white uppercase tracking-wider">Structural Refills</h4>
-                            <p className="text-xs text-white/50">Ran out of throughput? Add capacity incrementally.</p>
+                            <p className="text-xs text-white/50 max-w-sm">Ran out of throughput? Add capacity incrementally to your Sovereign Node. Credits are applied instantly.</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6 pr-4">
                         <div className="text-right">
                             <div className="text-xl font-bold text-white">$10</div>
                             <div className="text-[10px] text-white/40 uppercase tracking-wider">250 Extra SUs</div>
                         </div>
-                        <button className="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white font-medium text-xs transition-colors border border-white/5">
-                            Get Started
-                        </button>
                     </div>
                 </div>
             </section>
