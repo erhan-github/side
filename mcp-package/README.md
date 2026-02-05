@@ -7,7 +7,7 @@
 ## Quick Start
 
 ### 1. Get Your API Key
-Visit [side.ai](https://side.ai) and sign in with GitHub. Your API key is generated instantly.
+Visit [sidelith.com](https://sidelith.com) and sign in with GitHub. Your API key is generated instantly.
 
 ### 2. Add to Cursor
 Add this to your Cursor MCP settings (`.cursor/mcp.json`):
@@ -57,8 +57,8 @@ In Cursor, just chat with Side:
 
 ## Links
 
-- [Website](https://side.ai)
-- [Documentation](https://docs.side.ai)
+- [Website](https://sidelith.com)
+- [Documentation](https://docs.sidelith.com)
 - [GitHub](https://github.com/erhan-github/side)
 
 ## License

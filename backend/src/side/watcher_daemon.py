@@ -116,15 +116,17 @@ class SidelithEventHandler(FileSystemEventHandler):
             print(f"⚠️ Resonance Error: {e}")
 
     def _should_ignore(self, filepath: str) -> bool:
-        # [EFFICIENCY]: Cache ignored patterns as a set for O(1) lookups
-        if not hasattr(self, '_ignored_segments'):
-            self._ignored_segments = {
-                '__pycache__', '.git', '.side', 'node_modules', 
-                '.DS_Store', 'dist', 'build', '.pytest_cache'
-            }
+        # [GITIGNORE INHERITANCE]: Dimension 3 of Strategic Audit
+        from side.utils.ignore_store import get_ignore_store
+        ignore_store = get_ignore_store(self.engine.get_repo_root())
         
+        if ignore_store.is_ignored(filepath):
+            return True
+            
+        # Hardcoded safety segments as backup
         path_parts = Path(filepath).parts
-        return any(part in self._ignored_segments for part in path_parts) or filepath.endswith('.env')
+        segments = {'.git', '.side', 'node_modules', '__pycache__'}
+        return any(part in segments for part in path_parts) or filepath.endswith('.env')
 
     async def _process_event(self, filepath: str):
         """

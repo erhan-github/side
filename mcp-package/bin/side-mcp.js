@@ -19,7 +19,7 @@ if (!apiKey) {
 ║  ⚠️  SIDE_API_KEY not found                                ║
 ║                                                            ║
 ║  Get your free API key at:                                 ║
-║  https://side.ai/dashboard                                 ║
+║  https://sidelith.com/dashboard                                 ║
 ║                                                            ║
 ║  Then add to your MCP config:                              ║
 ║  "env": { "SIDE_API_KEY": "sk_xxx" }                       ║

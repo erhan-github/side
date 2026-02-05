@@ -83,13 +83,24 @@ Required for `{name}`: `{cost} SUs`
         # Run the tool
         result = await handler(arguments)
         
-        # 4. Deduct cost on success (No-bullshit logic)
-        if cost > 0:
-            try:
-                db.identity.update_token_balance(project_id, -cost)
-                db.forensic.log_activity(project_id, name, "execution", cost)
-            except InsufficientTokensError:
-                pass # Atomic check already passed, this is a safety fallback
+        # 4. [CURSOR BILLING]: Charge and log success
+        # We use the centralized BillingService for logic + logging
+        from side.services.billing import SystemAction, BillingService
+        billing = BillingService(db)
+        
+        # Map tool name to SystemAction if applicable, else use custom charge
+        action_map = {
+            "plan": SystemAction.PLAN_UPDATE,
+            "check": SystemAction.HUB_UPDATE,
+            "architectural_decision": SystemAction.PLAN_UPDATE, # Simplified mapping
+        }
+        
+        target_action = action_map.get(name, SystemAction.HUB_UPDATE)
+        billing.charge(project_id, target_action, name, arguments)
+        
+        # Ensure free tools are also logged in ForensicStore
+        if cost == 0:
+            db.forensic.log_activity(project_id, name, "execution", 0, tier="free")
                 
         return result
     except Exception as e:
