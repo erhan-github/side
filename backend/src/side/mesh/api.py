@@ -132,7 +132,7 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> UserI
     if not user_info.valid:
         raise HTTPException(
             status_code=401,
-            detail="Invalid API key. Get one at side.ai/dashboard",
+            detail="Invalid API key. Get one at sidelith.com/dashboard",
         )
     return user_info
 

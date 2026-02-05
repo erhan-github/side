@@ -6,7 +6,7 @@ Optimized for `task.md` ingestion.
 
 ```json
 {
-  "$schema": "https://side.ai/schemas/task_ledger_v1.json",
+  "$schema": "https://sidelith.com/schemas/task_ledger_v1.json",
   "project_node": "ce8bc1f3-973d-4645-9611-637a0e3daee7",
   "temporal_anchor": {
     "birth_time": "2026-01-30T10:00:00Z",
@@ -41,7 +41,7 @@ Optimized for `walkthrough.md` ingestion.
 
 ```json
 {
-  "$schema": "https://side.ai/schemas/decision_trace_v1.json",
+  "$schema": "https://sidelith.com/schemas/decision_trace_v1.json",
   "trace_id": "P0_COMPLETION",
   "event_time": "2026-01-30T13:15:00Z",
   "origin_task_birth": "2026-01-30T10:00:00Z",

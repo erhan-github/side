@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidelith | Intelligence, Locally Owned</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container">
+            <h1>SIDELITH</h1>
+            <p>The Sovereign Intelligence Infrastructure. Built for the Software 2.0 era.</p>
+        </div>
+    </header>
+
+    <!-- Sovereign Shield Section (Security Proof) -->
+    <section id="security" class="container">
+        <h2 class="section-title">The <span>Sovereign Shield</span></h2>
+        <div class="shield-grid">
+            <div class="shield-features">
+                <div class="feature-card glass">
+                    <h3>AES-256-GCM Encryption</h3>
+                    <p>All session intents are cryptographically siloed. Raw data never leaves your project root.</p>
+                </div>
+                <div class="feature-card glass">
+                    <h3>Ed25519 Anchor Signing</h3>
+                    <p>Foundation-level protection. Every strategic pivot is signed and verified against your local
+                        identity.</p>
+                </div>
+                <div class="feature-card glass">
+                    <h3>Context Redaction</h3>
+                    <p>Entropy-aware scrubbing of PII and secrets before they reach any inference engine.</p>
+                </div>
+            </div>
+            <div class="shield-visual pulsing">
+                <img src="assets/shield.png" alt="Sovereign Shield"
+                    style="width: 100%; max-width: 400px; border-radius: 20px;">
+            </div>
+        </div>
+    </section>
+
+    <!-- Performance Moats Section -->
+    <section id="performance" class="glass container" style="margin-top: var(--spacing-md); border-radius: 0;">
+        <h2 class="section-title">The <span>Performance Substrate</span></h2>
+        <div class="moat-grid">
+            <div class="moat-card">
+                <div class="stat">&lt;1ms</div>
+                <p>Lookup Latency</p>
+                <small>Zero-copy Mmap substrate</small>
+            </div>
+            <div class="moat-card">
+                <div class="stat">0%</div>
+                <p>Cloud Leakage</p>
+                <small>Local-first intent fusion</small>
+            </div>
+            <div class="moat-card">
+                <div class="stat">&lt;5%</div>
+                <p>CPU Overhead</p>
+                <small>Polite background daemon</small>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integration Mesh Section -->
+    <section id="integrations" class="container">
+        <h2 class="section-title">Building <span>Sovereign Knowledge</span></h2>
+        <p style="text-align: center; margin-bottom: var(--spacing-md);">Sidelith integrates seamlessly with your
+            existing Software 2.0 tools.</p>
+
+        <div class="integration-mesh four-col">
+            <div class="integration-card glass" onclick="showIntegration('claude')">
+                <div style="height: 64px; color: var(--gold); font-weight: bold;">CLAUDE</div>
+                <p>Claude Desktop</p>
+            </div>
+            <div class="integration-card glass" onclick="showIntegration('cursor')">
+                <div style="height: 64px; color: var(--gold); font-weight: bold;">CURSOR</div>
+                <p>Cursor Editor</p>
+            </div>
+            <div class="integration-card glass" onclick="showIntegration('antigravity')">
+                <div style="height: 64px; color: var(--gold); font-weight: bold;">ANTIGRAVITY</div>
+                <p>Antigravity AI</p>
+            </div>
+            <div class="integration-card glass" onclick="showIntegration('gemini')">
+                <div style="height: 64px; color: var(--gold); font-weight: bold;">GEMINI CLI</div>
+                <p>Google Gemini</p>
+            </div>
+        </div>
+
+        <div id="integration-guide" class="glass"
+            style="margin-top: var(--spacing-md); padding: var(--spacing-md); display: none;">
+            <!-- Dynamic Content -->
+        </div>
+    </section>
+
+    <!-- Tier Activation Flow -->
+    <section id="pricing" class="container">
+        <h2 class="section-title">Activate your <span>Sovereign Tier</span></h2>
+        <div class="tier-grid">
+            <div class="tier-card glass">
+                <h3>Sovereign Node</h3>
+                <div class="price">Free</div>
+                <p>500 Standard Units / Cycle</p>
+                <small>Perfect for individual researchers.</small>
+                <button onclick="selectTier('node')">Select Tier</button>
+            </div>
+            <div class="tier-card glass" style="border-color: var(--gold);">
+                <h3>Mesh Network</h3>
+                <div class="price">$20<span>/mo</span></div>
+                <p>10,000 Standard Units / Cycle</p>
+                <small>Cross-node context sharing & GPG identities.</small>
+                <button onclick="selectTier('mesh')">Upgrade to Mesh</button>
+            </div>
+            <div class="tier-card glass">
+                <h3>Sovereign Network</h3>
+                <div class="price">Elite</div>
+                <p>Unlimited Intelligence</p>
+                <small>Full AES-256 field-level sealing enabled.</small>
+                <button onclick="selectTier('sovereign')">Go Sovereign</button>
+            </div>
+        </div>
+        <p id="tier-note" style="text-align: center; margin-top: var(--spacing-sm); color: var(--silver-dim);">
+            Note: If no selection is made, the <strong>Sovereign Node</strong> tier (500 SUs) will be automatically
+            activated upon installation.
+        </p>
+    </section>
+
+    <!-- Final Installation -->
+    <section id="install" class="container install-section">
+        <h2 class="section-title">Initialize <span>Localism</span></h2>
+        <div class="code-block" id="install-command">
+            curl -sSL https://sidelith.io/install.sh | sh
+        </div>
+    </section>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

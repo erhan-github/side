@@ -71,27 +71,49 @@ class SemanticAuditor:
             logger.error(f"Semantic query failed: {e}")
             return []
 
-    def audit_mobile_intent(self, lang_id: str, code: str) -> List[str]:
-        """
-        Specific audit for Mobile 'Intent' violations.
-        Example: Blocking network calls on the Main Thread (Swift/Kotlin).
-        """
-        violations = []
+    def audit_security(self, lang_id: str, code: str) -> List[Dict]:
+        """Runs security-focused semantic audits."""
+        results = []
         
-        # Prototype: Detecting SwiftUI @State mutations in inappropriate places
-        if lang_id in ["swift", "ios"]:
+        # 1. SQL Injection Risk (Raw f-string interpolation into conn.execute)
+        if lang_id in ["py", "python"]:
+            # Query for conn.execute(f"...") or similar
+            # This is a simplified query for demonstration
             query = """
-            (property_declaration
-              (attribute (type_identifier) @attr)
-              (#eq? @attr "State")
-            ) @state_prop
+            (call
+              function: (attribute
+                object: (identifier) @obj
+                attribute: (identifier) @method)
+              arguments: (argument_list
+                (string
+                  (string_content) @str_content))
+              (#match? @method "execute|query")
+              (#match? @str_content "{.*}")
+            ) @sqli_risk
             """
-            results = self.query_code("swift", code, query)
-            # This is just an example of what we CAN do with AST
-            if results:
-                logger.info(f"Found {len(results)} @State properties in Swift UI.")
+            results.extend(self.query_code("python", code, query))
         
-        return violations
+        return results
+
+    def audit_architecture(self, lang_id: str, code: str) -> List[Dict]:
+        """Runs architecture-focused semantic audits (Clean Arch, DRY)."""
+        results = []
+        
+        # 1. Database Access in UI/Frontend layers
+        # (This is better handled via path patterns in PulseEngine, 
+        # but semantic queries can check for specific DB-init patterns)
+        
+        # 2. Unhandled Exception Ghosts
+        if lang_id in ["py", "python"]:
+            query = """
+            (except_clause
+              body: (block
+                (pass_statement) @swallowed)
+            ) @unhandled_ghost
+            """
+            results.extend(self.query_code("python", code, query))
+            
+        return results
 
 # Singleton instance
 semantic_auditor = SemanticAuditor()

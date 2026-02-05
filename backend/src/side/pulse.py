@@ -92,16 +92,23 @@ class PulseEngine:
                     return None
 
             # 2. Semantic Audit (Tier-4) - Higher Precision
+            from side.intel.semantic_auditor import semantic_auditor
+            lang_id = Path(filepath).suffix[1:] or "python"
+            
+            # Run specific audits
+            security_issues = semantic_auditor.audit_security(lang_id, content)
+            for issue in security_issues:
+                return f"🔥 [SECURITY VIOLATION]: SQLi Risk | {issue['capture_name']} | Raw interpolation detected in database query."
+
+            arch_issues = semantic_auditor.audit_architecture(lang_id, content)
+            for issue in arch_issues:
+                 return f"👻 [ARCH VIOLATION]: Unhandled Exception | {issue['capture_name']} | Code swallowed an error without logging. This causes logic ghosts."
+
+            # 3. Custom S-expression queries from rules
             if rule.semantic_query:
-                from side.intel.semantic_auditor import semantic_auditor
-                lang_id = Path(filepath).suffix[1:] or "python"
                 results = semantic_auditor.query_code(lang_id, content, rule.semantic_query)
                 if results:
-                    return f"Semantic Violation [{rule.level}] | {rule.id} | {rule.rationale} | Found {len(results)} matches | FIX: {rule.fix}"
-
-            # 3. Regex Pattern Match (Tier-3) - Fallback
-            if rule.compiled_pattern and rule.compiled_pattern.search(content):
-                return f"Violation [{rule.level}] | {rule.id} | {rule.rationale} | FIX: {rule.fix}"
+                    return f"Violation [{rule.level}] | {rule.id} | {rule.rationale} | Found {len(results)} matches | FIX: {rule.fix}"
         except Exception as e:
             logger.error(f"Rule execution failed ({rule.id}): {e}")
         return None
@@ -313,6 +320,12 @@ class PulseEngine:
         dynamic_rules = self._load_dynamic_rules()
         target_file = current_context.get("target_file")
         file_content = current_context.get("file_content")
+
+        # [DEPENDENCY GUARD]: Phase 12 of Strategic audit
+        if target_file and file_content:
+            if target_file.endswith(("package.json", "requirements.txt", "pyproject.toml")):
+                 dep_violations = self._check_dependencies(target_file, file_content)
+                 violations.extend(dep_violations)
 
         if target_file and file_content:
             for rule in dynamic_rules:

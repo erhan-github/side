@@ -167,7 +167,7 @@ We charge based on **Sovereign Units (SUs)**—a measure of Codebase Size + Inte
 *   *Small Repo Indexing*: ~10 SUs/mo.
 *   *Deep Audit*: ~50 SUs.
 
-1.  **Trial**: **500 SUs** (Lifetime Grant). Enough to audit a small project.
+1.  **Hobby**: **500 SUs / Month** ($0/mo). The default entry point.
 2.  **Pro**: **5,000 SUs/mo**. Standard for Freelancers ($15/mo).
 3.  **Elite**: **25,000 SUs/mo**. For 10x Engineers & Large Repos ($60/mo).
 4.  **Enterprise**: High Volume + Team Collaboration + SSO ($50/seat).
@@ -188,39 +188,10 @@ Running low on Sovereignty? You can top up your wallet anytime.
 
 ---
 
-## ⚡ Quick Start
-
-### 1. Install & Activate
+### 1. The Genesis Handshake (Single-Shot)
 ```bash
-# 1. Install Sidelith (Global)
-pip install sidelith  # (Simulated - use 'pip install -e .' for now)
-
-# 2. Activate your Tier (Trial/Pro/Elite)
-side login --key side_pro_xxxxx
-```
-
-### 2. Ignite (Build Memory)
-```bash
-# Analyze your repo to build the Sovereign Context
-side feed .
-```
-
-### 3. Connect to IDE (MCP)
-```bash
-# Generate MCP configuration for Cursor / Claude Desktop
-side connect
-```
-
-### 4. Traverse the Mesh (Distributed Brain)
-```bash
-# List all identified Sidelith nodes on your machine
-side mesh list
-
-# Search strategic wisdom across all projects
-side mesh search "DB optimization"
-
-# Sync collective wisdom (Synergy)
-side synergy sync
+# Sidelith will install, login, detect your IDEs, and bridge them in one shot.
+curl -fsSL sidelith.com/install | sh
 ```
 
 ---

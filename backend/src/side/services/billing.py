@@ -45,14 +45,15 @@ class BillingService:
             return True
 
     def charge(self, project_id: str, action: SystemAction, tool_name: str, payload: dict) -> bool:
-        """Deduct tokens for an action."""
+        """Deduct tokens and track premium usage."""
         try:
             cost = ACTION_COSTS.get(action, 0)
-            if cost == 0:
-                return True
-                
+            
+            # [CURSOR TRACKING]: If it's a strategic action, increment premium count
+            if cost > 0:
+                self.db.identity.increment_premium_count(project_id)
+
             # Deduct (negative update)
-            # This handles atomicity in the DB layer
             self.db.identity.update_token_balance(project_id, -cost)
             
             logger.info(f"💰 Charged {cost} SUs for {action.value}")
@@ -64,6 +65,10 @@ class BillingService:
         except Exception as e:
             logger.error(f"Charge failed: {e}")
             return False
+
+    def get_summary(self, project_id: str) -> dict[str, Any]:
+        """Exposes the Cursor-level usage breakdown."""
+        return self.db.identity.get_cursor_usage_summary(project_id)
 
     def claim_trial(self, project_path: Any):
         """One-time trial grant."""

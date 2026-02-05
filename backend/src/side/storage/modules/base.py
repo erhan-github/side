@@ -137,17 +137,22 @@ class ContextEngine:
             logger.error(f"Integrity check failed: {e}")
             return False
 
-    def atomic_backup(self) -> None:
-        """Maintain a rotational .db.bak for disaster recovery."""
+    def perform_maintenance(self) -> None:
+        """Runs routine intelligence hardening (VACUUM, rotational backups)."""
         bak_path = self.db_path.with_suffix(".db.bak")
-        if self.db_path.exists():
-            try:
+        try:
+            with self.connection() as conn:
+                # 1. Vacuum to reclaim space and re-sort indices
+                conn.execute("VACUUM")
+                logger.info("🎨 [ENGINE]: Context VACUUM complete.")
+                
+            # 2. Atomic Backup
+            if self.check_integrity():
                 import shutil
-                if self.check_integrity():
-                    shutil.copy2(self.db_path, bak_path)
-                    logger.debug("Disaster Recovery: Atomic backup created.")
-            except Exception as e:
-                logger.warning(f"Disaster Recovery: Backup failed: {e}")
+                shutil.copy2(self.db_path, bak_path)
+                logger.debug("Disaster Recovery: Atomic backup created.")
+        except Exception as e:
+            logger.warning(f"Maintenance failed: {e}")
 
     def harden_permissions(self) -> None:
         """Ensure local.db is only readable by the user (mode 600)."""
@@ -160,8 +165,10 @@ class ContextEngine:
 
     @staticmethod
     def get_project_id(project_path: str | Path | None = None) -> str:
-        """Persists project ID in a hidden file for stable isolation."""
+        """Persists PROJECT_ID in a sealed file for stable isolation."""
         from side.utils.paths import get_repo_root
+        from side.utils.shield import shield
+        
         if project_path is None or str(project_path) == ".":
             project_path = get_repo_root()
         else:
@@ -170,16 +177,27 @@ class ContextEngine:
         project_path = project_path.resolve()
         id_file = project_path / ".side-id"
         
+        # [SEALED IDENTITY]: If file exists, unseal it
         if id_file.exists():
             try:
-                return id_file.read_text().strip()
+                raw_content = id_file.read_text().strip()
+                # If it looks like a hash, seal it now (migration)
+                if len(raw_content) == 16 and not raw_content.startswith("sealed:"):
+                    unsealed = raw_content
+                    id_file.write_text(f"sealed:{shield.seal(unsealed)}")
+                    return unsealed
+                elif raw_content.startswith("sealed:"):
+                    return shield.unseal(raw_content[7:])
+                return raw_content
             except Exception:
                 pass
         
         import hashlib
         path_hash = hashlib.sha256(str(project_path).encode()).hexdigest()[:16]
         try:
-            id_file.write_text(path_hash)
+            # Seal for first-time creation
+            id_file.write_text(f"sealed:{shield.seal(path_hash)}")
+            os.chmod(id_file, 0o600)
         except Exception:
             pass
             

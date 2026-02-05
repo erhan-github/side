@@ -274,7 +274,31 @@ class LLMClient:
                 model=actual_model, messages=all_messages,
                 temperature=temperature, max_tokens=max_tokens,
             )
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+
+            # [CURSOR BILLING]: Log and charge for raw compute
+            try:
+                from side.storage.modules.base import ContextEngine
+                engine = ContextEngine()
+                project_id = engine.get_project_id(".")
+                
+                # Get tokens from response if available (OpenAI/Groq compatible)
+                usage = getattr(response, "usage", None)
+                in_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
+                out_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
+                
+                # Use AccountingStore to record the task
+                engine.accounting.deduct_task_su(
+                    project_id=project_id,
+                    task_type="raw_llm_inference",
+                    llm_tokens_in=in_tokens,
+                    llm_tokens_out=out_tokens,
+                    llm_model=actual_model
+                )
+            except Exception as e:
+                logger.debug(f"Billing integration failed: {e}")
+
+            return content
                 
         except Exception as e:
             error_str = str(e).lower()

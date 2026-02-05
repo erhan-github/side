@@ -149,7 +149,7 @@ class VerifiedFix:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "$schema": "https://side.ai/schemas/verified_fix_v1.json",
+            "$schema": "https://sidelith.com/schemas/verified_fix_v1.json",
             "fix_id": self.fix_id,
             "project_id": self.project_id,
             "timestamps": {

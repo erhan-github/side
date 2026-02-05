@@ -1,4 +1,3 @@
-```python
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -48,8 +47,9 @@ class AccountingStore:
         """
         Deducts SUs from the project balance and logs the transaction.
         """
-        if amount <= 0:
-            return True
+        # [CURSOR LOGGING]: Allow 0 amount to be logged
+        if amount < 0:
+            return False
 
         current_balance = self.get_balance(project_id)
         if current_balance < amount:
@@ -217,5 +217,9 @@ class AccountingStore:
             value_delivered=value_delivered
         )
         
-        reason = f"{task_type} (LLM: {llm_tokens_in + llm_tokens_out} tokens)"
+        reason = f"{task_type}"
+        if llm_tokens_in or llm_tokens_out:
+            reason += f" (LLM: {llm_tokens_in + llm_tokens_out} tokens)"
+            
+        # [CURSOR LOGGING]: Even if cost is 0, we deduct_su to ensure it hits the ledger
         return self.deduct_su(project_id, su_cost, reason)
