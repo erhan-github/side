@@ -46,7 +46,7 @@ class SynergyEngine:
         profile = identity.get_profile(self.project_id)
         
         if profile and profile.get("is_airgapped"):
-            logger.warning(f"🛡️ [SYNERGY]: Project {self.project_id} is AIRGAPPED. Mesh harvesting disabled.")
+            logger.warning(f"🛡️ [SYNERGY]: Project {self.project_id} is AIRGAPPED. Mesh sync disabled.")
             return 0
             
         design_pattern = profile.get("design_pattern", "declarative") if profile else "declarative"

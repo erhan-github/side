@@ -32,7 +32,12 @@ class SemanticAuditor:
                 "go": "go",
                 "swift": "swift",
                 "kt": "kotlin",
-                "kotlin": "kotlin"
+                "kotlin": "kotlin",
+                "rb": "ruby",
+                "ruby": "ruby",
+                "php": "php",
+                "cs": "c_sharp",
+                "dotnet": "c_sharp"
             }
             
             ts_name = ts_lang_map.get(lang_id, lang_id)

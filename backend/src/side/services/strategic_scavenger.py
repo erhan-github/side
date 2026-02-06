@@ -9,9 +9,8 @@ logger = logging.getLogger(__name__)
 
 class StrategicScavenger:
     """
-    [STRATEGIC_SCAVENGER]: Ingests 5-year plans from raw documentation.
-    Scans for 'HUB.md', 'STRATEGY.md', and files in 'docs/' to 
-    auto-populate the StrategicStore.
+    [STRATEGIC_SCAVENGER]: Ingests strategic intentions from raw documentation.
+    Scans for files in 'docs/' to auto-populate the StrategicStore.
     """
     
     def __init__(self, strategic: StrategicStore):
@@ -23,16 +22,8 @@ class StrategicScavenger:
         """
         logger.info("🔭 [STRATEGIC_SCAVENGER]: Scanning for Sovereign Plans...")
         
-        # Priority 1: HUB.md (The Core)
-        hub = root_path / "HUB.md"
-        if hub.exists():
-            await self._ingest_file(hub, "objective")
+        # Database is the primary source; Scavenger acts as a bridge for existing docs.
 
-        # Priority 2: strategy.md
-        strategy = root_path / "strategy.md"
-        if strategy.exists():
-            await self._ingest_file(strategy, "vision")
-            
         # Priority 3: docs/*.md
         docs_dir = root_path / "docs"
         if docs_dir.exists():

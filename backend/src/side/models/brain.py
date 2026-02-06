@@ -40,9 +40,9 @@ class IntentSnapshot(BaseModel):
     intel_signals: List[Dict[str, Any]] = Field(default_factory=list)
     latest_destination: str = "Unknown"
 
-class SovereignGraph(BaseModel):
+class ContextSnapshot(BaseModel):
     """
-    The Indexed Brain of a Sidelith-managed Project.
+    The Serialized State of the Context Engine at a specific point in time.
     Replaces `sovereign.schema.json`.
     """
     version: str = "3.1.0"

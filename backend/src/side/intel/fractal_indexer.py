@@ -1,11 +1,11 @@
 """
-Sovereign Protocol v3: The Fractal Indexer (Deep Intel Upgrade).
-Generates a distributed 'Merkle Tree' of Context with Palantir-level Intelligence.
+Sovereign Protocol v4: Distributed Fractal Indexing (Merkle-Validated).
+Implements Sparse Context Retrieval with O(1) Local Update Latency.
 
-Changes:
-- Added Deep Semantic Parsing (Classes, Functions, Signals).
-- Optimized with pre-compiled regex.
-- Trust Code over Docs (Active Code Reading).
+Architectural Principles:
+1. Structural Truth: Extract method signatures and signal heuristics.
+2. Sparse State: Only persist 'Complex' nodes to minimize disk I/O.
+3. Zero-Trust Localism: All telemetry remains within the Merkle root.
 """
 
 import os
@@ -20,44 +20,100 @@ from side.utils.crypto import shield
 
 # --- PERFORMANCE CONFIG ---
 # Pre-compiled regex for micro-second parsing
-REGEX_PY_CLASS = re.compile(r'^class\s+(\w+)', re.MULTILINE)
-REGEX_PY_DEF = re.compile(r'^def\s+(\w+)', re.MULTILINE)
-
-# Signals to watch for (The 'Shadow Intelligence')
-SIGNALS = {
-    "FastAPI": re.compile(r'fastapi', re.IGNORECASE),
-    "Stripe": re.compile(r'stripe', re.IGNORECASE),
-    "Supabase": re.compile(r'supabase', re.IGNORECASE),
-    "Alchemy": re.compile(r'alchemy', re.IGNORECASE),
-    "NextJS": re.compile(r'next', re.IGNORECASE),
-    "Tailwind": re.compile(r'tailwind', re.IGNORECASE),
-    "React": re.compile(r'react', re.IGNORECASE),
-    "Zustand": re.compile(r'zustand', re.IGNORECASE),
-    "Zustand": re.compile(r'zustand', re.IGNORECASE),
+REGEX_STRUCTURAL = {
+    "python": {
+        "class": re.compile(r'^class\s+(\w+)', re.MULTILINE),
+        "def": re.compile(r'^def\s+(\w+)', re.MULTILINE)
+    },
+    "javascript": {
+        "class": re.compile(r'\bclass\s+(\w+)', re.MULTILINE),
+        "def": re.compile(r'\bfunction\s+(\w+)', re.MULTILINE)
+    },
+    "ruby": {
+        "class": re.compile(r'^class\s+(\w+)', re.MULTILINE),
+        "def": re.compile(r'^def\s+(\w+)', re.MULTILINE)
+    },
+    "php": {
+        "class": re.compile(r'\bclass\s+(\w+)', re.MULTILINE),
+        "def": re.compile(r'\bfunction\s+(\w+)', re.MULTILINE)
+    },
+    "go": {
+        "class": re.compile(r'^type\s+(\w+)\s+struct', re.MULTILINE),
+        "def": re.compile(r'^func\s+(?:\([^)]*\)\s+)?(\w+)', re.MULTILINE)
+    },
+    "dotnet": {
+        "class": re.compile(r'\b(?:class|struct|interface)\s+(\w+)', re.MULTILINE),
+        "def": re.compile(r'\b(?:public|private|protected|internal|static)?\s+(?:\w+)\s+(\w+)\s*\([^)]*\)\s*{', re.MULTILINE)
+    },
+    "swift": {
+        "class": re.compile(r'\b(?:class|struct|enum|protocol)\s+(\w+)', re.MULTILINE),
+        "def": re.compile(r'\bfunc\s+(\w+)', re.MULTILINE)
+    },
+    "kotlin": {
+        "class": re.compile(r'\b(?:class|interface|object)\s+(\w+)', re.MULTILINE),
+        "def": re.compile(r'\bfun\s+(\w+)', re.MULTILINE)
+    }
 }
 
-# --- KARPATHY FILTERING PROTOCOL ---
+# Signals to watch for (The 'Shadow Intelligence')
+# These allow the indexer to 'smell' the architecture of a file without deep parsing.
+SIGNALS = {
+    # Web & UI (The Visual Surface)
+    "NextJS": re.compile(r'next/navigation|next/link', re.IGNORECASE),
+    "React": re.compile(r'react', re.IGNORECASE),
+    "Vue": re.compile(r'vue', re.IGNORECASE),
+    "Svelte": re.compile(r'svelte', re.IGNORECASE),
+    "Tailwind": re.compile(r'tailwind', re.IGNORECASE),
+    "Zustand": re.compile(r'zustand', re.IGNORECASE),
+    "TanStack": re.compile(r'tanstack|react-query', re.IGNORECASE),
+    
+    # Backend & Frameworks (The Logic Core)
+    "FastAPI": re.compile(r'fastapi', re.IGNORECASE),
+    "Django": re.compile(r'django', re.IGNORECASE),
+    "Flask": re.compile(r'flask', re.IGNORECASE),
+    "Laravel": re.compile(r'laravel|illuminate', re.IGNORECASE),
+    "Rails": re.compile(r'rails|active_record', re.IGNORECASE),
+    "Spring": re.compile(r'springframework', re.IGNORECASE),
+    "DotNetCore": re.compile(r'Microsoft\.AspNetCore', re.IGNORECASE),
+    "GoGin": re.compile(r'gin-gonic', re.IGNORECASE),
+    
+    # Infrastructure & Persistence (The Foundation)
+    "Stripe": re.compile(r'stripe', re.IGNORECASE),
+    "Supabase": re.compile(r'supabase', re.IGNORECASE),
+    "Firebase": re.compile(r'firebase', re.IGNORECASE),
+    "Alchemy": re.compile(r'alchemy', re.IGNORECASE),
+    "Redlock": re.compile(r'redlock|redis', re.IGNORECASE),
+    "Prisma": re.compile(r'prisma', re.IGNORECASE),
+    "TypeORM": re.compile(r'typeorm', re.IGNORECASE),
+    "EntityFramework": re.compile(r'EntityFramework', re.IGNORECASE),
+    
+    # Security & Auth (The Sovereign Shield)
+    "Auth0": re.compile(r'auth0', re.IGNORECASE),
+    "Clerk": re.compile(r'clerk', re.IGNORECASE),
+    "OAuth2": re.compile(r'oauth2|oidc', re.IGNORECASE),
+}
+
+# --- THE SOVEREIGN GAVEL (Context Filtering) ---
 # "Code is Truth. Docs are Noise."
+# We exclude artifacts that increase Context Entropy while preserving 'Strategic Anchor' files.
 KARPATHY_DENY_EXTENSIONS = {
     ".md", ".markdown", ".txt", ".rst", ".adoc",
     ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
-    ".lock", ".map"
+    ".lock", ".map", ".tmp", ".log"
 }
 
-# The "Control Plane" Exceptions
 KARPATHY_ALLOW_FILES = {
-    "task.md",
-    "walkthrough.md",
-    "implementation_plan.md",
-    ".cursorrules",
-    ".editorconfig",
-    "package.json", 
-    "pyproject.toml",
-    "Dockerfile",
-    "docker-compose.yml",
-    "requirements.txt",
-    ".gitignore"
+    "task.md", "README.md", "SOVEREIGN_ANCHOR.md", 
+    "walkthrough.md", "implementation_plan.md",
+    ".cursorrules", ".editorconfig", "package.json", 
+    "pyproject.toml", "Dockerfile", "go.mod", "Gemfile", "composer.json"
 }
+
+try:
+    from tree_sitter_languages import get_language, get_parser
+    TS_AVAILABLE = True
+except ImportError:
+    TS_AVAILABLE = False
 
 from side.services.ignore import SovereignIgnore
 
@@ -68,13 +124,83 @@ def get_file_semantics(path: Path, content: str) -> Dict[str, Any]:
     semantics = {
         "classes": [],
         "functions": [],
-        "signals": []
+        "signals": [],
+        "entities": [],      # For OntologyStore
+        "relationships": [] # For OntologyStore
     }
     
-    # 1. Structural Extraction (Python)
-    if path.suffix == ".py":
-        semantics["classes"] = REGEX_PY_CLASS.findall(content)
-        semantics["functions"] = REGEX_PY_DEF.findall(content)
+    # 1. Structural Extraction (Universal)
+    ext_to_lang = {
+        ".py": "python",
+        ".js": "javascript",
+        ".jsx": "javascript",
+        ".ts": "typescript",
+        ".tsx": "typescript",
+        ".rb": "ruby",
+        ".php": "php",
+        ".go": "go",
+        ".cs": "c_sharp",
+        ".swift": "swift",
+        ".kt": "kotlin",
+        ".java": "java"
+    }
+    
+    lang_id = ext_to_lang.get(path.suffix)
+    # print(f"🔍 [SEMANTICS]: {path.name} -> {lang_id}")
+    
+    # --- TREE-SITTER DEEP SCAN (IF AVAILABLE) ---
+    if TS_AVAILABLE and lang_id:
+        try:
+            parser = get_parser(lang_id)
+            language = get_language(lang_id)
+            tree = parser.parse(bytes(content, "utf8"))
+            
+            # Simple queries for classes and functions
+            query_str = ""
+            if lang_id == "python":
+                query_str = """
+                (class_definition name: (identifier) @class.name)
+                (function_definition name: (identifier) @func.name)
+                (call function: (identifier) @call.name)
+                (call function: (attribute attribute: (identifier) @call.method))
+                """
+            elif lang_id in ["javascript", "typescript"]:
+                query_str = """
+                (class_declaration name: (identifier) @class.name)
+                (function_declaration name: (identifier) @func.name)
+                (call_expression function: (identifier) @call.name)
+                (call_expression function: (member_expression property: (property_identifier) @call.method))
+                """
+            
+            if query_str:
+                query = language.query(query_str)
+                captures = query.captures(tree.root_node)
+                
+                for node, tag in captures:
+                    name = node.text.decode("utf8")
+                    if "class.name" in tag:
+                        semantics["classes"].append(name)
+                        semantics["entities"].append({"name": name, "type": "class"})
+                    elif "func.name" in tag:
+                        semantics["functions"].append(name)
+                        semantics["entities"].append({"name": name, "type": "function"})
+                    elif "call.name" in tag or "call.method" in tag:
+                        # Relationship candidates
+                        semantics["relationships"].append({"target": name, "type": "calls"})
+                
+                # If we have AST results, we can skip regex
+                if semantics["classes"] or semantics["functions"]:
+                    return semantics
+        except Exception as e:
+            logger.debug(f"Tree-sitter scan failed for {path}: {e}")
+
+    # --- REGEX FALLBACK ---
+    lang = lang_id # Normalize for REGEX_STRUCTURAL mapping if needed
+    if lang == "c_sharp": lang = "dotnet"
+    
+    if lang and lang in REGEX_STRUCTURAL:
+        semantics["classes"] = REGEX_STRUCTURAL[lang]["class"].findall(content)
+        semantics["functions"] = REGEX_STRUCTURAL[lang]["def"].findall(content)
     
     # 2. Signal Extraction (Cross-Language)
     for signal_name, regex in SIGNALS.items():
@@ -107,13 +233,15 @@ def get_file_dna(path: Path) -> Dict[str, Any]:
     except Exception:
         return {"name": path.name, "error": "unreadable"}
 
-def generate_local_index(directory: Path) -> Dict[str, Any]:
+def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]:
     """Generates the V3 Fractal Index for a single directory."""
     files = []
     children_checksums = {}
     aggregated_signals = set()
     total_classes = 0
     total_functions = 0
+    
+    project_id = ontology_store.engine.get_project_id() if ontology_store else "default"
     
     ignore_service = SovereignIgnore(directory)
     # Finding project root for ignore service
@@ -146,7 +274,6 @@ def generate_local_index(directory: Path) -> Dict[str, Any]:
             if i.suffix in KARPATHY_DENY_EXTENSIONS:
                 continue
                 
-            # 3. Default Allow (Code)
             file_items.append(i)
 
         dna_results = list(executor.map(get_file_dna, file_items))
@@ -158,6 +285,41 @@ def generate_local_index(directory: Path) -> Dict[str, Any]:
                 aggregated_signals.update(sem.get("signals", []))
                 total_classes += len(sem.get("classes", []))
                 total_functions += len(sem.get("functions", []))
+
+                # 🧬 [PHASE 52]: ONTOLOGY PERSISTENCE
+                if ontology_store:
+                    file_rel_path = str(dna["name"])
+                    entities_to_save = []
+                    for ent in sem.get("entities", []):
+                        ent_id = hashlib.sha256(f"{project_id}:{ent['name']}:{ent['type']}".encode()).hexdigest()[:16]
+                        entities_to_save.append({
+                            "id": ent_id,
+                            "project_id": project_id,
+                            "name": ent["name"],
+                            "entity_type": ent["type"],
+                            "file_path": file_rel_path
+                        })
+                    if entities_to_save:
+                        ontology_store.save_entities_batch(entities_to_save)
+                    
+                    # Relationships (Simplified logic: entities in same file 'reference' each other)
+                    # Future: Use Tree-sitter 'calls' for high-precision
+                    relationships_to_save = []
+                    for rel in sem.get("relationships", []):
+                        # Find target entity ID (if already indexed or known)
+                        target_id = hashlib.sha256(f"{project_id}:{rel['target']}:function".encode()).hexdigest()[:16]
+                        # Source ID would be the current function/class if we tracked the traversal
+                        # For now, we link the FILE to the entity
+                        file_id = hashlib.sha256(f"{project_id}:{file_rel_path}:file".encode()).hexdigest()[:16]
+                        relationships_to_save.append({
+                            "id": hashlib.sha256(f"{file_id}:{target_id}:{rel['type']}".encode()).hexdigest()[:16],
+                            "project_id": project_id,
+                            "source_id": file_id,
+                            "target_id": target_id,
+                            "relation_type": rel["type"]
+                        })
+                    if relationships_to_save:
+                        ontology_store.save_relationships_batch(relationships_to_save)
 
         for item in items_to_scan:
             if item.is_dir() and item.name != ".side":
@@ -200,7 +362,7 @@ def generate_local_index(directory: Path) -> Dict[str, Any]:
     
     return index_data
 
-def run_fractal_scan(root: Path):
+def run_fractal_scan(root: Path, ontology_store=None):
     """
     Runs a pruning Top-Down scan to gather directories, 
     then processes them Bottom-Up to ensure Merkle integrity.
@@ -227,7 +389,7 @@ def run_fractal_scan(root: Path):
         # but reversed(dirs_to_process) includes root at the end.
         
         print(f"🔮 Deep Indexing: {current_dir}")
-        index_data = generate_local_index(current_dir)
+        index_data = generate_local_index(current_dir, ontology_store=ontology_store)
         
         # SPARSE WRITE LOGIC
         is_root = current_dir == root
@@ -241,7 +403,7 @@ def run_fractal_scan(root: Path):
             if side_dir.exists():
                 shutil.rmtree(side_dir)
 
-def update_branch(root: Path, changed_path: Path):
+def update_branch(root: Path, changed_path: Path, ontology_store=None):
     """
     Optimized update: Only re-indexes the folders from the changed file up to the root.
     """
@@ -265,7 +427,7 @@ def update_branch(root: Path, changed_path: Path):
             break
             
         print(f"⚡ Fractal Update: {current_dir}")
-        index_data = generate_local_index(current_dir)
+        index_data = generate_local_index(current_dir, ontology_store=ontology_store)
         
         side_dir = current_dir / ".side"
         is_root = current_dir == root

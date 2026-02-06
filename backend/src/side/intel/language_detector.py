@@ -28,14 +28,24 @@ def detect_primary_languages(project_path: Path) -> Set[str]:
                 languages.add("python")
             elif name == "package.json":
                 languages.add("javascript")
-            elif name == "tsconfig.json":
+            elif name == "tsconfig.json" or name == "jsconfig.json":
                 languages.add("typescript")
             elif name == "go.mod":
                 languages.add("go")
             elif name == "Cargo.toml":
                 languages.add("rust")
-            elif name == "pom.xml" or name == "build.gradle":
+            elif name == "pom.xml" or name == "build.gradle" or name == "settings.gradle":
                 languages.add("java")
+            elif name == "Gemfile" or name == "Rakefile":
+                languages.add("ruby")
+            elif name == "composer.json":
+                languages.add("php")
+            elif name.endswith(".csproj") or name.endswith(".sln"):
+                languages.add("dotnet")
+            elif name == "pubspec.yaml":
+                languages.add("dart")
+            elif name == "angular.json":
+                languages.add("angular")
                 
             ext = os.path.splitext(name)[1]
             if ext == ".py": languages.add("python")
@@ -46,6 +56,13 @@ def detect_primary_languages(project_path: Path) -> Set[str]:
             elif ext == ".swift": languages.add("swift")
             elif ext == ".kt" or ext == ".kts": languages.add("kotlin")
             elif ext == ".java": languages.add("java")
+            elif ext == ".rb": languages.add("ruby")
+            elif ext == ".php": languages.add("php")
+            elif ext == ".cs": languages.add("dotnet")
+            elif ext == ".dart": languages.add("dart")
+            elif ext == ".vue": languages.add("vue")
+            elif ext == ".svelte": languages.add("svelte")
+            elif ext == ".astro": languages.add("astro")
 
     logger.info(f"🔍 [DETECTOR] Detected languages: {list(languages)}")
     return languages

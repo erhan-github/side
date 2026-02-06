@@ -125,12 +125,23 @@ class LogScavenger:
         
         while not self.stop_event.is_set():
             try:
-                # Watch for error.log, debug.log, or *.err AND the Black Box
+                # [KAR-8.2] Structural Domain Isolation: Strictly exclude Sidelith internal metadata
+                FORBIDDEN_TAGS = ["[LOG_SCAVENGER]", "[SOVEREIGN]", "[GOVERNOR]", "[ENGINE]"]
+                
+                # 1. Surgical Globbing (Project Root Only)
                 log_files = (
                     list(self.project_path.glob("*.log")) + 
-                    list(self.project_path.glob("*.err")) +
-                    list((self.project_path / ".side" / "logs").glob("*.log"))
+                    list(self.project_path.glob("*.err"))
                 )
+                
+                # 2. Strict Structural Filter (Safety by Design)
+                # Ensure no internal Sidelith state files are ever observed
+                log_files = [
+                    f for f in log_files 
+                    if ".side" not in f.parts 
+                    and "scavenger" not in f.name.lower()
+                    and "server" not in f.name.lower()
+                ]
                 
                 for log_file in log_files:
                     try:
@@ -146,20 +157,44 @@ class LogScavenger:
                                 # Split lines for granular analysis
                                 lines = new_content.splitlines()
                                 for line in lines:
-                                    # [CRITICAL] Anti-Recursion: Ignore our own logs!
-                                    if "[LOG_SCAVENGER]" in line:
+                                    # [CRITICAL] Anti-Recursion: Ignore our own strategic metadata
+                                    if any(tag in line for tag in FORBIDDEN_TAGS):
                                         continue
                                         
                                     self.generic_buffer.append(line)
                                     
-                                    # Heuristic: "Traceback", "Error:", "Exception"
-                                    if "Traceback" in line or "Error:" in line or "Exception" in line:
+                                    # [POLYGLOT HEURISTICS]
+                                    # Detect generic stack traces across Ruby, PHP, .NET, Java, etc.
+                                    is_error = False
+                                    error_source = "GENERIC"
+                                    
+                                    # 1. Ruby / Rails
+                                    if ".rb:" in line and "in `" in line:
+                                        is_error = True
+                                        error_source = "RUBY"
+                                    # 2. PHP / Laravel
+                                    elif "PHP Fatal error:" in line or "PHP Stack trace:" in line or "thrown in /" in line:
+                                        is_error = True
+                                        error_source = "PHP"
+                                    # 3. .NET / C#
+                                    elif "   at " in line and ".cs:line " in line:
+                                        is_error = True
+                                        error_source = "DOTNET"
+                                    # 4. Java / Spring
+                                    elif "at " in line and "(" in line and ".java:" in line:
+                                        is_error = True
+                                        error_source = "JAVA"
+                                    # 5. Standard Python/JS
+                                    elif "Traceback" in line or "Error:" in line or "Exception" in line:
+                                        is_error = True
+
+                                    if is_error:
                                         # Capture the "Crime Scene" (Last 50 lines)
                                         crime_scene = list(self.generic_buffer)
-                                        self._log_friction("GENERIC", "RUNTIME_ERROR", {
+                                        self._log_friction(error_source, "RUNTIME_ERROR", {
                                             "file": log_file.name,
                                             "snippet": line,
-                                            "context": crime_scene # The smoking gun + breadcrumbs
+                                            "context": crime_scene 
                                         })
                         
                         seen_sizes[log_file] = current_size

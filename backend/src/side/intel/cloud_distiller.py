@@ -5,6 +5,7 @@ Ensures only high-value, structured data syncs to the cloud.
 import time
 import logging
 import json
+import os
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -19,6 +20,11 @@ class CloudDistiller:
     """
     The Cloud Distillation Engine.
     Ensures only meaningful, high-value verified fixes sync to the cloud brain.
+    
+    [WISDOM SHARING]:
+    - Filters: Only cloud-worthy fixes (persistence > 0.3, difficulty >= MEDIUM)
+    - Anonymizes: No file paths, no code, no project IDs in cloud
+    - Syncs: Distilled insights to tenant_insights table
     """
     
     # Cloud-worthy thresholds
@@ -27,11 +33,30 @@ class CloudDistiller:
     MIN_DIFFICULTY = "MEDIUM"
     MIN_ATTEMPTS = 2
 
-    def __init__(self, project_path: Path, cloud_endpoint: str = None):
+    def __init__(self, project_path: Path, cloud_endpoint: str = None, tenant_id: str = None):
         self.project_path = project_path
         self.cloud_endpoint = cloud_endpoint
+        self.tenant_id = tenant_id
         self.metrics_calc = MetricsCalculator()
         self.pending_fixes: List[VerifiedFix] = []
+        self._supabase_client = None
+    
+    @property
+    def supabase(self):
+        """Lazy-load Supabase client."""
+        if self._supabase_client is None:
+            try:
+                from supabase import create_client
+                url = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+                key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+                
+                if url and key:
+                    self._supabase_client = create_client(url, key)
+                else:
+                    logger.debug("Supabase credentials not found, using local staging only")
+            except ImportError:
+                logger.debug("Supabase client not installed")
+        return self._supabase_client
 
     def distill_fix(
         self,
@@ -143,23 +168,88 @@ class CloudDistiller:
         """
         Syncs all pending fixes to the cloud (or local staging).
         
+        [WISDOM SHARING]: Uploads anonymized wisdom to tenant_insights.
+        
         Returns:
             A summary of the sync operation.
         """
         if not self.pending_fixes:
             return {"status": "EMPTY", "synced": 0}
         
-        synced = []
-        for fix in self.pending_fixes:
-            # For now, persist to local staging file
-            self._persist_locally(fix)
-            synced.append(fix.fix_id)
+        synced_local = []
+        synced_cloud = []
         
-        count = len(synced)
+        for fix in self.pending_fixes:
+            # 1. Always persist locally (encrypted backup)
+            self._persist_locally(fix)
+            synced_local.append(fix.fix_id)
+            
+            # 2. Try cloud sync if Supabase available
+            if self.supabase and self.tenant_id:
+                try:
+                    success = self._sync_to_supabase(fix)
+                    if success:
+                        synced_cloud.append(fix.fix_id)
+                except Exception as e:
+                    logger.warning(f"Cloud sync failed for {fix.fix_id[:8]}: {e}")
+        
         self.pending_fixes = []
         
-        logger.info(f"☁️ [DISTILLER]: Synced {count} fixes to cloud staging.")
-        return {"status": "SUCCESS", "synced": count, "fix_ids": synced}
+        logger.info(f"☁️ [DISTILLER]: Synced {len(synced_local)} local, {len(synced_cloud)} cloud.")
+        return {
+            "status": "SUCCESS",
+            "synced_local": len(synced_local),
+            "synced_cloud": len(synced_cloud),
+            "fix_ids": synced_local
+        }
+    
+    def _sync_to_supabase(self, fix: VerifiedFix) -> bool:
+        """
+        [WISDOM SHARING] Upload anonymized wisdom to tenant_insights.
+        
+        What gets shared:
+        - distilled_insight (summary text)
+        - difficulty, persistence_score, commonality_index
+        - fix_attempts count
+        
+        What NEVER gets shared:
+        - file paths
+        - actual code
+        - project_id
+        - user identity
+        """
+        if not self.supabase or not self.tenant_id:
+            return False
+        
+        # Anonymize the insight
+        insight_data = {
+            "tenant_id": self.tenant_id,
+            "insight_type": "technical", # Matches schema comments: 'strategic', 'technical', etc.
+            "title": f"Pattern: {fix.metrics.difficulty} difficulty fix",
+            "content": fix.distilled_insight,  # Already anonymized summary
+            "confidence": fix.metrics.persistence_score,
+            "source_context": {
+                # Only anonymized metrics, no paths or code
+                "difficulty": fix.metrics.difficulty,
+                "persistence": fix.metrics.persistence_score,
+                "commonality": fix.metrics.commonality_index,
+                "fix_attempts": fix.metrics.fix_attempts,
+                "time_to_fix_seconds": fix.metrics.time_spent_seconds,
+                "cluster_complexity": len(fix.focus_cluster),  # Just count, not names
+            },
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        try:
+            response = self.supabase.table("tenant_insights").insert(insight_data).execute()
+            
+            if response.data:
+                logger.info(f"✅ [CLOUD]: Wisdom synced: {fix.distilled_insight[:50]}...")
+                return True
+        except Exception as e:
+            logger.error(f"❌ [CLOUD]: Failed to sync wisdom: {e}")
+        
+        return False
 
     def _persist_locally(self, fix: VerifiedFix):
         """Persists a fix to local staging (encrypted)."""
@@ -194,7 +284,8 @@ def complete_fix_flow(
     project_id: str,
     focus_file: str,
     focus_cluster: List[str],
-    timeline: ReasoningTimeline
+    timeline: ReasoningTimeline,
+    tenant_id: str = None
 ) -> Dict[str, Any]:
     """
     Completes the full fix flow: distill → evaluate → queue → sync.
@@ -202,7 +293,7 @@ def complete_fix_flow(
     Returns:
         Summary of the operation.
     """
-    distiller = CloudDistiller(project_path)
+    distiller = CloudDistiller(project_path, tenant_id=tenant_id)
     
     # Distill the fix
     verified_fix = distiller.distill_fix(

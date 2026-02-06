@@ -1,5 +1,5 @@
 """
-Wisdom Distiller - Intelligent analysis for pattern harvesting.
+Pattern Distiller - Intelligent analysis for strategic harvesting.
 """
 
 import logging
@@ -44,7 +44,7 @@ class PatternDistiller:
                 risk_description=risk,
                 remedy_json=remedy
             )
-            logger.info(f"🍯 [DISTILLER]: Harvested anti-pattern from {context_trigger}")
+            logger.info(f"🎯 [DISTILLER]: Extracted pattern from {context_trigger}")
         
         logger.info(f"✨ [PATTERNS]: Distilled context from {len(findings)} findings.")
 

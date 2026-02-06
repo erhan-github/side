@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List
 
 from side.storage.modules.transient import OperationalStore
+from side.models.core import SignalReport
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,8 @@ class SignalAuditorService:
         self.operational = operational
         self._running = False
         self._task: asyncio.Task | None = None
-        self.report_path = Path.home() / ".side" / "signal_reachability.json"
+        from side.env import env
+        self.report_path = env.get_side_root() / "signal_reachability.json"
 
     async def start(self) -> None:
         """Start the signal auditor."""
@@ -56,7 +58,8 @@ class SignalAuditorService:
                 self._save_report(report)
                 
                 # Update Operational Ledger with Reachability Index
-                reachability = sum(1 for s in report.values() if s.get("reachable")) / len(report)
+                report_dict = report.model_dump()
+                reachability = sum(1 for s in report_dict.values() if isinstance(s, dict) and s.get("reachable")) / (len(report_dict) - 1) # Subtract created_at
                 self.operational.set_setting("signal_reachability_index", str(round(reachability, 3)))
                 
                 await asyncio.sleep(interval)
@@ -64,15 +67,15 @@ class SignalAuditorService:
                 logger.error(f"Signal Auditor Error: {e}")
                 await asyncio.sleep(interval * 2)
 
-    async def audit_all_signals(self) -> Dict[str, Any]:
+    async def audit_all_signals(self) -> SignalReport:
         """Audits all targeted machine signals."""
-        return {
-            "zsh_history": await self._check_zsh_history(),
-            "os_log": await self._check_os_log(),
-            "clipboard": await self._check_clipboard(),
-            "lsof_side": await self._check_lsof(),
-            "disk_io": await self._check_disk_io(),
-        }
+        return SignalReport(
+            zsh_history=await self._check_zsh_history(),
+            os_log=await self._check_os_log(),
+            clipboard=await self._check_clipboard(),
+            lsof_side=await self._check_lsof(),
+            disk_io=await self._check_disk_io(),
+        )
 
     async def _check_zsh_history(self) -> Dict[str, Any]:
         history_path = Path.home() / ".zsh_history"
@@ -164,12 +167,12 @@ class SignalAuditorService:
             "intent": "Physical Burn Rate"
         }
 
-    def _save_report(self, report: Dict[str, Any]) -> None:
+    def _save_report(self, report: SignalReport) -> None:
         """Saves report to disk and operational store."""
         try:
             self.report_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.report_path, "w") as f:
-                json.dump(report, f, indent=2)
-            self.operational.set_setting("signal_reachability_report", json.dumps(report))
+                f.write(report.model_dump_json(indent=2))
+            self.operational.set_setting("signal_reachability_report", report.model_dump_json())
         except Exception as e:
             logger.error(f"Failed to save signal report: {e}")

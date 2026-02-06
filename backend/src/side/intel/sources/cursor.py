@@ -1,7 +1,7 @@
 """
 Cursor Intent Source.
 
-Ingests intent from Cursor .plan.md files in ~/.cursor/plans/
+Ingests intent from Cursor plans.
 Parses YAML frontmatter manually to avoid dependencies.
 """
 
@@ -18,8 +18,7 @@ logger = logging.getLogger(__name__)
 
 class CursorSource(IntentSource):
     """
-    Reads ~/.cursor/plans/*.plan.md files.
-    Extracts 'name' and 'overview' as intent.
+    Reads Cursor plans and extracts 'name' and 'overview' as intent.
     """
     
     def __init__(self, plans_dir: Path | None = None):

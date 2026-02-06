@@ -1,86 +1,85 @@
+"""
+Strategic Hub - Database-First Architecture.
+
+[SOVEREIGN ARCHITECTURE]: Returns data for LLM consumption via MCP directly from Strategic Database.
+"""
 import logging
-import os
-import stat
-from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
-async def generate_hub(db: Any) -> str:
-    """
-    Evolves the Strategic Hub (HUB.md) based on the latest strategic data.
-    """
-    from side.utils.paths import get_side_dir
-    project_id = db.get_project_id()
-    side_dir = get_side_dir()
-    hub_path = side_dir / "HUB.md"
-    
-    logger.info(f"🏛️ [HUB]: Evolving Strategic Hub at {hub_path}")
-    
-    # 1. Soften the Hub for writing
-    if hub_path.exists():
-        try:
-            os.chmod(hub_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
-        except Exception as e:
-            logger.debug(f"Could not soften HUB: {e}")
 
-    # 2. Collect Data
+async def get_strategic_hub_data(db: Any) -> Dict[str, Any]:
+    """
+    [DRY ARCHITECTURE]: Returns strategic hub data directly from database.
+    
+    No file is created. LLM accesses this via MCP tools.
+    
+    Returns:
+        Dict containing all strategic hub data:
+        - project_id: Project identifier
+        - objectives: Active strategic objectives
+        - friction: Critical/high severity issues
+        - milestones: Active milestones
+        - completed: Recently completed items
+        - activities: Recent activity feed
+    """
+    project_id = db.get_project_id()
+    
+    logger.info(f"🏛️ [HUB]: Fetching Strategic Hub data for {project_id}")
+    
+    # 1. Collect Data from Database (Single Source of Truth)
     plans = db.strategic.list_plans(project_id=project_id)
     activities = db.forensic.get_recent_activities(project_id=project_id, limit=5)
-    
-    # NEW: Fetch Forensic Audits (Strategic Friction)
-    # We look for violations or high-severity issues
     audits = db.forensic.get_recent_audits(project_id=project_id, limit=10)
+    
+    # 2. Process data
     friction = [a for a in audits if a.get('severity') in ['CRITICAL', 'HIGH', 'VIOLATION']]
-    
-    # 3. Generate Markdown
-    lines = [
-        "# Sidelith Strategic Hub\n",
-        f"*Sovereign Strategic Identity for {project_id} (INTENTION FIREWALL ENABLED)*\n",
-        "## 🎯 Strategic Objectives\n"
-    ]
-    
     objectives = [p for p in plans if p.get('type') == 'objective' and p.get('status') != 'done']
-    for obj in objectives:
-        lines.append(f"- [ ] **{obj['title']}** (ID: `{obj['id']}`)")
-    
-    if friction:
-        lines.append("\n## ⚠️ Strategic Friction & Forensic Remediation\n")
-        lines.append("These bottlenecks have been harvested by the **Wisdom Distiller**. Apply these directives to realign.\n")
-        for issue in friction:
-            severity = issue.get('severity', 'INFO')
-            emoji = "🛑" if severity in ['CRITICAL', 'VIOLATION'] else "🟠"
-            lines.append(f"### {emoji} {issue.get('message', 'Unknown Friction')}")
-            lines.append(f"- **File**: `{issue.get('file_path', 'Global')}`")
-            lines.append(f"- **Outcome**: `FORENSIC_PULSE` Detection")
-            
-            # Generate Remediation Directive (The "Pasteable Prompt" value)
-            lines.append("\n> **Strategic Directive**:")
-            lines.append(f"> Paste this into your LLM box: `Side, fix the {severity} friction in {issue.get('file_path')}: {issue.get('message')}. Maintain architectural intent.`\n")
-
-    lines.append("\n## 🚀 Active Milestones\n")
     milestones = [p for p in plans if p.get('type') == 'milestone' and p.get('status') != 'done']
-    for ms in milestones:
-        lines.append(f"- [ ] {ms['title']}")
-        
-    lines.append("\n## ✅ Success Log\n")
-    completed = [p for p in plans if p.get('status') == 'done']
-    for c in completed[:10]:
-        lines.append(f"- [x] {c['title']}")
-        
-    lines.append("\n## 📡 Real-time Intelligence\n")
-    for act in activities:
-        lines.append(f"- *{act.get('created_at', '')}*: {act.get('action', '')}")
-        
-    # 4. Write File
-    try:
-        hub_path.write_text("\n".join(lines))
-        
-        # 5. Harden the Hub (Read-only)
-        os.chmod(hub_path, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
-        
-        logger.info("✨ [HUB]: Strategic Hub update successful.")
-        return "HUB.md"
-    except Exception as e:
-        logger.error(f"Failed to generate HUB.md: {e}")
-        return "ERROR"
+    completed = [p for p in plans if p.get('status') == 'done'][:10]
+    
+    # 3. Return structured data (not a file)
+    hub_data = {
+        "project_id": project_id,
+        "objectives": objectives,
+        "friction": friction,
+        "milestones": milestones,
+        "completed": completed,
+        "activities": activities,
+        "summary": {
+            "total_objectives": len(objectives),
+            "total_friction": len(friction),
+            "total_milestones": len(milestones),
+            "total_completed": len(completed)
+        }
+    }
+    
+    logger.info(f"✨ [HUB]: Strategic Hub data retrieved. {len(objectives)} objectives, {len(friction)} friction points.")
+    
+    return hub_data
+
+
+async def get_strategic_friction(db: Any) -> List[Dict[str, Any]]:
+    """
+    [DRY ARCHITECTURE]: Returns strategic friction (critical issues) from database.
+    
+    This provides the "Strategic Friction & Forensic Remediation" snapshot for the Hub.
+    """
+    project_id = db.get_project_id()
+    audits = db.forensic.get_recent_audits(project_id=project_id, limit=20)
+    
+    friction = []
+    for issue in audits:
+        if issue.get('severity') in ['CRITICAL', 'HIGH', 'VIOLATION']:
+            friction.append({
+                "severity": issue.get('severity'),
+                "message": issue.get('message'),
+                "file_path": issue.get('file_path', 'Global'),
+                "directive": f"Fix the {issue.get('severity')} issue in {issue.get('file_path')}: {issue.get('message')}. Maintain architectural intent."
+            })
+    
+    return friction
+
+
+# Removed: generate_hub() - All callers must use get_strategic_hub_data()

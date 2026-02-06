@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 
 class AutoIntelligence:
     """
-    The 'Context Server'.
-    Automatically monitors the user's focus and injects:
-    1. Project Memories (JSON).
-    2. Local Git History.
-    3. Activity log (Audit Trail).
+    Sovereign Context Orchestrator [Tier-3].
+    Implements 'Non-Linear Context Injection' via:
+    1. Fractal DNA Indexing (Structural Truth).
+    2. Local Merkle Persistence (State Anchor).
+    3. Forensic Activity Rollups (Ground Truth).
     """
 
     def __init__(self, project_path: Path, engine: ContextEngine, buffer=None):
@@ -63,7 +63,7 @@ class AutoIntelligence:
         # 1. Run the Fractal Scan (Distributed Indexing)
         start_time = time.time()
         logger.info("🧠 [BRAIN]: Initiating Parallel Fractal Context Scan...")
-        run_fractal_scan(self.project_path)
+        run_fractal_scan(self.project_path, ontology_store=self.engine.ontology)
         scan_duration = time.time() - start_time
         logger.info(f"🧠 [BRAIN]: Scan completed in {scan_duration:.2f}s.")
         
@@ -100,28 +100,25 @@ class AutoIntelligence:
         activities = self.forensic.get_recent_activities(project_id, limit=10)
         
         # [SOVEREIGN GAVEL]: Enforce Pydantic V2 Strictness
-        from side.models.brain import SovereignGraph, BrainStats, DNA, IntentSnapshot
+        from side.models.brain import ContextSnapshot, BrainStats, DNA, IntentSnapshot
         
         # Construct Policy Object
-        graph_obj = ContextEngine(
-            dna=DNA(
-                version="3.0",
-                last_updated=datetime.now(timezone.utc).isoformat(),
-                project_id=self.engine.get_project_id()
-            ),
+        snapshot_obj = ContextSnapshot(
             stats=BrainStats(
-                total_files=len(list(self.project_path.rglob("*"))),
-                context_density=0.9
+                nodes=len(list(self.project_path.rglob("*"))),
+                total_lines=0 # TODO: Roll up from fractal index
             ),
-            intent_history=[]
+            dna=DNA(
+                signals=local_data.get("dna", {}).get("signals", [])
+            )
         )
         
         # 3. Persist Master Checkpoint (The Weights)
         metadata_file = self.project_path / ".side" / "project_metadata.json"
         metadata_file.parent.mkdir(parents=True, exist_ok=True)
-        shield.seal_file(metadata_file, graph_obj.model_dump_json(indent=2))
+        shield.seal_file(metadata_file, snapshot_obj.model_dump_json(indent=2))
         logger.debug("💾 [CHECKPOINT]: Project metadata serialized (STRICT).")
-        return graph_obj
+        return snapshot_obj
 
     async def _sync_mmap_patterns(self):
         """Syncs public patterns to Mmap Store for low-latency acceleration."""
@@ -142,6 +139,7 @@ class AutoIntelligence:
             if fragments:
                  self.mmap.sync_from_ledger(fragments)
             
+            import json
             metadata_file = self.project_path / ".side" / "project_metadata.json"
             if metadata_file.exists():
                 raw = shield.unseal_file(metadata_file)
@@ -162,19 +160,15 @@ class AutoIntelligence:
         
         # 1. Surgical Harvest
         if "task.md" in file_path.name or "WALKTHROUGH.md" in file_path.name:
-            # We refresh the Strategic Timeline in the master graph
+            # Refresh the Strategic Timeline via ContextCache
             bridge = BrainBridge(self.brain_path)
             nodes = bridge.scan_nodes()
             
-            sovereign_file = self.project_path / ".side" / "sovereign.json"
-            if sovereign_file.exists():
-                import json
-                raw = shield.unseal_file(sovereign_file)
-                data = json.loads(raw)
-                data["strategic_timeline"] = nodes
-                data["last_scan"] = datetime.now(timezone.utc).isoformat()
-                shield.seal_file(sovereign_file, json.dumps(data, indent=2))
-                logger.info("✨ [BRAIN]: Strategic Timeline synced to Sovereign Anchor.")
+            # [HYBRID ARCHITECTURE]: Regenerate cache from database
+            from side.utils.context_cache import ContextCache
+            cache = ContextCache(self.project_path, self.engine)
+            cache.generate(force=True)  # Force regeneration
+            logger.info("✨ [BRAIN]: Context cache regenerated from database.")
             
         # 2. Pattern Harvest
         # [PURGE]: Unstructured .md files are no longer harvested.
@@ -330,12 +324,12 @@ class AutoIntelligence:
         import re
         symbols = set()
         
-        # Heuristic: Find lines starting with + or - that look like def or class
-        # (Slightly faster than parsing the whole file for every diff)
+        # Heuristic: Find lines starting with + or - that look like structural keywords
+        # Supports: def (Py), class (JS/TS/Ruby/PHP/C#), func (Go/Swift), function (JS/PHP), fun (Kotlin)
         lines = diff_content.splitlines()
         for line in lines:
             if line.startswith("+") and not line.startswith("+++"):
-                match = re.search(r"(def|class)\s+([a-zA-Z_][a-zA-Z0-9_]*)", line)
+                match = re.search(r"\b(def|class|func|function|fun)\s+([a-zA-Z_][a-zA-Z0-9_]*)", line)
                 if match:
                     symbols.add(match.group(2))
         
@@ -605,7 +599,7 @@ class AutoIntelligence:
                 ("INTENT", ConversationSession),
                 ("PHYSICS", PulseResult),
                 ("LEDGER", LedgerEntry),
-                ("BRAIN", SovereignGraph)
+                ("SNAPSHOT", ContextSnapshot)
             ]
             
             for name, model in models:
@@ -732,53 +726,26 @@ class AutoIntelligence:
 
     async def optimize_weights(self) -> dict:
         """
-        [LAYER 4]: Optimizes Sovereign Weights (sovereign.json).
-        Triggers Strategic Observer to distill facts.
+        [LAYER 4]: Optimizes Context Snapshot Weights.
+        [HYBRID ARCHITECTURE]: Uses ContextCache for regeneratable cache.
         """
-        import json
         from side.intel.observer import StrategicObserver
+        from side.utils.sovereign import SovereignCache
         
         project_id = self.engine.get_project_id()
         
-        # 1. Update sovereign.json (The Weights)
-        # We ensure the file exists and has the latest schema pointers
-        sovereign_path = self.project_path / ".side" / "sovereign.json"
-        
-        if not sovereign_path.exists():
-            weights = {
-                "version": "4.0.0 (Observer Edition)",
-                "project_id": project_id,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "intent": {},
-                "metrics": {}
-            }
-        else:
-            weights = json.loads(shield.unseal_file(sovereign_path))
-            
-        weights["last_scan"] = datetime.now(timezone.utc).isoformat()
-        
-        # 2. Trigger Strategic Observer (The Compiler)
+        # 1. Trigger Strategic Observer (The Compiler)
         observer = StrategicObserver(self.forensic)
         new_facts = await observer.distill_observations(project_id, limit=20)
         
-        if "metrics" not in weights:
-            weights["metrics"] = {}
-        weights["metrics"]["recent_facts"] = new_facts
+        # 2. [HYBRID ARCHITECTURE]: Regenerate context.json cache from database
+        from side.utils.context_cache import ContextCache
+        cache = ContextCache(self.project_path, self.engine)
+        cache_data = cache.generate(force=True)  # Force regeneration with new facts
         
-        # Save Weights
-        # We use a shielded write to prevent corruption
-        shield.seal_file(sovereign_path, json.dumps(weights, indent=2))
-        logger.info(f"⚓ [WEIGHTS]: Optimized sovereign.json (Facts: +{new_facts})")
+        logger.info(f"⚓ [WEIGHTS]: Optimized context cache (Facts: +{new_facts})")
         
-        return weights
-
-        
-        # 3. Re-run Fractal Scan (The Body)
-        # We build a fresh distributed index of the current filesystem
-        logger.info("🧠 [PHOENIX]: Re-building Fractal Context Graph...")
-        await self.feed()
-        
-        logger.info("✨ [PHOENIX]: Recovery Complete. Sovereign Context is Immortal.")
+        return cache_data
 
     def enrich_system_prompt(self, base_prompt: str, context: str) -> str:
         """
