@@ -5,25 +5,6 @@ import { CheckoutButton } from "@/components/dashboard/CheckoutButton";
 export default function PricingPage() {
     return (
         <div className="min-h-screen bg-black text-white selection:bg-white/20">
-            {/* Navigation */}
-            <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/50 backdrop-blur-md">
-                <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="h-6 w-6 bg-white rounded-sm group-hover:rotate-90 transition-transform duration-500" />
-                        <span className="font-black tracking-tighter text-xl uppercase italic text-white underline decoration-white/20 underline-offset-4">Sidelith</span>
-                    </Link>
-                    <div className="flex items-center gap-6 text-sm font-medium text-zinc-300">
-                        <Link href="/#forensics" className="hover:text-white transition-colors">Forensics & Strategy</Link>
-                        <Link href="/#caselogs" className="hover:text-white transition-colors">Case Logs</Link>
-                        <Link href="/#install" className="hover:text-white transition-colors">Install</Link>
-                        <Link href="/pricing" className="text-white">Infrastructure</Link>
-                        <Link href="/login" className="flex items-center gap-2 text-white bg-white/10 px-5 py-2 rounded-full hover:bg-white/20 transition-all font-bold border border-white/5 uppercase tracking-widest text-[10px]">
-                            Authenticate <ChevronRight className="w-3 h-3" />
-                        </Link>
-                    </div>
-                </div>
-            </nav>
-
             <main className="pt-32 pb-16 px-6">
                 <div className="max-w-6xl mx-auto">
                     {/* Header */}
@@ -232,13 +213,6 @@ export default function PricingPage() {
                         <p className="text-zinc-400 italic">
                             "Modern engineering is not about typing. It's about structure. Sidelith provides the stable System of Record required for high-stakes architectural decisions."
                         </p>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="text-center">
-                        <Link href="/" className="text-zinc-500 hover:text-white transition-colors uppercase tracking-[0.2em] text-[10px] font-black">
-                            ← Back to Sidelith
-                        </Link>
                     </div>
                 </div>
             </main>

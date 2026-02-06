@@ -8,6 +8,27 @@ export async function GET(request: Request) {
     // if "next" is in param, use it as the redirect URL
     const next = searchParams.get('next') ?? '/dashboard'
 
+    // [SECURITY] Validate redirect URL to prevent open redirect attacks
+    const ALLOWED_CLI_HOSTS = ['localhost', '127.0.0.1'];
+
+    const isValidRedirect = (url: string): boolean => {
+        // Internal paths are always allowed
+        if (url.startsWith('/') && !url.startsWith('//')) return true;
+
+        // External URLs must be whitelisted CLI hosts
+        try {
+            const parsed = new URL(url);
+            return ALLOWED_CLI_HOSTS.includes(parsed.hostname);
+        } catch {
+            return false;
+        }
+    };
+
+    if (!isValidRedirect(next)) {
+        console.error(`[SECURITY] Open redirect attempt blocked: ${next}`);
+        return NextResponse.redirect(`${origin}/dashboard`);
+    }
+
     if (code) {
         const supabase = await createClient()
         const { data, error } = await supabase.auth.exchangeCodeForSession(code) // Capture data for tokens

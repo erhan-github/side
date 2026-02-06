@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { Terminal, Copy, Check, Command, Monitor, Box, Zap, Code, Wind, Bot, Sparkles, Cpu, Lock } from "lucide-react";
 
-type Platform = "claude" | "gemini" | "cursor" | "windsurf" | "codex" | "antigravity";
+type Platform = "cursor" | "claude" | "vscode" | "windsurf" | "terminal" | "gemini";
 type Tier = "hobby" | "pro" | "elite";
 
 export function InstallWidget() {
-    const [active, setActive] = useState<Platform>("antigravity");
+    const [active, setActive] = useState<Platform>("cursor");
     const [tier, setTier] = useState<Tier>("hobby");
     const [subscribedTiers, setSubscribedTiers] = useState<Tier[]>(["hobby"]);
     const [isActivating, setIsActivating] = useState(false);
@@ -18,13 +18,14 @@ export function InstallWidget() {
         : `curl -fsSL sidelith.com/install | sh -s --tier ${tier}`;
 
     const platforms = [
-        { id: "antigravity", label: "Antigravity", icon: Command, color: "text-white" },
-        { id: "claude", label: "Claude", icon: Bot, color: "text-orange-400" },
-        { id: "gemini", label: "Gemini CLI", icon: Sparkles, color: "text-blue-400" },
-        { id: "cursor", label: "Cursor", icon: Monitor, color: "text-blue-300" },
+        { id: "cursor", label: "Cursor", icon: Monitor, color: "text-blue-400" },
+        { id: "claude", label: "Claude Desktop", icon: Bot, color: "text-purple-400" },
+        { id: "vscode", label: "VS Code", icon: Code, color: "text-indigo-400" },
         { id: "windsurf", label: "Windsurf", icon: Wind, color: "text-cyan-400" },
-        { id: "codex", label: "Codex", icon: Cpu, color: "text-green-400" },
+        { id: "terminal", label: "Terminal", icon: Terminal, color: "text-emerald-400" },
+        { id: "gemini", label: "Gemini CLI", icon: Sparkles, color: "text-amber-400" },
     ];
+
 
     const handleTierSelection = (selectedTier: Tier) => {
         if (!subscribedTiers.includes(selectedTier)) {
@@ -54,34 +55,28 @@ export function InstallWidget() {
         <section className="w-full max-w-5xl mx-auto mb-32 px-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
             <div className="text-center mb-10">
                 <h3 className="text-2xl font-heading text-white mb-2">The Genesis Handshake</h3>
-                <p className="text-white/50 max-w-2xl mx-auto">One command. Total Sovereignty. Select your tier below to lock your identity and auto-patch your entire IDE mesh in a single shot.</p>
+                <p className="text-white/50 max-w-2xl mx-auto">One command. Total Sovereignty. Your node automatically initializes your active tier to lock your identity and auto-patch your entire IDE mesh in a single shot.</p>
             </div>
 
-            {/* TIER SELECTOR */}
+            {/* TIER DISPLAY (Static, as it's auto-detected) */}
             <div className="flex justify-center gap-4 mb-8">
                 {[
                     { id: "hobby", label: "Hobby", su: "500 SUs", price: "$0", color: "border-white/10" },
                     { id: "pro", label: "Pro", su: "5,000 SUs", price: "$20", color: "border-blue-500/30" },
                     { id: "elite", label: "Elite", su: "25,000 SUs", price: "$60", color: "border-amber-500/30" }
                 ].map((t) => {
-                    const isSubscribed = subscribedTiers.includes(t.id as Tier);
+                    const isActive = tier === t.id;
                     return (
-                        <button
+                        <div
                             key={t.id}
-                            onClick={() => handleTierSelection(t.id as Tier)}
-                            className={`flex flex-col items-center p-4 min-w-[120px] rounded-xl border transition-all duration-300 relative overflow-hidden ${tier === t.id
+                            className={`flex flex-col items-center p-4 min-w-[120px] rounded-xl border transition-all duration-300 relative overflow-hidden ${isActive
                                 ? `${t.color} bg-white/5 shadow-[0_0_20px_rgba(255,255,255,0.05)]`
-                                : 'border-white/5 hover:border-white/10 opacity-40 hover:opacity-100'}`}
+                                : 'border-white/5 opacity-40 grayscale'}`}
                         >
-                            {!isSubscribed && t.id !== "hobby" && (
-                                <div className="absolute top-1 right-1">
-                                    <Lock size={10} className="text-white/30" />
-                                </div>
-                            )}
                             <span className="text-[10px] uppercase tracking-widest font-bold mb-1 text-white/40">{t.label}</span>
                             <span className="text-lg font-bold text-white">{t.price}</span>
                             <span className="text-[10px] font-mono text-zinc-500 mt-1">{t.su}</span>
-                        </button>
+                        </div>
                     );
                 })}
             </div>
@@ -119,8 +114,8 @@ export function InstallWidget() {
                     <div className="flex items-center gap-4 mb-8">
                         <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold border border-blue-500/30 text-lg group-hover:scale-110 transition-transform">⚡</div>
                         <div>
-                            <h4 className="text-lg font-bold text-white uppercase tracking-widest">Execute Single-Shot</h4>
-                            <p className="text-sm text-white/40">Sidelith will install the binary, anchor your identity, and bridge your tools instantly.</p>
+                            <h4 className="text-lg font-bold text-white uppercase tracking-widest">Run in your Project Root</h4>
+                            <p className="text-sm text-white/40">Open your terminal in your <b>active project directory</b> and run the command. Sidelith will anchor your local DNA and bridge your entire IDE mesh in a single shot.</p>
                         </div>
                     </div>
 
@@ -139,7 +134,7 @@ export function InstallWidget() {
                     {/* Magic Detection Indicators */}
                     <div className="mt-12">
                         <div className="flex items-center gap-2 text-[10px] text-white/30 uppercase tracking-[0.2em] mb-4 font-bold">
-                            <Sparkles size={12} className="text-blue-400 animate-pulse" /> Automatic Mesh Injection Locked
+                            <Sparkles size={12} className="text-blue-400 animate-pulse" /> Automatic MCP Injection Locked
                         </div>
                         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                             {platforms.map((p) => {
@@ -147,7 +142,7 @@ export function InstallWidget() {
                                 return (
                                     <div key={p.id} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-all hover:-translate-y-1">
                                         <Icon size={24} className={p.color} />
-                                        <span className="text-[10px] text-white/40 font-medium uppercase truncate w-full text-center">{p.label}</span>
+                                        <span className="text-[10px] text-white/40 font-medium uppercase w-full text-center leading-tight">{p.label}</span>
                                     </div>
                                 );
                             })}

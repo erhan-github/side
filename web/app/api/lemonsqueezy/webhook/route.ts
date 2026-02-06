@@ -23,13 +23,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "No signature" }, { status: 401 });
         }
 
-        // Verify signature
+        // Verify signature using timing-safe comparison (CIA-grade)
         const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET!;
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const hmac = require('crypto').createHmac('sha256', secret);
+        const crypto = require('crypto');
+        const hmac = crypto.createHmac('sha256', secret);
         const digest = hmac.update(body).digest('hex');
 
-        if (signature !== digest) {
+        // Prevent timing attacks
+        const signatureBuffer = Buffer.from(signature, 'hex');
+        const digestBuffer = Buffer.from(digest, 'hex');
+
+        if (signatureBuffer.length !== digestBuffer.length || !crypto.timingSafeEqual(signatureBuffer, digestBuffer)) {
+            console.error('[SECURITY] Invalid webhook signature detected');
             return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
         }
 

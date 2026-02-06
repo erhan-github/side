@@ -26,6 +26,7 @@ const SIDEBAR_ITEMS = [
         items: [
             { label: "The Vault", href: "/dashboard", icon: Home },
             { label: "Trajectory Variance", href: "/dashboard/impact", icon: BarChart3 },
+            { label: "Forensic Audit", href: "/dashboard/forensics", icon: Shield },
             { label: "The Event Clock", href: "/dashboard/ledger", icon: FileText },
         ]
     },

@@ -16,12 +16,16 @@ export async function GET(request: Request) {
 
         let data;
         let error;
+        let count;
 
         switch (action) {
-            case 'alerts':
+            case 'alerts': {
+                const limit = parseInt(searchParams.get('limit') || '50');
+                const offset = parseInt(searchParams.get('offset') || '0');
+
                 let alertsQuery = supabase
                     .from('findings')
-                    .select('*')
+                    .select('*', { count: 'exact' })
                     .eq('user_id', user.id)
                     .eq('is_resolved', false);
 
@@ -29,9 +33,13 @@ export async function GET(request: Request) {
                     alertsQuery = alertsQuery.eq('project_id', projectId);
                 }
 
-                ({ data, error } = await alertsQuery);
-                if (error) throw error;
-                return NextResponse.json(data);
+                const { data: alertsData, error: alertsError, count: alertsCount } = await alertsQuery
+                    .order('created_at', { ascending: false })
+                    .range(offset, offset + limit - 1);
+
+                if (alertsError) throw alertsError;
+                return NextResponse.json({ data: alertsData, count: alertsCount });
+            }
 
             case 'activities':
                 let activitiesQuery = supabase
@@ -62,9 +70,9 @@ export async function GET(request: Request) {
                     balance: (data?.tokens_monthly || 0) - (data?.tokens_used || 0)
                 });
 
-            case 'iq':
+            case 'iq': {
                 // Simple IQ calculation: 100 - (active findings * weight)
-                const { count, error: countError } = await supabase
+                const { count: iqCount, error: countError } = await supabase
                     .from('findings')
                     .select('*', { count: 'exact', head: true })
                     .eq('user_id', user.id)
@@ -72,8 +80,9 @@ export async function GET(request: Request) {
 
                 if (countError) throw countError;
 
-                const score = Math.max(0, 100 - (count || 0) * 5);
-                return NextResponse.json({ score, findings_count: count });
+                const score = Math.max(0, 100 - (iqCount || 0) * 5);
+                return NextResponse.json({ score, findings_count: iqCount });
+            }
 
             default:
                 return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

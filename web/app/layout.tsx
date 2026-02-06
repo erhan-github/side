@@ -33,6 +33,8 @@ export const metadata: Metadata = {
 import { CSPostHogProvider } from "./providers";
 import { GlobalErrorBoundary } from "@/components/observability/GlobalErrorBoundary";
 import { AuthSync } from "@/components/auth/AuthSync";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
 export default function RootLayout({
   children,
@@ -48,7 +50,9 @@ export default function RootLayout({
         <GlobalErrorBoundary>
           <CSPostHogProvider>
             <AuthSync />
+            <Header />
             {children}
+            <Footer />
           </CSPostHogProvider>
         </GlobalErrorBoundary>
       </body>
