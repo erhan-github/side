@@ -2,6 +2,7 @@ import base64
 import os
 import logging
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives import hashes
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.exceptions import InvalidTag
 from pathlib import Path
@@ -129,12 +130,13 @@ class NeuralShield:
             raise ValueError("Decryption failed (Invalid Token/Tag).")
 
     def seal_file(self, file_path: Path, data: str | bytes):
-        """Writes encrypted data to a file."""
+        """Writes encrypted data to a file with secure permissions."""
         if isinstance(data, str):
             encrypted = self.seal(data)
         else:
             encrypted = self.seal_bytes(data)
         file_path.write_bytes(encrypted)
+        file_path.chmod(0o600)  # Owner-only access (CIA-grade)
 
     def unseal_file(self, file_path: Path, binary: bool = False) -> str | bytes:
         """Reads and decrypts data from a file."""

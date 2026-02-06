@@ -1,6 +1,10 @@
 import sys
 import os
 import time
+from side.protocols.cli import CLIProtocol
+
+# [PROTOCOL]: Global UI Instance
+ux = CLIProtocol()
 
 # [OBSESSION DAY I] Standard libs moved to main() for <5ms Cold Start
 # Setup Pathing for local development without expensive pathlib at top-level
@@ -33,7 +37,7 @@ def _get_transient(engine):
 def handle_pulse(args):
     from side.pulse import pulse
     from pathlib import Path
-    print(f"🩺 [Sovereign Pulse] Initiating real-time forensic scan...")
+    ux.display_status("Initiating real-time forensic scan...", level="info")
     
     target_path = Path(args.path).resolve()
     # Simplified Pulse Logic for v1.1
@@ -44,16 +48,17 @@ def handle_pulse(args):
     }
     result = pulse.check_pulse(pulse_context)
     
-    print("\n--- 🛡️  SOVEREIGN PULSE REPORT -------------------------")
+    ux.display_header("Sovereign Pulse Report")
     if result.violations:
         for v in result.violations:
-            print(f"🛑 [VIOLATION]: {v}")
+            ux.display_status(v, level="error")
     else:
-        print("\n✅ [SECURE] No Constitutional Drift Detected.")
-        print("   ✨ Your codebase is aligned with the Sovereign Strategic Mesh.")
+        ux.display_status("No Constitutional Drift Detected.", level="success")
+        ux.display_status("Your codebase is aligned with the Sovereign Strategic Mesh.", level="info")
+    ux.display_footer()
 
 def handle_strategy(args):
-    print(f"🤔 [Sovereign Strategy]: Thinking about '{args.question}'...")
+    ux.display_status(f"Thinking about '{args.question}'...", level="info")
     import asyncio
     from side.tools import strategy
     # Fix: Ensure context is passed
@@ -61,10 +66,10 @@ def handle_strategy(args):
         "question": args.question,
         "context": "CLI User Request"
     }))
-    print("\n🦅 [STRATEGIC ADVICE]:")
-    print("---------------------------------------------------")
-    print(result)
-    print("---------------------------------------------------")
+    
+    ux.display_header("Strategic Advice")
+    ux.display_panel(result, style="cyan")
+    ux.display_footer()
 
 def handle_login(args):
     engine = _get_engine()
@@ -73,7 +78,7 @@ def handle_login(args):
     
     # 1. PATH A: The "Genesis" Key (Pro Flow)
     if args.key:
-        print(f"🔐 [GENESIS]: Verifying Sovereign Key '{args.key[:4]}...'")
+        ux.display_status(f"Verifying Sovereign Key '{args.key[:4]}...'", level="info")
         import time
         time.sleep(1) # Simulated network verification
         
@@ -90,9 +95,10 @@ def handle_login(args):
             "access_token": args.key,
             "email": "verified_user@sidelith.com" 
         })
-        print(f"\n✅ [SUCCESS]: Identity Verified ({tier.upper()} Tier).")
-        print(f"   💰 Balance: {limit} SUs / month")
-        print("   🚀 You are ready to connect.")
+        ux.display_header("Success: Identity Verified", subtitle=f"{tier.upper()} Tier")
+        ux.display_status(f"Balance: {limit:,} SUs / month", level="success")
+        ux.display_status("You are ready to connect.", level="info")
+        ux.display_footer()
         return
 
     # 2. PATH B: The Browser Flow (Legacy/Upgrade)
@@ -109,14 +115,14 @@ def handle_login(args):
     LOGIN_URL = f"{AUTH_DOMAIN}/login?cli_redirect={REDIRECT_URI}"
     
     print("🔐 [SOVEREIGN AUTH]: Initiating Secure Handshake...")
-    print(f"👉 Opening browser: {LOGIN_URL}")
+    ux.display_status(f"Opening browser: {LOGIN_URL}", level="info")
     webbrowser.open(LOGIN_URL)
     
     # Start ephemeral server to catch the callback
     tokens = start_auth_server(port=PORT)
     
     if tokens and tokens.get("access_token"):
-        print("\n✅ [SUCCESS]: Identity Verified.")
+        ux.display_status("Identity Verified.", level="success")
         
         from side.models.pricing import PricingModel, Tier
         
@@ -126,10 +132,9 @@ def handle_login(args):
         requested_tier = getattr(args, "tier", "hobby")
         
         # [SECURITY]: Cross-verify requested tier vs server-signed tier
-        # In a real scenario, this would check tokens["signature"] against a public key
         if requested_tier != server_tier and requested_tier != "hobby":
-            print(f"\n⚠️  [SECURITY ALERT]: Requested tier '{requested_tier.upper()}' does not match your Subscription state.")
-            print(f"   - Reverting to verified tier: {server_tier.upper()}")
+            ux.display_status(f"Requested tier '{requested_tier.upper()}' does not match your Subscription state.", level="warning")
+            ux.display_status(f"Reverting to verified tier: {server_tier.upper()}", level="info")
             requested_tier = server_tier
 
         # Standardize Token Prefix
@@ -151,10 +156,11 @@ def handle_login(args):
             "tokens_monthly": limit,
             "access_token": token
         })
-        print(f"   👤 Tier Locked: {tier.upper()}")
-        print(f"   💰 Balance: {limit} SUs / Month")
+        ux.display_header("Profile Updated", subtitle=tier.upper())
+        ux.display_status(f"Balance: {limit:,} SUs / Month", level="info")
+        ux.display_footer()
     else:
-        print("\n❌ [FAILURE]: Authentication timed out.")
+        ux.display_status("Authentication timed out.", level="error")
 
 
 def _check_auth_or_login(tier=None):
@@ -164,10 +170,10 @@ def _check_auth_or_login(tier=None):
     project_id = engine.get_project_id(".")
     profile = identity.get_profile(project_id)
     
-    if not profile or not profile.get("access_token") or profile.get("access_token").startswith("sk_hobby_"):
+    if not profile or not profile.access_token or profile.access_token.startswith("sk_hobby_"):
         # We allow sk_hobby_ but if it's completely missing, we need a handshake
         if not profile:
-            print(f"👋 [Welcome to Sidelith]: Let's activate your Sovereign Identity ({tier.upper() if tier else 'HOBBY'} Tier).")
+            ux.display_status(f"Welcome to Sidelith: Let's activate your Sovereign Identity ({tier.upper() if tier else 'HOBBY'} Tier).", level="info")
             from argparse import Namespace
             handle_login(Namespace(key=None, tier=tier))
             # Re-fetch after login
@@ -175,7 +181,7 @@ def _check_auth_or_login(tier=None):
     return profile
 
 def handle_connect(args):
-    print("🔌 [Sovereign Connect]: Initiating Universal Handshake...")
+    ux.display_status("Initiating Universal Handshake...", level="info")
     
     # [ULTRA-FLUID]: Consolidate Auth into Connect
     profile = _check_auth_or_login(tier=getattr(args, "tier", "hobby"))
@@ -188,16 +194,8 @@ def handle_connect(args):
     
     # [SOVEREIGN RESOLUTION]: Find the absolute path to the Sovereign Server.
     server_bin = shutil.which("sidelith-serve")
-    
-    if server_bin:
-        cmd = server_bin
-        cmd_args = []
-        # print(f"   🎯 Resolved Server Bin: {cmd}")
-    else:
-        # Fallback to the current python interpreter
-        cmd = sys.executable
-        cmd_args = ["-m", "side.server"]
-        # print(f"   ⚠️ 'sidelith-serve' not in PATH. Fallback to: {cmd} -m side.server")
+    cmd = server_bin if server_bin else sys.executable
+    cmd_args = [] if server_bin else ["-m", "side.server"]
 
     # Common standard config
     stdio_config = {
@@ -209,115 +207,76 @@ def handle_connect(args):
             "MCP_TRANSPORT": "stdio"
         }
     }
-    
-    # SSE Config (For Cursor)
-    sse_config = {
-        "command": cmd,
-        "args": cmd_args,
-        "env": {
-            "PYTHONUNBUFFERED": "1",
-            "SOVEREIGN_MODE": "1",
-            "MCP_TRANSPORT": "sse" 
-        }
-    }
 
     # [AUTO-DETECTION]: If no specific flag is provided, attempt magic detection
     if not any([args.cursor, args.vscode, args.claude, args.antigravity, args.codex, args.windsurf]):
-        print("🔍 [Magic Search]: Scanning for compatible AI Gateways...")
+        ux.display_status("Scanning for compatible AI Gateways...", level="info")
         
         # 1. Claude Check
         claude_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
         if claude_path.exists():
-            print("✨ [FOUND]: Claude Desktop detected. Patching bridge...")
+            ux.display_status("Claude Desktop detected. Patching bridge...", level="success")
             args.claude = True
         
         # 2. Cursor Check
         cursor_path = Path.home() / "Library" / "Application Support" / "Cursor" / "User" / "settings.json"
         if cursor_path.exists():
-            print("✨ [FOUND]: Cursor detected. Broadcasters active.")
+            ux.display_status("Cursor detected. Broadcasters active.", level="success")
             args.cursor = True
             
         # 3. VS Code Check
         vscode_path = Path.home() / "Library" / "Application Support" / "Code" / "User" / "settings.json"
         if vscode_path.exists():
-            print("✨ [FOUND]: VS Code detected.")
+            ux.display_status("VS Code detected.", level="success")
             args.vscode = True
 
     # 1. CURSOR (SSE Preference)
     if args.cursor:
-        print("\n🔵 [CURSOR DETECTED]: Generating SSE Configuration...")
-        cursor_config = {
-            "mcpServers": {
-                "sidelith": {
-                    "url": "http://localhost:8080/sse",
-                    "transport": "sse"
-                }
-            }
-        }
-        print("   ⚠️ Note: Cursor currently requires manual HTTP SSE configuration or stdio.")
-        print("   👉 Recommended: Use the Stdio config below for max stability in Cursor Tab:")
-        print("---------------------------------------------------------------")
-        print(json.dumps({
-            "sidelith": stdio_config
-        }, indent=2))
-        print("---------------------------------------------------------------")
+        ux.display_header("Cursor Handshake")
+        ux.display_status("Generating SSE Configuration...", level="info")
+        ux.display_status("Note: Cursor currently requires manual HTTP SSE configuration or stdio.", level="warning")
+        ux.display_status("Recommended: Use the Stdio config below for max stability in Cursor Tab:", level="info")
+        ux.display_panel(json.dumps({"sidelith": stdio_config}, indent=2), title="settings.json (mcpServers)")
+        ux.display_footer()
         return
 
     # 2. VS CODE (Stdio Preference)
     if args.vscode:
-        print("\n🟣 [VS CODE DETECTED]: Generating Stdio Configuration...")
-        print("   👉 Add this to your MCP Extension settings (settings.json):")
-        print("---------------------------------------------------------------")
-        print(json.dumps({
-            "mcp.servers": {
-                "sidelith": stdio_config
-            }
-        }, indent=2))
-        print("---------------------------------------------------------------")
+        ux.display_header("VS Code Handshake")
+        ux.display_status("Generating Stdio Configuration...", level="info")
+        ux.display_status("Add this to your MCP Extension settings (settings.json):", level="info")
+        ux.display_panel(json.dumps({"mcp.servers": {"sidelith": stdio_config}}, indent=2), title="settings.json")
+        ux.display_footer()
         return
 
-        return
-    # 3. OPENAI CODEX (NEW)
+    # 3. OPENAI CODEX
     if args.codex:
-        print("\n🟢 [OPENAI CODEX DETECTED]: Generating MCP Configuration...")
-        print("   👉 Add this to your `config.toml` (Skills & Automations):")
-        print("---------------------------------------------------------------")
-        print(json.dumps({
-            "mcpServers": {
-                "sidelith": stdio_config
-            }
-        }, indent=2))
-        print("---------------------------------------------------------------")
+        ux.display_header("OpenAI Codex Handshake")
+        ux.display_status("Generating MCP Configuration...", level="info")
+        ux.display_status("Add this to your `config.toml` (Skills & Automations):", level="info")
+        ux.display_panel(json.dumps({"mcpServers": {"sidelith": stdio_config}}, indent=2), title="config.toml")
+        ux.display_footer()
         return
 
-    # 4. WINDSURF (CONSISTENCY)
+    # 4. WINDSURF
     if args.windsurf:
-        print("\n🟢 [WINDSURF DETECTED]: Generating Universal Handshake...")
-        print("   👉 Sidelith is now broadcasting Cascade performance anchors.")
-        print("---------------------------------------------------------------")
-        print(json.dumps({
-            "mcpServers": {
-                "sidelith": stdio_config
-            }
-        }, indent=2))
-        print("---------------------------------------------------------------")
+        ux.display_header("Windsurf Handshake")
+        ux.display_status("Broadcasting Cascade performance anchors.", level="success")
+        ux.display_panel(json.dumps({"mcpServers": {"sidelith": stdio_config}}, indent=2), title="Configuration")
+        ux.display_footer()
         return
 
     # [RESTORED]: Intelligence Operations (The Brain)
     if args.antigravity:
-        print("\n🟠 [ANTIGRAVITY]: Generating Universal Config...")
-        print("---------------------------------------------------------------")
-        print(json.dumps(stdio_config, indent=2))
-        print("---------------------------------------------------------------")
+        ux.display_header("Antigravity Handshake")
+        ux.display_panel(json.dumps(stdio_config, indent=2), title="antigravity_config.json")
+        ux.display_footer()
         return
 
 def handle_index(args):
-    """
-    [CRITICAL]: The Manual Feed.
-    Allows the user to force-ingest the codebase into the Sovereign Memory.
-    """
+    """[CRITICAL]: The Manual Feed."""
     from pathlib import Path
-    print("🧠 [Sovereign Index]: Analyzing Project DNA...")
+    ux.display_status("Analyzing Project DNA...", level="info")
     import asyncio
     from side.intel.auto_intelligence import AutoIntelligence
     
@@ -327,23 +286,21 @@ def handle_index(args):
     # Run the Feed
     graph = asyncio.run(intel.feed())
     
-    # Report
+    ux.display_header("Index Complete")
     if 'stats' in graph:
-        print(f"✅ [INDEX COMPLETE]: Processed {graph['stats'].get('nodes', 0)} nodes.")
+        ux.display_status(f"Processed {graph['stats'].get('nodes', 0)} nodes.", level="success")
     else:
-        print(f"✅ [INDEX COMPLETE]: Sovereign Context Updated.")
-    print(f"   Identity successfully projected to: .side/sovereign.json")
+        ux.display_status("Sovereign Context Updated.", level="success")
+    ux.display_status("Identity successfully projected to: .side/sovereign.json", level="info")
+    ux.display_footer()
 
 def handle_watch(args):
-    """
-    [CRITICAL]: The Always-On Watcher.
-    Keeps the context specific to the user's active focus.
-    """
+    """[CRITICAL]: The Always-On Watcher."""
     from pathlib import Path
     from side.services.file_watcher import FileWatcher
     from side.intel.auto_intelligence import AutoIntelligence
     
-    print(f"🔭 [Sovereign Watch]: Active Monitoring Engaged...")
+    ux.display_status("Active Monitoring Engaged...", level="info")
     path = Path(args.path).resolve()
     intel = AutoIntelligence(path, engine=_get_engine())
     
@@ -355,7 +312,7 @@ def handle_watch(args):
             time.sleep(1)
     except KeyboardInterrupt:
         asyncio.run(watcher.stop())
-        print("\n🛑 [WATCHER]: Disengaged.")
+        ux.display_status("Watcher Disengaged.", level="warning")
 
     # 4. CLAUDE (Auto-Patch + Default Fallback)
     # If explicitly requested OR no specific flag provided (Default behavior)
@@ -397,7 +354,7 @@ def handle_audit(args):
     import asyncio
     from side.tools.audit import handle_run_audit
     
-    print(f"🕵️ [AUDIT]: Starting Deep Scan (Dimension: {args.dimension})...")
+    ux.display_status(f"Starting Deep Scan (Dimension: {args.dimension})...", level="info")
     
     severity = args.severity
     if severity == "all":
@@ -407,7 +364,9 @@ def handle_audit(args):
         "dimension": args.dimension,
         "severity": severity
     }))
-    print(result)
+    ux.display_header(f"Audit Results: {args.dimension.upper()}")
+    ux.display_panel(result)
+    ux.display_footer()
 
 def handle_usage(args):
     """Exposes high-fidelity Cursor-level usage summary."""
@@ -417,38 +376,33 @@ def handle_usage(args):
     
     summary = identity.get_cursor_usage_summary(project_id)
     if not summary or "error" in summary:
-        print("❌ [ERROR]: Could not retrieve usage summary. Run 'side login' first.")
+        ux.display_status("Could not retrieve usage summary. Run 'side login' first.", level="error")
         return
 
-    print("\n--- 📊 SOVEREIGN USAGE SUMMARY -----------------------")
-    print(f"   Tier:             {summary['tier_label']}")
-    print(f"   Cycle Ends:       {summary['cycle_ends_at']}")
-    print("-------------------------------------------------------")
+    ux.display_header("Sovereign Usage Summary", subtitle=f"Cycle Ends: {summary['cycle_ends_at']}")
     
     # [PRICING COMMUNICATION]: High-fidelity Progress Bars
     used = summary['tokens_used']
     limit = summary['tokens_monthly']
-    percent = min(100, int((used / limit) * 100)) if limit > 0 else 100
-    bar = "█" * (percent // 5) + "░" * (20 - (percent // 5))
+    percent = min(100, (used / limit) * 100) if limit > 0 else 100
     
-    print(f"   Standard SUs:     [{bar}] {percent}%")
-    print(f"                     ({used:,} / {limit:,} SUs used)")
-    
-    # Premium Requests (The Cursor Experience)
     prem_used = summary['premium_requests']
     prem_limit = summary['premium_limit']
-    prem_percent = min(100, int((prem_used / prem_limit) * 100)) if prem_limit > 0 else 100
-    prem_bar = "█" * (prem_percent // 5) + "░" * (20 - (prem_percent // 5))
-    
-    print(f"\n   Premium Requests: [{prem_bar}] {prem_percent}%")
-    print(f"                     ({prem_used} / {prem_limit} requests)")
+    prem_percent = min(100, (prem_used / prem_limit) * 100) if prem_limit > 0 else 100
+
+    ux.render_table("Resource Utilization", 
+                    ["Metric", "Used", "Limit", "Utilization"],
+                    [
+                        ["Standard SUs", f"{used:,}", f"{limit:,}", f"{percent:.1f}%"],
+                        ["Premium Requests", f"{prem_used}", f"{prem_limit}", f"{prem_percent:.1f}%"]
+                    ])
     
     if summary['is_exhausted']:
-        print("\n⚠️  [LIMIT REACHED]: You have exhausted your SUs for this cycle.")
-        print("   Upgrade at https://sidelith.com/pricing to resume high-fidelity reasoning.")
+        ux.display_status("LIMIT REACHED: You have exhausted your SUs for this cycle.", level="warning")
+        ux.display_status("Upgrade at https://sidelith.com/pricing to resume high-fidelity reasoning.", level="info")
     else:
-        print(f"\n✨ You have {summary['tokens_remaining']:,} SUs remaining.")
-    print("-------------------------------------------------------")
+        ux.display_status(f"You have {summary['tokens_remaining']:,} SUs remaining.", level="success")
+    ux.display_footer()
 
 def handle_profile(args):
     """View current Sovereign Identity & detailed SU Balance."""
@@ -458,18 +412,19 @@ def handle_profile(args):
     profile = identity.get_profile(project_id)
     
     if not profile:
-        print("❌ [ERROR]: No active profile found. Run 'side login' first.")
+        ux.display_status("No active profile found. Run 'side login' first.", level="error")
         return
 
-    print("\n--- 👤 SOVEREIGN IDENTITY -----------------------------")
-    print(f"   Project ID: {profile.get('id')}")
-    print(f"   Tier:       {profile.get('tier', 'hobby').upper()}")
-    print(f"   Balance:    {profile.get('token_balance', 0):,} SUs")
-    print(f"   Pattern:    {profile.get('design_pattern', 'declarative').upper()}")
-    print(f"   Airgapped:  {'YES' if profile.get('is_airgapped') else 'NO'}")
-    print(f"   Email:      {profile.get('email', 'Guest')}")
-    print("-------------------------------------------------------")
-    print("👉 Tip: Run 'side usage' for detailed cycle breakdown.")
+    ux.display_header("Sovereign Identity", subtitle=profile.email or "Guest")
+    ux.render_table("Profile Details", ["Attribute", "Value"], [
+        ["Project ID", profile.id],
+        ["Tier", profile.tier.upper()],
+        ["Balance", f"{profile.token_balance:,} SUs"],
+        ["Pattern", profile.design_pattern.upper()],
+        ["Airgapped", "YES" if profile.is_airgapped else "NO"]
+    ])
+    ux.display_status("Tip: Run 'side usage' for detailed cycle breakdown.", level="info")
+    ux.display_footer()
 
 def handle_sign_anchor(args):
     """Signs the sovereign.json anchor for project integrity."""
@@ -478,17 +433,17 @@ def handle_sign_anchor(args):
     anchor_path = project_path / "sovereign.json"
     
     if not anchor_path.exists():
-        print("❌ [ERROR]: No sovereign.json found to sign.")
+        ux.display_status("No sovereign.json found to sign.", level="error")
         return
         
     signer.sign_file(anchor_path)
-    print(f"✨ [SIGNER]: Anchor signed. Created {anchor_path.suffix}.sig companion.")
+    ux.display_status(f"Anchor signed. Created {anchor_path.suffix}.sig companion.", level="success")
 
 def handle_maintenance(args):
     """Triggers routine database maintenance (VACUUM/Backup)."""
     engine = _get_engine()
     engine.perform_maintenance()
-    print("🎨 [ENGINE]: System maintenance complete. Context VACUUMed and Backed up.")
+    ux.display_status("System maintenance complete. Context VACUUMed and Backed up.", level="success")
 
 def main():
     import argparse

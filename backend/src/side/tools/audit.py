@@ -32,7 +32,8 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
         ESLintAdapter,
         GosecAdapter,
         SwiftLintAdapter,
-        DetektAdapter
+        DetektAdapter,
+        DocVerifyAdapter
     )
     
     dimension = arguments.get('dimension', 'general')
@@ -51,7 +52,7 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     languages = detect_primary_languages(project_path)
     
     # 2. Select & Initialize Adapters
-    adapters = [SemgrepAdapter(project_path)] # Semgrep is always the polyglot baseline
+    adapters = [SemgrepAdapter(project_path), DocVerifyAdapter(project_path)] # Semgrep and DocVerify are polyglot baselines
     
     if "python" in languages:
         adapters.append(BanditAdapter(project_path))
@@ -151,14 +152,14 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
             except Exception as e:
                 logger.warning(f"Failed to save finding: {e}")
     
-    # 6. Wisdom Distillation (Phase 6)
+    # 6. Pattern Extraction (Phase 6)
     try:
-        print("🍯 [HARVESTING]: Extracting anti-patterns for your Wisdom Store...")
-        from side.intel.wisdom_distiller import WisdomDistiller
-        distiller = WisdomDistiller(engine.wisdom)
+        print("🎯 [PATTERNS]: Extracting architecture signals for your Pattern Store...")
+        from side.intel.pattern_distiller import PatternDistiller
+        distiller = PatternDistiller(db.strategic)
         await distiller.distill_audit_findings(all_findings)
     except Exception as e:
-        logger.warning(f"Wisdom distillation failed: {e}")
+        logger.warning(f"Pattern extraction failed: {e}")
 
     # 7. Generate report
     report = _generate_report(all_findings, dimension, severity_filter)
@@ -180,7 +181,7 @@ def _generate_report(findings: list[Finding], dimension: str, severity_filter: l
     
     lines = []
     lines.append(f"🛡️ **FORENSIC PULSE: {len(findings)} Issues Detected**")
-    lines.append(f"🎯 *Dimension: {dimension.upper()} | Wisdom Distiller: ACTIVE*")
+    lines.append(f"🎯 *Dimension: {dimension.upper()} | Pattern Distiller: ACTIVE*")
     lines.append("")
     
     # Show breakdown by severity
@@ -207,10 +208,10 @@ def _generate_report(findings: list[Finding], dimension: str, severity_filter: l
             lines.append(f"   - {finding.cwe_id} | Probe: {finding.tool}")
     
     if len(findings) > 5:
-        lines.append(f"   ... and {len(findings) - 5} more issues harvested into Wisdom Store.")
+        lines.append(f"   ... and {len(findings) - 5} more issues extracted into Pattern Store.")
     
     lines.append("")
-    lines.append("> **Next Steps**: View your refined [Strategic Hub](.side/HUB.md) for remediation directives.")
+    lines.append("> **Next Steps**: View the **Strategic Database** for specific remediation directives.")
     
     return "\n".join(lines)
 

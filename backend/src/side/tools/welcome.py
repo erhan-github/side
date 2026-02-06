@@ -9,8 +9,6 @@ from typing import Any
 from pathlib import Path
 
 from side.onboarding import run_onboarding, is_side_initialized, detect_project_name, detect_stack
-# from side.audit.memory import AuditMemory, AuditSnapshot
-from side.tools.planning import _generate_hub_file
 from side.tools.core import get_database
 from datetime import datetime
 
@@ -22,7 +20,7 @@ async def handle_welcome(arguments: dict[str, Any]) -> str:
     Day 1 magic - set up Side and create the Strategic Hub.
     
     - Detects project name and stack
-    - Creates .side/HUB.md (the Sovereign Dashboard)
+    - Initializes the Sovereign Context state
     - Runs baseline audit
     - Stores initial snapshot
     """
@@ -33,9 +31,8 @@ async def handle_welcome(arguments: dict[str, Any]) -> str:
         project_name = detect_project_name(Path(project_path))
         stack = detect_stack(Path(project_path))
         
-        # Ensure Strategic Hub exists
+        # Database is source of truth
         db = get_database()
-        hub_path = await _generate_hub_file(db)
         
         # Get latest health
         # memory = AuditMemory(project_path)
@@ -50,7 +47,7 @@ async def handle_welcome(arguments: dict[str, Any]) -> str:
 **Latest Score**: {progress['last_score']}%
 **Change**: {progress['message']}
 
-Your **Strategic Hub** is at `.side/HUB.md`
+**Context Source**: Sovereign Strategic Database (MCP)
 
 **What would you like to do?**
 - Say "Side, audit my code" to check health
@@ -63,7 +60,7 @@ Your **Strategic Hub** is at `.side/HUB.md`
 
 **Stack**: {', '.join(stack)}
 
-Your **Strategic Hub** is at `.side/HUB.md`
+**Context Source**: Sovereign Strategic Database (MCP)
 
 Say "Side, audit my code" to get your first health score!
 """
@@ -85,9 +82,8 @@ Say "Side, audit my code" to get your first health score!
     # )
     # memory.save_snapshot(snapshot)
     
-    # Generate the Strategic Hub
+    # Database serves as the Source of Truth
     db = get_database()
-    hub_path = await _generate_hub_file(db)
     
     return f"""
 ## 👋 Welcome to Sidelith.
@@ -96,16 +92,16 @@ I've initialized the technical context for this project:
 
 **📁 Project**: {result['project_name']}
 **🔧 Stack**: {', '.join(result['stack'])}
-**⬛ Context**: `.side/HUB.md`
+**⬛ Context**: Sovereign Strategic Database (Ready)
 
 ### How it works:
 
-Sidelith maintains a persistent state in `HUB.md`. It tracks your:
+Sidelith maintains a persistent state in your Sovereign Database. It tracks your:
 - Codebase health and logic flow
 - Active goals and constraints
 - Decision history (to prevent regressions)
 
-> **Don't edit the Hub manually.** Update it via command:
+> **Access context via LLM or MCP tools.** Update it via command:
 > - `lith log goal: Launch by February`
 > - `lith audit`
 > - `lith status`

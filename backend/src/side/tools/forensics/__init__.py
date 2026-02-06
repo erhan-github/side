@@ -16,6 +16,7 @@ from .eslint import ESLintAdapter
 from .gosec import GosecAdapter
 from .swiftlint import SwiftLintAdapter
 from .detekt import DetektAdapter
+from .doc_verify import DocVerifyAdapter
 from .synthesizer import ForensicSynthesizer
 
 __all__ = [
@@ -28,5 +29,6 @@ __all__ = [
     "GosecAdapter",
     "SwiftLintAdapter",
     "DetektAdapter",
+    "DocVerifyAdapter",
     "ForensicSynthesizer"
 ]

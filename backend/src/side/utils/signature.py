@@ -16,7 +16,8 @@ class SovereignSigner:
     
     def __init__(self, key_path: str | Path | None = None):
         if key_path is None:
-            key_path = Path.home() / ".side" / "sovereign.key"
+            from side.env import env
+            key_path = env.get_side_root() / "sovereign.key"
         self.key_path = Path(key_path)
         self._signing_key = None
         self._verify_key = None
@@ -62,13 +63,15 @@ class SovereignSigner:
             return False
 
     def sign_file(self, file_path: str | Path):
-        """Signs a file by creating a companion .sig file."""
+        """Signs a file by creating a companion .sig file with secure permissions."""
         file_path = Path(file_path)
         if not file_path.exists(): return
         
         content = file_path.read_bytes()
         sig = self.sign(content)
-        file_path.with_suffix(file_path.suffix + ".sig").write_text(sig)
+        sig_path = file_path.with_suffix(file_path.suffix + ".sig")
+        sig_path.write_text(sig)
+        sig_path.chmod(0o600)  # Owner-only access (CIA-grade)
 
     def verify_file(self, file_path: str | Path) -> bool:
         """Verifies a file against its .sig companion."""

@@ -20,7 +20,8 @@ Triggers:
 - "Side, what's the strategic risk of this implementation?"
 - "Side, help me decide between X and Y"
 
-Values: Injects **Historical Wisdom** from the Distiller to guide your path.
+Returns: Clear recommendation + reasoning + next steps.
+Values: Injects **Pattern Intelligence** from the Distiller to guide your path.
 Returns: Clear recommendation + reasoning + next steps.
 Speed: < 1 second""",
         inputSchema={
@@ -52,7 +53,7 @@ Triggers:
 - "Side, are we drifting from the mission?"
 - "Side, audit my strategy"
 
-Values: Professional accountability. Injects **Historical Wisdom** into the Agent.
+Values: Professional accountability. Injects **Pattern Intelligence** into the Agent.
 Returns: Prioritized actions, relevant articles, reasoning.
 Speed: < 2 seconds""",
         inputSchema={
@@ -131,7 +132,7 @@ Triggers:
 - "Side, run a forensic pulse"
 - "Side, how's my codebase?"
 
-Value: Not just a scan—it **harvests anti-patterns** into your local Wisdom Store.
+Value: Not just a scan—it **extracts patterns** and **verifies documentation truth** into your local Pattern Store.
 Returns: List of findings with severity and recommended actions. 
 Speed: < 5 seconds""",
         inputSchema={
@@ -142,18 +143,17 @@ Speed: < 5 seconds""",
     ),
     Tool(
         name="reindex_dna",
-        description="""CONTEXT DENSIFICATION. "I'm building the project soul."
+        description="""CONTEXT DENSIFICATION. "I'm indexing the codebase architecture."
         
-Multi-threaded indexing of your repository DNA via tree-sitter.
-
+Multi-threaded indexing of your codebase architecture via tree-sitter.
+        
 Triggers:
-- "Side, re-index the project DNA"
+- "Side, re-index the codebase architecture"
 - "Side, update your architectural awareness"
 - "Context densification"
 
 Value: Moving from "text-matching" to "architectural awareness".
-Returns: Stats on processed nodes.
-Speed: < 10 seconds""",
+Returns: Stats on processed nodes.""",
         inputSchema={
             "type": "object",
             "properties": {
@@ -199,7 +199,8 @@ Speed: < 10 seconds""",
         
 Sets up Side and creates the Strategic Hub for a new project:
 - Detects project name and stack
-- Creates .side/plan.md
+- Detects project name and stack
+- Initializes the Sovereign Context state
 - Runs baseline audit
 - Stores initial health snapshot
 

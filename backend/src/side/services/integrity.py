@@ -19,18 +19,18 @@ class IntegrityService:
         Runs a quick integrity check.
         In a production scenario, we'd verify the mmap checksum.
         """
-        logger.info("🔒 [INTEGRITY]: Running Node self-check...")
+        logger.info("🔒 [INTEGRITY]: Running Node self-check... [MMAP_DNA_VALIDATION]")
         
         # 1. Check if Mmap exists
         mmap_file = self.project_path / ".side" / "sovereign.mmap"
         if not mmap_file.exists():
-            logger.warning("🔒 [INTEGRITY]: Mmap index missing. Recovery required.")
+            logger.warning("🔒 [INTEGRITY]: Mmap index missing. [FS_MISSING_ARTIFACT]")
             return False
             
         # 2. Verify basic mmap state
         self.mmap.open()
         if self.mmap._count == 0:
-            logger.warning("🔒 [INTEGRITY]: Mmap index is empty.")
+            logger.warning("🔒 [INTEGRITY]: Mmap index is empty. [ZERO_BYTE_ENTROPY]")
             return False
             
         logger.info(f"🔒 [INTEGRITY]: Node Verified. ({self.mmap._count} vectors locked).")

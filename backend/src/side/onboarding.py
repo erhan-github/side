@@ -1,35 +1,12 @@
 """
 Side Onboarding - Day 1 Magic.
 
-Auto-creates .side/plan.md and runs baseline audit on first use.
+[SOVEREIGN ARCHITECTURE]: All strategic context is stored in the database.
 """
 import os
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
-
-
-PLAN_TEMPLATE = '''# Side Project Plan
-
-## Project
-- **Name**: {project_name}
-- **Stack**: {stack}
-- **Created**: {created_date}
-- **Side Version**: 1.0.0
-
-## Health Checks
-{health_checks}
-
-## Goals
-<!-- Add your goals here. Example: -->
-<!-- - [ ] Launch MVP by March 1 -->
-<!-- - [ ] Get 100 users -->
-
-## Audit History
-| Date | Score | Change |
-|------|-------|--------|
-| {created_date} | {baseline_score}% | Baseline |
-'''
 
 
 def detect_project_name(project_root: Path) -> str:
@@ -90,73 +67,26 @@ def detect_stack(project_root: Path) -> list[str]:
     return stack if stack else ["Unknown"]
 
 
-def create_side_directory(project_root: Path) -> Path:
-    """Create .side directory if it doesn't exist."""
-    side_dir = project_root / ".side"
-    side_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Create history subdirectory
-    (side_dir / "history").mkdir(exist_ok=True)
-    
-    # Add to .gitignore if not already there
+def ensure_gitignore_entry(project_root: Path) -> None:
+    """Ensure .side-id is in gitignore."""
     gitignore = project_root / ".gitignore"
     if gitignore.exists():
         content = gitignore.read_text()
-        if ".side/" not in content:
+        if ".side-id" not in content:
             with open(gitignore, "a") as f:
-                f.write("\n# Side AI\n.side/\n")
+                f.write("\n# Side AI\n.side-id\n")
     else:
-        gitignore.write_text("# Side AI\n.side/\n")
-        
-    return side_dir
-
-
-def create_plan_md(
-    project_root: Path,
-    baseline_score: int = 0,
-    health_checks: Optional[list[str]] = None,
-    findings_summary: str = ""
-) -> Path:
-    side_dir = create_side_directory(project_root)
-    plan_path = side_dir / "plan.md"
-    
-    from collections import Counter
-    
-    # 1. Detect basics (fast, sync)
-    project_name = detect_project_name(project_root)
-    stack = detect_stack(project_root)
-    
-    # Default health checks if none provided
-    if not health_checks:
-        health_checks = [
-            "- [ ] Security Score > 80%",
-            "- [ ] No hardcoded secrets",
-            "- [ ] Performance Score > 80%",
-            "- [ ] All tests passing",
-        ]
-    
-    content = PLAN_TEMPLATE.format(
-        project_name=project_name,
-        stack=", ".join(stack),
-        created_date=datetime.now().strftime("%Y-%m-%d"),
-        health_checks="\n".join(health_checks),
-        baseline_score=baseline_score,
-    )
-    
-    if findings_summary:
-        content += f"\n## First Diagnostic Findings\n{findings_summary}\n"
-        
-    plan_path.write_text(content)
-    return plan_path, project_name, stack
+        gitignore.write_text("# Side AI\n.side-id\n")
 
 
 async def run_onboarding(project_root: str) -> dict:
     """
     Run the Day 1 onboarding flow with a LIVE Baseline Audit.
     
+    [SOVEREIGN ARCHITECTURE]: Stores all data in the Strategic Database.
+    
     Returns dict with onboarding results.
     """
-    import asyncio
     from collections import Counter
     from side.tools.core import get_database, get_auto_intel
     from side.services.billing import BillingService
@@ -164,56 +94,68 @@ async def run_onboarding(project_root: str) -> dict:
     root = Path(project_root)
     db = get_database()
     
-    # 1. Get Profile
+    # 1. Detect project info
+    project_name = detect_project_name(root)
+    stack = detect_stack(root)
+    
+    # 2. Get/Create Profile (this creates .side-id)
     auto_intel = get_auto_intel()
     profile = await auto_intel.get_or_create_profile(project_root)
+    project_id = db.get_project_id()
     
-    # Real Forensics Audit (The Spear)
+    # 3. Real Forensics Audit (The Spear)
     from side.tools.forensics_tool import ForensicsTool
     spear = ForensicsTool()
     findings = spear.scan_project(str(project_root))
     
-    # [Anti-Abuse] Claim Trial (Repo Lock) - Uses shared DB
+    # 4. [Anti-Abuse] Claim Trial (Repo Lock)
     billing = BillingService(db)
     billing.claim_trial(project_root)
     
-    # 2. Calculate Strategic IQ (Lightweight)
-    audit_summary = Counter()
-    iq_score = 100 # Default starter score
+    # 5. Calculate Strategic IQ
+    iq_score = 100  # Default starter score
     max_iq = 400
+    baseline_score = int((iq_score / max_iq) * 100)
     
-    # 3. Format findings for plan.md
-    findings_summary = ""
-    for f in findings[:5]: # Top 5 findings
-        severity_emoji = {
-            "CRITICAL": "🔴",
-            "HIGH": "🟠",
-            "MEDIUM": "🟡",
-            "LOW": "⚪"
-        }.get(f.severity, "⚪")
-        findings_summary += f"{severity_emoji} **{f.type}**: {f.message}\n"
-
-    # 4. Create .side directory and plan.md
-    plan_path, project_name, stack = create_plan_md(
-        root, 
-        baseline_score=int((iq_score / max_iq) * 100), 
-        findings_summary=findings_summary
+    # 6. Store baseline in Strategic Database
+    # Save as a strategic fact for future reference
+    from uuid import uuid4
+    db.strategic.save_fact(
+        fact_id=str(uuid4()),
+        project_id=project_id,
+        content=f"Day 1 Baseline: {project_name} ({', '.join(stack)}) - Score: {baseline_score}%",
+        tags=["baseline", "onboarding", "day1"],
+        metadata={
+            "project_name": project_name,
+            "stack": stack,
+            "baseline_score": baseline_score,
+            "findings_count": len(findings),
+            "onboarded_at": datetime.now().isoformat()
+        }
     )
     
-    # 5. Return results
+    # 7. Store initial findings as audits (already happens in forensics tool)
+    # No need to duplicate in .md file
+    
+    # 8. Ensure gitignore has .side-id entry
+    ensure_gitignore_entry(root)
+    
+    # 9. Return results (no file path since we don't create .md files)
     return {
         "success": True,
-        "plan_path": str(plan_path),
+        "project_id": project_id,
         "project_name": project_name,
         "stack": stack,
         "iq_score": iq_score,
         "max_iq": max_iq,
-        "grade": "B", # Default
-        "findings_count": 0,
-        "message": f"✅ Live Diagnostic Complete! Your plan is at .side/plan.md",
+        "baseline_score": baseline_score,
+        "grade": "B",  # Default
+        "findings_count": len(findings),
+        "message": f"✅ Live Diagnostic Complete! Data stored in Sovereign Ledger.",
     }
 
 
 def is_side_initialized(project_root: str) -> bool:
     """Check if Side has been initialized for this project."""
-    return (Path(project_root) / ".side" / "plan.md").exists()
+    # Check for the .side-id identity anchor
+    return (Path(project_root) / ".side-id").exists()

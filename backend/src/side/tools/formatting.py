@@ -213,10 +213,8 @@ def format_decision(
     
     # Reasoning (brief)
     for line in reasoning.split("\n")[:2]:
-        output += box_line(f"→ {line.strip()}")
-    
-    output += box_empty()
-    output += box_line("📎 Decision saved to strategic_ledger.md")
+        output += box_empty()
+    output += box_line("📎 Decision saved to Strategic Database")
     output += box_footer(follow_up)
     
     return output
@@ -274,7 +272,7 @@ def format_strategy(
         for line in llm_context.split("\n")[:3]:
             output += box_line(f"  {line.strip()}")
     
-    output += box_line("📎 Strategy saved to strategic_ledger.md")
+    output += box_line("📎 Strategy saved to Strategic Database")
     if elapsed > 0:
         output += box_line(f"⚡ Response time: {elapsed*1000:.0f}ms")
     output += box_footer(follow_up)
@@ -343,7 +341,7 @@ def format_audit_summary(
     Shows magnitude, not details. Let user choose what to explore.
     """
     if follow_ups is None:
-        follow_ups = ["Show all findings?", "Fix critical issues first?", "Export to plan.md?"]
+        follow_ups = ["Show all findings?", "Fix critical issues first?", "Update Strategic Database?"]
     
     output = box_header("🔍", "AUDIT COMPLETE", "512 Tokens")
     output += box_empty()
@@ -439,7 +437,7 @@ def format_plan(goals: list[dict], follow_up: str = "Break down Week 1 into task
     done = len([g for g in goals if g.get('status') in ['done', 'completed']])
     output += box_line(progress_bar(done, total))
     output += box_empty()
-    output += box_line("📎 Full plan.md saved")
+    output += box_line("📎 Strategic Database updated")
     output += box_footer(follow_up)
     
     return output

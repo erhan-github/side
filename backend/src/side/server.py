@@ -16,7 +16,6 @@ from .intel.auto_intelligence import AutoIntelligence
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from .intel.log_scavenger import LogScavenger
-# from .services.watcher_service import WatcherService (DELETED)
 from .utils.crypto import shield
 import json
 import asyncio
@@ -82,8 +81,8 @@ class SovereignGovernor(threading.Thread):
                     logger.critical(f"🚨 [GOVERNOR]: RAM Violation ({mem/1024/1024:.1f}MB). Terminating.")
                     os._exit(1) # Hard kill
                 
-                # 2. CPU Audit
-                cpu = process.cpu_percent(interval=1.0)
+                # 2. CPU Audit (Non-blocking measurement)
+                cpu = process.cpu_percent(interval=None)
                 if cpu > self.high_cpu_threshold:
                     self.high_cpu_duration += 1
                 else:
@@ -149,16 +148,14 @@ def get_sovereign_context() -> str:
     This is the 'Golden Record' the Agent sees.
     """
     try:
-        # 1. Forensic Audit (Did we fetch context?)
-        forensic.log_activity(project_id="global", tool="MCP", action="serve_context", cost_tokens=1)
-        
+        # [PERFORMANCE]: Skipping forensic log for high-frequency resource polling
         mandates = strategic.list_decisions(category="mandate")
         rejections = strategic.list_rejections(limit=10)
         
         # 2. Wisdom Injection (Phase 6)
         # Search for wisdom relevant to the current repository DNA
         # Using a default 'global' hash for now, in real use this would be derived from the current focus
-        wisdom_suggestions = engine.wisdom.suggest_wisdom(context_hash="dna:primary")
+        wisdom_suggestions = engine.wisdom.get_patterns(context_hash="dna:primary")
         
         context = {
             "mandates": [m["answer"] for m in mandates],
@@ -221,7 +218,7 @@ def query_wisdom(topic: str) -> str:
     [The Research]: Semantic search over historical wisdom (Patterns & Anti-patterns).
     """
     # Use the new PatternStore for suggestions
-    results = engine.wisdom.suggest_wisdom(topic)
+    results = engine.wisdom.get_patterns(topic)
     return json.dumps(results, indent=2)
 
 # ---------------------------------------------------------------------
@@ -231,14 +228,62 @@ def query_wisdom(topic: str) -> str:
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request: Request):
     """
-    Railway Health Probe.
-    Returns 200 OK to allow container rotation.
+    Comprehensive health check with memory diagnostics.
+    Returns detailed system status for monitoring and alerting.
     """
-    return JSONResponse({
-        "status": "ok",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "mcp_type": "sse"
-    })
+    from side.config import config
+    from side.utils.memory_diagnostics import MemoryDiagnostics
+    
+    try:
+        # Get memory diagnostics
+        diag = MemoryDiagnostics()
+        memory = diag.get_current_memory()
+        
+        # Get cache statistics
+        cache_stats = operational.get_cache_stats()
+        
+        # Determine health status
+        status = "healthy"
+        warnings = []
+        
+        if memory["rss_mb"] > config.memory_warning_threshold_mb:
+            status = "warning"
+            warnings.append(f"Memory usage high: {memory['rss_mb']:.1f}MB / {config.max_memory_mb}MB")
+        
+        if memory["rss_mb"] > config.auto_restart_threshold_mb:
+            status = "critical"
+            warnings.append(f"Memory critical: {memory['rss_mb']:.1f}MB > {config.auto_restart_threshold_mb}MB")
+        
+        if cache_stats["entry_count"] > config.max_cache_entries * 0.9:
+            warnings.append(f"Cache near limit: {cache_stats['entry_count']} / {config.max_cache_entries}")
+        
+        return JSONResponse({
+            "status": status,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "memory": {
+                "rss_mb": round(memory["rss_mb"], 1),
+                "vms_mb": round(memory["vms_mb"], 1),
+                "percent": round(memory["percent"], 1),
+                "limit_mb": config.max_memory_mb,
+                "warning_threshold_mb": config.memory_warning_threshold_mb,
+                "auto_restart_threshold_mb": config.auto_restart_threshold_mb
+            },
+            "cache": {
+                "entries": cache_stats["entry_count"],
+                "size_mb": round(cache_stats["size_mb"], 2),
+                "limit": config.max_cache_entries,
+                "eviction_enabled": config.enable_cache_eviction
+            },
+            "warnings": warnings,
+            "mcp_type": "sse"
+        })
+    except Exception as e:
+        logger.error(f"Health check error: {e}")
+        return JSONResponse({
+            "status": "error",
+            "error": str(e),
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }, status_code=500)
 
 @mcp.custom_route("/version", methods=["GET"])
 async def get_version(request: Request):

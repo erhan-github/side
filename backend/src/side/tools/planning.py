@@ -10,17 +10,15 @@ from typing import Any
 from side.tools.core import get_auto_intel, get_database
 from side.tools.formatting import format_plan
 from side.utils.errors import handle_tool_errors
-from side.instrumentation.engine import InstrumentationEngine
 from side.services.billing import BillingService, SystemAction
 from side.utils.paths import get_side_dir, get_repo_root
-from side.services.hub import generate_hub
 
 logger = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # THE STRATEGIC HUB: Higher-Dimensional Strategic Sovereignty
 # ═══════════════════════════════════════════════════════════════════════════
-HUB_NAME = "HUB.md"
+# Removed: HUB_NAME - The Hub is now database-first.
 
 def _soften_hub(path: Path):
     """Temporarily unlock the Hub for evolution."""
@@ -58,9 +56,23 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     
     db.strategic.update_plan_status(matching['id'], 'done')
 
-    # INSTRUMENTATION: Record Outcome
-    ie = InstrumentationEngine(db)
-    ie.record_outcome(db.get_project_id(), f"Directive Fulfilled: {matching['title'][:30]}", 2.0)
+    # STRATEGIC OUTCOME: Record Directive Fulfillment
+    try:
+        db.forensic.log_activity(
+            project_id=db.get_project_id(),
+            tool="instrumentation",
+            action=f"Directive Fulfilled: {matching['title'][:30]}",
+            cost_tokens=0,
+            tier="system",
+            payload={
+                "event": f"Directive Fulfilled: {matching['title'][:30]}",
+                "value": 2.0,
+                "timestamp": datetime.now(timezone.utc).timestamp(),
+                "type": "outcome"
+            }
+        )
+    except Exception as ie_err:
+        logger.warning(f"Strategy instrumentation failed: {ie_err}")
     
     # BILLING: Charge for Directive Completion (Strategic Sync)
     billing = BillingService(db)
@@ -89,11 +101,7 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     except Exception as e:
         logger.error(f"Failed to log check activity: {e}")
     
-    # Evolve the Hub
-    from side.services.hub import generate_hub
-    await generate_hub(db)
-    
-    return f"✅ [STRATEGIC VECTORING]: Directive fulfilled. The Strategic Hub has evolved."
+    return f"✅ [STRATEGIC VECTORING]: Directive fulfilled. The Strategic Hub data updated."
 
 
 @handle_tool_errors
@@ -171,21 +179,10 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         
         output += f"📎 [INTENTION CAPTURED]: [{plan_type.upper()}] {goal_text}\n"
 
-    # 3. Evolve and Seal the Hub
-    hub_path = await generate_hub(db)
-    if hub_path:
-        output += f"🏛️ [HUB EVOLVED]: {hub_path}\n"
-    
     all_plans = db.strategic.list_plans(project_id=project_id)
     output += format_plan(all_plans)
     
     return output
 
 
-async def _generate_hub_file(db) -> str | None:
-    """Delegated to service."""
-    return await generate_hub(db)
-
-async def _generate_ledger_file(db) -> str | None:
-    """Legacy alias redirecting to Strategic Hub."""
-    return await generate_hub(db)
+# Removed: _generate_hub_file and _generate_ledger_file - All callers must use get_strategic_hub_data()

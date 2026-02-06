@@ -42,7 +42,7 @@ class PulseEngine:
     def __init__(self, anchor_path: Optional[Path] = None, rules_dir: Optional[Path] = None):
         self.anchor_path = anchor_path or Path.cwd() / ".side" / "sovereign.json"
         self.rules_dir = rules_dir or Path.cwd() / ".side" / "rules"
-        self.rules_dir.mkdir(parents=True, exist_ok=True)
+        # Note: rules_dir is created lazily when rules are synced
         self.rules_cache: List[DynamicRule] = []
         self.anchor_cache: Dict = {}
         self.last_load_time = 0.0
@@ -263,7 +263,8 @@ class PulseEngine:
             is_relevant = (target == "ALL" or target in fingerprint["frameworks"])
             
             if is_relevant:
-                # SEALING REMOVED: Writing Plain Text for Transparency & Speed
+                # Lazy-create rules directory only when writing rules
+                self.rules_dir.mkdir(parents=True, exist_ok=True)
                 rule_path = self.rules_dir / f"{rule_data['id']}.json"
                 if not rule_path.exists():
                     with open(rule_path, "w") as f:
