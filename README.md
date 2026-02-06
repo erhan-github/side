@@ -31,19 +31,24 @@ We don't compete on "Editor Features." We compete on **The Brain**.
     *   **The Tech (Pulse Engine)**: A **<1ms latency** local rule engine that blocks secrets and architectural violations *before* they leave your laptop.
     *   **Result**: You are not a typist; you are the **Monarch**.
 
-2.  **🧠 The Memory Moat (Sovereign Ledger)**
+2.  **🧠 The Memory Moat (Context Ledger)**
     *   **The Strategy**: Cloud LLMs have "Amnesia." We store your "Correction Vectors" (Rejections) locally.
     *   **The Tech (Dual-Track Architecture)**:
         *   **Discovery Layer**: A **Fractal Merkle Tree** (`local.json`) for incremental code discovery.
-        *   **Intent Layer**: A **Sovereign SQLite Brain** (`local.db`) for strategic memory and forensic activity.
+        *   **Intent Layer**: A **Context Snapshot Store** (`context.db`) for strategic memory and forensic activity.
     *   **Result**: Sidelith never makes the same mistake twice.
 
-3.  **🔒 The Privacy Moat (Neural Shield)**
-    *   **The Strategy**: To be smart, AI needs context. To be safe, it must be encrypted and controlled by you.
-    *   **The Tech (Local-First + Cloud Sync)**: Your brain is stored **locally first** with **AES-256 encryption**. Syncs to cloud only for device portability and intelligence exchange—you control what's shared.
-    *   **Result**: Enterprise-grade intelligence with local sovereignty and seamless device switching.
+3.  **📦 The Mobility Moat (Project Soul)**
+    *   **The Strategy**: Ownership means portability. You own your project's "Soul" across hardware.
+    *   **The Tech (CIA-Grade Portability)**: Projects are exported as AES-256 encrypted, HMAC-signed binary bundles (`sovereign_soul.shield`).
+    *   **Result**: 100% Ownership. Zero Vendor Lock-in.
 
-4.  **⚡ The Architecture Moat (Fractal + Mmap)**
+4.  **🔒 The Privacy Moat (Neural Shield)**
+    *   **The Strategy**: To be smart, AI needs context. To be safe, it must be encrypted and controlled by you.
+    *   **The Tech (Merkle-Chained Decision Ledgers)**: Every architectural maneuver is cryptographically sealed into an immutable chain, ensuring 100% auditability and preventing reasoning drift.
+    *   **Result**: Enterprise-grade intelligence with local sovereignty.
+
+5.  **⚡ The Architecture Moat (Fractal + Mmap)**
     *   **The Strategy**: Monoliths are slow. Memory-mapped fractals are instantaneous.
     *   **The Tech (Split-Contiguous Mmap)**: A high-frequency binary store that achieves **177M matches/sec** on ARM NEON (M2 Pro).
     *   **Adaptive Burden**: Sidelith uses a **Tiny/Fat** model. High-Performance features are **Adaptive**—offering JIT upgrades when it senses "Fractal Pressure."
@@ -59,7 +64,7 @@ We don't compete on "Editor Features." We compete on **The Brain**.
 ## 🧠 Core Intelligence
 
 ### 1. The Context Engine (Auto-Discovery)
-Sidelith is **Stateful**. It uses **Active Listening** to build the "Mental Model" (`sovereign.json`) of your company in real-time.
+Sidelith is **Stateful**. It uses **Active Listening** to build the "Mental Model" (`context.json`) of your company in real-time.
 *   **Mechanism**: We monitor every file change to *derive* the Strategy. We don't just read manual docs.
 *   **Result**: It feeds the LLM the **exact deltas** and context it needs using `AutoIntelligence`.
 
@@ -139,7 +144,7 @@ Sidelith separates **Physical Knowledge** from **Strategic Intent** to achieve i
     *   **Forensic (`db.forensic`)**: A tamper-proof ledger of every action and terminal command.
 
 > [!NOTE]
-> `memory.json` is a legacy "Hippocampus" scratchpad currently being distilled into the **Strategic Store**.
+> `memory.json` is a legacy node being distilled into the **Context Context Store**. 🛡️🏹
 
 **The Flow**:
 1.  **Index**: `side feed` building a distributed Merkle Tree of code understanding.
