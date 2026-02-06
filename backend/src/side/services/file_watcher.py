@@ -107,6 +107,22 @@ class FileWatcher:
                 pass
 
         logger.info("File watcher stopped")
+    
+    def get_diagnostics(self) -> dict:
+        """
+        Get file watcher diagnostics for memory tracking.
+        
+        Returns:
+            Dictionary with watcher metrics
+        """
+        return {
+            "watcher_count": 1 if self._running else 0,
+            "pending_changes": len(self._changed_files),
+            "debounce_active": self._debounce_task is not None and not self._debounce_task.done(),
+            "project_path": str(self.project_path),
+            "git_velocity": self._git_velocity,
+            "revert_count": self._revert_count
+        }
 
     async def _watch_loop(self) -> None:
         """Main watching loop."""
@@ -116,6 +132,10 @@ class FileWatcher:
             try:
                 # 1. Physical Presence Scan (Distributed Context)
                 current_scan = self._get_scan_snapshot()
+                
+                # Log scan size for memory diagnostics
+                if len(current_scan) % 100 == 0:  # Log every 100 files
+                    logger.debug(f"[FILE WATCHER] Scanned {len(current_scan)} files, pending changes: {len(self._changed_files)}")
                 
                 # 2. Check for git commits
                 current_commit = self._get_current_commit()
@@ -155,7 +175,7 @@ class FileWatcher:
                 # 3. Detect Ghost Intent (Pattern Rejection)
                 if rejection_signals := await self._detect_ghost_intent(last_scan, current_scan):
                     for signal in rejection_signals:
-                        logger.info(f"👻 [GHOST INTENT]: Pattern rejection detected in {signal['path']}")
+                        logger.info(f"👻 [GHOST INTENT]: Pattern rejection detected in {signal['path']} [DIFF_DELETION_SIGNAL]")
                         
                         reason = f"Ghost Deletion: {signal['entropy']} bytes removed."
                         if signal.get("diff"):
@@ -195,7 +215,7 @@ class FileWatcher:
                         changed.add(path)
 
                 if changed:
-                    logger.debug(f"Detected {len(changed)} changed files")
+                    logger.info(f"[FILE WATCHER] Detected {len(changed)} changed files, pending: {len(self._changed_files)}")
                     self._changed_files.update(changed)
                     await self._schedule_debounce()
 

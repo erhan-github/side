@@ -7,6 +7,7 @@ Centralized configuration for the Sidelith Sovereign SDK.
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from side.env import env
 
 
 PROJECT_NAME = "sidelith"
@@ -17,7 +18,7 @@ class SideConfig:
     """Configuration for sideMCP."""
 
     # Data storage (local fallback)
-    data_dir: Path = field(default_factory=lambda: Path.home() / f".{PROJECT_NAME}")
+    data_dir: Path = field(default_factory=lambda: env.get_side_root())
     db_name: str = "data.db"
 
     # Supabase Configuration (cloud storage with tenant isolation)
@@ -49,6 +50,20 @@ class SideConfig:
     buffer_flush_interval: int = 60      # Seconds
     heartbeat_interval: int = 30         # Seconds
     verification_window_hours: int = 1   # Baseline ground truth window
+
+    # Resource Limits (Production Safety)
+    max_memory_mb: int = field(default_factory=lambda: int(os.getenv("MAX_MEMORY_MB", "2048")))
+    auto_restart_threshold_mb: int = field(default_factory=lambda: int(os.getenv("AUTO_RESTART_THRESHOLD_MB", "3072")))
+    memory_warning_threshold_mb: int = field(default_factory=lambda: int(os.getenv("MEMORY_WARNING_THRESHOLD_MB", "1536")))
+    max_cache_entries: int = field(default_factory=lambda: int(os.getenv("MAX_CACHE_ENTRIES", "10000")))
+    cache_eviction_batch_size: int = field(default_factory=lambda: int(os.getenv("CACHE_EVICTION_BATCH_SIZE", "1000")))
+    max_file_watchers: int = field(default_factory=lambda: int(os.getenv("MAX_FILE_WATCHERS", "5")))
+    max_pending_changes: int = field(default_factory=lambda: int(os.getenv("MAX_PENDING_CHANGES", "1000")))
+    memory_check_interval: int = field(default_factory=lambda: int(os.getenv("MEMORY_CHECK_INTERVAL", "60")))
+    
+    # Feature Flags
+    enable_auto_restart: bool = field(default_factory=lambda: os.getenv("ENABLE_AUTO_RESTART", "false").lower() == "true")
+    enable_cache_eviction: bool = field(default_factory=lambda: os.getenv("ENABLE_CACHE_EVICTION", "true").lower() == "true")
 
     def __post_init__(self) -> None:
         """Initialize after creation."""

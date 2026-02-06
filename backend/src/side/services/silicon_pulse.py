@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from side.storage.modules.transient import OperationalStore
+from side.models.core import HardwareStats
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +61,11 @@ class SiliconPulseService:
                 stats = await self._sample_hardware()
                 
                 # 2. Analyze Friction
-                friction_score = self._calculate_friction(stats)
+                friction_score = self._calculate_friction(stats.model_dump())
                 
                 # 3. Store in Operational Ledger
                 self.operational.set_setting("silicon_pulse_score", str(round(friction_score, 3)))
-                self.operational.set_setting("silicon_pulse_stats", json.dumps(stats))
+                self.operational.set_setting("silicon_pulse_stats", stats.model_dump_json())
                 
                 if friction_score > 0.8:
                     logger.warning(f"🔥 [FRICTION ALERT]: Abnormal Silicon Strain detected (Score: {friction_score}). Fans likely spinning.")
@@ -74,35 +75,28 @@ class SiliconPulseService:
                 logger.error(f"Silicon Pulse Error: {e}")
                 await asyncio.sleep(self.interval * 2)
 
-    async def _sample_hardware(self) -> Dict[str, Any]:
+    async def _sample_hardware(self) -> HardwareStats:
         """Samples platform-specific hardware signals."""
-        # Use a small interval to get an accurate reading
         cpu_total = psutil.cpu_percent(interval=None)
         load_avg = psutil.getloadavg()[0] # 1 min average
         
-        stats = {
-            "temp": 0.0, 
-            "cpu_total": cpu_total,
-            "load_avg": load_avg,
-            "timestamp": asyncio.get_event_loop().time()
-        }
-        
+        temp = 0.0
         try:
-            # On Mac, psutil doesn't give temps easily. 
-            # We use load_avg and cpu_total as the primary heat signals.
-            pass
-            
             if hasattr(psutil, "sensors_temperatures"):
                 temps = psutil.sensors_temperatures()
                 if temps:
                     for name, entries in temps.items():
                         if entries:
-                            stats["temp"] = max(stats["temp"], entries[0].current)
+                            temp = max(temp, entries[0].current)
+        except Exception:
+            pass
             
-        except Exception as e:
-            logger.debug(f"Hardware sampling limited: {e}")
-            
-        return stats
+        return HardwareStats(
+            temp=temp,
+            cpu_total=cpu_total,
+            load_avg=load_avg,
+            timestamp=asyncio.get_event_loop().time()
+        )
 
     def _calculate_friction(self, stats: Dict[str, Any]) -> float:
         """

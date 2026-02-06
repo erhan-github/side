@@ -17,6 +17,7 @@ from side.storage.modules.identity import IdentityStore
 from side.storage.modules.strategic import StrategicStore
 from side.storage.modules.forensic import ForensicStore
 from side.storage.modules.transient import OperationalStore
+from side.utils.memory_diagnostics import get_diagnostics as get_memory_diagnostics
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,7 @@ class ServiceManager:
         self._running = False
         self._services: Dict[str, Any] = {}
         self._health_task: asyncio.Task | None = None
+        self._memory_task: asyncio.Task | None = None
         self.tasks: List[asyncio.Task] = []
 
         # Service status
@@ -101,6 +103,9 @@ class ServiceManager:
 
             # Start health monitoring
             self._health_task = asyncio.create_task(self._health_monitor())
+            
+            # Start memory monitoring
+            self._memory_task = asyncio.create_task(self._memory_monitor())
 
             # Setup signal handlers for graceful shutdown
             self._setup_signal_handlers()
@@ -134,6 +139,14 @@ class ServiceManager:
             self._health_task.cancel()
             try:
                 await self._health_task
+            except asyncio.CancelledError:
+                pass
+        
+        # Stop memory monitor
+        if self._memory_task:
+            self._memory_task.cancel()
+            try:
+                await self._memory_task
             except asyncio.CancelledError:
                 pass
 
@@ -411,6 +424,55 @@ class ServiceManager:
                 break
             except Exception as e:
                 logger.error(f"Error in health monitor: {e}", exc_info=True)
+    
+    async def _memory_monitor(self) -> None:
+        """Monitor memory usage and log diagnostics."""
+        mem_diag = get_memory_diagnostics()
+        
+        while self._running:
+            try:
+                # Sample current memory
+                mem_diag.sample()
+                
+                # Get memory report
+                report_lines = [mem_diag.get_report()]
+                
+                # Get file watcher diagnostics
+                if hasattr(self, "watcher"):
+                    watcher_diag = self.watcher.get_diagnostics()
+                    report_lines.append(f"  File Watchers: {watcher_diag['watcher_count']} active")
+                    report_lines.append(f"  Pending Changes: {watcher_diag['pending_changes']} files")
+                    report_lines.append(f"  Git Velocity: {watcher_diag['git_velocity']:.2f}")
+                
+                # Get cache diagnostics
+                try:
+                    cache_stats = self.operational.get_cache_stats()
+                    if cache_stats:
+                        report_lines.append(f"  Query Cache: {cache_stats.get('entry_count', 0)} entries, {cache_stats.get('size_mb', 0):.1f} MB")
+                except Exception:
+                    pass
+                
+                # Get active task count
+                active_tasks = len([t for t in self.tasks if not t.done()])
+                report_lines.append(f"  Active Tasks: {active_tasks}/{len(self.tasks)}")
+                
+                # Log the complete report
+                logger.info("\n".join(report_lines))
+                
+                # Check for memory threshold warnings
+                current_mem = mem_diag.get_current_memory()
+                if current_mem.get('rss_mb', 0) > 2048:  # 2GB threshold
+                    logger.warning(f"⚠️  HIGH MEMORY USAGE: {current_mem['rss_human']} - Consider restarting")
+                
+                # Wait before next check (30 seconds)
+                await asyncio.sleep(30)
+                
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Error in memory monitor: {e}", exc_info=True)
+                await asyncio.sleep(30)
+    
     async def _service_reaper(self) -> None:
         """
         [Hyper-Ralph] The Service Reaper.
