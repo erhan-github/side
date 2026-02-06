@@ -6,6 +6,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from side.models.core import Identity
 from side.utils.helpers import safe_get
 from .base import ContextEngine, InsufficientTokensError
 
@@ -115,20 +116,37 @@ class IdentityStore:
         except: pass
 
 
-    def update_profile(self, project_id: str, profile_data: dict[str, Any]) -> None:
+    def update_profile(self, project_id: str, profile_data: dict[str, Any] | Identity) -> None:
         """Update the Sovereign Identity Profile."""
-        # Mask project_id in warnings
-        masked_id = f"{project_id[:4]}...{project_id[-4:]}" if len(project_id) > 8 else project_id
-        
-        tech_stack = safe_get(profile_data, "tech_stack")
-        if not tech_stack:
-            tech_stack = {
-                "languages": safe_get(profile_data, "languages", {}),
-                "frameworks": safe_get(profile_data, "frameworks", []),
-                "recent_commits": safe_get(profile_data, "recent_commits", 0),
-                "recent_files": safe_get(profile_data, "recent_files", []),
-                "focus_areas": safe_get(profile_data, "focus_areas", [])
-            }
+        if isinstance(profile_data, Identity):
+            identity = profile_data
+        else:
+            # Backwards compatibility
+            tech_stack = safe_get(profile_data, "tech_stack")
+            if not tech_stack:
+                tech_stack = {
+                    "languages": safe_get(profile_data, "languages", {}),
+                    "frameworks": safe_get(profile_data, "frameworks", []),
+                    "recent_commits": safe_get(profile_data, "recent_commits", 0),
+                    "focus_areas": safe_get(profile_data, "focus_areas", [])
+                }
+            identity = Identity(
+                id=project_id,
+                name=profile_data.get("name"),
+                company=profile_data.get("company"),
+                domain=profile_data.get("domain"),
+                stage=profile_data.get("stage"),
+                business_model=profile_data.get("business_model"),
+                target_raise=profile_data.get("target_raise"),
+                tech_stack=tech_stack,
+                tier=profile_data.get("tier", "hobby"),
+                token_balance=profile_data.get("token_balance", 500),
+                tokens_monthly=profile_data.get("tokens_monthly", 500),
+                tokens_used=profile_data.get("tokens_used", 0),
+                design_pattern=profile_data.get("design_pattern", "declarative"),
+                is_airgapped=bool(profile_data.get("is_airgapped")),
+                access_token=profile_data.get("access_token")
+            )
 
         with self.engine.connection() as conn:
             conn.execute(
@@ -156,26 +174,26 @@ class IdentityStore:
                     updated_at = excluded.updated_at
                 """,
                 (
-                    project_id,
-                    profile_data.get("name"),
-                    profile_data.get("company"),
-                    profile_data.get("domain"),
-                    profile_data.get("stage"),
-                    profile_data.get("business_model"),
-                    profile_data.get("target_raise"),
-                    json.dumps(tech_stack) if tech_stack else None,
-                    profile_data.get("tier"),
-                    profile_data.get("token_balance"),
-                    profile_data.get("tokens_monthly"),
-                    profile_data.get("tokens_used"),
-                    profile_data.get("design_pattern", "declarative"),
-                    1 if profile_data.get("is_airgapped") else 0,
-                    profile_data.get("access_token"),
+                    identity.id,
+                    identity.name,
+                    identity.company,
+                    identity.domain,
+                    identity.stage,
+                    identity.business_model,
+                    identity.target_raise,
+                    identity.model_dump_json(include={'tech_stack'}),
+                    identity.tier,
+                    identity.token_balance,
+                    identity.tokens_monthly,
+                    identity.tokens_used,
+                    identity.design_pattern,
+                    1 if identity.is_airgapped else 0,
+                    identity.access_token,
                     datetime.now(timezone.utc).isoformat()
                 )
             )
 
-    def get_profile(self, project_id: str) -> dict[str, Any] | None:
+    def get_profile(self, project_id: str) -> Identity | None:
         """Get the unified profile."""
         with self.engine.connection() as conn:
             row = conn.execute(
@@ -183,24 +201,7 @@ class IdentityStore:
             ).fetchone()
             
             if row:
-                tech_stack = json.loads(row["tech_stack"]) if row["tech_stack"] else {}
-                return {
-                    "id": row["id"],
-                    "name": row["name"],
-                    "tier": row["tier"],
-                    "tokens_monthly": row["tokens_monthly"],
-                    "tokens_used": row["tokens_used"],
-                    "token_balance": row["token_balance"],
-                    "languages": tech_stack.get("languages", {}),
-                    "frameworks": tech_stack.get("frameworks", []),
-                    "recent_commits": tech_stack.get("recent_commits", 0),
-                    "focus_areas": tech_stack.get("focus_areas", []),
-                    "tech_stack": tech_stack,
-                    "design_pattern": row["design_pattern"],
-                    "is_airgapped": bool(row["is_airgapped"]),
-                    "access_token": row["access_token"],
-                    "updated_at": row["updated_at"]
-                }
+                return Identity.from_row(row)
             return None
 
     def get_token_balance(self, project_id: str) -> dict[str, Any]:

@@ -7,6 +7,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from side.models.core import Pattern, ExecutablePattern, AntiPattern
 from side.utils.crypto import shield
 
 logger = logging.getLogger(__name__)
@@ -91,10 +92,10 @@ class PatternStore:
 
     # --- Architectural Methods ---
 
-    def store_architectural_move(self, intent: str, context_hash: str, pattern: Dict[str, Any]):
+    def store_architectural_move(self, intent: str, context_hash: str, pattern_data: Dict[str, Any]):
         with self.engine.connection() as conn:
             row = conn.execute(
-                "SELECT id, success_count FROM architectural_patterns WHERE intent = ? AND context_hash = ?",
+                "SELECT id, confidence FROM architectural_patterns WHERE intent = ? AND context_hash = ?",
                 (intent, context_hash)
             ).fetchone()
             
@@ -104,10 +105,18 @@ class PatternStore:
                     (datetime.now(timezone.utc).isoformat(), row[0])
                 )
             else:
+                pattern = Pattern(
+                    id=str(uuid.uuid4()),
+                    topic=intent,
+                    content=str(pattern_data.get("description", intent)),
+                    context_hash=context_hash,
+                    metadata=pattern_data,
+                    source="system"
+                )
                 conn.execute("""
                     INSERT INTO architectural_patterns (id, intent, context_hash, pattern_json)
                     VALUES (?, ?, ?, ?)
-                """, (str(uuid.uuid4()), intent, context_hash, json.dumps(pattern)))
+                """, (pattern.id, pattern.topic, pattern.context_hash, pattern.model_dump_json(include={'metadata'})))
 
     def store_anti_pattern(self, issue_type: str, context_trigger: str, risk: str, remedy: Optional[Dict[str, Any]] = None):
         with self.engine.connection() as conn:
@@ -119,15 +128,29 @@ class PatternStore:
             if row:
                 conn.execute("UPDATE anti_patterns SET occurrence_count = occurrence_count + 1 WHERE id = ?", (row[0],))
             else:
+                anti = AntiPattern(
+                    id=str(uuid.uuid4()),
+                    issue_type=issue_type,
+                    context_trigger=context_trigger,
+                    risk_description=risk,
+                    remedy=remedy
+                )
                 conn.execute("""
                     INSERT INTO anti_patterns (id, issue_type, context_trigger, risk_description, remedy_json)
                     VALUES (?, ?, ?, ?, ?)
-                """, (str(uuid.uuid4()), issue_type, context_trigger, risk, json.dumps(remedy) if remedy else None))
+                """, (anti.id, anti.issue_type, anti.context_trigger, anti.risk_description, anti.model_dump_json(include={'remedy'})))
 
     # --- Executable Methods ---
 
     def save_executable_pattern(self, pattern_id: str, intent: str, tool_sequence: List[Dict[str, Any]], 
                                keywords: List[str], project_id: str = "default") -> None:
+        pattern = ExecutablePattern(
+            id=pattern_id,
+            project_id=project_id,
+            intent=intent,
+            tool_sequence=tool_sequence,
+            keywords=keywords
+        )
         with self.engine.connection() as conn:
             conn.execute(
                 """
@@ -139,7 +162,9 @@ class PatternStore:
                     success_count = success_count + 1,
                     last_used_at = CURRENT_TIMESTAMP
                 """,
-                (pattern_id, project_id, intent, json.dumps(tool_sequence), json.dumps(keywords))
+                (pattern.id, pattern.project_id, pattern.intent, 
+                 pattern.model_dump_json(include={'tool_sequence'}), 
+                 pattern.model_dump_json(include={'keywords'}))
             )
 
     def search_patterns(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
@@ -155,7 +180,9 @@ class PatternStore:
                     ORDER BY rank LIMIT ?
                 """, (limit,)).fetchall()
                 if rows: return self._hydrate(rows)
-            except: pass
+            except Exception as e:
+                logger.debug(f"FTS5 Search failed, falling back to LIKE: {e}")
+                pass
             
             # Fallback
             q = f"%{query}%"
@@ -165,6 +192,39 @@ class PatternStore:
                 ORDER BY success_count DESC LIMIT ?
             """, (q, q, limit)).fetchall()
             return self._hydrate(rows)
+
+    def get_patterns(self, topic: str | None = None, context_hash: str | None = None, limit: int = 5) -> List[Dict[str, Any]]:
+        """
+        [THE ORACLE]: Hybrid retrieval for architectural and executable patterns.
+        Handles both keyword-based 'topic' searches and 'context_hash' DNA matches.
+        """
+        results = []
+        with self.engine.connection() as conn:
+            # 1. Primary: Context-Hash Match (DNA Alignment)
+            if context_hash:
+                rows = conn.execute(
+                    "SELECT * FROM architectural_patterns WHERE context_hash = ? ORDER BY success_count DESC LIMIT ?",
+                    (context_hash, limit)
+                ).fetchall()
+                results.extend([dict(row) for row in rows])
+
+            # 2. Secondary: Topic-based search (FTS Fallback)
+            if topic and len(results) < limit:
+                remaining = limit - len(results)
+                # Search both tables
+                exec_patterns = self.search_patterns(topic, limit=remaining)
+                results.extend(exec_patterns)
+
+        # 3. Last Resort: Global 'Best Practices' if nothing specific found
+        if not results:
+             with self.engine.connection() as conn:
+                rows = conn.execute(
+                    "SELECT * FROM architectural_patterns ORDER BY success_count DESC LIMIT ?",
+                    (limit,)
+                ).fetchall()
+                results.extend([dict(row) for row in rows])
+
+        return results
 
     def _hydrate(self, rows) -> List[Dict[str, Any]]:
         results = []

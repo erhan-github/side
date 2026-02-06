@@ -5,8 +5,9 @@ Strategic Store - Plans, Decisions, & Learnings.
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from side.models.core import StrategicDecision, Rejection
 from side.utils.crypto import shield
-from .base import ContextEngine
+from .base import ContextEngine, MerkleManager
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,8 @@ class StrategicStore:
                 category TEXT,
                 plan_id TEXT,
                 confidence INTEGER DEFAULT 5,
+                merkle_hash TEXT,
+                parent_hash TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (plan_id) REFERENCES plans(id)
             )
@@ -202,6 +205,14 @@ class StrategicStore:
         try:
             conn.execute("ALTER TABLE public_patterns ADD COLUMN source_file TEXT")
         except: pass
+
+        # Decision Ledger Migration
+        try:
+            conn.execute("ALTER TABLE decisions ADD COLUMN merkle_hash TEXT")
+        except: pass
+        try:
+            conn.execute("ALTER TABLE decisions ADD COLUMN parent_hash TEXT")
+        except: pass
         
         # [TECHNICAL AUDIT] Add is_pinned to prevent over-aggressive Neural Decay
         # Explicit calls to avoid f-string injection patterns for Semgrep
@@ -333,25 +344,55 @@ class StrategicStore:
 
     def save_decision(self, decision_id: str, question: str, answer: str,
                       reasoning: str | None = None, category: str | None = None,
-                      plan_id: str | None = None, confidence: int = 5) -> None:
+                      plan_id: str | None = None, confidence: float = 5.0) -> None:
         """Save a strategic decision."""
-        # SEAL SENSITIVE REASONING
-        sealed_reasoning = shield.seal(reasoning) if reasoning else None
+        # 1. Fetch Parent Hash
+        with self.engine.connection() as conn:
+            parent = conn.execute(
+                "SELECT merkle_hash FROM decisions ORDER BY ROWID DESC LIMIT 1"
+            ).fetchone()
+            parent_hash = parent[0] if parent else None
+
+        # 2. Calculate New Hash
+        content = {
+            "question": question,
+            "answer": answer,
+            "plan_id": plan_id,
+            "category": category
+        }
+        merkle_hash = MerkleManager.calculate_hash(content, parent_hash)
+
+        # 3. Create Model
+        decision = StrategicDecision(
+            id=decision_id,
+            project_id="default",  # TODO: Pass project_id
+            question=question,
+            answer=answer,
+            reasoning=shield.seal(reasoning) if reasoning else None,
+            category=category or "general",
+            plan_id=plan_id,
+            confidence=confidence,
+            merkle_hash=merkle_hash,
+            parent_hash=parent_hash
+        )
 
         with self.engine.connection() as conn:
             conn.execute(
                 """
-                INSERT INTO decisions (id, question, answer, reasoning, category, plan_id, confidence)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO decisions (id, project_id, question, answer, reasoning, category, plan_id, confidence, merkle_hash, parent_hash)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     answer = excluded.answer,
                     reasoning = excluded.reasoning,
-                    confidence = excluded.confidence
+                    confidence = excluded.confidence,
+                    merkle_hash = excluded.merkle_hash
                 """,
-                (decision_id, question, answer, sealed_reasoning, category, plan_id, confidence),
+                (decision.id, decision.project_id, decision.question, decision.answer, 
+                 decision.reasoning, decision.category, decision.plan_id, 
+                 decision.confidence, decision.merkle_hash, decision.parent_hash),
             )
 
-    def list_decisions(self, category: str | None = None) -> list[dict[str, Any]]:
+    def list_decisions(self, category: str | None = None) -> list[StrategicDecision]:
         """List decisions."""
         with self.engine.connection() as conn:
             query = "SELECT * FROM decisions ORDER BY created_at DESC"
@@ -362,15 +403,16 @@ class StrategicStore:
                 ).fetchall()
             else:
                 rows = conn.execute(query).fetchall()
+            
             results = []
             for row in rows:
-                d = dict(row)
-                if d.get("reasoning"):
+                dec = StrategicDecision.from_row(row)
+                if dec.reasoning:
                     try:
-                        d["reasoning"] = shield.unseal(d["reasoning"])
+                        dec.reasoning = shield.unseal(dec.reasoning)
                     except Exception:
-                        d["reasoning"] = "[ENCRYPTED_PRIVATE_REASONING]"
-                results.append(d)
+                        dec.reasoning = "[ENCRYPTED_PRIVATE_REASONING]"
+                results.append(dec)
             return results
 
     def save_learning(self, learning_id: str, insight: str, source: str | None = None,
@@ -427,30 +469,46 @@ class StrategicStore:
             'project_id': kwargs.get("project_id", "default")
         }])
 
-    def save_rejections_batch(self, rejections: List[Dict[str, Any]]) -> None:
+    def save_rejections_batch(self, rejections: List[Dict[str, Any] | Rejection]) -> None:
         """Save multiple rejections in a single transaction."""
+        parsed_rejections = []
+        for r in rejections:
+            if isinstance(r, dict):
+                # Backwards compatibility
+                parsed_rejections.append(Rejection(
+                    id=r['id'],
+                    project_id=r.get('project_id', 'default'),
+                    file_path=r['file_path'],
+                    rejection_reason=r['reason'],
+                    instruction_hash=r.get('instruction_hash'),
+                    diff_signature=r.get('diff_signature'),
+                    signal_hash=r.get('signal_hash')
+                ))
+            else:
+                parsed_rejections.append(r)
+
         with self.engine.connection() as conn:
-            for rej in rejections:
+            for rej in parsed_rejections:
                 conn.execute(
                     """
-                    INSERT INTO rejections (id, file_path, rejection_reason, instruction_hash, diff_signature, signal_hash, project_id)
+                    INSERT INTO rejections (id, project_id, instruction_hash, file_path, rejection_reason, diff_signature, signal_hash)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                         rejection_reason = excluded.rejection_reason,
                         diff_signature = excluded.diff_signature
                     """,
-                    (rej['id'], rej['file_path'], rej['reason'], rej.get('instruction_hash'), 
-                     rej.get('diff_signature'), rej.get('signal_hash'), rej.get('project_id', 'default')),
+                    (rej.id, rej.project_id, rej.instruction_hash, rej.file_path, 
+                     rej.rejection_reason, rej.diff_signature, rej.signal_hash),
                 )
 
-    def list_rejections(self, limit: int = 10) -> list[dict[str, Any]]:
+    def list_rejections(self, limit: int = 10) -> list[Rejection]:
         """List recent rejections for the Sovereign Footer."""
         with self.engine.connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM rejections ORDER BY created_at DESC LIMIT ?",
                 (limit,)
             ).fetchall()
-            return [dict(row) for row in rows]
+            return [Rejection.from_row(row) for row in rows]
 
     def save_public_pattern(self, pattern_id: str, pattern_text: str, origin_node: str | None = None,
                            category: str | None = None, signal_pattern: str | None = None,

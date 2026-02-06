@@ -64,6 +64,10 @@ class OperationalStore:
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_telemetry_status ON telemetry_alerts(status)")
 
+    def get_version(self) -> str:
+        """Get the database schema version."""
+        return self.get_setting("version", "1.0")
+
     def get_setting(self, key: str, default: str | None = None) -> str | None:
         """Get a global system setting."""
         with self.engine.connection() as conn:
@@ -81,11 +85,36 @@ class OperationalStore:
     def save_query_cache(self, query_type: str, query_params: dict[str, Any], 
                          result: Any, ttl_hours: int = 1) -> None:
         """Cache query result."""
+        from side.config import config
+        
         query_str = f"{query_type}:{json.dumps(query_params, sort_keys=True)}"
         query_hash = hashlib.sha256(query_str.encode()).hexdigest()[:16]
         expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
 
         with self.engine.connection() as conn:
+            # Check cache size and evict if necessary
+            if config.enable_cache_eviction:
+                stats = self.get_cache_stats()
+                if stats["entry_count"] >= config.max_cache_entries:
+                    # Evict oldest entries (LRU strategy)
+                    evict_count = config.cache_eviction_batch_size
+                    logger.warning(
+                        f"Cache limit reached ({stats['entry_count']}/{config.max_cache_entries}), "
+                        f"evicting {evict_count} oldest entries"
+                    )
+                    conn.execute(
+                        """
+                        DELETE FROM query_cache 
+                        WHERE query_hash IN (
+                            SELECT query_hash FROM query_cache 
+                            ORDER BY cached_at ASC 
+                            LIMIT ?
+                        )
+                        """,
+                        (evict_count,)
+                    )
+            
+            # Insert new entry
             conn.execute(
                 """
                 INSERT INTO query_cache (query_hash, query_type, result, expires_at)
@@ -118,6 +147,34 @@ class OperationalStore:
             else:
                 cursor = conn.execute("DELETE FROM query_cache")
             return cursor.rowcount
+    
+    def get_cache_stats(self) -> dict[str, Any]:
+        """
+        Get cache statistics for memory diagnostics.
+        
+        Returns:
+            Dictionary with cache metrics
+        """
+        with self.engine.connection() as conn:
+            # Get entry count
+            count_row = conn.execute("SELECT COUNT(*) as count FROM query_cache").fetchone()
+            entry_count = count_row["count"] if count_row else 0
+            
+            # Get total size estimate (JSON length)
+            size_row = conn.execute("SELECT SUM(LENGTH(result)) as total_size FROM query_cache").fetchone()
+            total_size_bytes = size_row["total_size"] if size_row and size_row["total_size"] else 0
+            
+            # Get oldest and newest entries
+            oldest_row = conn.execute("SELECT MIN(cached_at) as oldest FROM query_cache").fetchone()
+            newest_row = conn.execute("SELECT MAX(cached_at) as newest FROM query_cache").fetchone()
+            
+            return {
+                "entry_count": entry_count,
+                "size_bytes": total_size_bytes,
+                "size_mb": total_size_bytes / (1024 * 1024),
+                "oldest_entry": oldest_row["oldest"] if oldest_row else None,
+                "newest_entry": newest_row["newest"] if newest_row else None
+            }
 
     def save_telemetry_alert(self, project_id: str, alert_type: str, severity: str, 
                              message: str, file_path: str | None = None) -> None:

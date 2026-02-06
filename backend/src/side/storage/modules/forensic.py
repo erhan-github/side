@@ -6,7 +6,7 @@ import json
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
-from side.models.forensic import Activity
+from side.models.core import Activity, Finding
 from side.intel.forensic_allowlist import is_allowed_project
 from pathlib import Path
 from side.utils.crypto import shield
@@ -166,7 +166,8 @@ class ForensicStore:
 
     def log_activity(self, project_id: str, tool: str, action: str, 
                      cost_tokens: int = 0, tier: str = 'free', 
-                     payload: dict[str, Any] | None = None) -> None:
+                     payload: dict[str, Any] | None = None,
+                     silent: bool = False) -> None:
         """Log a single activity."""
         self.log_activities_batch([{
             'project_id': project_id,
@@ -174,19 +175,38 @@ class ForensicStore:
             'action': action,
             'cost_tokens': cost_tokens,
             'tier': tier,
-            'payload': payload
+            'payload': payload,
+            'silent': silent
         }])
 
-    def log_activities_batch(self, activities: List[Dict[str, Any]]) -> None:
-        """Log multiple activities in a single transaction for maximum efficiency."""
+    def log_activities_batch(self, activities: List[Activity | Dict[str, Any]]) -> None:
+        """Log multiple activities in a single transaction."""
+        parsed_activities = []
+        for a in activities:
+            if isinstance(a, dict):
+                # Backwards compatibility for dict-based logs
+                parsed_activities.append(Activity(**a))
+            else:
+                parsed_activities.append(a)
+
+        # [PERFORMANCE]: Separate silent activities
+        normal_acts = [a for a in parsed_activities if not a.payload.get('silent')]
+        silent_acts = [a for a in parsed_activities if a.payload.get('silent')]
+
+        for act in silent_acts:
+             logger.debug(f"🤫 [SILENT_LOG]: {act.tool}:{act.action} for {act.project_id}")
+
+        if not normal_acts:
+            return
+
         with self.engine.connection() as conn:
-            for act in activities:
-                project_id = act['project_id']
-                cost_tokens = act.get('cost_tokens', 0)
-                tool = act['tool']
-                action = act['action']
-                tier = act.get('tier', 'free')
-                payload = act.get('payload')
+            for act in normal_acts:
+                project_id = act.project_id
+                cost_tokens = act.cost_tokens
+                tool = act.tool
+                action = act.action
+                tier = act.tier
+                payload = act.payload
 
                 if cost_tokens > 0:
                     row = conn.execute("SELECT token_balance FROM profile WHERE id = ?", (project_id,)).fetchone()
@@ -194,10 +214,10 @@ class ForensicStore:
                     if balance < cost_tokens:
                         masked_id = f"{project_id[:4]}...{project_id[-4:]}" if len(project_id) > 8 else project_id
                         logger.warning(f"🚫 Hard Stop: Insufficient tokens for {masked_id}")
-                        continue # Skip this one but keep going with the batch
+                        continue
 
-                # SEAL SENSITIVE PAYLOAD
-                sealed_payload = shield.seal(json.dumps(payload or {}))
+                # SEAL SENSITIVE PAYLOAD (Using Pydantic serialization)
+                sealed_payload = shield.seal(act.model_dump_json(include={'payload'}))
 
                 conn.execute(
                     """
@@ -221,7 +241,7 @@ class ForensicStore:
             except Exception as e:
                 logger.warning(f"Forensic post_log_hook failed: {e}")
 
-    def get_recent_activities(self, project_id: str, limit: int = 20) -> list[dict[str, Any]]:
+    def get_recent_activities(self, project_id: str, limit: int = 20) -> list[Activity]:
         """Get recent activities."""
         with self.engine.connection() as conn:
             rows = conn.execute(
@@ -230,27 +250,17 @@ class ForensicStore:
             ).fetchall()
             results = []
             for row in rows:
-                d = dict(row)
-                if d.get("payload"):
-                    try:
-                        d["payload"] = json.loads(shield.unseal(d["payload"]))
-                    except Exception:
-                        # Fallback for old unencrypted data
-                        try:
-                            d["payload"] = json.loads(d["payload"])
-                        except Exception:
-                             d["payload"] = {"error": "[PAYLOAD_SEALED]"}
-                results.append(d)
+                results.append(Activity.from_row(row))
             return results
 
-    def get_recent_audits(self, project_id: str, limit: int = 10) -> list[dict[str, Any]]:
+    def get_recent_audits(self, project_id: str, limit: int = 10) -> list[Finding]:
         """Get recent audits."""
         with self.engine.connection() as conn:
             rows = conn.execute(
                 "SELECT * FROM audits WHERE project_id = ? ORDER BY run_at DESC LIMIT ?",
                 (project_id, limit)
             ).fetchall()
-            return [dict(row) for row in rows]
+            return [Finding.from_row(row) for row in rows]
 
     def get_audit_summary(self, project_id: str) -> dict[str, int]:
         """Get audit summary."""

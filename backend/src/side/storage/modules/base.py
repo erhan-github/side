@@ -15,6 +15,26 @@ class InsufficientTokensError(Exception):
     """Raised when the user has run out of Strategic Units (SU)."""
     pass
 
+class MerkleManager:
+    """
+    Handles cryptographic sealing and integrity verification for the Decision Ledger.
+    """
+    @staticmethod
+    def calculate_hash(content: dict[str, Any], parent_hash: str | None) -> str:
+        """
+        Derives a SHA-256 seal for a decision based on its content and predecessor.
+        """
+        import hashlib
+        import json
+        
+        # Consistent serialization for deterministic hashing
+        payload = {
+            "content": content,
+            "parent": parent_hash or "GENESIS"
+        }
+        encoded = json.dumps(payload, sort_keys=True).encode()
+        return hashlib.sha256(encoded).hexdigest()
+
 class ContextEngine:
     """
     Core engine handling SQLite lifecycle and resiliency.
@@ -22,7 +42,8 @@ class ContextEngine:
 
     def __init__(self, db_path: str | Path | None = None):
         if db_path is None:
-            db_path = Path.home() / ".side" / "local.db"
+            from side.env import env
+            db_path = env.get_db_path()
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         
@@ -38,12 +59,15 @@ class ContextEngine:
         from side.storage.modules.transient import OperationalStore
         from side.storage.modules.pattern_store import PatternStore
         
+        from side.storage.modules.ontology import OntologyStore
+        
         self.strategic = StrategicStore(self)
         self.forensic = ForensicStore(self)
         self.accounting = AccountingStore(self)
         self.identity = IdentityStore(self)
         self.operational = OperationalStore(self)
         self.wisdom = PatternStore(self)
+        self.ontology = OntologyStore(self)
 
     @contextmanager
     def connection(self) -> Generator[sqlite3.Connection, None, None]:
@@ -202,3 +226,7 @@ class ContextEngine:
             pass
             
         return path_hash
+
+    def atomic_backup(self) -> None:
+        """Alias for perform_maintenance to satisfy Tier-4 legacy probes."""
+        self.perform_maintenance()
