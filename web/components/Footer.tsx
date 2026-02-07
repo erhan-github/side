@@ -69,23 +69,7 @@ export function Footer() {
                         </ul>
                     </div>
 
-                    {/* Connect */}
-                    <div>
-                        <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Connect</h3>
-                        <ul className="space-y-3">
-                            <li>
-                                <a
-                                    href="https://github.com/sidelith"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-sm text-white/40 hover:text-white transition-colors flex items-center gap-2"
-                                >
-                                    <Github size={16} />
-                                    GitHub
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
+
                 </div>
 
                 {/* Bottom Bar */}
