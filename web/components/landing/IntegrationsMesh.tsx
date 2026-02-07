@@ -29,8 +29,8 @@ export function IntegrationsMesh() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="md:col-span-2 p-6 rounded-[28px] bg-[#0a0a0a] border border-white/5 hover:border-emerald-500/30 transition-all group">
+                <div className="grid grid-cols-1 gap-4">
+                    <div className="p-6 rounded-[28px] bg-[#0a0a0a] border border-white/5 hover:border-emerald-500/30 transition-all group">
                         <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 border border-emerald-500/20">
                             <Cpu size={20} className="text-emerald-500" />
                         </div>
