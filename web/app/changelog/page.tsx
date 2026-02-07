@@ -11,7 +11,7 @@ export default function ChangelogPage() {
             <div className="max-w-4xl mx-auto px-6">
                 {/* Header */}
                 <div className="mb-16">
-                    <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 mb-4">Changelog</h1>
+                    <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 mb-4 pb-2">Changelog</h1>
                     <p className="text-xl text-white/60 text-balance">
                         Track the evolution of the Sidelith System of Record.
                     </p>

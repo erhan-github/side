@@ -25,11 +25,20 @@ def get_repo_root(current_path: Path | str | None = None) -> Path:
     return current_path
 
 def get_side_dir(current_path: Path | str | None = None) -> Path:
-    """Get the standardized .side directory at repository root."""
-    root = get_repo_root(current_path)
-    side_dir = root / ".side"
-    side_dir.mkdir(exist_ok=True)
-    return side_dir
+    """
+    Get the standardized .side directory.
+    
+    DEPRECATION NOTE: This function now delegates to EnvironmentEngine
+    for consistent path resolution across the entire codebase.
+    The `current_path` parameter is ignored for backwards compatibility.
+    
+    Returns:
+        Path to the global Sidelith data directory (~/.side-mcp by default).
+    """
+    from side.env import env
+    root = env.get_side_root()
+    root.mkdir(parents=True, exist_ok=True)
+    return root
 
 def mask_path(absolute_path: str | Path | None, human: bool = False) -> str:
     """
