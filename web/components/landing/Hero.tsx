@@ -7,9 +7,8 @@ export function Hero() {
                 Intelligence that Remembers.
             </h1>
 
-            <p className="text-xl md:text-2xl text-white/50 max-w-3xl mb-12 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-200 fill-mode-both leading-relaxed font-light">
-                Sidelith is the <span className="text-white font-medium">deterministic memory substrate</span> for AI agents. <br />
-                Curing digital amnesia with fractal ontology and 100% local persistence.
+            <p className="text-lg md:text-2xl text-white/50 max-w-2xl mb-12 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-200 fill-mode-both leading-relaxed font-light text-balance">
+                Sidelith is the <span className="text-white font-medium whitespace-nowrap">deterministic memory substrate</span> for AI agents—curing digital amnesia with fractal ontology and 100% local persistence.
             </p>
 
             <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-300 fill-mode-both">
