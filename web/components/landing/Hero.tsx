@@ -11,9 +11,12 @@ export function Hero() {
                 Sidelith is the <span className="text-white font-medium whitespace-nowrap">deterministic memory substrate</span> for AI agents—curing digital amnesia with fractal ontology and 100% local persistence.
             </p>
 
-            <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-300 fill-mode-both">
+            <div className="flex flex-col sm:flex-row items-center gap-4 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-300 fill-mode-both">
                 <a href="#install-widget" className="group flex items-center gap-2 px-8 py-4 rounded-full bg-white text-black font-bold hover:bg-neon hover:text-black transition-all shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:shadow-[0_0_60px_rgba(0,255,157,0.3)]">
-                    The Developer's Shortcut <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                    Get Started for Free <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                </a>
+                <a href="/docs" className="flex items-center gap-2 px-8 py-4 rounded-full border border-white/20 text-white font-bold hover:bg-white/5 hover:border-white/40 transition-all">
+                    Docs
                 </a>
             </div>
         </section>
