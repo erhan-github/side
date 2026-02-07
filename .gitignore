@@ -29,3 +29,6 @@ readings/
 .side-id
 investor/
 .side/logs/
+# Sidelith Local Configs
+.sovereignignore
+.sideignore
