@@ -38,7 +38,7 @@ export default function ChangelogPage() {
             ],
         },
         {
-            version: "0.7.5",
+            version: "0.7.0",
             date: "2026-02-01",
             title: "Architectural Integrity",
             changes: [
@@ -48,7 +48,7 @@ export default function ChangelogPage() {
             ],
         },
         {
-            version: "0.7.0",
+            version: "0.6.0",
             date: "2026-01-31",
             title: "Context Awareness",
             changes: [
@@ -58,7 +58,7 @@ export default function ChangelogPage() {
             ],
         },
         {
-            version: "0.6.5",
+            version: "0.5.0",
             date: "2026-01-30",
             title: "Resource Accounting",
             changes: [
@@ -68,7 +68,7 @@ export default function ChangelogPage() {
             ],
         },
         {
-            version: "0.5.5",
+            version: "0.4.0",
             date: "2026-01-29",
             title: "System Monitoring",
             changes: [
@@ -78,7 +78,7 @@ export default function ChangelogPage() {
             ],
         },
         {
-            version: "0.5.0",
+            version: "0.3.5",
             date: "2026-01-30",
             title: "Performance Optimization",
             changes: [
@@ -88,7 +88,7 @@ export default function ChangelogPage() {
             ],
         },
         {
-            version: "0.4.0",
+            version: "0.3.0",
             date: "2026-01-28",
             title: "CLI Architecture",
             changes: [
@@ -98,7 +98,7 @@ export default function ChangelogPage() {
             ],
         },
         {
-            version: "0.3.0",
+            version: "0.2.0",
             date: "2026-01-27",
             title: "Language Support",
             changes: [
@@ -108,7 +108,7 @@ export default function ChangelogPage() {
             ],
         },
         {
-            version: "0.2.0",
+            version: "0.1.5",
             date: "2026-01-26",
             title: "Local Intelligence",
             changes: [
@@ -140,12 +140,12 @@ export default function ChangelogPage() {
     ];
 
     return (
-        <main className="min-h-screen bg-void text-foreground pt-32 pb-20">
+        <main className="min-h-screen bg-[#050505] text-white pt-32 pb-20">
             <div className="max-w-4xl mx-auto px-6">
                 {/* Header */}
                 <div className="mb-16">
-                    <h1 className="text-5xl font-bold text-white mb-4">Changelog</h1>
-                    <p className="text-xl text-white/60">
+                    <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 mb-4">Changelog</h1>
+                    <p className="text-xl text-white/60 text-balance">
                         Track our progress as we build the future of deterministic AI memory.
                     </p>
                 </div>
@@ -155,19 +155,19 @@ export default function ChangelogPage() {
                     {releases.map((release) => (
                         <div
                             key={release.version}
-                            className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all"
+                            className="p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all"
                         >
                             {/* Release Header */}
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
                                 <div className="flex items-center gap-4">
-                                    <div className="px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                                        <span className="text-emerald-500 font-mono font-bold text-sm">
+                                    <div className="px-4 py-2 rounded-full bg-[var(--color-neon)]/10 border border-[var(--color-neon)]/20">
+                                        <span className="text-[var(--color-neon)] font-mono font-bold text-sm">
                                             v{release.version}
                                         </span>
                                     </div>
-                                    <h2 className="text-2xl font-bold text-white">{release.title}</h2>
+                                    <h2 className="text-2xl font-bold text-white tracking-tight">{release.title}</h2>
                                 </div>
-                                <div className="flex items-center gap-2 text-white/40 text-sm">
+                                <div className="flex items-center gap-2 text-white/40 text-sm font-medium">
                                     <Calendar size={16} />
                                     <span>{new Date(release.date).toLocaleDateString("en-US", {
                                         year: "numeric",
@@ -180,8 +180,8 @@ export default function ChangelogPage() {
                             {/* Changes */}
                             <ul className="space-y-3">
                                 {release.changes.map((change, idx) => (
-                                    <li key={idx} className="flex items-start gap-3 text-white/60">
-                                        <GitCommit size={16} className="text-emerald-500 mt-1 flex-shrink-0" />
+                                    <li key={idx} className="flex items-start gap-3 text-white/70 text-lg leading-relaxed">
+                                        <GitCommit size={18} className="text-[var(--color-neon)] mt-1.5 flex-shrink-0" />
                                         <span>{change}</span>
                                     </li>
                                 ))}
@@ -191,18 +191,9 @@ export default function ChangelogPage() {
                 </div>
 
                 {/* Footer Note */}
-                <div className="mt-16 p-6 rounded-xl bg-blue-500/[0.05] border border-blue-500/10 text-center">
+                <div className="mt-16 p-6 rounded-xl bg-white/[0.02] border border-white/5 text-center">
                     <p className="text-white/40 text-sm">
-                        More updates coming soon. Follow us on{" "}
-                        <a
-                            href="https://github.com/sidelith"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                        >
-                            GitHub
-                        </a>{" "}
-                        to stay updated.
+                        © 2026 Sidelith Inc. All systems functional.
                     </p>
                 </div>
             </div>
