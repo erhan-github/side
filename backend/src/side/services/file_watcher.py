@@ -55,11 +55,11 @@ class FileWatcher:
         self._last_commit_hash: str | None = None
         self._debounce_task: asyncio.Task | None = None
         
-        # Use Sovereign Ignore Service
-        from side.services.ignore import SovereignIgnore
+        # Use Ignore Filter Service
+        from side.services.ignore import IgnoreFilter
         from side.storage.modules.transient import OperationalStore
         from side.storage.modules.base import ContextEngine
-        self._ignore_service = SovereignIgnore(self.project_path)
+        self._ignore_service = IgnoreFilter(self.project_path)
         self.operational = OperationalStore(ContextEngine())
         
         # Temporal Synapse State
@@ -190,9 +190,9 @@ class FileWatcher:
                                 "reason": reason
                             })
                         else:
-                            from side.storage.modules.strategic import StrategicStore
+                            from side.storage.modules.chronos import ChronosStore
                             from side.storage.modules.base import ContextEngine
-                            strat_store = StrategicStore(ContextEngine())
+                            strat_store = ChronosStore(ContextEngine())
                             strat_store.save_rejection(
                                 rejection_id=f"ghost_{asyncio.get_event_loop().time()}",
                                 file_path=str(signal['path']),

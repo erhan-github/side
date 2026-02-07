@@ -8,43 +8,55 @@ from side.storage.simple_db import SimplifiedDatabase
 
 __all__ = [
     "SimplifiedDatabase",
-    "get_forensic_store",
+    "get_audit_store",
     "get_operational_store",
 ]
 
-# Storage accessor functions for friction-point handlers
-from typing import Optional
-from side.storage.modules.forensic import ForensicStore
-from side.storage.modules.transient import OperationalStore
-from side.storage.modules.base import ContextEngine
+from typing import Optional, TYPE_CHECKING
+from side.storage.simple_db import SimplifiedDatabase
 
-_forensic_store: Optional[ForensicStore] = None
-_operational_store: Optional[OperationalStore] = None
-_engine: Optional[ContextEngine] = None
+if TYPE_CHECKING:
+    from side.storage.modules.audit import AuditStore
+    from side.storage.modules.transient import OperationalStore
+    from side.storage.modules.base import ContextEngine
+
+__all__ = [
+    "SimplifiedDatabase",
+    "get_audit_store",
+    "get_operational_store",
+]
+
+_audit_store: Optional["AuditStore"] = None
+_operational_store: Optional["OperationalStore"] = None
+_engine: Optional["ContextEngine"] = None
 
 
 def initialize_storage(db_path: str = None):
     """Initialize storage instances."""
-    global _forensic_store, _operational_store, _engine
+    global _audit_store, _operational_store, _engine
     
     from side.env import env
+    from side.storage.modules.base import ContextEngine
+    from side.storage.modules.audit import AuditStore
+    from side.storage.modules.transient import OperationalStore
+
     if db_path is None:
         db_path = env.get_side_root() / "data.db"
     
     _engine = ContextEngine(db_path=db_path)
-    _forensic_store = ForensicStore(_engine)
+    _audit_store = AuditStore(_engine)
     _operational_store = OperationalStore(_engine)
 
 
-def get_forensic_store() -> ForensicStore:
-    """Get forensic store instance."""
-    global _forensic_store
-    if _forensic_store is None:
+def get_audit_store() -> "AuditStore":
+    """Get audit store instance."""
+    global _audit_store
+    if _audit_store is None:
         initialize_storage()
-    return _forensic_store
+    return _audit_store
 
 
-def get_operational_store() -> OperationalStore:
+def get_operational_store() -> "OperationalStore":
     """Get operational store instance."""
     global _operational_store
     if _operational_store is None:

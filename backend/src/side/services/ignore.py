@@ -1,6 +1,5 @@
-
 """
-Sovereign Ignore Service - The Noise Filter.
+Ignore Filter Service - File exclusion logic.
 """
 import logging
 from pathlib import Path
@@ -9,11 +8,10 @@ import fnmatch
 
 logger = logging.getLogger(__name__)
 
-class SovereignIgnore:
+class IgnoreFilter:
     """
-    Central authority for what Sidelith is allowed to see.
-    Reads from .sovereignignore in the project root.
-    Falls back to Sane Defaults.
+    Central authority for file exclusion rules.
+    Reads from .sovereignignore (legacy) or .sideignore and .gitignore.
     """
     
     # Defaults: What we ALWAYS ignore unless told otherwise.
@@ -37,10 +35,11 @@ class SovereignIgnore:
     def _load_config(self):
         """
         Load ignore patterns from multiple sources.
-        Priority: .sovereignignore > .gitignore > Defaults
+        Priority: .sideignore > .sovereignignore > .gitignore > Defaults
         """
         self._load_file(".gitignore")
-        self._load_file(".sovereignignore")
+        self._load_file(".sovereignignore") # Legacy support
+        self._load_file(".sideignore")
 
     def _load_file(self, filename: str):
         """Helper to parse a gitignore-style file."""

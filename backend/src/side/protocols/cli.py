@@ -1,5 +1,5 @@
 """
-Sovereign CLI Protocol - Rich Terminal Implementation of UXProtocol.
+System CLI Protocol - Rich Terminal Implementation of UXProtocol.
 """
 
 import sys
@@ -14,8 +14,8 @@ from rich.status import Status
 from side.models.core import Finding, Activity
 from .ux import UXProtocol
 
-# [DESIGN]: Sovereign Theme
-SOVEREIGN_THEME = Theme({
+# [DESIGN]: System Theme
+SYSTEM_THEME = Theme({
     "info": "cyan",
     "warning": "yellow",
     "error": "red bold",
@@ -30,7 +30,7 @@ class CLIProtocol(UXProtocol):
     """CLI implementation using the rich library."""
 
     def __init__(self, console: Optional[Console] = None):
-        self.console = console or Console(theme=SOVEREIGN_THEME)
+        self.console = console or Console(theme=SYSTEM_THEME)
 
     def display_finding(self, finding: Finding) -> None:
         """Display a forensic finding in a structured panel."""
@@ -69,9 +69,9 @@ class CLIProtocol(UXProtocol):
         self.console.print(f"[header]{'=' * 60}[/header]")
 
     def display_footer(self) -> None:
-        """Display the Sovereign Footer."""
+        """Display the System Footer."""
         self.console.print(f"[footer]{'-' * 60}[/footer]")
-        self.console.print("[footer]  SIDELITH | Detective AI | Sovereign Substrate[/footer]\n")
+        self.console.print("[footer]  SIDELITH | Detective AI | System Core[/footer]\n")
 
     def render_table(self, title: str, columns: List[str], rows: List[List[Any]]) -> None:
         """Render a data table."""

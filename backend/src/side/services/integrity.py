@@ -22,7 +22,7 @@ class IntegrityService:
         logger.info("🔒 [INTEGRITY]: Running Node self-check... [MMAP_DNA_VALIDATION]")
         
         # 1. Check if Mmap exists
-        mmap_file = self.project_path / ".side" / "sovereign.mmap"
+        mmap_file = self.project_path / ".side" / "system.mmap"
         if not mmap_file.exists():
             logger.warning("🔒 [INTEGRITY]: Mmap index missing. [FS_MISSING_ARTIFACT]")
             return False

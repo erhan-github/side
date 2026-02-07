@@ -59,17 +59,17 @@ class JetBrainsBridge:
                 plugin_version=payload.get("pluginVersion", "0.0.0")
             )
             
-            # Refactor: Use Phoenix Protocol (ForensicStore)
+            # Refactor: Use Phoenix Protocol (AuditStore)
             # We treat IDE context updates as 'Work Context' signals for Layer 2 RAM.
             from side.storage.modules.base import ContextEngine
-            from side.storage.modules.forensic import ForensicStore
+            from side.storage.modules.audit import AuditStore
             from pathlib import Path
             
             engine = ContextEngine()
-            forensic = ForensicStore(engine)
+            audit = AuditStore(engine)
             
             # Save as active work context
-            forensic.save_work_context(
+            audit.save_work_context(
                 project_path=str(Path(ctx.project_path)),
                 focus_area=ctx.file_path,
                 recent_files=[ctx.file_path],

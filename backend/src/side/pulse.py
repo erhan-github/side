@@ -40,7 +40,7 @@ class PulseEngine:
     """
 
     def __init__(self, anchor_path: Optional[Path] = None, rules_dir: Optional[Path] = None):
-        self.anchor_path = anchor_path or Path.cwd() / ".side" / "sovereign.json"
+        self.anchor_path = anchor_path or Path.cwd() / ".side" / "project.json"
         self.rules_dir = rules_dir or Path.cwd() / ".side" / "rules"
         # Note: rules_dir is created lazily when rules are synced
         self.rules_cache: List[DynamicRule] = []

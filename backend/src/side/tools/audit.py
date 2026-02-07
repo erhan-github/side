@@ -1,13 +1,13 @@
 """
 Audit tool handler for Side.
 Handles: run_audit
-Implements Forensic-level audit using OSS tools (Semgrep) + LLM synthesis.
+Implements System-level audit using OSS tools (Semgrep) + LLM synthesis.
 """
 
 import logging
 from pathlib import Path
 from typing import Any
-from side.tools.forensics import SemgrepAdapter, Finding
+from side.tools.audit_adapters import SemgrepAdapter, Finding
 
 from side.utils.paths import get_repo_root
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 async def handle_run_audit(arguments: dict[str, Any]) -> str:
     """
-    Run Side Forensic Audit using Polyglot OSS tools + LLM synthesis.
+    Run Side System Audit using Polyglot OSS tools + LLM synthesis.
     
     Architecture:
     1. Detect project languages (fingerprinting)
@@ -26,7 +26,7 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     import asyncio
     from side.tools.core import get_database
     from side.intel.language_detector import detect_primary_languages
-    from side.tools.forensics import (
+    from side.tools.audit_adapters import (
         SemgrepAdapter, 
         BanditAdapter, 
         ESLintAdapter,
@@ -40,13 +40,13 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     severity_filter = arguments.get('severity', 'high,medium,critical').upper().split(',')
     project_path = get_repo_root()
     
-    # [ECONOMY]: Charge for Forensic Audit (10 SUs)
+    # Charge for Audit (10 SUs)
     from side.tools.core import get_database
     db = get_database()
     project_id = db.get_project_id()
     
-    if not db.identity.charge_action(project_id, "FORENSIC_PULSE"):
-        return "🚫 [INSUFFICIENT FUNDS]: Forensic Pulse requires 10 SUs. Run 'side login' or upgrade."
+    if not db.identity.charge_action(project_id, "SYSTEM_AUDIT"):
+        return "🚫 [INSUFFICIENT FUNDS]: System Audit requires 10 SUs. Run 'side login' or upgrade."
     
     # 1. Detect Languages
     languages = detect_primary_languages(project_path)
@@ -69,7 +69,7 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     if "kotlin" in languages:
         adapters.append(DetektAdapter(project_path))
     
-    print(f"🛡️  [FORENSIC PULSE]: Initiating scan across {', '.join(languages)} DNA...")
+    print(f"🛡️  [SYSTEM AUDIT]: Initiating scan across {', '.join(languages)} DNA...")
     print(f"🎯 [ALIGNMENT]: Filter: Severity in {severity_filter}")
     
     # 3. Handle JIT Installation
@@ -79,16 +79,16 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
             active_adapters.append(adapter)
         else:
             # Agentic JIT: Attempt to install any missing tool directly relevant to detected languages
-            print(f"📦 [SOVEREIGN JIT]: Installing missing forensic probe '{adapter.get_tool_name()}'...")
+            print(f"📦 [JIT INSTALL]: Installing missing audit probe '{adapter.get_tool_name()}'...")
             if adapter.install():
                 active_adapters.append(adapter)
             else:
                 # If install fails (e.g. no npm/brew), falling back to degraded warning
-                print(f"❌ [DEGRADED]: Forensic probe '{adapter.get_tool_name()}' install failed.")
+                print(f"❌ [DEGRADED]: Audit probe '{adapter.get_tool_name()}' install failed.")
                 print(f"💡 {adapter.get_install_instructions()}")
 
     if not active_adapters:
-        return "❌ [ERROR]: All forensic probes failed. Please install Semgrep: pip install semgrep"
+        return "❌ [ERROR]: All audit probes failed. Please install Semgrep: pip install semgrep"
 
     # 3. Run Scans in Parallel
     print(f"🔍 [SCANNING]: Engaging {len(active_adapters)} probes in parallel...")
@@ -103,11 +103,11 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
         all_findings.extend(filtered)
     
     if not all_findings:
-        return "✅ [FORENSIC PULSE]: Project vitals are clean. No mission-critical issues found."
+        return "✅ [SYSTEM AUDIT]: Project vitals are clean. No mission-critical issues found."
 
-    print(f"🧠 [WISDOM DISTILLER]: Distilling top 20/{len(all_findings)} findings into patterns...")
-    from side.tools.forensics import ForensicSynthesizer
-    synthesizer = ForensicSynthesizer()
+    print(f"🧠 [ANALYSIS]: Distilling top 20/{len(all_findings)} findings into patterns...")
+    from side.tools.audit_adapters.synthesizer import AuditSynthesizer
+    synthesizer = AuditSynthesizer()
     
     # Sort by severity (CRITICAL > HIGH > MEDIUM > LOW > INFO)
     severity_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
@@ -180,7 +180,7 @@ def _generate_report(findings: list[Finding], dimension: str, severity_filter: l
         by_severity[severity].append(finding)
     
     lines = []
-    lines.append(f"🛡️ **FORENSIC PULSE: {len(findings)} Issues Detected**")
+    lines.append(f"🛡️ **SYSTEM AUDIT: {len(findings)} Issues Detected**")
     lines.append(f"🎯 *Dimension: {dimension.upper()} | Pattern Distiller: ACTIVE*")
     lines.append("")
     

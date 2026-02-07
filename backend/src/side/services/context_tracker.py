@@ -43,7 +43,7 @@ class ContextTracker:
         self.strategic = strategic
         self.identity = identity
         
-        # Cognitive State (Hyper-Perception V3)
+        # Cognitive State (Flow State Tracking)
         self._last_active_time = datetime.now(timezone.utc)
         self._window_seconds = 1800 # 30 Minute Sliding Window
         # Samples: deque of (timestamp, duration, is_ide)
@@ -162,7 +162,7 @@ class ContextTracker:
 
     async def _get_semantic_signature(self, project_path: Path, commit_hash: str, commit_msg: str = "") -> str:
         """
-        [PROFOUND DNA]: Tiered Inference Protocol (T-007).
+        [SEMANTIC ANALYSIS]: Tiered Inference Protocol (T-007).
         """
         try:
             # ... (Tier 0 filtering logic remains)
@@ -300,7 +300,7 @@ Output a concise (one-sentence) summary of the architectural change.
         recent_commits: list[dict[str, Any]],
     ) -> tuple[str, float]:
         """
-        [Software 2.0] Detect current focus area from files and commits using LLM.
+        [AI] Detect current focus area from files and commits using LLM.
         """
         # Combine files and commit messages for context
         files_str = "\n".join(recent_files[:10])
@@ -351,7 +351,7 @@ OUTPUT JSON:
 
     async def _update_cognitive_flow(self) -> None:
         """
-        [HYPER-PERCEPTION]: Detects if user is in 'Flow' or 'Search' mode.
+        [FLOW STATE]: Detects if user is in 'Flow' or 'Search' mode.
         Uses Mac-native osascript to check active window.
         """
         import sys
@@ -409,7 +409,7 @@ OUTPUT JSON:
 
     async def watch_forever(self, project_path: str | Path) -> None:
         """
-        [SOVEREIGN PERCEPTION]: Continuous monitoring loop.
+        [CONTEXT SCAN]: Continuous monitoring loop.
         """
         logger.info("🧠 [CONTEXT]: Starting continuous perception loop...")
         while True:

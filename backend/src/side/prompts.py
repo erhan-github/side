@@ -13,8 +13,8 @@ from mcp.types import (
 )
 
 from side.storage.modules.base import ContextEngine
-from side.storage.modules.forensic import ForensicStore
-from side.storage.modules.strategic import StrategicStore
+from side.storage.modules.audit import AuditStore
+from side.storage.modules.chronos import ChronosStore
 from side.storage.modules.transient import OperationalStore
 from side.storage.modules.identity import IdentityStore
 
@@ -22,10 +22,10 @@ logger = logging.getLogger("side-mcp")
 
 class DynamicPromptManager:
     def __init__(self):
-        # SFO Sprint: No Fat Architecture
+        # Lean Architecture
         self.engine = ContextEngine()
-        self.forensic = ForensicStore(self.engine)
-        self.strategic = StrategicStore(self.engine)
+        self.audit = AuditStore(self.engine)
+        self.strategic = ChronosStore(self.engine)
         self.operational = OperationalStore(self.engine)
         self.identity = IdentityStore(self.engine)
         self.project_path = Path.cwd()
@@ -46,12 +46,9 @@ class DynamicPromptManager:
             ),
         ]
         
-        if not self.store:
-            return prompts
-
         try:
-            # SFO Sprint: No Fat - Direct ForensicStore access
-            findings = self.forensic.get_recent_activities(self.project_id, limit=100)
+            # Lean Architecture - Direct AuditStore access
+            findings = self.audit.get_recent_activities(self.project_id, limit=100)
             
             # Filter for meaningful architectural or security findings
             security_issues = [f for f in findings if f.get('outcome') == 'VIOLATION' or 'security' in str(f.get('payload', '')).lower()]
@@ -72,17 +69,17 @@ class DynamicPromptManager:
                     arguments=[]
                 ))
             
-            # [Experience V2: The CSO Briefing]
+            # [Experience V2: The Executive Briefing]
             prompts.append(Prompt(
                 name="brief",
                 description="☀️ Mission Briefing: Strategic status, recent work, and today's focus.",
                 arguments=[]
             ))
             
-            # [Experience V2: The CSO Consult]
+            # [Experience V2: The Technical Consult]
             prompts.append(Prompt(
                 name="consult",
-                description="🧠 Strategic Consultation: Get a CTO-level decision on a technical or business choice.",
+                description="🧠 Technical Consultation: Get a CTO-level decision on a technical or business choice.",
                 arguments=[
                      PromptArgument(
                         name="question",
@@ -92,7 +89,7 @@ class DynamicPromptManager:
                 ]
             ))
             
-            # [Experience V2: The CSO Gatekeeper]
+            # [Experience V2: The Gatekeeper]
             prompts.append(Prompt(
                 name="verify",
                 description="🛡️ Pre-Flight Check: Verify system health before shipping/deploying.",
@@ -115,14 +112,14 @@ class DynamicPromptManager:
             # [Experience V3: The Truth Engine]
             prompts.append(Prompt(
                 name="check_truth",
-                description="🔍 Truth Engine: Verify that documentation (README, Vision) matches reality.",
+                description="🔍 Truth Engine: Verify that documentation matches reality.",
                 arguments=[]
             ))
 
-            # [Experience V4: Deep Forensics]
+            # [Experience V4: Deep Audit]
             prompts.append(Prompt(
                 name="audit_deep",
-                description="🕵️ Deep Recursive Audit: Scan codebase for complex patterns (e.g. 'hardcoded secrets').",
+                description="🕵️ Deep Recursive Audit: Scan codebase for complex patterns.",
                 arguments=[
                     PromptArgument(
                         name="query",
@@ -147,7 +144,7 @@ class DynamicPromptManager:
     def get_prompt_result(self, name: str, args: dict[str, str]) -> GetPromptResult:
         if name == "fix_flow":
             # Smart Logic: Find the worst issue
-            findings = self.forensic.get_recent_activities(self.project_id, limit=50)
+            findings = self.audit.get_recent_activities(self.project_id, limit=50)
             # Filter for violations
             violations = [f for f in findings if f.get('outcome') == 'VIOLATION']
             if not violations:
@@ -187,7 +184,7 @@ class DynamicPromptManager:
             top_focus = all_plans[0]['title'] if all_plans else "No active directives."
             
             # 3. Get Recent Activity (Context)
-            activities = self.forensic.get_recent_activities(self.project_id, limit=5)
+            activities = self.audit.get_recent_activities(self.project_id, limit=5)
             recent_context = "\n".join([f"- {a['action']} ({a['tool']})" for a in activities]) if activities else "None."
             
             return GetPromptResult(
@@ -244,10 +241,10 @@ class DynamicPromptManager:
 
         if name == "verify":
             # 1. Get Security Posture
-            # SFO Sprint: Simplified audit summary from forensic store
-            findings = self.forensic.get_recent_activities(self.project_id, limit=100)
+            # SFO Sprint: Simplified audit summary from audit store
+            findings = self.audit.get_recent_activities(self.project_id, limit=100)
             crit = len([f for f in findings if f.get('outcome') == 'VIOLATION'])
-            high = 0 # Placeholder for severity mapping in ForensicStore
+            high = 0 # Placeholder for severity mapping in AuditStore
             
             # 2. Get Recent Work
             # Determine what to verify (e.g. files changed recently, though we can't easily get diffs here without git tool)

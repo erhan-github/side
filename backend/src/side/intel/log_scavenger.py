@@ -6,7 +6,7 @@ import threading
 import collections
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from side.storage.modules.forensic import ForensicStore
+from side.storage.modules.audit import AuditStore
 from side.storage.modules.base import ContextEngine
 from side.intel.scavengers.mobile import AndroidScavenger
 from side.intel.scavengers.docker import DockerScavenger
@@ -20,8 +20,8 @@ class LogScavenger:
     Tails external logs (Xcode, Next.js, Python) to capture 'Ground Truth' friction.
     """
     
-    def __init__(self, forensic: ForensicStore, project_path: Path):
-        self.forensic = forensic
+    def __init__(self, audit: AuditStore, project_path: Path):
+        self.audit = audit
         self.project_path = project_path
         self.stop_event = threading.Event()
         self.threads = []
@@ -251,14 +251,14 @@ class LogScavenger:
         
         # [ECONOMY]: Charge 1 SU for Signal Capture (Log Event)
         from side.storage.modules.identity import IdentityStore
-        identity = IdentityStore(self.forensic.engine)
+        identity = IdentityStore(self.audit.engine)
         
         # If charge fails (insufficient SUs), we still log it as FREE (grace period)
         # or we could skip it. For now, we charge.
         identity.charge_action(project_id, "SIGNAL_CAPTURE")
         
         logger.info(f"🚨 [LOG_SCAVENGER]: Captured {source} {event_type} Friction.")
-        self.forensic.log_activity(
+        self.audit.log_activity(
             project_id=project_id,
             tool="LOG_SCAVENGER",
             action=f"capture_{source.lower()}_signal",
@@ -275,8 +275,8 @@ class LogScavenger:
 if __name__ == "__main__":
     # Test Standalone
     engine = ContextEngine()
-    forensic = ForensicStore(engine)
-    scavenger = LogScavenger(forensic, Path.cwd())
+    audit = AuditStore(engine)
+    scavenger = LogScavenger(audit, Path.cwd())
     scavenger.start()
     try:
         while True: time.sleep(1)

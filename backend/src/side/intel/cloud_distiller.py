@@ -21,7 +21,7 @@ class CloudDistiller:
     The Cloud Distillation Engine.
     Ensures only meaningful, high-value verified fixes sync to the cloud brain.
     
-    [WISDOM SHARING]:
+    [CLOUD SYNC]:
     - Filters: Only cloud-worthy fixes (persistence > 0.3, difficulty >= MEDIUM)
     - Anonymizes: No file paths, no code, no project IDs in cloud
     - Syncs: Distilled insights to tenant_insights table
@@ -168,7 +168,7 @@ class CloudDistiller:
         """
         Syncs all pending fixes to the cloud (or local staging).
         
-        [WISDOM SHARING]: Uploads anonymized wisdom to tenant_insights.
+        [PATTERN SYNC]: Uploads anonymized patterns to tenant_insights.
         
         Returns:
             A summary of the sync operation.
@@ -205,7 +205,7 @@ class CloudDistiller:
     
     def _sync_to_supabase(self, fix: VerifiedFix) -> bool:
         """
-        [WISDOM SHARING] Upload anonymized wisdom to tenant_insights.
+        [PATTERN SYNC] Upload anonymized patterns to tenant_insights.
         
         What gets shared:
         - distilled_insight (summary text)
@@ -244,10 +244,10 @@ class CloudDistiller:
             response = self.supabase.table("tenant_insights").insert(insight_data).execute()
             
             if response.data:
-                logger.info(f"✅ [CLOUD]: Wisdom synced: {fix.distilled_insight[:50]}...")
+                logger.info(f"✅ [CLOUD]: Patterns synced: {fix.distilled_insight[:50]}...")
                 return True
         except Exception as e:
-            logger.error(f"❌ [CLOUD]: Failed to sync wisdom: {e}")
+            logger.error(f"❌ [CLOUD]: Failed to sync patterns: {e}")
         
         return False
 

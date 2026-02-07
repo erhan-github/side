@@ -23,8 +23,8 @@ def get_spc():
         l_friction = ops.get_setting("local_friction_contribution") or "0.0"
         
         # [PERCEPTION]: Fetch Strategic Alerts
-        from side.storage.modules.strategic import StrategicStore
-        strat = StrategicStore(engine)
+        from side.storage.modules.chronos import ChronosStore
+        strat = ChronosStore(engine)
         rejections = strat.list_rejections(limit=3)
         alerts = [{"id": r["id"], "reason": r["rejection_reason"], "file": r["file_path"]} for r in rejections]
 

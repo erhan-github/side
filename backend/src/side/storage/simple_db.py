@@ -1,11 +1,11 @@
 """
-Sidelith Sovereign Database - Privacy-First Strategic Storage.
+Sidelith Database - Privacy-First Strategic Storage.
 
 This is a modular facade that delegates to specialized domain stores:
 1. Base Engine (base.py)
 2. Strategic Ledger (strategic.py)
 3. Identity Store (identity.py)
-4. Forensic Store (forensic.py)
+4. Audit Store (audit.py)
 5. Operational Store (transient.py)
 """
 
@@ -15,9 +15,9 @@ from typing import Any, Dict, List, Optional
 from side.utils.helpers import safe_get
 
 from .modules.base import ContextEngine, InsufficientTokensError
-from .modules.strategic import StrategicStore
+from .modules.chronos import ChronosStore
 from .modules.identity import IdentityStore
-from .modules.forensic import ForensicStore
+from .modules.audit import AuditStore
 from .modules.transient import OperationalStore
 from .modules.intent_fusion import IntentFusionStore
 
@@ -38,8 +38,8 @@ class SimplifiedDatabase:
         
         # Initialize sub-stores (The Source of Truth)
         self.identity = IdentityStore(self.engine)
-        self.strategic = StrategicStore(self.engine)
-        self.forensic = ForensicStore(self.engine)
+        self.strategic = ChronosStore(self.engine)
+        self.audit = AuditStore(self.engine)
         self.operational = OperationalStore(self.engine)
         self.intent_fusion = IntentFusionStore(self.engine)
 
@@ -55,7 +55,7 @@ class SimplifiedDatabase:
             self.operational.init_schema(conn)
             self.strategic.init_schema(conn)
             self.identity.init_schema(conn)
-            self.forensic.init_schema(conn)
+            self.audit.init_schema(conn)
             self.intent_fusion.init_schema(conn)
 
     def _run_migrations(self) -> None:

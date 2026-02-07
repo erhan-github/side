@@ -1,5 +1,5 @@
 """
-Sovereign UX Protocol - Abstract Interface for deterministic UIs.
+System UX Protocol - Abstract Interface for deterministic UIs.
 """
 
 from abc import ABC, abstractmethod

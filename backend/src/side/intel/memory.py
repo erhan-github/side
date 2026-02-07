@@ -3,16 +3,16 @@ import uuid
 import time
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from side.storage.modules.strategic import StrategicStore
+from side.storage.modules.chronos import ChronosStore
 
 logger = logging.getLogger(__name__)
 
 class MemoryManager:
     """
     The Hippocampus. Manages store and recall of strategic facts.
-    Now backed by SQLite (StrategicStore) for atomic, no-fat persistence.
+    Now backed by SQLite (ChronosStore) for atomic, no-fat persistence.
     """
-    def __init__(self, strategic: StrategicStore, project_id: str = "default"):
+    def __init__(self, strategic: ChronosStore, project_id: str = "default"):
         self.strategic = strategic
         self.project_id = project_id
         

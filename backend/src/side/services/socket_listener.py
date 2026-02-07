@@ -21,6 +21,7 @@ class SocketListenerService:
 
     async def start(self):
         """Starts the Unix Domain Socket server."""
+        from side.services.ipc_proxy import IPCProxy
         if self._running:
             return
         

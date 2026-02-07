@@ -1,7 +1,7 @@
 """
 Strategic Hub - Database-First Architecture.
 
-[SOVEREIGN ARCHITECTURE]: Returns data for LLM consumption via MCP directly from Strategic Database.
+[CORE ARCHITECTURE]: Returns data for LLM consumption via MCP directly from Strategic Database.
 """
 import logging
 from typing import Any, Dict, List
@@ -30,8 +30,8 @@ async def get_strategic_hub_data(db: Any) -> Dict[str, Any]:
     
     # 1. Collect Data from Database (Single Source of Truth)
     plans = db.strategic.list_plans(project_id=project_id)
-    activities = db.forensic.get_recent_activities(project_id=project_id, limit=5)
-    audits = db.forensic.get_recent_audits(project_id=project_id, limit=10)
+    activities = db.audit.get_recent_activities(project_id=project_id, limit=5)
+    audits = db.audit.get_recent_audits(project_id=project_id, limit=10)
     
     # 2. Process data
     friction = [a for a in audits if a.get('severity') in ['CRITICAL', 'HIGH', 'VIOLATION']]
@@ -55,7 +55,7 @@ async def get_strategic_hub_data(db: Any) -> Dict[str, Any]:
         }
     }
     
-    logger.info(f"✨ [HUB]: Strategic Hub data retrieved. {len(objectives)} objectives, {len(friction)} friction points.")
+    logger.info(f"✨ [HUB]: Project Hub data retrieved. {len(objectives)} objectives, {len(friction)} friction points.")
     
     return hub_data
 
@@ -64,10 +64,10 @@ async def get_strategic_friction(db: Any) -> List[Dict[str, Any]]:
     """
     [DRY ARCHITECTURE]: Returns strategic friction (critical issues) from database.
     
-    This provides the "Strategic Friction & Forensic Remediation" snapshot for the Hub.
+    This provides the "Strategic Friction & Audit Remediation" snapshot for the Hub.
     """
     project_id = db.get_project_id()
-    audits = db.forensic.get_recent_audits(project_id=project_id, limit=20)
+    audits = db.audit.get_recent_audits(project_id=project_id, limit=20)
     
     friction = []
     for issue in audits:

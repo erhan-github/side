@@ -1,7 +1,7 @@
 """
-Sovereign Billing Service.
+Billing Service.
 
-[ANTI-FRAUD]: Server-side billing via Supabase RPC.
+Server-side billing via Supabase RPC.
 Users cannot tamper with local database to fake usage.
 All charges are verified and logged on the cloud.
 """
@@ -35,9 +35,9 @@ ACTION_COSTS = {
 
 class BillingService:
     """
-    Sovereign Billing Service with Anti-Fraud Protection.
+    Billing Service with Server-Side Verification.
     
-    [SECURITY ARCHITECTURE]:
+    Architecture:
     1. Server-Side Verification: All charges go through Supabase RPC
     2. Transaction Ledger: Every charge is logged with timestamp
     3. Local Cache: Read-only balance cache for UX

@@ -8,12 +8,12 @@ from pathlib import Path
 from datetime import datetime, timezone
 import json
 
-from side.storage.modules.forensic import ForensicStore
-from side.storage.modules.strategic import StrategicStore
+from side.storage.modules.audit import AuditStore
+from side.storage.modules.chronos import ChronosStore
 
 class EpisodicProjector:
-    def __init__(self, forensic: ForensicStore, strategic: StrategicStore):
-        self.forensic = forensic
+    def __init__(self, audit: AuditStore, strategic: ChronosStore):
+        self.audit = audit
         self.strategic = strategic
 
     def get_session_history(self, project_id: str = "global", limit: int = 15) -> str:
@@ -23,12 +23,12 @@ class EpisodicProjector:
         """
         try:
             # 1. Fetch Recent Activities (The Raw Stream)
-            activities = self.forensic.get_recent_activities(project_id, limit=limit)
+            activities = self.audit.get_recent_activities(project_id, limit=limit)
             
             # 2. Fetch Work Context (The Focus)
             # We assume project_path is current working dir for this context
             # In a real multi-tenant setup, we'd pass the specific path
-            work_ctx = self.forensic.get_latest_work_context(str(Path.cwd()))
+            work_ctx = self.audit.get_latest_work_context(str(Path.cwd()))
             
             # 3. Construct the Narrative
             report = ["## 2. SESSION TIMELINE (Recent History)"]

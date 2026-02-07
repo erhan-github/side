@@ -49,7 +49,7 @@ class SQLCipherManager:
             except ImportError:
                 pass
             
-            logger.warning("🔒 [SQLCIPHER]: Not installed. pip install pysqlcipher3")
+            logger.info("ℹ️ [STORAGE]: Standard Mode active. Install 'pysqlcipher3' for High-Tier IP-Sensitive Protection (AES-256).")
             return False
             
         except Exception as e:

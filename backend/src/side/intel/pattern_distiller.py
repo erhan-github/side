@@ -4,13 +4,13 @@ Pattern Distiller - Intelligent analysis for strategic harvesting.
 
 import logging
 from typing import List, Dict, Any
-from side.storage.modules.pattern_store import PatternStore
+from side.storage.modules.substores.patterns import PublicPatternStore
 from side.tools.forensics import Finding
 
 logger = logging.getLogger(__name__)
 
 class PatternDistiller:
-    def __init__(self, pattern_store: PatternStore):
+    def __init__(self, pattern_store: PublicPatternStore):
         self.store = pattern_store
 
     async def distill_audit_findings(self, findings: List[Finding]):

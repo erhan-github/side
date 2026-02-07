@@ -52,21 +52,21 @@ class ContextEngine:
             self.harden_permissions()
         
         # Initialize sub-stores
-        from side.storage.modules.strategic import StrategicStore
-        from side.storage.modules.forensic import ForensicStore
+        from side.storage.modules.chronos import ChronosStore
+        from side.storage.modules.audit import AuditStore
         from side.storage.modules.accounting import AccountingStore
-        from side.storage.modules.identity import IdentityStore
-        from side.storage.modules.transient import OperationalStore
-        from side.storage.modules.pattern_store import PatternStore
+        from .identity import IdentityStore
+        from .transient import OperationalStore
+        from .substores.patterns import PublicPatternStore
         
         from side.storage.modules.ontology import OntologyStore
         
-        self.strategic = StrategicStore(self)
-        self.forensic = ForensicStore(self)
+        self.strategic = ChronosStore(self)
+        self.audit = AuditStore(self)
         self.accounting = AccountingStore(self)
         self.identity = IdentityStore(self)
         self.operational = OperationalStore(self)
-        self.wisdom = PatternStore(self)
+        self.wisdom = PublicPatternStore(self)
         self.ontology = OntologyStore(self)
 
     @contextmanager
@@ -148,7 +148,7 @@ class ContextEngine:
             logger.info("🔒 [ENGINE]: Using SQLCipher encryption (P2P/Enterprise tier)")
             return conn
         except Exception as e:
-            logger.warning(f"🔒 [SOVEREIGN]: SQLCipher unavailable, falling back to standard: {e}")
+            logger.info(f"ℹ️ [STORAGE]: Standard Mode active. Install 'pysqlcipher3' for High-Tier IP-Sensitive Protection. {e}")
             return self._create_standard_connection()
 
     def check_integrity(self) -> bool:

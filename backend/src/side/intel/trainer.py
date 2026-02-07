@@ -10,7 +10,7 @@ def generate_training_data(project_path: Path, output_file: str = "strategic_tra
     """
     Converts Sovereign Memory into a fine-tuning dataset.
     """
-    sovereign_file = project_path / ".side" / "sovereign.json"
+    sovereign_file = project_path / ".side" / "project.json"
     if not sovereign_file.exists():
         logger.error("❌ [TRAINER]: Sovereign Memory not found. Run 'side feed --historic' first.")
         return

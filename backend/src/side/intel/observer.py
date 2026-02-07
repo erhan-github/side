@@ -6,22 +6,22 @@ import json
 import uuid
 from typing import List, Dict, Any
 from datetime import datetime, timezone
-from side.storage.modules.forensic import ForensicStore
+from side.storage.modules.audit import AuditStore
 from side.llm.client import LLMClient
 from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)
 
 class StrategicObserver:
-    def __init__(self, forensic: ForensicStore):
-        self.forensic = forensic
+    def __init__(self, audit: AuditStore):
+        self.audit = audit
         self.llm = LLMClient()
 
     async def distill_observations(self, project_id: str, limit: int = 20) -> int:
         """
         Scans recent activity logs and extracts new "Invariant Facts".
         """
-        activities = self.forensic.get_recent_activities(project_id, limit=limit)
+        activities = self.audit.get_recent_activities(project_id, limit=limit)
         if not activities:
             return 0
             
@@ -80,7 +80,7 @@ Format:
         """Store a verified observation."""
         # Simple deduplication check could go here
         try:
-            with self.forensic.engine.connection() as conn:
+            with self.audit.engine.connection() as conn:
                 conn.execute("""
                     INSERT INTO observations (id, content, context_tags, confidence, last_verified_at)
                     VALUES (?, ?, ?, ?, ?)

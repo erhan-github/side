@@ -14,16 +14,16 @@ sys.path.append(str(project_root))
 # from side.forensic_audit.runner import ForensicAuditRunner (DELETED)
 # from side.intel.intelligence_store import IntelligenceStore (DELETED)
 from side.storage.modules.base import ContextEngine
-from side.storage.modules.forensic import ForensicStore
+from side.storage.modules.audit import AuditStore
 # from side.common.telemetry import monitor (DELETED)
 
 class SidelithEventHandler(FileSystemEventHandler):
     """
-    Handles file system events, triggers forensic audits, AND records the Event Clock.
+    Handles file system events, triggers audits, AND records the Event Clock.
     """
-    def __init__(self, engine: ContextEngine, forensic: ForensicStore, loop: asyncio.AbstractEventLoop, project_id: str):
+    def __init__(self, engine: ContextEngine, audit: AuditStore, loop: asyncio.AbstractEventLoop, project_id: str):
         self.engine = engine
-        self.forensic = forensic
+        self.audit = audit
         self.loop = loop
         self.project_id = project_id
         self.last_scan_time: Dict[str, float] = {}
@@ -47,11 +47,11 @@ class SidelithEventHandler(FileSystemEventHandler):
 
         now = time.time()
         
-        # 1. Handle Rolling Chronicle (Hourly Synthesis)
+        # 1. Handle State Snapshot (Hourly Synthesis)
         if now - self.last_chronicle_time > self.CHRONICLE_INTERVAL:
             self.last_chronicle_time = now
             asyncio.run_coroutine_threadsafe(
-                self._trigger_rolling_chronicle(),
+                self._trigger_state_snapshot(),
                 self.loop
             )
 
@@ -92,28 +92,28 @@ class SidelithEventHandler(FileSystemEventHandler):
             return True
         return False
 
-    async def _trigger_rolling_chronicle(self):
+    async def _trigger_state_snapshot(self):
         """
-        [SILENT RESONANCE] Triggers the hourly intent compression.
+        [CONSISTENCY CHECK] Triggers the hourly state compression.
         
         Philosophy:
         - We lack direct chat access (Cursor/IDE privacy).
         - We discover INTENT by observing OUTCOMES (FS changes + Git logs).
-        - Resonance: Does the current state align with the Sovereign Anchor?
-        - Rolling Chronicle: High-fidelity records of these discovered truths.
+        - Consistency: Does the current state align with the Project Definition?
+        - State Snapshot: High-fidelity records of these discovered truths.
         """
         try:
-            print(f"\n⏳ [SILENT RESONANCE]: Discovering intent from outcomes...")
-            self.forensic.log_activity(
+            print(f"\n⏳ [CONSISTENCY CHECK]: Discovering intent from outcomes...")
+            self.audit.log_activity(
                 project_id=self.project_id,
                 tool="watcher",
-                action="SILENT_RESONANCE",
+                action="CONSISTENCY_CHECK",
                 cost_tokens=0
             )
-            # Remove fat: optimize call replaced with standard cleanup if needed
-            self.forensic.cleanup_expired_data()
+            # Remove fat
+            self.audit.cleanup_expired_data()
         except Exception as e:
-            print(f"⚠️ Resonance Error: {e}")
+            print(f"⚠️ Consistency Check Error: {e}")
 
     def _should_ignore(self, filepath: str) -> bool:
         # [GITIGNORE INHERITANCE]: Dimension 3 of Strategic Audit
@@ -152,7 +152,7 @@ class SidelithEventHandler(FileSystemEventHandler):
 
             result = pulse.check_pulse(context)
             
-            # 2. LOG THE OUTCOME (SOVEREIGN CORE)
+            # 2. LOG THE OUTCOME (SYSTEM CORE)
             outcome_status = "PASS"
             if result.status == PulseStatus.VIOLATION:
                 outcome_status = "VIOLATION"
@@ -160,7 +160,7 @@ class SidelithEventHandler(FileSystemEventHandler):
                 outcome_status = "DRIFT"
             
             # Pulse check costs 0 SU for background watcher
-            self.forensic.log_activity(
+            self.audit.log_activity(
                 project_id=self.project_id,
                 tool="watcher",
                 action=f"FILE_MOD:{rel_path}",
@@ -194,11 +194,11 @@ async def start_watcher(path: str):
     except Exception as e:
         print(f"⚠️ Could not set process niceness: {e}")
     engine = ContextEngine()
-    forensic = ForensicStore(engine)
+    audit = AuditStore(engine)
     project_id = ContextEngine.get_project_id(str(path_obj))
     loop = asyncio.get_running_loop()
     
-    event_handler = SidelithEventHandler(engine, forensic, loop, project_id)
+    event_handler = SidelithEventHandler(engine, audit, loop, project_id)
     observer = Observer()
     observer.schedule(event_handler, str(path_obj), recursive=True)
     observer.start()

@@ -4,7 +4,7 @@ import os
 
 class NotificationService:
     """
-    Sovereign Desktop Notification Layer.
+    System Desktop Notification Layer.
     Uses macOS native AppleScript (osascript) to deliver Apple-grade alerts.
     """
 
@@ -12,7 +12,7 @@ class NotificationService:
     def _has_consent() -> bool:
         """Checks if the user has granted permission for notifications."""
         try:
-            path = Path.cwd() / ".side" / "sovereign.json"
+            path = Path.cwd() / ".side" / "project.json"
             if not path.exists():
                 return False
             with open(path, 'r') as f:
@@ -51,7 +51,7 @@ class NotificationService:
     def notify_violation(self, file_path: str, reason: str):
         """CRITICAL: Loud alert."""
         self.notify(
-            title="🛑 [SOVEREIGN] INTERCEPTED",
+            title="🛑 [SYSTEM] INTERCEPTED",
             subtitle="Violation Detected",
             message=f"{os.path.basename(file_path)}: {reason}",
             sound="Basso"
@@ -69,7 +69,7 @@ class NotificationService:
     def notify_anchored(self, message: str):
         """Standard Anchor alert."""
         self.notify(
-            title="⚓️ SOVEREIGN ANCHORED",
+            title="⚓️ SYSTEM ANCHORED",
             subtitle="System of Record Updated",
             message=message,
             sound="Hero"

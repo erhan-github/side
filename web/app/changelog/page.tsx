@@ -8,16 +8,148 @@ export const metadata = {
 export default function ChangelogPage() {
     const releases = [
         {
-            version: "0.1.0",
-            date: "2026-02-06",
-            title: "Initial Release",
+            version: "1.0.0",
+            date: "2026-02-07",
+            title: "The Sovereign Upgrade",
             changes: [
-                "Fractal Merkle Tree indexing for codebase understanding",
-                "MCP server integration for Cursor and Claude Desktop",
-                "Sovereign Units (SUs) pricing model",
-                "Local-first SQLite persistence",
-                "Forensic audit system",
-                "CLI tools: feed, audit, status",
+                "Implemented recursive CTE support in Task Dependency Engine for O(n) resolution.",
+                "Refactored Memory Engine to use time-decay ranking algorithm (1/(t+1)).",
+                "Implemented Merkle Tree aggregation service for 256-bit reasoning chain integrity.",
+                "Enforced SHA-256 session token handshake on IPC Unix Domain Sockets.",
+                "Standardized core services to strict Domain-Driven Design patterns.",
+            ],
+        },
+        {
+            version: "0.9.0",
+            date: "2026-02-04",
+            title: "Foundation Hardening",
+            changes: [
+                "Implemented token-bucket rate limiter for background process throttling.",
+                "Unified disparate logging streams into a single structured SignalBuffer.",
+                "Added unified stack trace parsing for Python, TypeScript, and Go runtimes.",
+                "Added vacuum/pruning logic to SQLite engine to optimize storage footprint.",
+            ],
+        },
+        {
+            version: "0.8.0",
+            date: "2026-02-02",
+            title: "Neural Link",
+            changes: [
+                "Implemented local file-system based discovery for IDE sidecar processes.",
+                "Added PII redaction middleware to telemetry pipeline.",
+                "Deployed event bus listeners for cognitive friction analysis.",
+                "Created background recovery service for restoring context from crashed sessions.",
+            ],
+        },
+        {
+            version: "0.7.5",
+            date: "2026-02-01",
+            title: "Cognitive Defense",
+            changes: [
+                "Deployed 'Strategic Graveyard' (rejections.py) for analyzing failed architectural branches.",
+                "Implemented 'Cloud Distiller' service to filter low-entropy signals before sync.",
+                "Added 'Airgap Mode' toggle for instant severance of all external network calls.",
+            ],
+        },
+        {
+            version: "0.7.0",
+            date: "2026-01-31",
+            title: "Context Awareness",
+            changes: [
+                "Decoupled monolithic `auto_intelligence` orchestrator into specialized component handlers.",
+                "Implemented `ContextTracker` for non-blocking IDE cursor state monitoring.",
+                "Standardized `project.json` schema for portable sovereign project identity.",
+            ],
+        },
+        {
+            version: "0.6.5",
+            date: "2026-01-30",
+            title: "Sovereign Economy",
+            changes: [
+                "Established 'Side Units' (SU) valuation metric for quantifying architectural debt.",
+                "Implemented `averted_disasters` ledger to track ROI of automated fixes.",
+                "Created 'Sovereign Grant' system for tier-based resource allocation.",
+            ],
+        },
+        {
+            version: "0.6.0",
+            date: "2026-01-30",
+            title: "The Sovereign Shell",
+            changes: [
+                "Implemented `side chat` REPL with `InteractiveUI` rendering engine.",
+                "Deployed `SnitchMonitor` for real-time network transparency logging.",
+                "Integrated `ShellEngine` controller loop for autonomous command execution.",
+            ],
+        },
+        {
+            version: "0.5.5",
+            date: "2026-01-29",
+            title: "Deep Silicon",
+            changes: [
+                "Implemented 'Pulse Engine' for zero-latency mmap-based system auditing.",
+                "Integrated 'Fractal Watcher' to detect real-time drift in project topology.",
+                "Added 'Mirror HUD' telemetry endpoints for visualizing cognitive load.",
+            ],
+        },
+        {
+            version: "0.5.0",
+            date: "2026-01-30",
+            title: "Performance Review",
+            changes: [
+                "Optimized main loop to reduce CPU overhead from 25% to <5%.",
+                "Implemented non-blocking monitoring for system metrics (Silicon Velocity).",
+                "Refactored monolithic `simple_db` into modular persistence domains.",
+            ],
+        },
+        {
+            version: "0.4.0",
+            date: "2026-01-28",
+            title: "Command Architecture",
+            changes: [
+                "Refactored CLI into modular `cli_handlers` using Typer pattern.",
+                "Implemented strictly typed environment configuration parsing.",
+                "Added `audit` and `status` subcommands for deep system introspection.",
+            ],
+        },
+        {
+            version: "0.3.0",
+            date: "2026-01-27",
+            title: "Polyglot Foundation",
+            changes: [
+                "Integrated Tree-sitter parsers for Python, TypeScript, and JavaScript.",
+                "Implemented `SovereignParser` abstract interface for language-agnostic analysis.",
+                "Deployed 'Trinity Architecture' (Sensor + Registry + Analyst) for code understanding.",
+            ],
+        },
+        {
+            version: "0.2.0",
+            date: "2026-01-26",
+            title: "Local Intelligence",
+            changes: [
+                "Integrated Ollama/Llama-2 for offline semantic reasoning.",
+                "Implemented initial embeddings vector store using raw numpy arrays.",
+                "Established multi-environment configuration (Dev/Staging/Prod).",
+            ],
+        },
+        {
+            version: "0.1.0",
+            date: "2026-01-24",
+            title: "Genesis",
+            changes: [
+                "Initial repository scaffolding and dependency lockfile generation.",
+                "Established SQLite-based local-first architecture with WAL mode enabled.",
+                "Implemented cryptographic identity generation.",
+            ],
+        },
+        {
+            version: "0.0.1",
+            date: "2026-01-16",
+            title: "The Singularity",
+            changes: [
+                "Initial import of 'Antigravity' intelligence pipeline.",
+                "Integrated 'Vector Embeddings' support for semantic codebase analysis.",
+                "Established 'MCP Server' foundation with standard input/output transport.",
+                "Deployed 'Market Analyzer' and 'LLM Strategist' agents.",
             ],
         },
     ];

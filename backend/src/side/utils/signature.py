@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class SovereignSigner:
     """
     Sovereign Signer [Tier-5]: GPG-style signing for metabolic anchors.
-    Ensures the 'sovereign.json' and identity files are untampered.
+    Ensures the 'project.json' and identity files are untampered.
     """
     
     def __init__(self, key_path: str | Path | None = None):

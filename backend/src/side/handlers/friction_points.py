@@ -23,7 +23,7 @@ from side.utils.event_optimizer import (
     lazy_intelligence
 )
 from side.storage.modules.transient import OperationalStore
-from side.storage.modules.forensic import ForensicStore
+from side.storage.modules.audit import AuditStore
 
 logger = logging.getLogger(__name__)
 
@@ -53,11 +53,11 @@ async def handle_ai_code_generation(event: Event):
     logger.info(f"AI code generation detected: {file_path} ({ai_model})")
     
     # Get storage instances (will be injected via dependency injection)
-    from side.storage import get_forensic_store
-    forensic = get_forensic_store()
+    from side.storage import get_audit_store
+    audit = get_audit_store()
     
-    # Log AI interaction to forensic store
-    forensic.log_activity(
+    # Log AI interaction to audit store
+    audit.log_activity(
         project_id=project_id,
         tool="ai_assistant",
         action="code_generation",
@@ -88,7 +88,7 @@ async def handle_ai_code_generation(event: Event):
     if warnings:
         for warning in warnings:
             logger.warning(f"{file_path}: {warning}")
-            forensic.log_activity(
+            audit.log_activity(
                 project_id=project_id,
                 tool="pattern_detector",
                 action="anti_pattern_warning",
@@ -125,8 +125,8 @@ async def handle_git_commit(event: Event):
     
     logger.info(f"Git commit detected: {message[:50]}... ({len(files)} files)")
     
-    from side.storage import get_forensic_store
-    forensic = get_forensic_store()
+    from side.storage import get_audit_store
+    audit = get_audit_store()
     
     # Extract strategic intent from commit message
     intent_type = "feature"  # Default
@@ -139,8 +139,8 @@ async def handle_git_commit(event: Event):
     elif any(keyword in message.lower() for keyword in ["doc", "readme", "comment"]):
         intent_type = "documentation"
     
-    # Log to forensic store with strategic context
-    forensic.log_activity(
+    # Log to audit store with strategic context
+    audit.log_activity(
         project_id=project_id,
         tool="git",
         action="commit",
@@ -164,7 +164,7 @@ async def handle_git_commit(event: Event):
 @event_bus.on(FrictionPoint.AI_CONTEXT_REQUEST, EventPriority.HIGH)
 async def handle_ai_context_request(event: Event):
     """
-    Handle AI context request - provide sovereign knowledge.
+    Handle AI context request - provide system knowledge.
     
     Value:
     - Inject project-specific context
@@ -290,12 +290,12 @@ async def handle_file_structure_change(event: Event):
     if event_type in {"created", "deleted"}:
         logger.info(f"Significant structure change: {event_type} - {path}")
         
-        from side.storage import get_forensic_store, get_operational_store
-        forensic = get_forensic_store()
+        from side.storage import get_audit_store, get_operational_store
+        audit = get_audit_store()
         operational = get_operational_store()
         
         # Log structural change
-        forensic.log_activity(
+        audit.log_activity(
             project_id=project_id,
             tool="file_watcher",
             action=f"file_{event_type}",
@@ -336,11 +336,11 @@ async def handle_error(event: Event):
     
     logger.error(f"Error occurred: {error}")
     
-    from side.storage import get_forensic_store
-    forensic = get_forensic_store()
+    from side.storage import get_audit_store
+    audit = get_audit_store()
     
-    # Always log errors to forensic store (CRITICAL priority)
-    forensic.log_activity(
+    # Always log errors to audit store (CRITICAL priority)
+    audit.log_activity(
         project_id=project_id,
         tool="error_tracker",
         action="error_occurred",
@@ -354,13 +354,13 @@ async def handle_error(event: Event):
     )
     
     # Check if this is a repeated error (simple pattern detection)
-    recent_errors = forensic.get_recent_activities(project_id, limit=10)
+    recent_errors = audit.get_recent_activities(project_id, limit=10)
     error_count = sum(1 for act in recent_errors 
                      if act.action == "error_occurred" and error in str(act.payload))
     
     if error_count > 2:
         logger.warning(f"⚠️ Repeated error detected ({error_count} times): {error[:50]}...")
-        forensic.log_activity(
+        audit.log_activity(
             project_id=project_id,
             tool="pattern_detector",
             action="repeated_error",

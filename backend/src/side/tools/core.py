@@ -9,15 +9,15 @@ from side.intel.auto_intelligence import AutoIntelligence
 
 from side.storage.modules.base import ContextEngine
 from side.storage.modules.identity import IdentityStore
-from side.storage.modules.strategic import StrategicStore
-from side.storage.modules.forensic import ForensicStore
+from side.storage.modules.chronos import ChronosStore
+from side.storage.modules.audit import AuditStore
 from side.storage.modules.transient import OperationalStore
 
 # Global singletons - initialized lazily
 _engine: ContextEngine | None = None
 _identity: IdentityStore | None = None
-_strategic: StrategicStore | None = None
-_forensic: ForensicStore | None = None
+_strategic: ChronosStore | None = None
+_audit: AuditStore | None = None
 _operational: OperationalStore | None = None
 _auto_intel: AutoIntelligence | None = None
 
@@ -43,17 +43,17 @@ def get_identity() -> IdentityStore:
         _identity = IdentityStore(get_engine())
     return _identity
 
-def get_strategic() -> StrategicStore:
+def get_strategic() -> ChronosStore:
     global _strategic
     if _strategic is None:
-        _strategic = StrategicStore(get_engine())
+        _strategic = ChronosStore(get_engine())
     return _strategic
 
-def get_forensic() -> ForensicStore:
-    global _forensic
-    if _forensic is None:
-        _forensic = ForensicStore(get_engine())
-    return _forensic
+def get_audit() -> AuditStore:
+    global _audit
+    if _audit is None:
+        _audit = AuditStore(get_engine())
+    return _audit
 
 def get_operational() -> OperationalStore:
     global _operational

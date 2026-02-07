@@ -7,10 +7,10 @@ from collections import defaultdict, deque
 
 logger = logging.getLogger(__name__)
 
-class UnifiedBuffer:
+class SignalBuffer:
     """
-    Unified Buffer: High-Frequency Context Sync.
-    Aggregates strategic, forensic, and operational signals into a single 
+    Signal Buffer: High-Frequency Context Sync.
+    Aggregates strategic, audit, and operational signals into a single 
     asynchronous stream to maintain low-latency developer workflow.
     """
     
@@ -96,7 +96,7 @@ class UnifiedBuffer:
             if action == "log_signal" and payload.get("level") == "ERROR":
                 return 0.9
         
-        # 2. Defensiveness (Rejections & Wisdom)
+        # 2. Defensiveness (Rejections & Patterns)
         if category in ["rejection", "patterns", "insights"]:
             return 0.9
             
@@ -130,9 +130,9 @@ class UnifiedBuffer:
         flushed_in_batch = 0
 
         try:
-            # 1. Forensic Activities (Audits, SFI, Shell)
+            # 1. Audit Activities (Shell, etc.)
             if activities := current_buffer.get("activity"):
-                await asyncio.to_thread(self.stores['forensic'].log_activities_batch, activities)
+                await asyncio.to_thread(self.stores['audit'].log_activities_batch, activities)
                 flushed_in_batch += len(activities)
 
             if shell_cmds := current_buffer.get("shell"):
@@ -144,7 +144,7 @@ class UnifiedBuffer:
                         'action': 'command',
                         'payload': cmd['payload']
                     })
-                await asyncio.to_thread(self.stores['forensic'].log_activities_batch, shell_batch)
+                await asyncio.to_thread(self.stores['audit'].log_activities_batch, shell_batch)
                 flushed_in_batch += len(shell_cmds)
 
             # 2. Strategic Rejections
@@ -164,14 +164,14 @@ class UnifiedBuffer:
 
             self.signals_flushed += flushed_in_batch
             
-            # 5. [HYPER-PERCEPTION]: Calculate Work Velocity (signals/sec)
+            # 5. [DEEP_SCAN]: Calculate Work Velocity (signals/sec)
             now = time.time()
             delta = now - self._last_flush_ts
             if delta > 0:
                 velocity = flushed_in_batch / delta
                 self.stores['operational'].set_setting("buffer_ingest_velocity", str(round(velocity, 3)))
             self._last_flush_ts = now
-
+            
             self.last_flush_time = (time.perf_counter() - start_time) * 1000
             
             if flushed_in_batch > 0:
@@ -192,6 +192,6 @@ class UnifiedBuffer:
 
 # Entry for ServiceManager
 async def create_buffer(stores):
-    buf = UnifiedBuffer(stores)
+    buf = SignalBuffer(stores)
     await buf.start()
     return buf
