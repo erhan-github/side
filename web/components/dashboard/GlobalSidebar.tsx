@@ -33,7 +33,7 @@ const SIDEBAR_ITEMS = [
     {
         category: "Infrastructure",
         items: [
-            { label: "Sovereign Capacity", href: "/dashboard/billing", icon: CreditCard },
+            { label: "System Capacity", href: "/dashboard/billing", icon: CreditCard },
             { label: "Neural Extensions", href: "/dashboard/addons", icon: Zap },
         ]
     },
@@ -62,7 +62,7 @@ export function GlobalSidebar() {
                 <Link href="/" className="flex items-center gap-2.5">
                     <div className="w-5 h-5 bg-white rounded-sm" />
                     <span className="font-bold tracking-tight text-white uppercase italic">Side<span className="not-italic lowercase font-light text-zinc-500">lith</span></span>
-                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 ml-1 font-black uppercase">Sovereign</span>
+                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 ml-1 font-black uppercase">SYSTEM</span>
                 </Link>
                 <button
                     onClick={() => setIsOpen(!isOpen)}
@@ -88,7 +88,7 @@ export function GlobalSidebar() {
                 <Link href="/" className="hidden md:flex h-16 items-center px-6 border-b border-white/5 gap-2.5 group">
                     <div className="w-5 h-5 bg-white rounded-sm group-hover:rotate-90 transition-transform duration-500" />
                     <span className="font-bold tracking-tight text-white uppercase italic">Side<span className="not-italic lowercase font-light text-zinc-500">lith</span></span>
-                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 ml-1 font-black uppercase">Sovereign</span>
+                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 ml-1 font-black uppercase">SYSTEM</span>
                 </Link>
 
                 {/* Navigation */}

@@ -11,7 +11,7 @@
   --font-heading: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Sovereign Color Palette (Stockholm Midnight) */
+  /* Metric Color Palette (Stockholm Midnight) */
   --color-void: #050505;
   --color-void-lite: #0a0a0a;
   --color-stockholm-blue: #3B82F6;
@@ -23,7 +23,7 @@
 
   --color-glass-border: rgba(255, 255, 255, 0.08);
 
-  /* The Sovereign Scale (Golden Ratio) */
+  /* The Golden Ratio Scale */
   --text-hero: clamp(4rem, 9vw, 7rem);
   /* H1 Display */
   --text-h1: clamp(3rem, 7vw, 5rem);
@@ -58,7 +58,7 @@
 }
 
 :root {
-  /* Default to Dark Mode aesthetics for Sovereign Brand */
+  /* Default to Dark Mode aesthetics for System Brand */
   --background: #050505;
   --foreground: #F8FAFC;
   --primary: #3B82F6;

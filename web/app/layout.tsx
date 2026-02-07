@@ -20,11 +20,11 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Side | Sovereign Intelligence Layer",
+    default: "Side | System of Record",
     template: "%s | Side"
   },
   description: "The professional System of Record for modern engineering. Side monitors project trajectory and architectural integrity in real-time.",
-  keywords: ["Sovereign Intelligence", "Deterministic Code Audit", "Strategic Registry", "System of Record", "Architecture Forensics", "Local-First AI"],
+  keywords: ["Deterministic Memory", "Code Audit", "Strategic Registry", "System of Record", "Architecture Forensics", "Local-First AI"],
   authors: [{ name: "Sidelith OS" }],
   viewport: "width=device-width, initial-scale=1, maximum-scale=5",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://sidelith.com"),

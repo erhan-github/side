@@ -45,7 +45,7 @@ export default function AboutPage() {
                         </div>
 
                         <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-                            <h3 className="text-xl font-bold text-blue-500 mb-3">Sovereign Intelligence</h3>
+                            <h3 className="text-xl font-bold text-blue-500 mb-3">System Intelligence</h3>
                             <p className="text-white/60">
                                 Your data stays local. Your secrets stay yours. We sync anonymized patterns across the network while keeping strategic intent locked down. Privacy by design.
                             </p>

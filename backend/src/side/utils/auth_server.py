@@ -27,7 +27,7 @@ SUCCESS_PAGE = """
         <div class="logo"></div>
         <h1>Authentication Successful</h1>
         <p>You can close this window and return to your terminal.</p>
-        <p style="font-size: 10px; margin-top: 32px; color: #333;">Sovereign Secure Auth v1.0</p>
+        <p style="font-size: 10px; margin-top: 32px; color: #333;">System Secure Auth v1.0</p>
     </div>
 </body>
 </html>

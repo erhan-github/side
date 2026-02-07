@@ -13,7 +13,7 @@ export default function PricingPage() {
                             Infrastructure<br />Level.
                         </h1>
                         <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-                            The System of Record for Project Context. Sidelith is a sovereign layer for your IDE. Free for individuals, tiered for scale.
+                            The System of Record for Project Context. Sidelith is a foundational layer for your IDE. Free for individuals, tiered for scale.
                         </p>
                     </div>
 
@@ -146,7 +146,7 @@ export default function PricingPage() {
                             </div>
                             <div className="mb-8 flex flex-col justify-center h-20">
                                 <span className="text-4xl font-bold tracking-tighter text-white">Custom</span>
-                                <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mt-1">ABSOLUTE SOVEREIGNTY</span>
+                                <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mt-1">ABSOLUTE CONTROL</span>
                             </div>
                             <div className="flex-grow">
                                 <ul className="space-y-3 mb-8 text-sm text-zinc-400">
@@ -156,7 +156,7 @@ export default function PricingPage() {
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <Check className="w-4 h-4 text-white shrink-0" />
-                                        <span className="text-zinc-300">Sovereign Pulse</span>
+                                        <span className="text-zinc-300">System Pulse</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <Check className="w-4 h-4 text-white shrink-0" />

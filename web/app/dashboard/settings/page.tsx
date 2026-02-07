@@ -2,7 +2,7 @@ import { getSettings } from "@/lib/dal/settings";
 import { PageHeader } from "@/components/dashboard/shell/PageHeader";
 import { Shield } from "lucide-react";
 import { GhostModeSection } from "@/components/dashboard/settings/GhostModeSection";
-import { DataSovereignty } from "@/components/dashboard/settings/DataSovereignty";
+import { DataPrivacy } from "@/components/dashboard/settings/DataPrivacy";
 import { DangerZone } from "@/components/dashboard/settings/DangerZone";
 
 export default async function SettingsPage() {
@@ -13,7 +13,7 @@ export default async function SettingsPage() {
         <div className="p-4 md:p-8 max-w-[1200px] mx-auto min-h-screen flex flex-col gap-8 mt-16 md:mt-0">
             <PageHeader
                 title="Privacy & Data"
-                description='Sovereign control over your context. Sidelith is designed to be "Local First", giving you absolute authority over data egress.'
+                description='System control over your context. Sidelith is designed to be "Local First", giving you absolute authority over data egress.'
                 icon={Shield}
                 iconColor="text-emerald-500"
             />
@@ -21,8 +21,8 @@ export default async function SettingsPage() {
             {/* Ghost Mode Toggle (Hero Feature) */}
             <GhostModeSection initialEnabled={settings.ghost_mode} />
 
-            {/* Data Sovereignty Grid */}
-            <DataSovereignty />
+            {/* Data Privacy Grid */}
+            <DataPrivacy />
 
             {/* Danger Zone */}
             <DangerZone />

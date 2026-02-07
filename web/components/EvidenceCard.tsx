@@ -31,7 +31,7 @@ export function EvidenceCard() {
                         <div className="flex items-start gap-3">
                             <ShieldAlert className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                             <div>
-                                <h4 className="text-red-400 font-bold mb-1">BLOCKED: Sovereign Integrity Violation</h4>
+                                <h4 className="text-red-400 font-bold mb-1">BLOCKED: Structural Integrity Violation</h4>
                                 <p className="text-zinc-300 mb-2">Detailed forensic analysis detected a high-risk pattern.</p>
 
                                 <div className="bg-black/50 rounded p-2 text-xs text-red-300 font-mono mb-2">

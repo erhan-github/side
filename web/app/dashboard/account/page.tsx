@@ -31,7 +31,7 @@ export default async function AccountPage() {
                             <span className="text-xs text-white font-mono">{profile.email}</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-white/5">
-                            <span className="text-xs text-zinc-500 uppercase tracking-tighter">Sovereign Tier</span>
+                            <span className="text-xs text-zinc-500 uppercase tracking-tighter">System Tier</span>
                             <span className="text-xs text-white font-bold uppercase">{profile.tier}</span>
                         </div>
                     </div>

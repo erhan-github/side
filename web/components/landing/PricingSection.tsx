@@ -90,7 +90,7 @@ export function PricingSection() {
                     </div>
                     <div>
                         <h4 className="text-sm font-bold text-white uppercase tracking-wider">Structural Refills</h4>
-                        <p className="text-xs text-white/40 max-w-sm">Ran out of throughput? Add capacity incrementally to your Sovereign Node. Credits are applied instantly.</p>
+                        <p className="text-xs text-white/40 max-w-sm">Ran out of throughput? Add capacity incrementally to your System Node. Credits are applied instantly.</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-8 pr-4">

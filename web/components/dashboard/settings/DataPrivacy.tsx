@@ -4,7 +4,7 @@ import { Globe, Server, Power, Download } from "lucide-react";
 
 // This component is mostly static but has "Export" button which needs client interaction.
 // We keep it as a client component to isolate the button logic.
-export function DataSovereignty() {
+export function DataPrivacy() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Telemetry Control */}

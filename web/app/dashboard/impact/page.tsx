@@ -13,7 +13,7 @@ export default function ImpactPage() {
                         Strategic Impact
                     </h1>
                     <p className="text-zinc-500 max-w-xl">
-                        Measuring the ROI of your sovereignty. Side tracks not just code written, but cognitive load reduced.
+                        Measuring the ROI of your System. Side tracks not just code written, but cognitive load reduced.
                     </p>
                 </div>
                 <button className="bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
@@ -110,8 +110,8 @@ export default function ImpactPage() {
                                 <div className="flex justify-between items-start mb-1">
                                     <h4 className="text-sm font-medium text-white">{win.title}</h4>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded border ${win.impact === 'Critical' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                            win.impact === 'High' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
-                                                'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                        win.impact === 'High' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                                            'bg-blue-500/10 text-blue-400 border-blue-500/20'
                                         }`}>{win.impact}</span>
                                 </div>
                                 <p className="text-xs text-zinc-500">{win.desc}</p>

@@ -77,9 +77,9 @@ export default function HUDPage() {
                             transition={{ duration: 2, repeat: Infinity }}
                             className={`w-2 h-2 rounded-full ${isFriction ? 'bg-red-500' : 'bg-[var(--color-neon-trace)]'}`}
                         />
-                        <span className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 font-black">Sovereign Hyper-Perception</span>
+                        <span className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 font-black">System Hyper-Perception</span>
                     </div>
-                    <h1 className="text-4xl font-black tracking-tighter italic glow-text">SOVEREIGN <span className="text-zinc-600">HUD</span></h1>
+                    <h1 className="text-4xl font-black tracking-tighter italic glow-text">SYSTEM <span className="text-zinc-600">HUD</span></h1>
                 </div>
                 <div className="text-right">
                     <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">{new Date().toLocaleTimeString()}</p>
@@ -202,7 +202,7 @@ export default function HUDPage() {
                                 <span className="text-white">28ms</span>
                             </div>
                             <div className="flex justify-between">
-                                <span>Sovereign Guard</span>
+                                <span>System Guard</span>
                                 <span className="text-emerald-500">ACTIVE</span>
                             </div>
                         </div>

@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Sovereign Knowledge Graph",
+    "title": "System Knowledge Graph",
     "version": "2.0.0",
     "description": "The Indexed Brain of a Sidelith-managed Project.",
     "type": "object",

@@ -5,14 +5,14 @@ export function SolutionSolarSystem() {
         <section className="section-spacing w-full max-w-6xl px-4 z-10 relative">
             <div className="text-center mb-32">
                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                    The <span className="text-neon">Sovereign Shield</span>.
+                    The <span className="text-neon">System Shield</span>.
                 </h2>
                 <p className="text-xl text-white/40 font-light max-w-2xl mx-auto">
                     A deterministic loop that replaces noise with truth.
                 </p>
             </div>
 
-            {/* THE SOVEREIGN SOLAR SYSTEM (HEXAGON ORBIT) */}
+            {/* THE SYSTEM SOLAR SYSTEM (HEXAGON ORBIT) */}
             <div className="w-full max-w-6xl mx-auto mb-20 relative animate-in fade-in zoom-in-95 duration-1000 delay-500 min-h-[900px] hidden md:block">
 
                 {/* Background Galaxy & Title */}
@@ -122,7 +122,7 @@ export function SolutionSolarSystem() {
                         <Shield size={24} className="text-white/40 group-hover:text-signal transition-colors" />
                     </div>
                     <h4 className="text-signal font-bold font-mono text-sm tracking-widest mb-1">03. GOVERNANCE SHIELD</h4>
-                    <p className="text-xs text-white/50 max-w-[150px]">The Sovereignty Gate.</p>
+                    <p className="text-xs text-white/50 max-w-[150px]">The System Gate.</p>
                 </div>
 
                 {/* Phase 4: COMPUTE (Left - 9:00) */}
@@ -266,7 +266,7 @@ export function SolutionSolarSystem() {
                     </div>
                 </div>
                 <div className="order-2">
-                    <h3 className="text-2xl font-bold text-white mb-4">03. Sovereign Integrity.</h3>
+                    <h3 className="text-2xl font-bold text-white mb-4">03. Structural Integrity.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
                         Secrets stay local. Corporate policy is enforced on the edge before any packet leaves.
                     </p>
@@ -306,7 +306,7 @@ export function SolutionSolarSystem() {
                     </div>
                 </div>
                 <div className="order-2">
-                    <h3 className="text-2xl font-bold text-white mb-4">05. Episodic Sovereignty.</h3>
+                    <h3 className="text-2xl font-bold text-white mb-4">05. Episodic Memory.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
                         Verified solutions are serialized into the Chronos Vector Store. Sidelith captures the Reasoning Graph, Verified Patterns, and Forensic Guards from this interaction, ensuring the Operator never repeats a mistake.
                     </p>

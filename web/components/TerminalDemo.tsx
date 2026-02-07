@@ -18,7 +18,7 @@ const commands = [
     { cmd: "", output: "   >> Context: 'auth_v2' is required for strict-mode." },
 
     // Scenario 3: The Amnesia Check (Registry)
-    { cmd: "side query 'Why Postgres?'", output: "   [09:16:05] 🧠 Querying Sovereign Registry..." },
+    { cmd: "side query 'Why Postgres?'", output: "   [09:16:05] 🧠 Querying System Registry..." },
     { cmd: "", output: "   >> FACT: Switched to Postgres on Jan 12 (Commit a7f2)" },
     { cmd: "", output: "   >> REASON: 'SQLite lock contention during bulk writes'" },
     { cmd: "", output: "   >> SOURCE: MONOLITH.md (Line 450)" },

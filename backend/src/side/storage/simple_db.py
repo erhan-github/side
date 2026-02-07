@@ -61,7 +61,7 @@ class SimplifiedDatabase:
     def _run_migrations(self) -> None:
         """Handle CTO-level schema resilience."""
         version = self.operational.get_version()
-        logger.info(f"Sidelith Sovereign Schema: v{version}")
+        logger.info(f"Sidelith System Schema: v{version}")
 
     def get_project_id(self, project_path: str | Path | None = None) -> str:
         """Delegates to ContextEngine for stable isolation."""

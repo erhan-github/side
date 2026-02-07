@@ -227,7 +227,7 @@ def import_project(bundle_path: str | Path, force: bool = False) -> bool:
         logger.error(f"🚨 [SECURITY]: Bundle too large: {bundle_size} bytes (max: {MAX_BUNDLE_SIZE})")
         return False
     
-    logger.info(f"🔓 [SOVEREIGN MOBILITY]: Unsealing Project Soul...")
+    logger.info(f"🔓 [SYSTEM MOBILITY]: Unsealing Project Soul...")
     
     try:
         # 3. Unseal the bundle

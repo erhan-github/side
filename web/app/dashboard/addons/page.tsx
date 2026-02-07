@@ -13,7 +13,7 @@ export default function AddonsPage() {
             </h1>
             <p className="text-zinc-500 text-center max-w-md">
                 Infrastructure extensions for the Sidelith Registry are currently being synthesized.
-                Sovereign egress and high-throughput adapters arriving soon.
+                System egress and high-throughput adapters arriving soon.
             </p>
             <div className="flex items-center gap-2 text-zinc-600 text-xs uppercase tracking-[0.2em] font-black italic">
                 <Construction className="w-4 h-4" /> Under Construction
