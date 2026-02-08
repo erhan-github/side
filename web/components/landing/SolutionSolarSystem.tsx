@@ -121,8 +121,8 @@ export function SolutionSolarSystem() {
                     <div className="w-16 h-16 rounded-2xl bg-[#0a0a0a] border border-white/10 flex items-center justify-center shadow-2xl mb-4 group-hover:border-signal/50 transition-colors">
                         <Shield size={24} className="text-white/40 group-hover:text-signal transition-colors" />
                     </div>
-                    <h4 className="text-signal font-bold font-mono text-sm tracking-widest mb-1">03. GOVERNANCE SHIELD</h4>
-                    <p className="text-xs text-white/50 max-w-[150px]">The System Gate.</p>
+                    <h4 className="text-signal font-bold font-mono text-sm tracking-widest mb-1">03. POLICY GUARD</h4>
+                    <p className="text-xs text-white/50 max-w-[150px]">Automated Rules.</p>
                 </div>
 
                 {/* Phase 4: COMPUTE (Left - 9:00) */}
@@ -168,7 +168,7 @@ export function SolutionSolarSystem() {
                         { id: "00", label: "INTENT", icon: Sparkles, color: "text-white", border: "border-white/20", shadow: "shadow-white/5", sub: "User Request" },
                         { id: "01", label: "AWARENESS", icon: Database, color: "text-neon", border: "border-neon/20", shadow: "shadow-neon/5", sub: "Code Structure" },
                         { id: "02", label: "CONTEXT", icon: Zap, color: "text-blue-400", border: "border-blue-500/20", shadow: "shadow-blue-500/5", sub: "Verified Ctx" },
-                        { id: "03", label: "ANTIBODY", icon: Shield, color: "text-signal", border: "border-signal/20", shadow: "shadow-signal/5", sub: "Local Shield" },
+                        { id: "03", label: "GUARD", icon: Shield, color: "text-signal", border: "border-signal/20", shadow: "shadow-signal/5", sub: "Safety Check" },
                         { id: "04", label: "COMPUTE", icon: Globe, color: "text-purple-400", border: "border-purple-500/20", shadow: "shadow-purple-500/5", sub: "Local Reasoning" },
                         { id: "05", label: "LEARNING", icon: Terminal, color: "text-white", border: "border-white/40", shadow: "shadow-white/10", sub: "Save Knowledge" }
                     ].map((phase) => (
@@ -249,7 +249,6 @@ export function SolutionSolarSystem() {
                     {`\u003e\u003e ISOLATION: 100%`}
                 </div>
             </div>
-
             {/* STEP 3: INTEGRITY (Policy Shield Visual) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24 items-center">
                 <div className="order-1">
@@ -266,7 +265,7 @@ export function SolutionSolarSystem() {
                     </div>
                 </div>
                 <div className="order-2">
-                    <h3 className="text-2xl font-bold text-white mb-4">03. Structural Integrity.</h3>
+                    <h3 className="text-2xl font-bold text-white mb-4">03. Policy Guard.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
                         Secrets stay local. Corporate policy is enforced at the edge before any packet leaves.
                     </p>
