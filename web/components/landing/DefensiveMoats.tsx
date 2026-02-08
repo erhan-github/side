@@ -33,16 +33,16 @@ export function DefensiveMoats() {
                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-purple-500/10 flex items-center justify-center mb-4 md:mb-6 border border-purple-500/20">
                         <Eye size={24} className="text-purple-500" />
                     </div>
-                    <h4 className="text-lg font-bold text-white mb-3">Vision Guard</h4>
-                    <p className="text-white/40 text-xs leading-relaxed uppercase tracking-widest">PII Stripping Engines.</p>
+                    <h4 className="text-lg font-bold text-white mb-3">Privacy Screen</h4>
+                    <p className="text-white/40 text-xs leading-relaxed uppercase tracking-widest">Personal Data Removal (PII).</p>
                 </div>
 
                 <div className="p-4 md:p-8 rounded-[24px] md:rounded-[32px] bg-[#0a0a0a] border border-white/5 hover:border-orange-500/20 transition-all group">
                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-orange-500/10 flex items-center justify-center mb-4 md:mb-6 border border-orange-500/20">
                         <Zap size={24} className="text-orange-500" />
                     </div>
-                    <h4 className="text-lg font-bold text-white mb-3">Deterministic</h4>
-                    <p className="text-white/40 text-xs leading-relaxed uppercase tracking-widest">100% Logic Reproducibility.</p>
+                    <h4 className="text-lg font-bold text-white mb-3">Predictable</h4>
+                    <p className="text-white/40 text-xs leading-relaxed uppercase tracking-widest">Consistent Logic.</p>
                 </div>
             </div>
         </section>

@@ -25,7 +25,7 @@ export function ProblemSection() {
                                 </div>
                             </div>
                             <p className="text-white/50 text-lg leading-relaxed max-w-xl">
-                                Generative models are stateless. Sidelith provides the <b>persistent substrate</b>. Eliminate repetitive loops by anchoring every prompt to a permanent semantic truth.
+                                Generative models are stateless. Sidelith provides the <b>permanent memory layer</b>. Eliminate repetitive loops by anchoring every prompt to a permanent semantic truth.
                             </p>
                         </div>
                     </div>
@@ -36,13 +36,13 @@ export function ProblemSection() {
                     <div className="flex justify-between items-start mb-6">
                         <Activity className="text-red-500" size={32} />
                         <div className="opacity-0 group-hover/reveal:opacity-100 transition-all duration-500 scale-95 group-hover/reveal:scale-100 text-[8px] font-mono text-red-500/60 uppercase tracking-widest text-right leading-tight">
-                            Validation: Merkle-Hash<br />
-                            Integrity: SHA-256
+                            Validation: Cryptographic Checksum<br />
+                            Integrity: Secure Hash
                         </div>
                     </div>
                     <h3 className="text-xl font-bold text-white mb-4">The Truth Decay</h3>
                     <p className="text-white/40 leading-relaxed text-sm">
-                        Documentation is a claim; Code is the evidence. Sidelith bridges the gap with Merkle-validated state.
+                        Documentation is a claim; Code is the evidence. Sidelith bridges the gap with verified accuracy.
                     </p>
                 </div>
 
@@ -51,13 +51,13 @@ export function ProblemSection() {
                     <div className="flex justify-between items-start mb-6">
                         <Zap className="text-orange-500" size={32} />
                         <div className="opacity-0 group-hover/reveal:opacity-100 transition-all duration-500 scale-95 group-hover/reveal:scale-100 text-[8px] font-mono text-orange-500/60 uppercase tracking-widest text-right leading-tight">
-                            Signal: High-Fidelity<br />
-                            Noise Isolation: Binary
+                            Signal: Exact Match<br />
+                            Noise Isolation: Total
                         </div>
                     </div>
                     <h3 className="text-xl font-bold text-white mb-4">Context Rot</h3>
                     <p className="text-white/40 leading-relaxed text-sm">
-                        Reasoning degrades as noise accumulates. Sidelith acts as the antibody to generative entropy.
+                        Reasoning degrades as noise accumulates. Sidelith prevents data decay.
                     </p>
                 </div>
 

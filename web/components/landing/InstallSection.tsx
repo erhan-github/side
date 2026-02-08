@@ -25,11 +25,11 @@ export function InstallSection() {
 
                         <div className="mt-8 text-center max-w-2xl mx-auto">
                             <p className="text-white/60 text-sm mb-6">
-                                Sidelith lives where you code. From your terminal to your preferred AI IDE, we provide a unified semantic bridge.
+                                Sidelith lives where you code. From your terminal to your preferred AI IDE, we provide a universal connector.
                             </p>
                             <div className="flex flex-wrap justify-center gap-2">
                                 {[
-                                    { name: "Automatic MCP Injection Locked", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+                                    { name: "Automatic Context Injection", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
                                     { name: "Cursor" },
                                     { name: "Claude Desktop" },
                                     { name: "VS Code" },

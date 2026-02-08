@@ -7,15 +7,15 @@ export function CollectiveIntelligence() {
                 <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mb-8 border border-emerald-500/20">
                     <Activity size={32} className="text-emerald-500" />
                 </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Collective <span className="text-emerald-500">Antibodies</span>.</h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Community <span className="text-emerald-500">Immunity</span>.</h2>
                 <p className="text-white/40 text-lg font-light leading-relaxed max-w-2xl">
-                    When one developer solves a logic puzzle, Sidelith's <span className="text-white">Anonymized Ledger</span> shares the structural solution with the network. You benefit from the community's immunization without ever sharing a line of code.
+                    When one developer solves a logic puzzle, Sidelith's <span className="text-white">Shared Knowledge Base</span> shares the structural solution with the network. You benefit from the community's immunization without ever sharing a line of code.
                 </p>
 
                 <div className="mt-12 flex gap-8">
                     <div className="text-center">
                         <div className="text-3xl font-bold text-white">Verified</div>
-                        <div className="text-[10px] text-white/30 uppercase tracking-[0.2em] mt-2">Pattern Library</div>
+                        <div className="text-[10px] text-white/30 uppercase tracking-[0.2em] mt-2">Solutions</div>
                     </div>
                     <div className="w-px h-12 bg-white/10"></div>
                     <div className="text-center">
