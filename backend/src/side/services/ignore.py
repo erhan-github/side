@@ -27,10 +27,60 @@ class IgnoreFilter:
         "coverage", "tmp", "temp", "logs"
     }
 
+    # Palantir-level default configuration
+    DEFAULT_SIDEIGNORE_CONTENT = """# Sidelith Ignore File
+# Defines the boundaries of Sidelith's awareness.
+# Format: gitignore-style glob patterns.
+
+# 1. System & SCM
+.git/
+.DS_Store
+
+# 2. Dependencies & Build Artifacts
+node_modules/
+venv/
+.venv/
+__pycache__/
+dist/
+build/
+coverage/
+.next/
+
+# 3. Sidelith Internals
+.side/
+.side-id
+
+# 4. Secrets & Environment
+.env*
+*.key
+*.pem
+secrets/
+*.log
+tmp/
+
+# 5. Editor Configs (Optional - reduce noise)
+.vscode/
+.idea/
+"""
+
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.ignore_patterns: Set[str] = set(self.DEFAULT_IGNORES)
+        self._ensure_config_exists()
         self._load_config()
+
+    def _ensure_config_exists(self):
+        """
+        Auto-create .sideignore if it doesn't exist.
+        This ensures users always have a baseline configuration.
+        """
+        config_path = self.project_root / ".sideignore"
+        if not config_path.exists():
+            try:
+                config_path.write_text(self.DEFAULT_SIDEIGNORE_CONTENT, encoding="utf-8")
+                logger.info(f"Created default .sideignore at {config_path}")
+            except Exception as e:
+                logger.warning(f"Failed to create default .sideignore: {e}")
 
     def _load_config(self):
         """
