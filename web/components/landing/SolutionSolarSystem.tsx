@@ -102,8 +102,8 @@ export function SolutionSolarSystem() {
                     <div className="w-16 h-16 rounded-2xl bg-[#0a0a0a] border border-white/10 flex items-center justify-center shadow-2xl mb-4 group-hover:border-neon/50 transition-colors">
                         <Database size={24} className="text-white/40 group-hover:text-neon transition-colors" />
                     </div>
-                    <h4 className="text-neon font-bold font-mono text-sm tracking-widest mb-1">01. FRACTAL DNA</h4>
-                    <p className="text-xs text-white/50 max-w-[150px]">Structural Tree Analysis.</p>
+                    <h4 className="text-neon font-bold font-mono text-sm tracking-widest mb-1">01. CODE STRUCTURE</h4>
+                    <p className="text-xs text-white/50 max-w-[150px]">Code structure analysis.</p>
                 </div>
 
                 {/* Phase 2: CONTEXT (Bottom Right - 5:00) */}
@@ -112,7 +112,7 @@ export function SolutionSolarSystem() {
                         <Zap size={24} className="text-white/40 group-hover:text-blue-500 transition-colors" />
                         <div className="absolute -top-2 -right-2 bg-blue-500 text-black p-1 rounded-full"><Lock size={10} /></div>
                     </div>
-                    <h4 className="text-blue-400 font-bold font-mono text-sm tracking-widest mb-1">02. MERKLE INJECTION</h4>
+                    <h4 className="text-blue-400 font-bold font-mono text-sm tracking-widest mb-1">02. VERIFIED CONTEXT</h4>
                     <p className="text-xs text-white/50 max-w-[150px]">Grounding the Narrative.</p>
                 </div>
 
@@ -166,8 +166,8 @@ export function SolutionSolarSystem() {
                 <div className="grid grid-cols-2 gap-4">
                     {[
                         { id: "00", label: "INTENT", icon: Sparkles, color: "text-white", border: "border-white/20", shadow: "shadow-white/5", sub: "Initial Signal" },
-                        { id: "01", label: "AWARENESS", icon: Database, color: "text-neon", border: "border-neon/20", shadow: "shadow-neon/5", sub: "Fractal DNA" },
-                        { id: "02", label: "CONTEXT", icon: Zap, color: "text-blue-400", border: "border-blue-500/20", shadow: "shadow-blue-500/5", sub: "Merkle Inject" },
+                        { id: "01", label: "AWARENESS", icon: Database, color: "text-neon", border: "border-neon/20", shadow: "shadow-neon/5", sub: "Code Structure" },
+                        { id: "02", label: "CONTEXT", icon: Zap, color: "text-blue-400", border: "border-blue-500/20", shadow: "shadow-blue-500/5", sub: "Verified Ctx" },
                         { id: "03", label: "ANTIBODY", icon: Shield, color: "text-signal", border: "border-signal/20", shadow: "shadow-signal/5", sub: "Local Shield" },
                         { id: "04", label: "COMPUTE", icon: Globe, color: "text-purple-400", border: "border-purple-500/20", shadow: "shadow-purple-500/5", sub: "Mesh Intel" },
                         { id: "05", label: "LEARNING", icon: Terminal, color: "text-white", border: "border-white/40", shadow: "shadow-white/10", sub: "Save \u0026 Evolve" }
@@ -194,7 +194,7 @@ export function SolutionSolarSystem() {
                 <div className="order-2 md:order-1">
                     <h3 className="text-2xl font-bold text-white mb-4">00. Decipher Intent.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
-                        Sidelith captures high-dimensional intent, mapping your request against the core project mission.
+                        Capture high-dimensional intent to map your request against the core project mission.
                     </p>
                 </div>
                 <div className="order-1 md:order-2 p-8 rounded-3xl bg-white/[0.02] border border-white/5 font-mono text-xs text-white/60">
@@ -229,7 +229,7 @@ export function SolutionSolarSystem() {
                 <div className="order-2">
                     <h3 className="text-2xl font-bold text-white mb-4">01. Map the Territory.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
-                        Every signal is indexed into a cryptographic Merkle Tree, ensuring structural truth across polyglot codebases.
+                        Every signal is indexed into a local code structure database to ensure structural truth across polyglot codebases.
                     </p>
                 </div>
             </div>
@@ -239,7 +239,7 @@ export function SolutionSolarSystem() {
                 <div className="order-2 md:order-1">
                     <h3 className="text-2xl font-bold text-white mb-4">02. Deterministic Anchoring.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
-                        We force-feed the model exact dependencies and constraints, grounding every generation in architectural reality.
+                        Force-feed the model exact dependencies and constraints. Ground every generation in architectural reality.
                     </p>
                 </div>
                 <div className="order-1 md:order-2 p-8 rounded-3xl bg-blue-500/[0.02] border border-blue-500/10 font-mono text-xs text-blue-400/80">
@@ -268,7 +268,7 @@ export function SolutionSolarSystem() {
                 <div className="order-2">
                     <h3 className="text-2xl font-bold text-white mb-4">03. Structural Integrity.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
-                        Secrets stay local. Corporate policy is enforced on the edge before any packet leaves.
+                        Secrets stay local. Corporate policy is enforced at the edge before any packet leaves.
                     </p>
                 </div>
             </div>
@@ -278,7 +278,7 @@ export function SolutionSolarSystem() {
                 <div className="order-2 md:order-1">
                     <h3 className="text-2xl font-bold text-white mb-4">04. Compound Reasoning.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
-                        Sidelith orchestrates with high-end models (Claude, Gemini) through a secure local bridge, synthesizing complex solutions without leaking context.
+                        Synthesize complex solutions without leaking context via a secure local bridge to high-end models.
                     </p>
                 </div>
                 <div className="order-1 md:order-2 p-8 rounded-3xl bg-purple-500/[0.02] border border-purple-500/10 font-mono text-xs text-purple-400/80 flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden">
@@ -308,10 +308,10 @@ export function SolutionSolarSystem() {
                 <div className="order-2">
                     <h3 className="text-2xl font-bold text-white mb-4">05. Episodic Memory.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
-                        Verified solutions are serialized into the Chronos Vector Store. Sidelith captures the Reasoning Graph, Verified Patterns, and Forensic Guards from this interaction, ensuring the Operator never repeats a mistake.
+                        Verified solutions are serialized into the Local storage. Never repeat a mistake.
                     </p>
                     <div className="mt-6 p-4 rounded-xl bg-amber-500/[0.03] border border-amber-500/10 font-mono text-[10px] text-amber-500/60 transition-all hover:bg-amber-500/[0.06]">
-                        {`\u003e update: NEURAL_LOGIC_GRAPH`} <br />
+                        {`\u003e update: DECISION_DATABASE`} <br />
                         {`\u003e serialized: [REASONING_GRAPH, PATTERN_V4]`} <br />
                         <span className="text-amber-500 font-bold">{`\u003e status: KNOWLEDGE_BASE_UPDATED`}</span>
                     </div>

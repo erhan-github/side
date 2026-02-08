@@ -26,7 +26,7 @@ export function DefensiveMoats() {
                         <Lock size={24} className="text-emerald-500" />
                     </div>
                     <h4 className="text-lg font-bold text-white mb-3">E2E Cryptography</h4>
-                    <p className="text-white/40 text-xs leading-relaxed uppercase tracking-widest">AES-256 Memory Tunnels.</p>
+                    <p className="text-white/40 text-xs leading-relaxed uppercase tracking-widest">Encrypted local storage.</p>
                 </div>
 
                 <div className="p-4 md:p-8 rounded-[24px] md:rounded-[32px] bg-[#0a0a0a] border border-white/5 hover:border-purple-500/20 transition-all group">

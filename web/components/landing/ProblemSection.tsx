@@ -25,7 +25,7 @@ export function ProblemSection() {
                                 </div>
                             </div>
                             <p className="text-white/50 text-lg leading-relaxed max-w-xl">
-                                Generative models are stateless. Sidelith provides the <b>persistent substrate</b>. We stop the cycle of repeating yourself by providing a permanent semantic anchor.
+                                Generative models are stateless. Sidelith provides the <b>persistent substrate</b>. Eliminate repetitive loops by anchoring every prompt to a permanent semantic truth.
                             </p>
                         </div>
                     </div>
@@ -57,7 +57,7 @@ export function ProblemSection() {
                     </div>
                     <h3 className="text-xl font-bold text-white mb-4">Context Rot</h3>
                     <p className="text-white/40 leading-relaxed text-sm">
-                        The degradation of reasoning as noise accumulates. Sidelith is the antibody to generative entropy.
+                        Reasoning degrades as noise accumulates. Sidelith acts as the antibody to generative entropy.
                     </p>
                 </div>
 
@@ -70,7 +70,7 @@ export function ProblemSection() {
                         <div className="max-w-lg">
                             <h3 className="text-2xl font-bold text-white mb-4">The Governance Moat</h3>
                             <p className="text-white/50 leading-relaxed">
-                                Architectural maneuvers are cryptographically sealed. Prevent reasoning drift with 100% auditability.
+                                Every architectural decision is cryptographically sealed. Prevent reasoning drift with 100% auditability.
                             </p>
                         </div>
                         <div className="opacity-0 group-hover/reveal:opacity-100 transition-all duration-500 translate-x-4 group-hover/reveal:translate-x-0 text-[10px] font-mono text-yellow-500/60 uppercase tracking-[0.2em] bg-yellow-500/5 px-4 py-2 rounded-xl border border-yellow-500/10 text-right leading-relaxed">
