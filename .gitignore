@@ -23,7 +23,7 @@ backend/task.md
 # Classified Strategy (Sovereign Level)
 private/
 .side
-docs/
+/docs/
 readings/
 .sovereignignore
 .side-id

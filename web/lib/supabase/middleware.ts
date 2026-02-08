@@ -45,6 +45,12 @@ export async function updateSession(request: NextRequest) {
         !request.nextUrl.pathname.startsWith('/api/spc') &&
         !request.nextUrl.pathname.startsWith('/public') &&
         !request.nextUrl.pathname.startsWith('/changelog') &&
+        !request.nextUrl.pathname.startsWith('/docs') &&
+        !request.nextUrl.pathname.startsWith('/terms') &&
+        !request.nextUrl.pathname.startsWith('/privacy') &&
+        !request.nextUrl.pathname.startsWith('/security') &&
+        !request.nextUrl.pathname.startsWith('/about') &&
+        !request.nextUrl.pathname.startsWith('/install') &&
         request.nextUrl.pathname !== '/'
     ) {
         // no user, potentially respond by redirecting the user to the login page
