@@ -5,175 +5,167 @@ import { CheckoutButton } from "@/components/dashboard/CheckoutButton";
 export default function PricingPage() {
     return (
         <div className="min-h-screen bg-black text-white selection:bg-white/20">
-            <main className="pt-32 pb-16 px-6">
-                <div className="max-w-6xl mx-auto">
-                    {/* Header */}
-                    <div className="text-center mb-16">
-                        <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic">
-                            Infrastructure<br />Level.
-                        </h1>
-                        <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-                            The System of Record for Project Context. Sidelith is a foundational layer for your IDE. Free for individuals, tiered for scale.
-                        </p>
+            <main className="pt-40 pb-16">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="max-w-3xl">
+                        {/* Header */}
+                        <div className="mb-12">
+                            <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 uppercase italic">
+                                Infrastructure<br />Level.
+                            </h1>
+                            <p className="text-lg text-zinc-400 leading-relaxed">
+                                The System of Record for Project Context. Sidelith is a foundational layer for your IDE. Free for individuals, tiered for scale.
+                            </p>
+                        </div>
                     </div>
+                </div>
 
-                    {/* Pricing Cards - 4 tiers */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 items-stretch">
+                <div className="max-w-7xl mx-auto px-6">
+
+
+                    {/* Pricing Cards - 5 tiers */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-16 items-stretch">
                         {/* Hobby - Free */}
-                        <div className="relative p-8 rounded-3xl border border-white/10 bg-zinc-900/50 flex flex-col hover:border-white/20 transition-colors duration-300">
-                            <div className="mb-6">
-                                <h3 className="text-xl font-bold tracking-tight mb-2 text-white uppercase tracking-widest">Hobby</h3>
-                                <p className="text-zinc-400 text-sm italic">For individuals</p>
+                        <div className="relative p-6 rounded-3xl border border-white/10 bg-zinc-900/50 flex flex-col hover:border-white/20 transition-colors duration-300">
+                            <div className="mb-4">
+                                <h3 className="text-lg font-bold tracking-tight mb-1 text-white uppercase tracking-widest">Hobby</h3>
+                                <p className="text-zinc-400 text-xs italic">Individual, evaluation</p>
                             </div>
-                            <div className="mb-6">
-                                <span className="text-5xl font-bold tracking-tighter text-white">$0</span>
-                                <span className="text-zinc-400 font-medium">/mo</span>
+                            <div className="mb-4">
+                                <span className="text-4xl font-bold tracking-tighter text-white">$0</span>
                             </div>
-                            <div className="mb-6 p-3 rounded-xl bg-zinc-500/10 border border-zinc-500/20">
-                                <p className="text-zinc-400 text-sm font-medium flex items-center gap-2">
-                                    <Check className="w-4 h-4" /> 500 SUs / MO
+                            <div className="mb-4 p-2 rounded-lg bg-zinc-500/10 border border-zinc-500/20">
+                                <p className="text-zinc-400 text-xs font-medium flex items-center gap-2">
+                                    <Check className="w-3 h-3" /> 500 SUs
                                 </p>
                             </div>
                             <div className="flex-grow">
-                                <ul className="space-y-3 mb-8 text-sm text-zinc-400">
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-cyan-400 shrink-0" />
-                                        <span className="text-zinc-300">Decision Database</span>
+                                <ul className="space-y-2 mb-6 text-xs text-zinc-400">
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-cyan-400 shrink-0" />
+                                        <span>Decision Database</span>
                                     </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-cyan-400 shrink-0" />
-                                        <span className="text-zinc-300">Forensic Audit Logs</span>
-                                    </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-cyan-400 shrink-0" />
-                                        <span className="text-zinc-300">Local SQLite Registry</span>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-cyan-400 shrink-0" />
+                                        <span>Local SQLite Registry</span>
                                     </li>
                                 </ul>
                             </div>
-                            <Link
-                                href="/login"
-                                className="w-full h-12 rounded-full border border-white/10 flex items-center justify-center font-medium hover:bg-white hover:text-black hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 mt-auto"
-                            >
-                                Get Started →
-                            </Link>
+                            <Link href="/login" className="w-full h-10 rounded-full border border-white/10 flex items-center justify-center text-sm font-medium hover:bg-white hover:text-black transition-all">Start</Link>
                         </div>
 
                         {/* Pro - $20 */}
-                        <div className="relative p-8 rounded-3xl border border-cyan-500/30 bg-zinc-900/80 flex flex-col hover:border-cyan-500/50 transition-colors duration-300 shadow-2xl shadow-cyan-900/10 z-10">
-                            <div className="mb-6">
-                                <h3 className="text-xl font-black tracking-tight mb-2 text-white uppercase tracking-widest italic">Pro</h3>
-                                <p className="text-cyan-400/60 text-sm italic">For professionals</p>
+                        <div className="relative p-6 rounded-3xl border border-cyan-500/30 bg-zinc-900/80 flex flex-col hover:border-cyan-500/50 transition-colors duration-300 shadow-xl shadow-cyan-900/10 z-10">
+                            <div className="mb-4">
+                                <h3 className="text-lg font-bold tracking-tight mb-1 text-white uppercase tracking-widest">Pro</h3>
+                                <p className="text-cyan-400/60 text-xs italic">Professional developers</p>
                             </div>
-                            <div className="mb-6">
-                                <span className="text-6xl font-black tracking-tighter text-white">$20</span>
-                                <span className="text-zinc-400 font-medium">/mo</span>
+                            <div className="mb-4">
+                                <span className="text-4xl font-bold tracking-tighter text-white">$20</span>
                             </div>
-                            <div className="mb-6 p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-                                <p className="text-cyan-400 text-sm font-medium flex items-center gap-2">
-                                    <Check className="w-4 h-4" /> 5,000 SUs / MO
+                            <div className="mb-4 p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                                <p className="text-cyan-400 text-xs font-medium flex items-center gap-2">
+                                    <Check className="w-3 h-3" /> 5,000 SUs
                                 </p>
                             </div>
                             <div className="flex-grow">
-                                <ul className="space-y-3 mb-8 text-sm text-zinc-300">
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-cyan-400 shrink-0" />
-                                        <span className="font-bold text-white">Everything in Hobby</span>
+                                <ul className="space-y-2 mb-6 text-xs text-zinc-300">
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-cyan-400 shrink-0" />
+                                        <span>Everything in Hobby</span>
                                     </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-cyan-400 shrink-0" />
                                         <span>Architectural Forensics</span>
-                                    </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-cyan-400 shrink-0" />
-                                        <span>Continuous Context Sync</span>
                                     </li>
                                 </ul>
                             </div>
-                            <CheckoutButton
-                                variantId={process.env.LEMONSQUEEZY_VARIANT_ID_PRO!}
-                                label="UPGRADE"
-                            />
+                            <CheckoutButton variantId={process.env.LEMONSQUEEZY_VARIANT_ID_PRO!} label="UPGRADE" />
                         </div>
 
                         {/* Elite - $60 */}
-                        <div className="relative p-8 rounded-3xl border border-purple-500/30 bg-zinc-900/80 flex flex-col hover:border-purple-500/50 transition-colors duration-300 shadow-2xl shadow-purple-900/10 scale-105 z-20">
-                            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-purple-500 text-white text-[10px] font-black tracking-[0.2em] uppercase">
-                                Best Value
+                        <div className="relative p-6 rounded-3xl border border-purple-500/30 bg-zinc-900/80 flex flex-col hover:border-purple-500/50 transition-colors duration-300 shadow-xl shadow-purple-900/10 z-20">
+                            <div className="mb-4">
+                                <h3 className="text-lg font-bold tracking-tight mb-1 text-white uppercase tracking-widest">Elite</h3>
+                                <p className="text-purple-400/60 text-xs italic">Power users, small teams</p>
                             </div>
-                            <div className="mb-6">
-                                <h3 className="text-xl font-black tracking-tight mb-2 text-white uppercase tracking-widest italic flex items-center gap-2">
-                                    Elite <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                </h3>
-                                <p className="text-purple-400/60 text-sm italic">For power users</p>
+                            <div className="mb-4">
+                                <span className="text-4xl font-bold tracking-tighter text-white">$60</span>
                             </div>
-                            <div className="mb-6">
-                                <span className="text-6xl font-black tracking-tighter text-white">$60</span>
-                                <span className="text-zinc-400 font-medium">/mo</span>
-                            </div>
-                            <div className="mb-6 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                                <p className="text-purple-400 text-sm font-medium flex items-center gap-2">
-                                    <Check className="w-4 h-4" /> 25,000 SUs / MO
+                            <div className="mb-4 p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                                <p className="text-purple-400 text-xs font-medium flex items-center gap-2">
+                                    <Check className="w-3 h-3" /> 25,000 SUs
                                 </p>
                             </div>
                             <div className="flex-grow">
-                                <ul className="space-y-3 mb-8 text-sm text-zinc-300">
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-purple-400 shrink-0" />
-                                        <span className="font-bold text-white">Everything in Pro</span>
+                                <ul className="space-y-2 mb-6 text-xs text-zinc-300">
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-purple-400 shrink-0" />
+                                        <span>Unlimited Projects</span>
                                     </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-purple-400 shrink-0" />
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-purple-400 shrink-0" />
                                         <span>Context-Engine (RLM)</span>
                                     </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-purple-400 shrink-0" />
-                                        <span className="font-bold">Unlimited Projects</span>
-                                    </li>
                                 </ul>
                             </div>
-                            <CheckoutButton
-                                variantId={process.env.LEMONSQUEEZY_VARIANT_ID_ELITE!}
-                                label="GO ELITE"
-                                variant="purple"
-                            />
+                            <CheckoutButton variantId={process.env.LEMONSQUEEZY_VARIANT_ID_ELITE!} label="GO ELITE" variant="purple" />
                         </div>
 
-                        {/* High Tech - Custom */}
-                        <div className="relative p-8 rounded-3xl border border-white/10 bg-zinc-900/50 flex flex-col hover:border-white/20 transition-colors duration-300">
-                            <div className="mb-6">
-                                <h3 className="text-xl font-bold tracking-tight mb-2 flex items-center gap-2 text-white uppercase tracking-widest">High Tech</h3>
-                                <p className="text-zinc-400 text-sm italic">For IP-Sensitive Enterprises</p>
+                        {/* Enterprise - Custom */}
+                        <div className="relative p-6 rounded-3xl border border-blue-500/20 bg-zinc-900/50 flex flex-col hover:border-blue-500/40 transition-colors duration-300">
+                            <div className="mb-4">
+                                <h3 className="text-lg font-bold tracking-tight mb-1 text-white uppercase tracking-widest">Enterprise</h3>
+                                <p className="text-blue-400/60 text-xs italic">Teams, SSO, Shared Pools</p>
                             </div>
-                            <div className="mb-8 flex flex-col justify-center h-20">
-                                <span className="text-4xl font-bold tracking-tighter text-white">Custom</span>
-                                <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mt-1">ABSOLUTE CONTROL</span>
+                            <div className="mb-4 flex flex-col justify-center h-10">
+                                <span className="text-2xl font-bold tracking-tighter text-white">Custom</span>
                             </div>
                             <div className="flex-grow">
-                                <ul className="space-y-3 mb-8 text-sm text-zinc-400">
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-white shrink-0" />
-                                        <span className="text-zinc-300">Airgap Mode (Ollama, Azure & Custom)</span>
+                                <ul className="space-y-2 mb-6 text-xs text-zinc-400">
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-blue-400 shrink-0" />
+                                        <span>Shared Context Pools</span>
                                     </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-white shrink-0" />
-                                        <span className="text-zinc-300">System Pulse</span>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-blue-400 shrink-0" />
+                                        <span>SAML SSO</span>
                                     </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-white shrink-0" />
-                                        <span className="text-zinc-300">Fractal Memory</span>
-                                    </li>
-                                    <li className="flex items-center gap-3">
-                                        <Check className="w-4 h-4 text-white shrink-0" />
-                                        <span className="text-zinc-300">Decision Database</span>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-blue-400 shrink-0" />
+                                        <span>Team Analytics</span>
                                     </li>
                                 </ul>
                             </div>
-                            <a
-                                href="mailto:hq@sidelith.com"
-                                className="w-full h-12 rounded-full border border-white/10 flex items-center justify-center font-medium hover:bg-white hover:text-black hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 mt-auto"
-                            >
-                                Contact Sales →
-                            </a>
+                            <a href="mailto:sales@sidelith.com" className="w-full h-10 rounded-full border border-white/10 flex items-center justify-center text-sm font-medium hover:bg-white hover:text-black transition-all mt-auto">Contact</a>
+                        </div>
+
+                        {/* Airgapped - Custom */}
+                        <div className="relative p-6 rounded-3xl border border-emerald-500/20 bg-zinc-900/50 flex flex-col hover:border-emerald-500/40 transition-colors duration-300">
+                            <div className="mb-4">
+                                <h3 className="text-lg font-bold tracking-tight mb-1 text-white uppercase tracking-widest">Airgapped</h3>
+                                <p className="text-emerald-400/60 text-xs italic">Regulated industries</p>
+                            </div>
+                            <div className="mb-4 flex flex-col justify-center h-10">
+                                <span className="text-2xl font-bold tracking-tighter text-white">Custom</span>
+                            </div>
+                            <div className="flex-grow">
+                                <ul className="space-y-2 mb-6 text-xs text-zinc-400">
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                                        <span>On-Premise Deployment</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                                        <span>BYOK LLM / Local</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                                        <span>Zero Cloud Egress</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <a href="mailto:enterprise@sidelith.com" className="w-full h-10 rounded-full border border-white/10 flex items-center justify-center text-sm font-medium hover:bg-white hover:text-black transition-all mt-auto">Available Now</a>
                         </div>
                     </div>
 

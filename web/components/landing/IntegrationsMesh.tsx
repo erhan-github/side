@@ -1,4 +1,4 @@
-import { Terminal, Cpu, Globe, Database } from "lucide-react";
+import { Terminal, Cpu, Globe, Database, Wind } from "lucide-react";
 
 export function IntegrationsMesh() {
     return (
@@ -11,20 +11,20 @@ export function IntegrationsMesh() {
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
-                            <Terminal size={20} className="text-white/40" />
-                            <span className="text-xs font-bold text-white/60">CLI</span>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
-                            <Cpu size={20} className="text-white/40" />
+                            <Cpu size={20} className="text-blue-400" />
                             <span className="text-xs font-bold text-white/60">Cursor</span>
                         </div>
                         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
-                            <Globe size={20} className="text-white/40" />
+                            <Globe size={20} className="text-purple-400" />
+                            <span className="text-xs font-bold text-white/60">Claude</span>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
+                            <Database size={20} className="text-indigo-400" />
                             <span className="text-xs font-bold text-white/60">VS Code</span>
                         </div>
                         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
-                            <Database size={20} className="text-white/40" />
-                            <span className="text-xs font-bold text-white/60">JetBrains</span>
+                            <Wind size={20} className="text-cyan-400" />
+                            <span className="text-xs font-bold text-white/60">Windsurf</span>
                         </div>
                     </div>
                 </div>

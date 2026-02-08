@@ -6,6 +6,12 @@ import { Terminal, Copy, Check, Command, Monitor, Box, Zap, Code, Wind, Bot, Spa
 type Platform = "cursor" | "claude" | "vscode" | "windsurf" | "terminal" | "gemini";
 type Tier = "hobby" | "pro" | "elite";
 
+const TIER_METADATA = [
+    { id: "hobby", label: "Hobby", su: "500 SUs", price: "$0", color: "border-white/10" },
+    { id: "pro", label: "Pro", su: "5,000 SUs", price: "$20", color: "border-blue-500/30" },
+    { id: "elite", label: "Elite", su: "25,000 SUs", price: "$60", color: "border-amber-500/30" }
+];
+
 export function InstallWidget() {
     const [active, setActive] = useState<Platform>("cursor");
     const [tier, setTier] = useState<Tier>("hobby");
@@ -60,11 +66,7 @@ export function InstallWidget() {
 
             {/* TIER DISPLAY (Static, as it's auto-detected) */}
             <div className="flex justify-center gap-4 mb-8">
-                {[
-                    { id: "hobby", label: "Hobby", su: "500 SUs", price: "$0", color: "border-white/10" },
-                    { id: "pro", label: "Pro", su: "5,000 SUs", price: "$20", color: "border-blue-500/30" },
-                    { id: "elite", label: "Elite", su: "25,000 SUs", price: "$60", color: "border-amber-500/30" }
-                ].map((t) => {
+                {TIER_METADATA.map((t) => {
                     const isActive = tier === t.id;
                     return (
                         <div

@@ -14,7 +14,7 @@ export function PricingSection() {
                     <div className="text-[10px] font-mono text-white/30 tracking-widest uppercase mb-2">Hobby</div>
                     <div className="text-3xl font-bold text-white mb-1">$0</div>
                     <div className="text-[10px] font-mono text-white/40 mb-4">500 SUs / MO</div>
-                    <p className="text-xs text-white/30 mb-6">The default entry point for exploring Sidelith.</p>
+                    <p className="text-xs text-white/30 mb-6">Individual use and evaluation.</p>
                     <a href="#install-widget" className="block text-center py-2 px-4 rounded-xl border border-white/10 hover:border-white/20 text-xs font-bold text-white transition-colors uppercase tracking-widest">
                         Start Free
                     </a>
@@ -31,7 +31,7 @@ export function PricingSection() {
                         <div className="text-[10px] font-mono text-amber-500/60 tracking-widest uppercase mb-2">Pro</div>
                         <div className="text-4xl font-bold text-white mb-1">$20</div>
                         <div className="text-sm font-mono text-white/60 mb-6">5,000 SUs / MO</div>
-                        <p className="text-sm text-white/60 mb-6">Standard tier for freelancers and professionals.</p>
+                        <p className="text-sm text-white/60 mb-6">For professional developers delivering code daily.</p>
 
                         <div className="mb-6">
                             <div className="h-2 bg-white/5 rounded-full overflow-hidden">
@@ -51,32 +51,51 @@ export function PricingSection() {
                     <div className="text-[10px] font-mono text-white/30 tracking-widest uppercase mb-2">Elite</div>
                     <div className="text-3xl font-bold text-white mb-1">$60</div>
                     <div className="text-[10px] font-mono text-white/40 mb-4">25,000 SUs / MO</div>
-                    <p className="text-xs text-white/30 mb-6">For 10x engineers and large repositories.</p>
+                    <p className="text-xs text-white/30 mb-6">For power users and small teams.</p>
                     <a href="#install-widget" className="block text-center py-2 px-4 rounded-xl border border-white/10 hover:border-purple-500/30 text-xs font-bold text-white transition-colors uppercase tracking-widest">
                         Upgrade
                     </a>
                 </div>
             </div>
 
-            {/* HIGH TECH - Full Width Enterprise Card */}
-            <div className="p-8 rounded-[28px] bg-gradient-to-r from-slate-900/50 to-slate-800/50 border border-white/10 hover:border-white/20 transition-all group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/[0.02] to-purple-500/[0.02]" />
-                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div className="flex-1">
-                        <div className="text-[10px] font-mono text-white/40 tracking-widest uppercase mb-2">High Tech</div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Enterprise Infrastructure</h3>
-                        <p className="text-white/50 text-sm mb-4">True air-gap deployment with local Ollama LLM for regulated industries.</p>
-                        <div className="flex flex-wrap gap-4 text-[10px] text-white/40">
-                            <span>• Zero Cloud Sync</span>
-                            <span>• Local Ollama LLM</span>
-                            <span>• FIPS/ITAR/HIPAA Ready</span>
-                            <span>• Custom Deployment</span>
+            {/* Enterprise & Airgapped - 2 Column Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Enterprise */}
+                <div className="p-8 rounded-[28px] bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] border border-white/10 hover:border-blue-500/30 transition-all group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[50px] rounded-full group-hover:bg-blue-500/10 transition-colors" />
+                    <div className="relative z-10 flex flex-col h-full justify-between">
+                        <div>
+                            <div className="text-[10px] font-mono text-blue-400 tracking-widest uppercase mb-2">Enterprise</div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Cloud Teams</h3>
+                            <p className="text-white/50 text-sm mb-6">SSO, Shared Context Pools, and Team Analytics.</p>
+                            <div className="flex flex-wrap gap-2 mb-6">
+                                <span className="text-[10px] px-2 py-1 rounded bg-white/5 border border-white/10 text-white/60">SAML SSO</span>
+                                <span className="text-[10px] px-2 py-1 rounded bg-white/5 border border-white/10 text-white/60">Team Pools</span>
+                                <span className="text-[10px] px-2 py-1 rounded bg-white/5 border border-white/10 text-white/60">Audit API</span>
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex-shrink-0 flex flex-col items-center justify-center">
-                        <div className="text-3xl font-bold text-white mb-4">Custom</div>
-                        <a href="mailto:enterprise@sidelith.com" className="block text-center py-3 px-6 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 text-sm font-bold text-white transition-colors uppercase tracking-widest whitespace-nowrap">
+                        <a href="mailto:sales@sidelith.com" className="block text-center py-3 px-6 rounded-xl border border-white/10 hover:bg-blue-500/10 hover:border-blue-500/30 text-sm font-bold text-white transition-colors uppercase tracking-widest">
                             Contact Sales
+                        </a>
+                    </div>
+                </div>
+
+                {/* Airgapped */}
+                <div className="p-8 rounded-[28px] bg-gradient-to-br from-slate-900 to-slate-800 border border-white/10 hover:border-emerald-500/30 transition-all group relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 mix-blend-overlay" />
+                    <div className="relative z-10 flex flex-col h-full justify-between">
+                        <div>
+                            <div className="text-[10px] font-mono text-emerald-400 tracking-widest uppercase mb-2">Airgapped</div>
+                            <h3 className="text-2xl font-bold text-white mb-2">On-Premise</h3>
+                            <p className="text-white/50 text-sm mb-6">Zero-egress deployment for regulated industries.</p>
+                            <div className="flex flex-wrap gap-2 mb-6">
+                                <span className="text-[10px] px-2 py-1 rounded bg-white/5 border border-white/10 text-white/60">BYOK LLM</span>
+                                <span className="text-[10px] px-2 py-1 rounded bg-white/5 border border-white/10 text-white/60">No Cloud Sync</span>
+                                <span className="text-[10px] px-2 py-1 rounded bg-white/5 border border-white/10 text-white/60">FIPS/ITAR</span>
+                            </div>
+                        </div>
+                        <a href="mailto:enterprise@sidelith.com" className="block text-center py-3 px-6 rounded-xl bg-white/5 border border-white/10 hover:bg-emerald-500/10 hover:border-emerald-500/30 text-sm font-bold text-white transition-colors uppercase tracking-widest">
+                            Talk to Engineering
                         </a>
                     </div>
                 </div>
