@@ -53,7 +53,7 @@ export function SolutionSolarSystem() {
 
                     <text dy="-10">
                         <textPath href="#diode-text-path" startOffset="50%" textAnchor="middle" className="fill-white/70 text-[10px] uppercase font-mono tracking-widest font-bold">
-                            [ANON_PATTERNS]
+                            [SHARED_KNOWLEDGE]
                         </textPath>
                     </text>
 
@@ -93,8 +93,8 @@ export function SolutionSolarSystem() {
                     <div className="w-16 h-16 rounded-2xl bg-[#0a0a0a] border border-white flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.2)] mb-4">
                         <Sparkles size={24} className="text-white animate-pulse" />
                     </div>
-                    <h4 className="text-white font-bold font-mono text-sm tracking-widest mb-1">00. VECTORED INTENT</h4>
-                    <p className="text-xs text-white/50 max-w-[150px]">The Initial Signal.</p>
+                    <h4 className="text-white font-bold font-mono text-sm tracking-widest mb-1">00. USER INTENT</h4>
+                    <p className="text-xs text-white/50 max-w-[150px]">Your Request.</p>
                 </div>
 
                 {/* Phase 1: SHADOWING (Right - 3:00) */}
@@ -130,8 +130,8 @@ export function SolutionSolarSystem() {
                     <div className="w-16 h-16 rounded-2xl bg-[#0a0a0a] border border-white/10 flex items-center justify-center shadow-2xl mb-4 group-hover:border-purple-500/50 transition-colors">
                         <Globe size={24} className="text-white/40 group-hover:text-purple-400 transition-colors" />
                     </div>
-                    <h4 className="text-purple-400 font-bold font-mono text-sm tracking-widest mb-1">04. MESH INTELLIGENCE</h4>
-                    <p className="text-xs text-white/50 max-w-[150px]">Compound Reasoning.</p>
+                    <h4 className="text-purple-400 font-bold font-mono text-sm tracking-widest mb-1">04. LOCAL REASONING</h4>
+                    <p className="text-xs text-white/50 max-w-[150px]">Smart Analysis.</p>
                 </div>
 
                 {/* Phase 5: EDITOR (Top Left - 11:00) */}
@@ -139,8 +139,8 @@ export function SolutionSolarSystem() {
                     <div className="w-16 h-16 rounded-2xl bg-[#0a0a0a] border border-white/10 flex items-center justify-center shadow-2xl mb-4 group-hover:border-white/50 transition-colors relative">
                         <Terminal size={24} className="text-white/40 group-hover:text-white transition-colors" />
                     </div>
-                    <h4 className="text-white font-bold font-mono text-sm tracking-widest mb-1">05. PATTERN SERIALIZATION</h4>
-                    <p className="text-xs text-white/50 max-w-[150px]">Recursive Learning Loop.</p>
+                    <h4 className="text-white font-bold font-mono text-sm tracking-widest mb-1">05. SAVE KNOWLEDGE</h4>
+                    <p className="text-xs text-white/50 max-w-[150px]">Continuous Improvement.</p>
                 </div>
 
             </div>
@@ -165,12 +165,12 @@ export function SolutionSolarSystem() {
                 {/* Phase Grid */}
                 <div className="grid grid-cols-2 gap-4">
                     {[
-                        { id: "00", label: "INTENT", icon: Sparkles, color: "text-white", border: "border-white/20", shadow: "shadow-white/5", sub: "Initial Signal" },
+                        { id: "00", label: "INTENT", icon: Sparkles, color: "text-white", border: "border-white/20", shadow: "shadow-white/5", sub: "User Request" },
                         { id: "01", label: "AWARENESS", icon: Database, color: "text-neon", border: "border-neon/20", shadow: "shadow-neon/5", sub: "Code Structure" },
                         { id: "02", label: "CONTEXT", icon: Zap, color: "text-blue-400", border: "border-blue-500/20", shadow: "shadow-blue-500/5", sub: "Verified Ctx" },
                         { id: "03", label: "ANTIBODY", icon: Shield, color: "text-signal", border: "border-signal/20", shadow: "shadow-signal/5", sub: "Local Shield" },
-                        { id: "04", label: "COMPUTE", icon: Globe, color: "text-purple-400", border: "border-purple-500/20", shadow: "shadow-purple-500/5", sub: "Mesh Intel" },
-                        { id: "05", label: "LEARNING", icon: Terminal, color: "text-white", border: "border-white/40", shadow: "shadow-white/10", sub: "Save \u0026 Evolve" }
+                        { id: "04", label: "COMPUTE", icon: Globe, color: "text-purple-400", border: "border-purple-500/20", shadow: "shadow-purple-500/5", sub: "Local Reasoning" },
+                        { id: "05", label: "LEARNING", icon: Terminal, color: "text-white", border: "border-white/40", shadow: "shadow-white/10", sub: "Save Knowledge" }
                     ].map((phase) => (
                         <div key={phase.id} className={`p-4 rounded-2xl bg-[#0a0a0a] border ${phase.border} ${phase.shadow} flex flex-col items-center text-center group active:scale-95 transition-all`}>
                             <div className={`w-10 h-10 rounded-xl bg-white/[0.02] flex items-center justify-center mb-3`}>
@@ -192,7 +192,7 @@ export function SolutionSolarSystem() {
             {/* STEP 0: INTENT (The Spark) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24 items-center">
                 <div className="order-2 md:order-1">
-                    <h3 className="text-2xl font-bold text-white mb-4">00. Decipher Intent.</h3>
+                    <h3 className="text-2xl font-bold text-white mb-4">00. User Intent.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
                         Capture high-dimensional intent to map your request against the core project mission.
                     </p>
@@ -227,7 +227,7 @@ export function SolutionSolarSystem() {
                     </div>
                 </div>
                 <div className="order-2">
-                    <h3 className="text-2xl font-bold text-white mb-4">01. Map the Territory.</h3>
+                    <h3 className="text-2xl font-bold text-white mb-4">01. Code Structure.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
                         Every signal is indexed into a local code structure database to ensure structural truth across polyglot codebases.
                     </p>
@@ -276,7 +276,7 @@ export function SolutionSolarSystem() {
             {/* STEP 4: REASONING (The Mesh) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24 items-center">
                 <div className="order-2 md:order-1">
-                    <h3 className="text-2xl font-bold text-white mb-4">04. Compound Reasoning.</h3>
+                    <h3 className="text-2xl font-bold text-white mb-4">04. Smart Analysis.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
                         Synthesize complex solutions without leaking context via a secure local bridge to high-end models.
                     </p>
@@ -306,7 +306,7 @@ export function SolutionSolarSystem() {
                     </div>
                 </div>
                 <div className="order-2">
-                    <h3 className="text-2xl font-bold text-white mb-4">05. Episodic Memory.</h3>
+                    <h3 className="text-2xl font-bold text-white mb-4">05. Save Knowledge.</h3>
                     <p className="text-white/40 text-lg font-light leading-relaxed">
                         Verified solutions are serialized into the Local storage. Never repeat a mistake.
                     </p>
