@@ -12,7 +12,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from side.storage.modules.base import ContextEngine
 
-from side.intel.handlers.dna import DNAHandler
+import os
+from side.intel.handlers.topology import DNAHandler
 from side.intel.handlers.feeds import FeedHandler
 from side.intel.handlers.janitor import JanitorHandler
 from side.intel.handlers.context import ContextHandler
@@ -21,11 +22,11 @@ logger = logging.getLogger(__name__)
 
 class AutoIntelligence:
     """
-    Sovereign Context Orchestrator [Tier-3].
+    System Context Orchestrator [Tier-3].
     Delegates specialized logic to handlers:
     - DNAHandler: Structural Truth & Indexing.
     - FeedHandler: Historical & Incremental Sync.
-    - JanitorHandler: Neural Decay & Pruning.
+    - JanitorHandler: Cache Decay & Pruning.
     - ContextHandler: High-Fidelity Prompt Construction.
     """
 
@@ -36,7 +37,7 @@ class AutoIntelligence:
         self.project_path = project_path
         self.engine = engine
         self.strategic = engine.strategic
-        self.forensic = engine.forensic
+        self.forensic = engine.audit
         self.buffer = buffer
         
         self.mmap = MmapStore(project_path)
@@ -78,14 +79,20 @@ class AutoIntelligence:
         root_index_path = self.project_path / ".side" / "local.json"
         local_data = {}
         if root_index_path.exists():
-            raw_data = shield.unseal_file(root_index_path)
-            local_data = json.loads(raw_data)
+            try:
+                raw_data = shield.unseal_file(root_index_path)
+                local_data = json.loads(raw_data)
+            except Exception as e:
+                logger.warning(f"Failed to read local index: {e}")
+        
+        # [PERFORMANCE]: Optimized Stats Scan (Batch 1 Remediation)
+        stats = self._get_project_stats()
         
         from side.models.brain import ContextSnapshot, BrainStats, DNA
         snapshot_obj = ContextSnapshot(
             stats=BrainStats(
-                nodes=len(list(self.project_path.rglob("*"))),
-                total_lines=0
+                nodes=stats["nodes"],
+                total_lines=stats["total_lines"]
             ),
             dna=DNA(
                 signals=local_data.get("dna", {}).get("signals", [])
@@ -94,9 +101,41 @@ class AutoIntelligence:
         
         metadata_file = self.project_path / ".side" / "project_metadata.json"
         metadata_file.parent.mkdir(parents=True, exist_ok=True)
+        # Only seal if meaningful data exists
         shield.seal_file(metadata_file, snapshot_obj.model_dump_json(indent=2))
         logger.debug("💾 [CHECKPOINT]: Project metadata serialized (STRICT).")
         return snapshot_obj
+
+    def _get_project_stats(self) -> Dict[str, int]:
+        """Deep Scan: Fast directory traversal with early pruning."""
+        from side.services.ignore import ProjectIgnore
+        ignore = ProjectIgnore(self.project_path)
+        nodes = 0
+        total_lines = 0
+        
+        stack = [self.project_path]
+        while stack:
+            curr = stack.pop()
+            try:
+                with os.scandir(curr) as it:
+                    for entry in it:
+                        path = Path(entry.path)
+                        if ignore.should_ignore(path):
+                            continue
+                        
+                        nodes += 1
+                        if entry.is_dir():
+                            stack.append(path)
+                        elif entry.is_file():
+                            if path.suffix in ('.py', '.js', '.ts', '.tsx', '.css', '.html', '.md', '.json', '.yaml', '.yml'):
+                                try:
+                                    with open(path, 'rb') as f:
+                                        total_lines += sum(1 for _ in f)
+                                except Exception:
+                                    pass
+            except (PermissionError, FileNotFoundError):
+                continue
+        return {"nodes": nodes, "total_lines": total_lines}
 
     async def _sync_mmap_patterns(self):
         """Syncs public patterns to Mmap Store."""
@@ -108,20 +147,16 @@ class AutoIntelligence:
                 p_id = p.get('id')
                 if sig_hash is not None and p_id:
                     import uuid
-                    try:
-                        uuid_obj = uuid.UUID(p_id)
-                        fragments.append((sig_hash, uuid_obj.bytes))
-                    except: continue
+                try:
+                    import uuid
+                    uuid_obj = uuid.UUID(p_id)
+                    fragments.append((sig_hash, uuid_obj.bytes))
+                except (ValueError, TypeError):
+                    continue
             
             if fragments:
                  self.mmap.sync_from_ledger(fragments)
-            
-            metadata_file = self.project_path / ".side" / "project_metadata.json"
-            if metadata_file.exists():
-                raw = shield.unseal_file(metadata_file)
-                data = json.loads(raw)
-                shield.seal_file(metadata_file, json.dumps(data, indent=2))
-                logger.info("✨ [CONTEXT]: Technical timeline synced.")
+                 logger.info("✨ [CONTEXT]: Technical timeline synced.")
         except Exception as e:
             logger.warning(f"MMAP Sync Failed: {e}")
 

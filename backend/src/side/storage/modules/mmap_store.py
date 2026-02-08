@@ -20,7 +20,7 @@ class MmapStore:
     """
 
     def __init__(self, project_path: Path):
-        self.mmap_path = project_path / ".side" / "sovereign.mmap"
+        self.mmap_path = project_path / ".side" / "project.mmap"
         self._mmap = None
         self._fd = None
         self._count = 0

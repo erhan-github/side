@@ -16,7 +16,7 @@ from side.tools.core import get_database
 
 from side.models.pricing import ActionCost
 
-# Costs for different tool types (Aligned with Sovereign Economy)
+# Costs for different tool types (Aligned with System Economy)
 TOOL_COSTS = {
     "architectural_decision": ActionCost.STRATEGIC_ALIGN,
     "strategic_review": ActionCost.STRATEGIC_ALIGN,

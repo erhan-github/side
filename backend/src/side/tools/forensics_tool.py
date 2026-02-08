@@ -115,44 +115,18 @@ class ForensicsTool:
         # Extract file paths from content to get context guidance
         context_guidance = self._extract_context_guidance(content)
         
-        prompt = f"""You are a Code Forensics Engine specializing in identifying REAL security vulnerabilities.
-
-**Query**: "{query}"
-
-**Code Context**:
-{content}
-
-{context_guidance}
-
-**Task**: Identify CRITICAL security issues (OWASP Top 10, hardcoded secrets, auth flaws).
-
-**CRITICAL Rules - Avoid False Positives**:
-
-✅ **Report These (Real Vulnerabilities)**:
-- Actual hardcoded API keys: `api_key = "sk_live_abc123"` (NOT environment variables)
-- SQL injection with unsanitized user input (NOT parameterized queries)
-- Missing authentication on PUBLIC endpoints (check if local-only/MCP server)
-- Passwords in plain text storage (NOT bcrypt hashes)
-
-❌ **DO NOT Report These (False Positives)**:
-- Regex patterns for DETECTING secrets (e.g., `PATTERNS = {{"OPENAI_KEY": r"sk-..."}}`) - these are DEFENSE tools
-- Environment variable usage (e.g., `os.getenv("API_KEY")`) - this is the CORRECT pattern
-- Null/empty checks (e.g., `if not text: return`) - this IS validation
-- TODO comments about future improvements - these are known tech debt
-- Lists of environment variable NAMES (e.g., `ALLOWED_KEYS = ["GROQ_API_KEY"]`) - not actual keys
-- In-memory stores with "replace with database" comments - acknowledged tech debt
-
-**Response Format**:
-- If NO real vulnerabilities found: return "PASS"
-- If found: `[FILE]: [LINE] - [SEVERITY] - [ISSUE]`
-- Include confidence score (HIGH/MEDIUM/LOW) based on context understanding
-
-**Remember**: Security tools that PREVENT vulnerabilities are not vulnerabilities themselves.
-"""
+        from side.llm.prompts import Personas, StandardPrompts
+        
+        prompt = StandardPrompts.FORENSICS_TASK.format(
+            query=query,
+            content=content,
+            context_guidance=context_guidance
+        )
+        
         try:
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are an expert security auditor who distinguishes real vulnerabilities from false positives.",
+                system_prompt=Personas.FORENSICS_AUDITOR,
                 temperature=0.0
             )
             if "PASS" in response:

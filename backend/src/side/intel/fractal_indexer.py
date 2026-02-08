@@ -1,5 +1,5 @@
 """
-Sovereign Protocol v4: Distributed Fractal Indexing (Merkle-Validated).
+System Protocol v4: Distributed Fractal Indexing (Merkle-Validated).
 Implements Sparse Context Retrieval with O(1) Local Update Latency.
 
 Architectural Principles:
@@ -87,13 +87,13 @@ SIGNALS = {
     "TypeORM": re.compile(r'typeorm', re.IGNORECASE),
     "EntityFramework": re.compile(r'EntityFramework', re.IGNORECASE),
     
-    # Security & Auth (The Sovereign Shield)
+    # Security & Auth (The Security Shield)
     "Auth0": re.compile(r'auth0', re.IGNORECASE),
     "Clerk": re.compile(r'clerk', re.IGNORECASE),
     "OAuth2": re.compile(r'oauth2|oidc', re.IGNORECASE),
 }
 
-# --- THE SOVEREIGN GAVEL (Context Filtering) ---
+# --- THE SYSTEM GAVEL (Context Filtering) ---
 # "Code is Truth. Docs are Noise."
 # We exclude artifacts that increase Context Entropy while preserving 'Strategic Anchor' files.
 KARPATHY_DENY_EXTENSIONS = {
@@ -103,7 +103,7 @@ KARPATHY_DENY_EXTENSIONS = {
 }
 
 KARPATHY_ALLOW_FILES = {
-    "task.md", "README.md", "SOVEREIGN_ANCHOR.md", 
+    "task.md", "README.md", "SYSTEM_ANCHOR.md", 
     "walkthrough.md", "implementation_plan.md",
     ".cursorrules", ".editorconfig", "package.json", 
     "pyproject.toml", "Dockerfile", "go.mod", "Gemfile", "composer.json"
@@ -115,7 +115,7 @@ try:
 except ImportError:
     TS_AVAILABLE = False
 
-from side.services.ignore import SovereignIgnore
+from side.services.ignore import ProjectIgnore
 
 logger = logging.getLogger(__name__)
 
@@ -243,15 +243,15 @@ def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]
     
     project_id = ontology_store.engine.get_project_id() if ontology_store else "default"
     
-    ignore_service = SovereignIgnore(directory)
+    ignore_service = ProjectIgnore(directory)
     # Finding project root for ignore service
     try:
         project_root_path = directory
         while not (project_root_path / ".git").exists() and project_root_path.parent != project_root_path:
             project_root_path = project_root_path.parent
-        ignore_service = SovereignIgnore(project_root_path)
+        ignore_service = ProjectIgnore(project_root_path)
     except:
-        ignore_service = SovereignIgnore(directory)
+        ignore_service = ProjectIgnore(directory)
 
     has_subdirs = False
     
@@ -367,7 +367,7 @@ def run_fractal_scan(root: Path, ontology_store=None):
     Runs a pruning Top-Down scan to gather directories, 
     then processes them Bottom-Up to ensure Merkle integrity.
     """
-    ignore_service = SovereignIgnore(root)
+    ignore_service = ProjectIgnore(root)
     dirs_to_process = []
 
     # 1. Top-Down Pruning Pass
@@ -410,7 +410,7 @@ def update_branch(root: Path, changed_path: Path, ontology_store=None):
     if not changed_path.exists() and not changed_path.parent.exists():
         return
 
-    ignore_service = SovereignIgnore(root)
+    ignore_service = ProjectIgnore(root)
 
     # Start from the parent directory of the changed file
     current_dir = changed_path.parent if changed_path.is_file() else changed_path

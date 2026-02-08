@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 from side.utils.helpers import safe_get
 
 from .modules.base import ContextEngine, InsufficientTokensError
-from .modules.chronos import ChronosStore
+from .modules.strategy import StrategyStore
 from .modules.identity import IdentityStore
 from .modules.audit import AuditStore
 from .modules.transient import OperationalStore
@@ -38,7 +38,7 @@ class SimplifiedDatabase:
         
         # Initialize sub-stores (The Source of Truth)
         self.identity = IdentityStore(self.engine)
-        self.strategic = ChronosStore(self.engine)
+        self.strategic = StrategyStore(self.engine)
         self.audit = AuditStore(self.engine)
         self.operational = OperationalStore(self.engine)
         self.intent_fusion = IntentFusionStore(self.engine)

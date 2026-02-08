@@ -1,7 +1,7 @@
 """
 Outcome Verifier.
 
-Triangulates LLM claims against Sovereign Forensic Signals.
+Triangulates LLM claims against System Forensic Signals.
 Determines if a "fixed" issue actually stopped occuring in the logs.
 """
 

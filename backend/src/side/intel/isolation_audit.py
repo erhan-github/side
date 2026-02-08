@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 class IsolationAuditor:
     """
-    Sovereign Isolation Auditor: The SILO Watchdog.
-    [SILO PROTOCOL]: Periodically audits for cross-project strategic pollution.
+    Isolation Auditor: The Isolation Watchdog.
+    [ISOLATION PROTOCOL]: Periodically audits for cross-project strategic pollution.
     """
     def __init__(self, project_path: Path):
         self.project_path = Path(project_path).resolve()

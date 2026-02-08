@@ -149,7 +149,7 @@ def export_project(project_path: str | Path, encrypt: bool = True) -> Optional[P
     export_dir = project_path / ".side" / "export"
     export_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     
-    bundle_name = f"sovereign_soul_{project_id[:8]}.shield"
+    bundle_name = f"project_soul_{project_id[:8]}.shield"
     bundle_path = export_dir / bundle_name
     
     # 5. Create bundle with secure temporary directory

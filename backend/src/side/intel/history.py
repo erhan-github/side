@@ -14,7 +14,7 @@ from side.storage.modules.base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
-class ChronosStore:
+class TimelineStore:
     def __init__(self, engine: ContextEngine):
         self.engine = engine
         with self.engine.connection() as conn:
@@ -22,7 +22,7 @@ class ChronosStore:
 
     def _init_schema(self, conn):
         """
-        [CHRONOS-1]: The 4D Schema.
+        [TIMELINE-1]: The 4D Schema.
         Stores events with semantic embeddings (simulated) and temporal weights.
         """
         conn.execute("""

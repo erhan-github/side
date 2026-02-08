@@ -1,6 +1,6 @@
 """
-Sovereign Operational Store - Cache, Metadata, & System Stats.
-Refined: Purged Universal Mesh (Social Bloat).
+System Operational Store - Cache, Metadata, & System Stats.
+Refined: Purged Project Graph (Social Bloat).
 """
 
 import json

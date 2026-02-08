@@ -1,5 +1,5 @@
 """
-Sovereign Identity Store - Profile & Economy Management.
+System Identity Store - Profile & Economy Management.
 """
 
 import json
@@ -41,7 +41,7 @@ class IdentityStore:
                 cycle_ended_at TIMESTAMP, -- Legacy typo fix placeholder
                 design_pattern TEXT DEFAULT 'declarative',
                 is_airgapped INTEGER DEFAULT 0,
-                access_token TEXT, -- [SOVEREIGN LOCKDOWN]: The trackable sk- key
+                access_token TEXT, -- [SYSTEM LOCKDOWN]: The trackable sk- key
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -71,7 +71,7 @@ class IdentityStore:
             )
         """)
         # ─────────────────────────────────────────────────────────────
-        # ECONOMY TABLE: SU_VALUATION - Cost of Sovereignty [Software 2.0]
+        # ECONOMY TABLE: SU_VALUATION - Cost of System [Software 2.0]
         # ─────────────────────────────────────────────────────────────
         conn.execute("""
             CREATE TABLE IF NOT EXISTS su_valuation (
@@ -96,7 +96,7 @@ class IdentityStore:
             ('IDENTITY_RECONFIG', ActionCost.IDENTITY_RECONFIG, 'Identity Rotation/Migration'),
             ('FORENSIC_PULSE', ActionCost.FORENSIC_PULSE, 'Forensic-level static analysis'),
             ('SIGNAL_CAPTURE', ActionCost.SIGNAL_CAPTURE, 'Passive terminal friction capture'),
-            ('HUB_EVOLVE', ActionCost.HUB_EVOLVE, 'Strategic Hub update (plan/check)'),
+            ('HUB_EVOLVE', ActionCost.HUB_EVOLVE, 'Strategy Center update (plan/check)'),
             ('CONTEXT_BOOST', ActionCost.CONTEXT_BOOST, 'Context Densification (Fractal Index)'),
             ('STRATEGIC_ALIGN', ActionCost.STRATEGIC_ALIGN, 'Strategic goal alignment'),
             ('WELCOME', ActionCost.WELCOME, 'Administrative Bootstrap')

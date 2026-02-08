@@ -10,7 +10,7 @@ class JanitorHandler:
 
     async def autonomous_janitor(self, throttle_hook=None) -> int:
         """
-        The 'Neural Decay' Protocol. 
+        The 'Cache Decay' Protocol. 
         Prunes obsolete, redundant, or conflicting strategic fragments.
         """
         pruned_count = 0
@@ -53,5 +53,5 @@ class JanitorHandler:
             cursor = conn.execute("DELETE FROM rejections WHERE is_pinned = 0 AND id NOT IN (SELECT id FROM rejections ORDER BY created_at DESC LIMIT 200)")
             pruned_count += cursor.rowcount
 
-        logger.info(f"🧹 [JANITOR]: Neural Decay complete. Purged {pruned_count} strategic fragments.")
+        logger.info(f"🧹 [JANITOR]: Cache Decay complete. Purged {pruned_count} strategic fragments.")
         return pruned_count

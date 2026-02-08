@@ -49,7 +49,7 @@ Output strictly JSON:
         try:
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are a Reflection Engine. Be critical.",
+                system_prompt="Analyze the outcome against the intent. Be critical.",
                 temperature=0.0
             )
             

@@ -3,7 +3,7 @@ import hashlib
 from pathlib import Path
 from typing import List, Dict, Any
 from side.storage.modules.base import ContextEngine
-from side.storage.modules.chronos import ChronosStore
+from side.storage.modules.strategy import StrategyStore
 from side.storage.modules.transient import OperationalStore
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class SynergyEngine:
     def __init__(self, project_path: Path, buffer=None):
         self.project_path = Path(project_path).resolve()
         self.engine = ContextEngine()
-        self.strategic = ChronosStore(self.engine)
+        self.strategic = StrategyStore(self.engine)
         self.operational = OperationalStore(self.engine)
         self.buffer = buffer
         self.project_id = ContextEngine.get_project_id(self.project_path)

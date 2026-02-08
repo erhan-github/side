@@ -8,17 +8,17 @@ logger = logging.getLogger(__name__)
 
 def generate_training_data(project_path: Path, output_file: str = "strategic_training.jsonl"):
     """
-    Converts Sovereign Memory into a fine-tuning dataset.
+    Converts System Memory into a fine-tuning dataset.
     """
-    sovereign_file = project_path / ".side" / "project.json"
-    if not sovereign_file.exists():
-        logger.error("❌ [TRAINER]: Sovereign Memory not found. Run 'side feed --historic' first.")
+    project_file = project_path / ".side" / "project.json"
+    if not project_file.exists():
+        logger.error("❌ [TRAINER]: System Memory not found. Run 'side feed --historic' first.")
         return
 
     print("🧠 [TRAINER]: Synthesizing Strategic Training Pairs...")
     
     try:
-        raw = shield.unseal_file(sovereign_file)
+        raw = shield.unseal_file(project_file)
         data = json.loads(raw)
         fragments = data.get("history_fragments", [])
         

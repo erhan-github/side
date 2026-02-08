@@ -7,8 +7,8 @@ logger = logging.getLogger(__name__)
 
 class SemanticAuditor:
     """
-    Sovereign Semantic Auditor [Tier-4].
-    Uses Tree-sitter for deep AST-level invariants across the Universal Mesh.
+    Semantic Auditor [Tier-4].
+    Uses Tree-sitter for deep AST-level invariants across the Project Graph.
     """
 
     def __init__(self):

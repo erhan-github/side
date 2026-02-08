@@ -19,9 +19,9 @@ class ContextHandler:
         context_parts = []
         
         # 0. ANCHOR LOGIC
-        anchor_path = self.project_path / "SOVEREIGN_ANCHOR.md"
+        anchor_path = self.project_path / "SYSTEM_ANCHOR.md"
         if anchor_path.exists():
-             context_parts.append(f"⚓ [SOVEREIGN ANCHOR]:\n{anchor_path.read_text()}")
+             context_parts.append(f"⚓ [SYSTEM ANCHOR]:\n{anchor_path.read_text()}")
 
         # 1. STRATEGIC ARTIFACTS
         artifacts = ["VISION.md", "STRATEGY.md", "ARCHITECTURE.md"]

@@ -9,10 +9,10 @@ from datetime import datetime, timezone
 import json
 
 from side.storage.modules.audit import AuditStore
-from side.storage.modules.chronos import ChronosStore
+from side.storage.modules.strategy import StrategyStore
 
 class EpisodicProjector:
-    def __init__(self, audit: AuditStore, strategic: ChronosStore):
+    def __init__(self, audit: AuditStore, strategic: StrategyStore):
         self.audit = audit
         self.strategic = strategic
 

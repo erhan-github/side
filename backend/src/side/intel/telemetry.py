@@ -56,7 +56,7 @@ class ProactiveForensicObserver:
                 }
                 findings.append(finding)
                 
-                # Log to Sovereign Ledger
+                # Log to System Ledger
                 self.operational.save_telemetry_alert(
                     project_id=self.project_id,
                     alert_type=rule["id"],
@@ -78,7 +78,7 @@ class ProactiveForensicObserver:
             stats = self.operational.get_setting("silicon_pulse_stats")
             message = f"Hyper-Ralph detected severe hardware friction ({pulse_score}). Possible infinite loop or unoptimized logic."
             
-            # Log to Sovereign Ledger
+            # Log to System Ledger
             self.operational.save_telemetry_alert(
                 project_id=self.project_id,
                 alert_type="hardware_friction_spike",

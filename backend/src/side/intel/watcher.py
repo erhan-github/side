@@ -8,7 +8,7 @@ from side.intel.fractal_indexer import update_branch
 
 logger = logging.getLogger(__name__)
 
-class SovereignHandler(FileSystemEventHandler):
+class ProjectWatcher(FileSystemEventHandler):
     """
     Handles file system events and triggers Fractal Updates.
     """
@@ -45,15 +45,15 @@ class SovereignHandler(FileSystemEventHandler):
     def on_created(self, event):
         self.on_modified(event)
 
-def start_sovereign_watcher(root: Path):
+def start_watcher(root: Path):
     """
     Runs the infinite watch loop.
     """
-    event_handler = SovereignHandler(root)
+    event_handler = ProjectWatcher(root)
     observer = Observer()
     observer.schedule(event_handler, str(root), recursive=True)
     
-    logger.info(f"🦅 [SOVEREIGN WATCH]: Monitoring {root} for Neural Compression...")
+    logger.info(f"🦅 [PROJECT WATCH]: Monitoring {root} for Index Optimization...")
     observer.start()
     try:
         while True:

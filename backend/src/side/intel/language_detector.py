@@ -1,5 +1,5 @@
 """
-Sovereign Language Detector - Fingerprinting for Polyglot Analysis.
+Language Detector - Fingerprinting for Polyglot Analysis.
 """
 
 import logging

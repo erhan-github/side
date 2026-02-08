@@ -52,7 +52,8 @@ class ContextEngine:
             self.harden_permissions()
         
         # Initialize sub-stores
-        from side.storage.modules.chronos import ChronosStore
+        # Initialize sub-stores
+        from side.storage.modules.strategy import StrategyStore
         from side.storage.modules.audit import AuditStore
         from side.storage.modules.accounting import AccountingStore
         from .identity import IdentityStore
@@ -61,7 +62,7 @@ class ContextEngine:
         
         from side.storage.modules.ontology import OntologyStore
         
-        self.strategic = ChronosStore(self)
+        self.strategic = StrategyStore(self)
         self.audit = AuditStore(self)
         self.accounting = AccountingStore(self)
         self.identity = IdentityStore(self)
@@ -110,10 +111,15 @@ class ContextEngine:
                 return False  # New DB, use standard until tier established
             
             # Quick check without full store initialization
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.execute("SELECT tier FROM profile LIMIT 1")
-            row = cursor.fetchone()
-            conn.close()
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                # Check if profile table exists first
+                res = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='profile'").fetchone()
+                if not res:
+                    return False
+                
+                cursor = conn.execute("SELECT tier FROM profile LIMIT 1")
+                row = cursor.fetchone()
             
             if row and row[0] in ("high_tech", "enterprise"):
                 # Check if SQLCipher is available
@@ -191,7 +197,7 @@ class ContextEngine:
     def get_project_id(project_path: str | Path | None = None) -> str:
         """Persists PROJECT_ID in a sealed file for stable isolation."""
         from side.utils.paths import get_repo_root
-        from side.utils.shield import shield
+        from side.utils.crypto import shield
         
         if project_path is None or str(project_path) == ".":
             project_path = get_repo_root()

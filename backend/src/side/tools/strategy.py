@@ -6,6 +6,8 @@ from side.storage.modules.base import ContextEngine
 
 from side.utils.paths import get_repo_root
 
+from side.llm.prompts import Personas
+
 # Centralized root resolution
 PROJECT_ROOT = get_repo_root()
 
@@ -32,9 +34,7 @@ async def handle_decide(args: dict[str, Any]) -> str:
     prompt = f"🎯 Strategic Question: {question}\n🛠️ Operational Context: {base_context}\n\nProvide a high-density architectural decision anchored in technical reality."
     
     system_prompt = intel.enrich_system_prompt(
-        "You are a Strategic Architect (VECTORING). "
-        "Analyze the provided technical context and project knowledge base to deliver a grounded architectural decision. "
-        "Your goal is to provide a decision that minimizes long-term technical debt and maximizes technical alignment.", 
+        Personas.STRATEGIC_ARCHITECT, 
         project_context
     )
     
@@ -46,7 +46,7 @@ async def handle_decide(args: dict[str, Any]) -> str:
         )
         return response
     except Exception as e:
-        return f"🚫 Architectural decision failed due to neural outage: {e}"
+        return f"🚫 Architectural decision failed due to system outage: {e}"
 
 async def handle_strategy(args: dict[str, Any]) -> str:
     """Handle strategic_review tool."""
@@ -67,9 +67,7 @@ async def handle_strategy(args: dict[str, Any]) -> str:
     prompt = f"🔍 Review Context: {base_context}\n\nConduct a high-density Strategic Review of the current project state. Identify potential project-drift or architectural bottlenecks."
     
     system_prompt = intel.enrich_system_prompt(
-        "You are a Strategic Architect (VECTORING). "
-        "Analyze the project knowledge base for technical drift and outcome alignment. "
-        "Use the provided context to guide the path forward with high-fidelity technical advice.", 
+        Personas.STRATEGIC_REVIEWER, 
         project_context
     )
     

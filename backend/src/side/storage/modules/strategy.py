@@ -4,7 +4,9 @@ Delegates to specialized sub-stores for scalability.
 """
 
 import logging
-from typing import Any, Dict, List
+import sqlite3
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 from side.models.core import StrategicDecision, Rejection
 from .base import ContextEngine
 
@@ -16,9 +18,9 @@ from .substores.memory import MemoryStore
 
 logger = logging.getLogger(__name__)
 
-class ChronosStore:
+class StrategyStore:
     """
-    [CHRONOS]: Orchestrator for Time-Weighted Strategic Memory.
+    [STRATEGY]: Orchestrator for Time-Weighted Strategic Memory.
     Provides "Fractal Context" and "Temporal Search" capabilities.
     """
     def __init__(self, engine: ContextEngine):
@@ -35,7 +37,7 @@ class ChronosStore:
         with self.engine.connection() as conn:
             self.init_schema(conn)
 
-    def init_schema(self, conn):
+    def init_schema(self, conn: sqlite3.Connection) -> None:
         """Initialize all sub-store schemas."""
         self.plans.init_schema(conn)
         self.decisions.init_schema(conn)
@@ -140,7 +142,7 @@ class ChronosStore:
     def recall_facts(self, *args, **kwargs):
         return self.memory.recall_facts(*args, **kwargs)
 
-    def search_wisdom_relational(self, query: str, project_id: str, limit: int = 5):
+    def search_wisdom_relational(self, query: str, project_id: str, limit: int = 5) -> List[Dict[str, Any]]:
         """Backwards compatibility for recall_facts."""
         return self.memory.recall_facts(query, project_id, limit)
 
@@ -188,7 +190,7 @@ class ChronosStore:
 
     def decay_strategic_fat(self, days: int = 30) -> Dict[str, int]:
         """
-        [NEURAL DECAY]: Prunes low-entropy strategic data.
+        [CACHE DECAY]: Prunes low-entropy strategic data.
         """
         counts = {}
         with self.engine.connection() as conn:

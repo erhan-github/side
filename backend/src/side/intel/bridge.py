@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class BrainBridge:
     """
-    The 'Sovereign Bridge'.
+    The 'High-Fidelity Bridge'.
     Surgically extracts tasks and walkthroughs from the Antigravity Brain
     and converts them into High-Density Strategic Schemas.
     """
@@ -33,7 +33,7 @@ class BrainBridge:
         return nodes
 
     def _process_node(self, node_dir: Path) -> Dict[str, Any] | None:
-        """Processes a single strategic node."""
+        """Processes a single project node."""
         tasks = []
         walkthroughs = []
         
@@ -64,7 +64,7 @@ class BrainBridge:
 
     def _get_birth_time(self, file_path: Path) -> str:
         """Gets the definitive Birth Time of a document."""
-        # 1. Check internal marker (The 'Strategic Truth')
+        # 1. Check internal marker (The 'Ground Truth')
         try:
             content = file_path.read_text()
             match = re.search(r"Generated[:\s*]+\*\*?(\d{4}-\d{2}-\d{2})", content)
