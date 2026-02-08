@@ -1,4 +1,4 @@
-import { User, Bot, Zap, Shield, Database, ArrowRight, Brain, FileCode, CheckCircle2, XCircle } from "lucide-react";
+import { User, Bot, Zap, Shield, Database, ArrowRight, Brain, FileCode, CheckCircle2, XCircle, Filter, Sparkles } from "lucide-react";
 
 export function MiddlewareFlow() {
     return (
@@ -78,12 +78,19 @@ export function MiddlewareFlow() {
                             </div>
 
                             {/* Processing Labels */}
-                            <div className="absolute top-[140px] w-[300px] flex justify-center gap-2">
-                                <div className="px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 animate-in fade-in zoom-in duration-500 delay-100">
+                            {/* Processing Labels */}
+                            <div className="absolute top-[130px] w-[340px] grid grid-cols-2 gap-2">
+                                <div className="px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 animate-in fade-in zoom-in duration-500 delay-100">
                                     <Brain size={12} /> Inject Memory
                                 </div>
-                                <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 animate-in fade-in zoom-in duration-500 delay-300">
+                                <div className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 animate-in fade-in zoom-in duration-500 delay-200">
                                     <Shield size={12} /> Guard Rails
+                                </div>
+                                <div className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 animate-in fade-in zoom-in duration-500 delay-300">
+                                    <Filter size={12} /> Prune Noise
+                                </div>
+                                <div className="px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 animate-in fade-in zoom-in duration-500 delay-400">
+                                    <Sparkles size={12} /> Match Patterns
                                 </div>
                             </div>
                         </div>
@@ -116,6 +123,21 @@ export function MiddlewareFlow() {
                     <ArrowRight className="rotate-90" />
                 </div>
 
+            </div>
+
+            {/* Context Comparison Caption */}
+            <div className="mt-12 text-center max-w-4xl mx-auto">
+                <p className="text-lg text-white/50 font-light leading-relaxed">
+                    <span className="opacity-60 decoration-white/20 line-through decoration-1">You are used to "Stateless Chat" (The LLM knows nothing).</span>
+                    <br className="my-2 block" />
+                    <span className="hidden md:inline mx-3 text-white/10">↓</span>
+                    <span className="text-white font-medium block mt-2">
+                        Sidelith enforces <span className="text-blue-400">"Stateful Context"</span>.
+                        <span className="block text-white/60 text-base mt-1 font-light">
+                            (It retains the <span className="text-white/90">strategic intent</span> behind your architecture).
+                        </span>
+                    </span>
+                </p>
             </div>
         </section>
     );
