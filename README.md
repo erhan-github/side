@@ -72,7 +72,7 @@ The Sidelith architecture delivers six foundational capabilities, categorized by
 | **Memory Persistence** | `AutoIntelligence` + `data.db` | Solves **"Context Amnesia"**. The system remembers architectural decisions across sessions. |
 | **Forensic-Driven Context** | `AuditStore` (SQLite) | Reconstructs the **"Reasoning Chain"** of previous sessions to prevent context regression in new LLM prompts. |
 | **Unified Bootstrapping** | `curl` | `sh` pipeline | Achieves a "Zero-to-Connected" state in <15s, dynamically identifying and bridging all local IDEs. |
-| **Cryptographic Audit Chains** | `ReasoningTimeline` | Every architectural maneuver is cryptographically sealed into an immutable chain, ensuring 100% auditability. |
+| **Cryptographic Audit Chains** | `ReasoningTimeline` | Every architectural maneuver is logged into an immutable chain, ensuring 100% auditability. |
 | **Performance Substrate** | Virtualized List Rendering | Allows deep-AST scanning to run with minimal CPU impact, ensuring zero degradation of developer velocity. |
 | **Polyglot Log Scavenging** | `log_scavenger.py` | Correlates logs from Xcode, Docker, and Node.js to reconstruct failure states ("Crime Scene Reconstruction"). |
 

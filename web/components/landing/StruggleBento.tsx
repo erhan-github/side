@@ -6,7 +6,7 @@ export function StruggleBento() {
                     The Cost of <span className="text-orange-500">Struggle</span>.
                 </h2>
                 <p className="text-white/40 text-lg md:text-xl font-light max-w-2xl mx-auto">
-                    Every manual correction is a leak in your cognitive treasury.
+                    Every manual correction is a leak in your developer time.
                 </p>
             </div>
 

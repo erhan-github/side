@@ -38,7 +38,7 @@ export default function PricingPage() {
                                 <ul className="space-y-3 mb-8 text-sm text-zinc-400">
                                     <li className="flex items-center gap-3">
                                         <Check className="w-4 h-4 text-cyan-400 shrink-0" />
-                                        <span className="text-zinc-300">Neural Logic Graph</span>
+                                        <span className="text-zinc-300">Decision Database</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <Check className="w-4 h-4 text-cyan-400 shrink-0" />
@@ -164,7 +164,7 @@ export default function PricingPage() {
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <Check className="w-4 h-4 text-white shrink-0" />
-                                        <span className="text-zinc-300">Neural Logic Graph</span>
+                                        <span className="text-zinc-300">Decision Database</span>
                                     </li>
                                 </ul>
                             </div>

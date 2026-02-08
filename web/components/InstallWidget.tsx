@@ -54,7 +54,7 @@ export function InstallWidget() {
     return (
         <section className="w-full max-w-5xl mx-auto mb-32 px-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
             <div className="text-center mb-10">
-                <h3 className="text-2xl font-heading text-white mb-2">The Genesis Handshake</h3>
+                <h3 className="text-2xl font-heading text-white mb-2">Installation</h3>
                 <p className="text-white/50 max-w-2xl mx-auto">One command. Total System Control. Your node automatically initializes your active tier to lock your identity and auto-patch your entire IDE mesh in a single shot.</p>
             </div>
 
