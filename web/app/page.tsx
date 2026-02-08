@@ -3,11 +3,11 @@
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/landing/Hero";
 import { ProblemSection } from "@/components/landing/ProblemSection";
+import { MiddlewareFlow } from "@/components/landing/MiddlewareFlow";
 import { StruggleBento } from "@/components/landing/StruggleBento";
 import { SolutionSolarSystem } from "@/components/landing/SolutionSolarSystem";
 import { DefensiveMoats } from "@/components/landing/DefensiveMoats";
 import { CollectiveIntelligence } from "@/components/landing/CollectiveIntelligence";
-import { IntegrationsMesh } from "@/components/landing/IntegrationsMesh";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { InstallSection } from "@/components/landing/InstallSection";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -21,11 +21,11 @@ export default function LandingPage() {
 
             <div className="w-full flex flex-col items-center">
                 <ProblemSection />
+                <MiddlewareFlow />
                 <StruggleBento />
                 <SolutionSolarSystem />
                 <DefensiveMoats />
                 <CollectiveIntelligence />
-                <IntegrationsMesh />
                 <PricingSection />
                 <InstallSection />
             </div>
