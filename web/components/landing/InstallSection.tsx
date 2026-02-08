@@ -22,23 +22,44 @@ export function InstallSection() {
 
                     <div className="mb-12">
                         <InstallWidget />
+
+                        <div className="mt-8 text-center max-w-2xl mx-auto">
+                            <p className="text-white/60 text-sm mb-6">
+                                Sidelith lives where you code. From your terminal to your preferred AI IDE, we provide a unified semantic bridge.
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-2">
+                                {[
+                                    { name: "Automatic MCP Injection Locked", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+                                    { name: "Cursor" },
+                                    { name: "Claude Desktop" },
+                                    { name: "VS Code" },
+                                    { name: "Windsurf" },
+                                    { name: "Terminal" },
+                                    { name: "Gemini CLI" }
+                                ].map((provider) => (
+                                    <span key={provider.name} className={`px-3 py-1.5 rounded-lg border border-white/5 bg-white/[0.02] text-[10px] font-mono uppercase tracking-wider ${provider.color || "text-white/40"}`}>
+                                        {provider.name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
-                            <div className="text-2xl font-bold text-emerald-500 mb-1">177M/s</div>
+                            <div className="text-xl font-bold text-emerald-500 mb-1">High-Velocity</div>
                             <div className="text-[10px] text-white/40 uppercase tracking-wider">Match Speed</div>
                         </div>
                         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
-                            <div className="text-2xl font-bold text-emerald-500 mb-1">&lt;1ms</div>
+                            <div className="text-xl font-bold text-emerald-500 mb-1">Real-Time</div>
                             <div className="text-[10px] text-white/40 uppercase tracking-wider">Pulse Latency</div>
                         </div>
                         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
-                            <div className="text-2xl font-bold text-emerald-500 mb-1">&lt;5ms</div>
+                            <div className="text-xl font-bold text-emerald-500 mb-1">Instant</div>
                             <div className="text-[10px] text-white/40 uppercase tracking-wider">Context Load</div>
                         </div>
                         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
-                            <div className="text-2xl font-bold text-emerald-500 mb-1">&lt;1%</div>
+                            <div className="text-xl font-bold text-emerald-500 mb-1">Minimal</div>
                             <div className="text-[10px] text-white/40 uppercase tracking-wider">CPU Usage</div>
                         </div>
                     </div>

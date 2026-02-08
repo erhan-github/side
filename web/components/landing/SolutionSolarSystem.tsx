@@ -199,9 +199,9 @@ export function SolutionSolarSystem() {
                 </div>
                 <div className="order-1 md:order-2 p-8 rounded-3xl bg-white/[0.02] border border-white/5 font-mono text-xs text-white/60">
                     {`\u003e origin: "User Request"`} <br />
-                    {`\u003e velocity: 120ms`} <br />
+                    {`\u003e velocity: REAL_TIME`} <br />
                     {`\u003e status: VECTOR_CAPTURED`} <br />
-                    {`\u003e scan: 177,402 ops/s`} <br />
+                    {`\u003e scan: LINK_ESTABLISHED`} <br />
                     <span className="text-emerald-400">{`\u003e merkle_tree: UPDATED`}</span>
                 </div>
             </div>

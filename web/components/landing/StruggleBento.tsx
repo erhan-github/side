@@ -26,7 +26,7 @@ export function StruggleBento() {
                         <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
                             <div className="h-full bg-orange-500/40 w-3/4"></div>
                         </div>
-                        <span className="text-[10px] font-mono text-orange-500/60 uppercase tracking-widest">74% LEAK</span>
+                        <span className="text-[10px] font-mono text-orange-500/60 uppercase tracking-widest">CRITICAL LEAK</span>
                     </div>
                 </div>
 
@@ -45,7 +45,7 @@ export function StruggleBento() {
                         <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
                             <div className="h-full bg-red-500/40 w-[92%]"></div>
                         </div>
-                        <span className="text-[10px] font-mono text-red-500/60 uppercase tracking-widest">92% WASTE</span>
+                        <span className="text-[10px] font-mono text-red-500/60 uppercase tracking-widest">HIGH WASTE</span>
                     </div>
                 </div>
 
@@ -64,7 +64,7 @@ export function StruggleBento() {
                         <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
                             <div className="h-full bg-blue-500/40 w-[61%]"></div>
                         </div>
-                        <span className="text-[10px] font-mono text-blue-500/60 uppercase tracking-widest">61% RISK</span>
+                        <span className="text-[10px] font-mono text-blue-500/60 uppercase tracking-widest">UNKNOWN RISK</span>
                     </div>
                 </div>
             </div>

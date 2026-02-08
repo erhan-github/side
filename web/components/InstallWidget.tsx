@@ -14,8 +14,8 @@ export function InstallWidget() {
     const [copied, setCopied] = useState<{ type: "foundation" | "activation" | "gateway", status: boolean }>({ type: "foundation", status: false });
 
     const foundationCommand = tier === "hobby"
-        ? "curl -fsSL sidelith.com/install | sh"
-        : `curl -fsSL sidelith.com/install | sh -s --tier ${tier}`;
+        ? "curl -fsSL https://sidelith.com/install.sh | sh"
+        : `curl -fsSL https://sidelith.com/install.sh | sh -s --tier ${tier}`;
 
     const platforms = [
         { id: "cursor", label: "Cursor", icon: Monitor, color: "text-blue-400" },

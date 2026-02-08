@@ -21,7 +21,7 @@ export function ProblemSection() {
                             <div className="flex justify-between items-start mb-4">
                                 <h3 className="text-3xl font-bold text-white">The Digital Amnesia</h3>
                                 <div className="opacity-0 group-hover/reveal:opacity-100 group-active/reveal:opacity-100 transition-all duration-500 translate-y-2 group-hover/reveal:translate-y-0 group-active/reveal:translate-y-0 text-[10px] font-mono text-white/40 uppercase tracking-[0.2em] bg-white/5 px-3 py-1 rounded-full border border-white/10">
-                                    Recovery Rate: 98% | Substrate: SQLite
+                                    Recovery: Auto-Persisted | Substrate: SQLite
                                 </div>
                             </div>
                             <p className="text-white/50 text-lg leading-relaxed max-w-xl">
@@ -51,7 +51,7 @@ export function ProblemSection() {
                     <div className="flex justify-between items-start mb-6">
                         <Zap className="text-orange-500" size={32} />
                         <div className="opacity-0 group-hover/reveal:opacity-100 transition-all duration-500 scale-95 group-hover/reveal:scale-100 text-[8px] font-mono text-orange-500/60 uppercase tracking-widest text-right leading-tight">
-                            Dampening: 0.94<br />
+                            Signal: High-Fidelity<br />
                             Noise Isolation: Binary
                         </div>
                     </div>
