@@ -35,8 +35,8 @@ def initialize_storage(db_path: str = None):
     """Initialize storage instances."""
     global _audit_store, _operational_store, _engine
     
-    from side.env import env
-    from side.storage.modules.base import ContextEngine
+    from ..env import env
+    from .modules.base import ContextEngine
     from side.storage.modules.audit import AuditStore
     from side.storage.modules.transient import OperationalStore
 

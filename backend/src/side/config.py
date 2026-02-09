@@ -7,7 +7,7 @@ Centralized configuration for the Sidelith SDK.
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from side.env import env
+from .env import env
 
 
 PROJECT_NAME = "sidelith"

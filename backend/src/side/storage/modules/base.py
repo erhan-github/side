@@ -42,7 +42,7 @@ class ContextEngine:
 
     def __init__(self, db_path: str | Path | None = None):
         if db_path is None:
-            from side.env import env
+            from ...env import env
             db_path = env.get_db_path()
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
