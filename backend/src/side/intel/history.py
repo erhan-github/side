@@ -1,5 +1,5 @@
 """
-[LAYER 5] Chronos Store - The 4D Memory Vector.
+Timeline Store - The Project Timeline.
 Treats Time as a dimension to enable "Time-Travel Debugging" and Narrative Reconstruction.
 Platform Agnostic: Works for Claude, Cursor, and Terminals.
 """

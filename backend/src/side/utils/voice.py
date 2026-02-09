@@ -94,7 +94,7 @@ class SystemVoice:
         if "SQL" in result.check_id or "Injection" in result.check_name:
              return "I've flagged code that requires hardening."
         if "Secret" in result.check_name:
-             return "I've detected a structural integrity risk."
+             return "I've detected a security risk."
         if "CQ-" in result.check_id or "Logic" in result.check_id:
              return "I've identified a logic refinement."
         if "TERM-" in result.check_id or "Terminal" in result.check_name:

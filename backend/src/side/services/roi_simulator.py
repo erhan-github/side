@@ -8,9 +8,8 @@ logger = logging.getLogger(__name__)
 
 class ROISimulatorService:
     """
-    [COUNTERFACTUAL_SIMULATOR]: Calculates the 'Value of Averted Disaster'.
-    Whenever a Causal Resolution is detected, this service simulates the 
-    'World Without Sidelith' to quantify technical and financial ROI.
+    Value Estimator Service.
+    Estimates the technical and financial impact of resolved issues.
     """
     
     def __init__(self, buffer: UnifiedBuffer):
@@ -18,16 +17,15 @@ class ROISimulatorService:
 
     async def simulate_resolution_impact(self, problem: str, resolution: str):
         """
-        Simulates the counterfactual cost of a bug.
+        Estimates the cost savings of a fix.
         """
         try:
-            # TIER 2: Strategic Simulation (Gated Call)
             prompt = f"""
 A developer just fixed this problem: "{problem}"
 The resolution was: "{resolution}"
             
 TASK:
-Simulate the "World Without This Fix". If this problem reached production:
+Estimate the value of this fix. If this problem reached production:
 1. How many ENGINEERING HOURS would it take to find and fix?
 2. What is the RISK (None, Low, Medium, High, Critical)?
 3. What is the ESTIMATED COST (in USD, assuming $150/hr)?
@@ -51,17 +49,17 @@ Output strictly JSON:
             data = extract_json(response)
             if data:
                 
-                # [IMPACT_LOG] Commit to the Unified Buffer
+                # Log to Unified Buffer
                 await self.buffer.ingest("insights", {
                     "tool": "roi_simulator",
-                    "action": "averted_disaster_log",
+                    "action": "value_estimation",
                     "payload": {
                         "problem": problem,
                         "simulated_impact": data,
                         "timestamp": datetime.now(timezone.utc).isoformat()
                     }
                 })
-                logger.info(f"💰 [ROI]: Simulated ${data.get('cost_saved', 0)} in averted disaster costs.")
+                logger.info(f"💰 Value Estimate: ${data.get('cost_saved', 0)} saved.")
 
         except Exception as e:
-            logger.warning(f"ROI Simulation failed: {e}")
+            logger.warning(f"ROI Estimation failed: {e}")

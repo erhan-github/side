@@ -4,10 +4,9 @@ export function ProblemSection() {
     return (
         <section className="section-spacing w-full max-w-6xl px-6">
             <div className="text-center mb-24">
-                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                    Why AI coding tools <span className="text-red-500">forget</span>.
+                <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-400 mb-6">
+                    AI tools forget between conversations
                 </h2>
-                <p className="text-white/40 text-lg md:text-xl font-light">The cost of stateless context.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">

@@ -98,8 +98,9 @@ class MetricsCalculator:
         if not error_pattern or not self.cloud_client:
             return 0.0  # Unknown commonality without cloud
         
-        # TODO: Implement cloud query for pattern frequency
-        # For now, use heuristics based on error keywords
+        # Local Heuristic (V1) - Replaces Cloud Query
+        # In a distributed system, this would query the central hive.
+
         common_patterns = [
             "None", "undefined", "null", "NoneType",
             "timeout", "connection", "auth", "permission",

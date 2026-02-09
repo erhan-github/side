@@ -151,18 +151,6 @@ class AuditStore:
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_observations_content ON observations(content)")
 
-    def log_averted_disaster(self, project_id: str, reason: str, su_saved: int = 50, technical_debt: str | None = None) -> None:
-        """
-        [TECH-05]: Quantifies ROI by logging blocked architectural or security violations.
-        """
-        import uuid
-        with self.engine.connection() as conn:
-            conn.execute("""
-                INSERT INTO averted_disasters (id, project_id, reason, su_saved, technical_debt_averted)
-                VALUES (?, ?, ?, ?, ?)
-            """, (str(uuid.uuid4()), project_id, reason, su_saved, technical_debt))
-        masked_id = f"{project_id[:4]}...{project_id[-4:]}" if len(project_id) > 8 else project_id
-        logger.info(f"🛡️ [ROI]: Averted Disaster Logged for project {masked_id}: {reason} (Saved {su_saved} SU)")
 
     def log_activity(self, project_id: str, tool: str, action: str, 
                      cost_tokens: int = 0, tier: str = 'free', 
@@ -234,7 +222,7 @@ class AuditStore:
                         (cost_tokens, project_id)
                     )
 
-        # Trigger Sync Hook (The Karpathy Protocol)
+        # Trigger Sync Hook
         if self.post_log_hook:
             try:
                 self.post_log_hook()

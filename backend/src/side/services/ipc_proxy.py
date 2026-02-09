@@ -72,22 +72,19 @@ class IPCProxy:
             source = payload.get("source", "external")
             token = payload.get("token", "")
 
-            # [MEMORY TUNNEL]: Enforce Handshake
+            # Enforce Handshake
             if not secrets.compare_digest(token, self.session_token):
-                logger.warning(f"🛑 [MEMORY_TUNNEL]: Unauthorized access attempt from {source}")
+                logger.warning(f"🛑 Unauthorized access attempt from {source}")
                 return
 
             if action == "HANDSHAKE":
-                logger.info(f"🤝 [MEMORY_TUNNEL]: Handshake accepted from {source}")
+                logger.info(f"🤝 Handshake accepted from {source}")
                 return
             
-            print(f"\n📡 [IPC SIGNAL]: Received '{action}' from {source}")
+            print(f"\n📡 [IPC]: Received '{action}' from {source}")
             
-            # Integrate with Strategic Mesh
-            # In a real app, this would update the Transient Store or trigger a Pulse
-            from side.pulse import pulse
-            if action == "FLIGHT_CHECK":
-                 pulse.check_pulse(payload.get("context", {}))
+            # Future Integration Point
+            # In a real app, this would update the Transient Store
         
         except Exception as e:
             logger.error(f"Failed to handle telemetry: {e}")

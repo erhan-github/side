@@ -30,32 +30,33 @@ export default function DashboardPage() {
 
     useEffect(() => {
         async function fetchData() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) setUserEmail(user.email ?? null);
+            try {
+                // 1. Auth Check (Client-Side)
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) setUserEmail(user.email ?? null);
 
-            // SIMULATED DATA FOR HUD (Replace with real API calls later)
-            // In a real app, this would fetch from /api/dashboard
-            const mockStats: Stats = {
-                su_available: 4850, // Started with 5000
-                su_used: 150,
-                tier: "Pro",
-                efficiency: 98.5
-            };
+                // 2. Fetch Real System Stats
+                const statsRes = await fetch('/api/dashboard/stats');
+                if (statsRes.ok) {
+                    const statsData = await statsRes.json();
+                    setStats(statsData);
+                }
 
-            const mockLedger: LedgerEntry[] = [
-                { type: "FRACTAL_SCAN", description: "Indexed 10 files (Delta Mode)", outcome: "PASS", timestamp: new Date().toISOString(), cost: 5 },
-                { type: "CONTEXT_INJECTION", description: "Injecting memory: security.md", outcome: "PASS", timestamp: new Date(Date.now() - 1000 * 60 * 2).toISOString(), cost: 15 },
-                { type: "PULSE_CHECK", description: "Architectural drift detected in auth.py", outcome: "WARN", timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), cost: 2 },
-                { type: "LOCAL_ENCRYPTION", description: "Vault synchronized to local_db.sqlite", outcome: "PASS", timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), cost: 0 },
-            ];
-
-            setStats(mockStats);
-            setLedger(mockLedger);
-            setLoading(false);
+                // 3. Fetch Real Ledger
+                const ledgerRes = await fetch('/api/dashboard/ledger');
+                if (ledgerRes.ok) {
+                    const ledgerData = await ledgerRes.json();
+                    setLedger(ledgerData);
+                }
+            } catch (err) {
+                console.error("Failed to fetch dashboard data:", err);
+            } finally {
+                setLoading(false);
+            }
         }
 
         fetchData();
-        const interval = setInterval(fetchData, 30000);
+        const interval = setInterval(fetchData, 10000); // 10s polling for "Live" feel
         return () => clearInterval(interval);
     }, []);
 

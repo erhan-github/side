@@ -225,12 +225,13 @@ class BillingService:
         # Local summary
         return self.db.identity.get_cursor_usage_summary(project_id)
     
-    def claim_trial(self, project_path: Any) -> bool:
+    
+    def claim_trial(self) -> bool:
         """
-        One-time trial grant.
+        One-time trial grant check.
         
-        [ANTI-FRAUD]: Trial claims are verified server-side.
+        Trials are automatically granted on signup via Supabase Database Triggers.
+        This method is a placeholder for future manual claim logic if needed.
         """
-        # TODO: Implement server-side trial claim verification
-        # For now, this is a no-op (trial granted on signup via Supabase trigger)
+        # Logic handled by PostgreSQL Trigger: on_auth_user_created -> grant_trial()
         return True

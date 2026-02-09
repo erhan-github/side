@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 class MerkleTree:
     """
-    [AUTHORITY]: Aggregates all active reasoning chains into a single Project Root Hash.
-    This fulfills the 'Merkle Injection' capability.
+    System Integrity Service.
+    Aggregates reasoning chains into a single Project Root Hash.
     """
     
     @staticmethod

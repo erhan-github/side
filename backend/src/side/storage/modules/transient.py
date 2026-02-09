@@ -1,6 +1,6 @@
 """
 System Operational Store - Cache, Metadata, & System Stats.
-Refined: Purged Project Graph (Social Bloat).
+Refined: Purged Project Graph.
 """
 
 import json

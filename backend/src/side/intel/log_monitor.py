@@ -114,12 +114,26 @@ class LogMonitor:
         Runs external stream monitors in a single asyncio loop.
         Efficiently multiplexes Docker, Android, and Xcode polling.
         """
+        from side.config import config
+        
+        # [OPTIMIZATION] Lazy load external scavengers only if enabled
+        if not config.enable_advanced_scavengers:
+             return
+
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
         async def _lifecycle():
-            android = AndroidScavenger()
-            docker = DockerScavenger()
+            # Lazy Import to prevent startup bloat
+            try:
+                from side.intel.scavengers.mobile import AndroidScavenger
+                from side.intel.scavengers.docker import DockerScavenger
+                
+                android = AndroidScavenger()
+                docker = DockerScavenger()
+            except ImportError:
+                logger.warning("Advanced scavengers not available (missing dependencies).")
+                return
             
             while not self.stop_event.is_set():
                 # 1. Android

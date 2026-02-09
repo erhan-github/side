@@ -42,6 +42,7 @@ class IdentityStore:
                 design_pattern TEXT DEFAULT 'declarative',
                 is_airgapped INTEGER DEFAULT 0,
                 access_token TEXT, -- [SYSTEM LOCKDOWN]: The trackable sk- key
+                email TEXT, -- [NEW]: User email from authentication
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -52,7 +53,8 @@ class IdentityStore:
             conn.execute("ALTER TABLE profile ADD COLUMN cycle_started_at TIMESTAMP")
             conn.execute("ALTER TABLE profile ADD COLUMN cycle_ends_at TIMESTAMP")
             conn.execute("ALTER TABLE profile ADD COLUMN access_token TEXT")
-            logger.info("MIGRATION: Added access_token and billing columns to profile")
+            conn.execute("ALTER TABLE profile ADD COLUMN email TEXT")
+            logger.info("MIGRATION: Added access_token, email and billing columns to profile")
         except: pass
         
         # ─────────────────────────────────────────────────────────────
@@ -97,7 +99,7 @@ class IdentityStore:
             ('FORENSIC_PULSE', ActionCost.FORENSIC_PULSE, 'Forensic-level static analysis'),
             ('SIGNAL_CAPTURE', ActionCost.SIGNAL_CAPTURE, 'Passive terminal friction capture'),
             ('HUB_EVOLVE', ActionCost.HUB_EVOLVE, 'Strategy Center update (plan/check)'),
-            ('CONTEXT_BOOST', ActionCost.CONTEXT_BOOST, 'Context Densification (Fractal Index)'),
+            ('CONTEXT_BOOST', ActionCost.CONTEXT_BOOST, 'Context Densification (Pattern Index)'),
             ('STRATEGIC_ALIGN', ActionCost.STRATEGIC_ALIGN, 'Strategic goal alignment'),
             ('WELCOME', ActionCost.WELCOME, 'Administrative Bootstrap')
         ]
@@ -145,7 +147,8 @@ class IdentityStore:
                 tokens_used=profile_data.get("tokens_used", 0),
                 design_pattern=profile_data.get("design_pattern", "declarative"),
                 is_airgapped=bool(profile_data.get("is_airgapped")),
-                access_token=profile_data.get("access_token")
+                access_token=profile_data.get("access_token"),
+                email=profile_data.get("email")
             )
 
         with self.engine.connection() as conn:
@@ -154,8 +157,8 @@ class IdentityStore:
                 INSERT INTO profile (
                     id, name, company, domain, stage, business_model, 
                     target_raise, tech_stack, tier, token_balance, tokens_monthly, tokens_used,
-                    design_pattern, is_airgapped, access_token, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    design_pattern, is_airgapped, access_token, email, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name = COALESCE(excluded.name, name),
                     company = COALESCE(excluded.company, company),
@@ -171,6 +174,7 @@ class IdentityStore:
                     design_pattern = COALESCE(excluded.design_pattern, design_pattern),
                     is_airgapped = COALESCE(excluded.is_airgapped, is_airgapped),
                     access_token = COALESCE(excluded.access_token, access_token),
+                    email = COALESCE(excluded.email, email),
                     updated_at = excluded.updated_at
                 """,
                 (
@@ -189,6 +193,7 @@ class IdentityStore:
                     identity.design_pattern,
                     1 if identity.is_airgapped else 0,
                     identity.access_token,
+                    identity.email,
                     datetime.now(timezone.utc).isoformat()
                 )
             )

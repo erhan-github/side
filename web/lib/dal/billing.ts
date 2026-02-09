@@ -2,8 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cache } from "react";
 import { getProfile } from "./profile";
 
-// TODO: Replace with real Supabase table if 'usage' is not sufficient
-// TODO: Replace with real Supabase table if 'usage' is not sufficient
+// Verified: Uses 'profiles' table via getProfile() for usage tracking.
 export interface BillingStatus {
     userId: string;
     plan: "free" | "pro" | "enterprise";

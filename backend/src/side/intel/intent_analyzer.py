@@ -45,7 +45,15 @@ class IntentAnalyzer:
         repetition_signals = self._detect_repetition(session)
         signals.extend(repetition_signals)
         
-        # 2. Escalation Detection (TODO: Complexity analysis)
+        # 2. Escalation Detection
+        if len(session.intent_vector) > 8 or session.duration_seconds > 600:
+             signals.append(IntentSignal(
+                 session_id=session.session_id,
+                 signal_type=IntentSignalType.ESCALATION,
+                 confidence=0.8,
+                 evidence={"duration": session.duration_seconds, "complexity": len(session.intent_vector)},
+                 context_snippet="⚠️ Session flagged as complex/escalating."
+             ))
         # 3. False Positive Detection (Requires Signal Layer integration)
         
         # Persist signals

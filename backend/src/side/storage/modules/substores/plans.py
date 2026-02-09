@@ -148,11 +148,7 @@ class PlanStore:
 
     def resolve_hierarchy(self, plan_id: str) -> List[Dict[str, Any]]:
         """
-        [FRACTAL DNA]: Resolves the full lineage of a plan from Leaf to Root.
-        Returns ordered list: [Leaf, Parent, Grandparent, ... Root]
-        """
-        """
-        [FRACTAL DNA]: Resolves the full lineage of a plan from Leaf to Root.
+        [PLAN LINEAGE]: Resolves the full lineage of a plan from Leaf to Root.
         Returns ordered list: [Leaf, Parent, Grandparent, ... Root]
         """
         with self.engine.connection() as conn:
@@ -175,9 +171,9 @@ class PlanStore:
             rows = conn.execute(query, (plan_id,)).fetchall()
             return [dict(row) for row in rows]
 
-    def get_fractal_context(self, plan_id: str) -> Dict[str, Any]:
+    def get_plan_hierarchy(self, plan_id: str) -> Dict[str, Any]:
         """
-        [FRACTAL ONTOLOGY]: Generates the 'Holographic Context' for a task.
+        [CONTEXT HIERARCHY]: Generates the 'Full Context' for a task.
         Combines the specific task with the strategic intent of its ancestors.
         """
         chain = self.resolve_hierarchy(plan_id)

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 async def get_strategic_hub_data(db: Any) -> Dict[str, Any]:
     """
-    [DRY ARCHITECTURE]: Returns strategic hub data directly from database.
+    Returns strategic hub data directly from database.
     
     No file is created. LLM accesses this via MCP tools.
     
@@ -62,7 +62,7 @@ async def get_strategic_hub_data(db: Any) -> Dict[str, Any]:
 
 async def get_strategic_friction(db: Any) -> List[Dict[str, Any]]:
     """
-    [DRY ARCHITECTURE]: Returns strategic friction (critical issues) from database.
+    Returns strategic friction (critical issues) from database.
     
     This provides the "Strategic Friction & Audit Remediation" snapshot for the Hub.
     """

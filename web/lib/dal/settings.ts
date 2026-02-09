@@ -16,7 +16,7 @@ export const getSettings = cache(async (): Promise<Settings> => {
     // Ensure auth
     await getAuthenticatedUser();
 
-    // TODO: Connect to real 'user_settings' table
+    // NOTE: 'user_settings' table pending. Using defaults for Production V1.
     return {
         ghost_mode: false,
         data_region: "eu",

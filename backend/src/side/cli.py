@@ -3,28 +3,13 @@ import os
 import argparse
 from side.cli_handlers.auth import handle_login, handle_profile, handle_usage
 from side.cli_handlers.connect import handle_connect
-from side.cli_handlers.audit import handle_audit, handle_pulse
+from side.cli_handlers.audit import handle_audit, handle_health
 from side.cli_handlers.intel import handle_index, handle_watch, handle_strategy, handle_maintenance
 from side.cli_handlers.wizard import handle_wizard
 
 # Standard libs setup for fast start
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-def handle_sign_anchor(args):
-    """Signs the project.json anchor for project integrity."""
-    from side.utils.signature import signer
-    from side.cli_handlers.utils import ux
-    from pathlib import Path
-    
-    project_path = Path(".").resolve()
-    anchor_path = project_path / "project.json"
-    
-    if not anchor_path.exists():
-        ux.display_status("No project.json found to sign.", level="error")
-        return
-        
-    signer.sign_file(anchor_path)
-    ux.display_status(f"Anchor signed. Created {anchor_path.suffix}.sig companion.", level="success")
 
 def main():
     parser = argparse.ArgumentParser(description="Sidelith CLI")
@@ -73,8 +58,6 @@ def main():
     maint_parser = subparsers.add_parser("maintenance", help="Run system maintenance (VACUUM/Backup)")
     
     # Signing
-    sign_parser = subparsers.add_parser("sign-anchor", help="Cryptographically sign the project.json anchor")
-
     # Wizard
     wizard_parser = subparsers.add_parser("wizard", help="Run the First-Run Experience Setup Wizard")
     
@@ -89,7 +72,6 @@ def main():
         "watch": handle_watch,
         "strategy": handle_strategy,
         "maintenance": handle_maintenance,
-        "sign-anchor": handle_sign_anchor,
         "wizard": handle_wizard
     }
 

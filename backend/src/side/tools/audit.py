@@ -69,8 +69,8 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     if "kotlin" in languages:
         adapters.append(DetektAdapter(project_path))
     
-    print(f"🛡️  [SYSTEM AUDIT]: Initiating scan across {', '.join(languages)} DNA...")
-    print(f"🎯 [ALIGNMENT]: Filter: Severity in {severity_filter}")
+    print(f"🛡️  [AUDIT]: Initiating scan across {', '.join(languages)}...")
+    print(f"🎯 [FILTER]: Severity in {severity_filter}")
     
     # 3. Handle JIT Installation
     active_adapters = []
@@ -161,59 +161,44 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     except Exception as e:
         logger.warning(f"Pattern extraction failed: {e}")
 
-    # 7. Generate report
-    report = _generate_report(all_findings, dimension, severity_filter)
+    # 7. Generate report using Standard Formatter
+    from side.tools.formatting import format_audit_summary, format_audit_finding
+    
+    # Calculate stats
+    critical_count = len([f for f in all_findings if f.severity.value == "CRITICAL"])
+    high_count = len([f for f in all_findings if f.severity.value == "HIGH"])
+    medium_count = len([f for f in all_findings if f.severity.value == "MEDIUM"])
+    
+    top_issue = all_findings[0].message if all_findings else "None"
+    
+    report = format_audit_summary(
+        critical=critical_count,
+        high=high_count,
+        medium=medium_count,
+        top_issue=top_issue,
+        follow_ups=["View details in Strategic Database", "Run 'side strategy' for remediation plan"]
+    )
+    
+    # Append top 5 findings details
+    report += "\n\n"
+    for finding in all_findings[:5]:
+        report += format_audit_finding(
+            finding_type=finding.message,
+            severity=finding.severity.value,
+            file_path=f"{finding.file_path}:{finding.line}",
+            code_snippet=finding.code_snippet or "",
+            fix=finding.suggested_fix or "See detailed report",
+            risk=finding.explanation or "Potential risk identified",
+            follow_up="Apply fix"
+        )
+        report += "\n"
+    
+    if len(all_findings) > 5:
+        report += f"\n... and {len(all_findings) - 5} more issues saved to database."
     
     logger.info(f"✅ Saved {saved_count}/{len(all_findings)} findings from {len(active_adapters)} tools")
     
     return report
-
-def _generate_report(findings: list[Finding], dimension: str, severity_filter: list[str]) -> str:
-    """Generate human-readable report from findings."""
-    
-    # Group by severity
-    by_severity = {}
-    for finding in findings:
-        severity = finding.severity.value
-        if severity not in by_severity:
-            by_severity[severity] = []
-        by_severity[severity].append(finding)
-    
-    lines = []
-    lines.append(f"🛡️ **SYSTEM AUDIT: {len(findings)} Issues Detected**")
-    lines.append(f"🎯 *Dimension: {dimension.upper()} | Pattern Distiller: ACTIVE*")
-    lines.append("")
-    
-    # Show breakdown by severity
-    for severity in ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]:
-        if severity in by_severity:
-            count = len(by_severity[severity])
-            emoji = {"CRITICAL": "🛑", "HIGH": "⚠️", "MEDIUM": "⚡", "LOW": "ℹ️", "INFO": "💡"}
-            lines.append(f"{emoji.get(severity, '•')} **{severity}**: {count} issues")
-    
-    lines.append("")
-    lines.append("**Top High-Density Findings:**")
-    
-    # Show top 5 findings with synthesis
-    for i, finding in enumerate(findings[:5], 1):
-        lines.append(f"{i}. [{finding.file_path}:{finding.line}] **{finding.message}**")
-        if finding.explanation:
-            lines.append(f"   💡 *{finding.explanation}*")
-        
-        impact = finding.metadata.get("strategic_impact") if finding.metadata else None
-        if impact:
-            lines.append(f"   🎯 **INTENTION IMPACT**: {impact}")
-            
-        if finding.cwe_id:
-            lines.append(f"   - {finding.cwe_id} | Probe: {finding.tool}")
-    
-    if len(findings) > 5:
-        lines.append(f"   ... and {len(findings) - 5} more issues extracted into Pattern Store.")
-    
-    lines.append("")
-    lines.append("> **Next Steps**: View the **Strategic Database** for specific remediation directives.")
-    
-    return "\n".join(lines)
 
 if __name__ == "__main__":
     import asyncio

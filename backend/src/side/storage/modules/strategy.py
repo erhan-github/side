@@ -85,8 +85,8 @@ class StrategyStore:
     def resolve_hierarchy(self, *args, **kwargs):
         return self.plans.resolve_hierarchy(*args, **kwargs)
 
-    def get_fractal_context(self, *args, **kwargs):
-        return self.plans.get_fractal_context(*args, **kwargs)
+    def get_plan_hierarchy(self, *args, **kwargs):
+        return self.plans.get_plan_hierarchy(*args, **kwargs)
 
     # --- DECISION DELEGATION ---
 
@@ -146,11 +146,11 @@ class StrategyStore:
         """Backwards compatibility for recall_facts."""
         return self.memory.recall_facts(query, project_id, limit)
 
-    # --- CHRONOS (TIME-WEIGHTED SEARCH) ---
+    # --- TIME-WEIGHTED SEARCH ---
 
-    def search_chronos(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def search_time_weighted(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        [CHRONOS VECTOR]: Time-Weighted Semantic Search.
+        [TEMPORAL VECTOR]: Time-Weighted Semantic Search.
         Rank = Relevance * (1 / (DaysOld + 1))
         """
         # 1. Get raw matches from patterns
@@ -179,11 +179,11 @@ class StrategyStore:
                 decay_factor = 1.0
                 
             final_score = relevance * decay_factor
-            res["chronos_score"] = final_score
+            res["time_weighted_score"] = final_score
             weighted_results.append(res)
             
         # 3. Re-sort
-        weighted_results.sort(key=lambda x: x["chronos_score"], reverse=True)
+        weighted_results.sort(key=lambda x: x["time_weighted_score"], reverse=True)
         return weighted_results[:limit]
 
     # --- HOUSEKEEPING ---

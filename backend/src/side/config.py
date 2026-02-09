@@ -64,6 +64,7 @@ class SideConfig:
     # Feature Flags
     enable_auto_restart: bool = field(default_factory=lambda: os.getenv("ENABLE_AUTO_RESTART", "false").lower() == "true")
     enable_cache_eviction: bool = field(default_factory=lambda: os.getenv("ENABLE_CACHE_EVICTION", "true").lower() == "true")
+    enable_advanced_scavengers: bool = field(default_factory=lambda: os.getenv("ENABLE_ADVANCED_SCAVENGERS", "false").lower() == "true")
 
     def __post_init__(self) -> None:
         """Initialize after creation."""

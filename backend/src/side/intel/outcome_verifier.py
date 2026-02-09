@@ -96,5 +96,31 @@ class OutcomeVerifier:
 
     def verify_pending_sessions(self):
         """Batch job to verify recent UNKNOWN sessions."""
-        # TODO: Implement batch scanner
-        pass
+        """Batch job to verify recent UNKNOWN sessions."""
+        # Get sessions that ended > 1 hour ago but are still UNKNOWN
+        pending = self.store.get_pending_verification_sessions(limit=50)
+        
+        verified_count = 0
+        for session_dict in pending:
+            session = self._dict_to_session(session_dict)
+            outcome = self.verify_session(session)
+            
+            if outcome != VerifiedOutcome.UNKNOWN:
+                self.store.update_outcome(session.session_id, outcome)
+                verified_count += 1
+                
+        logger.info(f"✅ [VERIFIER]: Batch verification complete. {verified_count} sessions finalized.")
+
+    def _dict_to_session(self, data: Dict[str, Any]) -> ConversationSession:
+        """Helper to hydrate session from DB dict (OutcomeVerifier version)."""
+        # (Duplicate helper - in production this should be in a shared utility)
+        return ConversationSession(
+            session_id=data['session_id'],
+            project_id=data['project_id'],
+            started_at=datetime.fromisoformat(data['started_at']) if data.get('started_at') else None,
+            ended_at=datetime.fromisoformat(data['ended_at']) if data.get('ended_at') else None,
+            duration_seconds=data.get('duration_seconds', 0),
+            raw_intent=data.get('raw_intent', ''),
+            intent_vector=data.get('intent_vector', []),
+            claimed_outcome=ClaimedOutcome(data.get('claimed_outcome', 'unknown'))
+        )

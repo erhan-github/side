@@ -1,5 +1,6 @@
 """
-System Protocol v4: Distributed Fractal Indexing (Merkle-Validated).
+"""
+System Protocol v4: Distributed Indexing.
 Implements Sparse Context Retrieval with O(1) Local Update Latency.
 
 Architectural Principles:
@@ -55,7 +56,7 @@ REGEX_STRUCTURAL = {
     }
 }
 
-# Signals to watch for (The 'Shadow Intelligence')
+# Signals to watch for (Technology Detection)
 # These allow the indexer to 'smell' the architecture of a file without deep parsing.
 SIGNALS = {
     # Web & UI (The Visual Surface)
@@ -93,16 +94,16 @@ SIGNALS = {
     "OAuth2": re.compile(r'oauth2|oidc', re.IGNORECASE),
 }
 
-# --- THE SYSTEM GAVEL (Context Filtering) ---
+# --- CONTEXT FILTERING ---
 # "Code is Truth. Docs are Noise."
 # We exclude artifacts that increase Context Entropy while preserving 'Strategic Anchor' files.
-KARPATHY_DENY_EXTENSIONS = {
+DENIED_EXTENSIONS = {
     ".md", ".markdown", ".txt", ".rst", ".adoc",
     ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
     ".lock", ".map", ".tmp", ".log"
 }
 
-KARPATHY_ALLOW_FILES = {
+ALLOWED_FILES = {
     "task.md", "README.md", "SYSTEM_ANCHOR.md", 
     "walkthrough.md", "implementation_plan.md",
     ".cursorrules", ".editorconfig", "package.json", 
@@ -120,7 +121,7 @@ from side.services.ignore import ProjectIgnore
 logger = logging.getLogger(__name__)
 
 def get_file_semantics(path: Path, content: str) -> Dict[str, Any]:
-    """Palantir-level semantic extraction from file content."""
+    """Semantic extraction from file content."""
     semantics = {
         "classes": [],
         "functions": [],
@@ -234,7 +235,7 @@ def get_file_dna(path: Path) -> Dict[str, Any]:
         return {"name": path.name, "error": "unreadable"}
 
 def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]:
-    """Generates the V3 Fractal Index for a single directory."""
+    """Generates the Context Index for a single directory."""
     files = []
     children_checksums = {}
     aggregated_signals = set()
@@ -264,14 +265,14 @@ def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]
             if not i.is_file():
                 continue
                 
-            # [KARPATHY FILTER]: Apply the "Signal Only" logic
+            # [CONTEXT FILTER]: Apply the "Signal Only" logic
             # 1. Allow Exception List explicitly
-            if i.name in KARPATHY_ALLOW_FILES:
+            if i.name in ALLOWED_FILES:
                 file_items.append(i)
                 continue
                 
             # 2. Deny Noise Extensions
-            if i.suffix in KARPATHY_DENY_EXTENSIONS:
+            if i.suffix in DENIED_EXTENSIONS:
                 continue
                 
             file_items.append(i)
@@ -286,7 +287,7 @@ def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]
                 total_classes += len(sem.get("classes", []))
                 total_functions += len(sem.get("functions", []))
 
-                # 🧬 [PHASE 52]: ONTOLOGY PERSISTENCE
+                # 🧬 ONTOLOGY PERSISTENCE
                 if ontology_store:
                     file_rel_path = str(dna["name"])
                     entities_to_save = []
@@ -333,7 +334,7 @@ def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]
                     except:
                         pass
     
-    # --- KARPATHY HEURISTIC (Complexity Analysis) ---
+    # --- HEURISTIC (Complexity Analysis) ---
     is_complex = (
         len(files) >= 5 or 
         total_classes > 0 or 
@@ -362,7 +363,7 @@ def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]
     
     return index_data
 
-def run_fractal_scan(root: Path, ontology_store=None):
+def run_context_scan(root: Path, ontology_store=None):
     """
     Runs a pruning Top-Down scan to gather directories, 
     then processes them Bottom-Up to ensure Merkle integrity.
@@ -426,7 +427,7 @@ def update_branch(root: Path, changed_path: Path, ontology_store=None):
         if ignore_service.should_ignore(current_dir):
             break
             
-        print(f"⚡ Fractal Update: {current_dir}")
+        print(f"⚡ Context Update: {current_dir}")
         index_data = generate_local_index(current_dir, ontology_store=ontology_store)
         
         side_dir = current_dir / ".side"
@@ -447,6 +448,6 @@ def update_branch(root: Path, changed_path: Path, ontology_store=None):
 if __name__ == "__main__":
     import sys
     target = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.cwd()
-    print(f"🚀 Starting Deep Fractal Scan on: {target}")
-    run_fractal_scan(target)
+    print(f"🚀 Starting Deep Context Scan on: {target}")
+    run_context_scan(target)
     print("✨ Deep Intelligence Context Tree Generated.")
