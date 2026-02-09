@@ -44,6 +44,7 @@ RUN useradd -m sideuser && chown -R sideuser:sideuser /app
 USER sideuser
 
 # Healthcheck - Railway assigns port 8080 by default
+EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:8080/health || exit 1
 
