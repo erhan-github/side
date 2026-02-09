@@ -16,7 +16,7 @@ Optimizations:
 import asyncio
 import logging
 from pathlib import Path
-from typing import List, Set, Callable, Optional
+from typing import List, Set, Callable, Optional, Any
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 from datetime import datetime, timedelta
