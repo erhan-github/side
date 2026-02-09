@@ -180,21 +180,34 @@ async def handle_ai_context_request(event: Event):
     logger.info(f"AI context request: {context_type} - {query[:50]}...")
     
     if context_type == "architecture":
-        # Strategy: Query ContextEngine for project graph
+        # Strategy: Query DNAHandler for real project graph
         try:
-            from side.storage.modules.base import ContextEngine
-            # [ROADMAP]: Integrate graph-based context resolution
-            logger.info("Injecting architectural context")
-        except ImportError:
-            pass
+            from side.intel.handlers.topology import DNAHandler
+            from side.config import config
+            
+            dna_handler = DNAHandler(
+                project_path=config.PROJECT_ROOT,
+                engine=engine,
+                brain_path=config.BRAIN_PATH
+            )
+            dna_summary = dna_handler.get_condensed_dna()
+            logger.info(f"AI: Injected DNA Context: {dna_summary[:50]}...")
+            # Real implementation: Append DNA to AI context payload
+            payload["architectural_dna"] = dna_summary
+        except Exception as e:
+            logger.error(f"Failed to inject DNA Context: {e}")
             
     elif context_type == "patterns":
         # Strategy: Load high-fidelity code patterns from WisdomStore
         logger.info("Injecting pattern context")
         
     elif context_type == "industry":
-        # [FUTURE]: Asynchronous fetch of external intelligence (RSS/vibe-check)
-        logger.info("External intelligence fetch requested")
+        # Strategy: Real-time intelligence capture via OperationalStore
+        from side.storage.modules.transient import OperationalStore
+        ops = OperationalStore(engine)
+        intel_signals = ops.get_setting("external_intel_cache")
+        logger.info(f"AI: Injected External Intel: {len(intel_signals or '')} chars")
+        payload["external_intelligence"] = intel_signals
 
 
 # ============================================================================
