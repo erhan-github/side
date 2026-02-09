@@ -69,6 +69,10 @@ class SmartFileWatcher(FileSystemEventHandler):
             "processed_events": 0,
             "debounced_batches": 0
         }
+        
+        # Legacy support
+        self.on_change_callback = None
+        self.buffer = None
     
     def should_ignore(self, path: Path) -> bool:
         """
@@ -211,6 +215,17 @@ class SmartFileWatcher(FileSystemEventHandler):
             f"Processed {len(changes)} file changes: "
             f"{len(critical_changes)} critical, {len(high_changes)} high, {len(normal_changes)} normal"
         )
+        
+        # Legacy callback support
+        if self.on_change_callback:
+            try:
+                paths = [p for p, _ in changes]
+                if asyncio.iscoroutinefunction(self.on_change_callback):
+                    await self.on_change_callback(paths)
+                else:
+                    self.on_change_callback(paths)
+            except Exception as e:
+                logger.error(f"Error in FileWatcher callback: {e}")
     
     async def _emit_change_event(self, path: Path, event_type: str, priority: EventPriority):
         """Emit file change event to event bus."""
@@ -237,17 +252,17 @@ class SmartFileWatcher(FileSystemEventHandler):
         }
 
 
-class OptimizedFileWatcherService:
+class FileWatcher:
     """
     Optimized file watcher service using event-driven architecture.
-    
-    Replaces polling-based watcher with event-driven approach.
     """
     
-    def __init__(self, project_path: Path):
-        self.project_path = project_path
+    def __init__(self, project_path: Path, on_change: Optional[Callable] = None, debounce_seconds: float = 2.0, buffer: Optional[Any] = None):
+        self.project_path = Path(project_path)
         self.observer = Observer()
-        self.handler = SmartFileWatcher(project_path)
+        self.handler = SmartFileWatcher(self.project_path, debounce_seconds=debounce_seconds)
+        self.handler.on_change_callback = on_change
+        self.handler.buffer = buffer
         self._running = False
     
     def start(self):

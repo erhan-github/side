@@ -16,7 +16,7 @@ from .intel.auto_intelligence import AutoIntelligence
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from .intel.log_monitor import LogMonitor
-from .services.file_watcher import OptimizedFileWatcherService
+from .services.file_watcher import FileWatcher
 from .utils.event_optimizer import event_bus
 from .utils.crypto import shield
 import json
@@ -74,7 +74,7 @@ def start_background_services():
     
     # [KAR-8.2] Optimized File Intelligence (Palantir)
     logger.info("⚡ [NEURAL]: Activating Optimized File Sentinel...")
-    file_watcher = OptimizedFileWatcherService(Path.cwd())
+    file_watcher = FileWatcher(Path.cwd())
     file_watcher.start()
     
     # [NEURAL] Connect Intelligence to Events
