@@ -1,8 +1,8 @@
 """
-Side - Your Strategic Partner
+Sidelith - Context Engine for AI Coding Tools
 
-Strategic intelligence that understands your codebase, business, and market
-without being asked.
+Indexes your codebase locally and injects context into Cursor, VS Code,
+and Claude so AI assistants understand your project structure and patterns.
 """
 
 __version__ = "0.1.0"

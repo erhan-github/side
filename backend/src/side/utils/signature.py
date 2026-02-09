@@ -16,7 +16,7 @@ class SystemSigner:
     
     def __init__(self, key_path: str | Path | None = None):
         if key_path is None:
-            from side.env import env
+            from ..env import env
             key_path = env.get_side_root() / "system.key"
         self.key_path = Path(key_path)
         self._signing_key = None

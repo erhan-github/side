@@ -28,7 +28,7 @@ class SignalAuditorService:
         self.operational = operational
         self._running = False
         self._task: asyncio.Task | None = None
-        from side.env import env
+        from ..env import env
         self.report_path = env.get_side_root() / "signal_reachability.json"
 
     async def start(self) -> None:

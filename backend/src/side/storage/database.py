@@ -69,7 +69,7 @@ def get_engine(db_path: Optional[str] = None) -> Engine:
         return _engine
     
     if not db_path:
-        from side.env import env
+        from ..env import env
         db_path = str(env.get_db_path())
     
     # Check if DB exists to avoid creating empty files in wrong places?

@@ -79,7 +79,7 @@ def _get_log_file_path(log_file: Optional[str] = None) -> Path:
     if log_file:
         path = Path(log_file)
     else:
-        from side.env import env
+        from .env import env
         log_dir = env.get_log_dir()
         log_dir.mkdir(parents=True, exist_ok=True)
         path = log_dir / "sidelith.log"

@@ -81,7 +81,7 @@ def _compute_bundle_signature(data: bytes, secret: bytes) -> str:
 
 def _get_signing_secret() -> bytes:
     """Get or create signing secret for bundle integrity."""
-    from side.env import env
+    from ..env import env
     secret_path = env.get_side_root() / "bundle.secret"
     
     if not secret_path.exists():
@@ -138,7 +138,7 @@ def export_project(project_path: str | Path, encrypt: bool = True) -> Optional[P
         return None
     
     # 3. Get database path
-    from side.env import env
+    from ..env import env
     db_path = env.get_db_path()
     
     if db_path.is_symlink():
@@ -284,7 +284,7 @@ def import_project(bundle_path: str | Path, force: bool = False) -> bool:
             
             # 8. Check for existing data
             target_id_file = Path.cwd() / ".side-id"
-            from side.env import env
+            from ..env import env
             target_db_path = env.get_db_path()
             
             if (target_id_file.exists() or target_db_path.exists()) and not force:

@@ -35,7 +35,7 @@ def get_side_dir(current_path: Path | str | None = None) -> Path:
     Returns:
         Path to the global Sidelith data directory (~/.side-mcp by default).
     """
-    from side.env import env
+    from ..env import env
     root = env.get_side_root()
     root.mkdir(parents=True, exist_ok=True)
     return root

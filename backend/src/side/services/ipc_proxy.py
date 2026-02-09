@@ -16,7 +16,7 @@ class IPCProxy:
 
     def __init__(self, socket_path: Optional[str] = None):
         import secrets
-        from side.env import env
+        from ..env import env
         self.socket_path = socket_path or str(env.get_side_root() / "polyglot.sock")
         self.server_thread = None
         self.running = False
