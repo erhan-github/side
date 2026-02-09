@@ -20,7 +20,7 @@ async def handle_welcome(arguments: dict[str, Any]) -> str:
     Day 1 magic - set up Side and create the Strategic Hub.
     
     - Detects project name and stack
-    - Initializes the Sovereign Context state
+    - Initializes the System Context state
     - Runs baseline audit
     - Stores initial snapshot
     """
@@ -47,7 +47,7 @@ async def handle_welcome(arguments: dict[str, Any]) -> str:
 **Latest Score**: {progress['last_score']}%
 **Change**: {progress['message']}
 
-**Context Source**: Sovereign Strategic Database (MCP)
+**Context Source**: System Context Database (MCP)
 
 **What would you like to do?**
 - Say "Side, audit my code" to check health
@@ -60,7 +60,7 @@ async def handle_welcome(arguments: dict[str, Any]) -> str:
 
 **Stack**: {', '.join(stack)}
 
-**Context Source**: Sovereign Strategic Database (MCP)
+**Context Source**: System Context Database (MCP)
 
 Say "Side, audit my code" to get your first health score!
 """
@@ -92,11 +92,11 @@ I've initialized the technical context for this project:
 
 **📁 Project**: {result['project_name']}
 **🔧 Stack**: {', '.join(result['stack'])}
-**⬛ Context**: Sovereign Strategic Database (Ready)
+**⬛ Context**: System Context Database (Ready)
 
 ### How it works:
 
-Sidelith maintains a persistent state in your Sovereign Database. It tracks your:
+Sidelith maintains a persistent state in your System Database. It tracks your:
 - Codebase health and logic flow
 - Active goals and constraints
 - Decision history (to prevent regressions)
