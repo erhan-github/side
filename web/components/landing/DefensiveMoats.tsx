@@ -2,10 +2,10 @@ import { Shield, Lock, Eye, Zap } from "lucide-react";
 
 export function DefensiveMoats() {
     return (
-        <section className="section-spacing w-full max-w-6xl px-6 py-32 relative overflow-hidden">
+        <section className="w-full max-w-6xl px-6 py-16 relative overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-500/5 blur-[120px] rounded-full -z-10" />
 
-            <div className="text-center mb-24">
+            <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
                     Defensive <span className="text-blue-400">Moats</span>.
                 </h2>

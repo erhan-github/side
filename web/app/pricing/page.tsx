@@ -24,59 +24,67 @@ export default function PricingPage() {
 
 
                     {/* Pricing Cards - 5 tiers */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-16 items-stretch">
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-20 items-stretch">
                         {/* Hobby - Free */}
                         <div className="relative p-6 rounded-3xl border border-white/10 bg-zinc-900/50 flex flex-col hover:border-white/20 transition-colors duration-300">
                             <div className="mb-4">
                                 <h3 className="text-lg font-bold tracking-tight mb-1 text-white uppercase tracking-widest">Hobby</h3>
-                                <p className="text-zinc-400 text-xs italic">Individual, evaluation</p>
+                                <p className="text-zinc-400 text-xs font-medium">Individual, evaluation</p>
                             </div>
                             <div className="mb-4">
                                 <span className="text-4xl font-bold tracking-tighter text-white">$0</span>
                             </div>
                             <div className="mb-4 p-2 rounded-lg bg-zinc-500/10 border border-zinc-500/20">
-                                <p className="text-zinc-400 text-xs font-medium flex items-center gap-2">
-                                    <Check className="w-3 h-3" /> 500 SUs
+                                <p className="text-zinc-300 text-xs font-medium flex items-center gap-2">
+                                    <Check className="w-3 h-3" /> 500 SUs / mo
                                 </p>
                             </div>
                             <div className="flex-grow">
-                                <ul className="space-y-2 mb-6 text-xs text-zinc-400">
+                                <ul className="space-y-3 mb-6 text-xs text-zinc-300 font-medium">
                                     <li className="flex items-center gap-2">
                                         <Check className="w-3 h-3 text-cyan-400 shrink-0" />
-                                        <span>Decision Database</span>
+                                        <span>Full Context Injection</span>
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <Check className="w-3 h-3 text-cyan-400 shrink-0" />
                                         <span>Local SQLite Registry</span>
                                     </li>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-cyan-400 shrink-0" />
+                                        <span>All IDE Integrations</span>
+                                    </li>
                                 </ul>
                             </div>
-                            <Link href="/login" className="w-full h-10 rounded-full border border-white/10 flex items-center justify-center text-sm font-medium hover:bg-white hover:text-black transition-all">Start</Link>
+                            <Link href="/login" className="w-full h-10 rounded-full border border-white/10 flex items-center justify-center text-sm font-bold hover:bg-white hover:text-black transition-all">Start</Link>
                         </div>
 
                         {/* Pro - $20 */}
                         <div className="relative p-6 rounded-3xl border border-cyan-500/30 bg-zinc-900/80 flex flex-col hover:border-cyan-500/50 transition-colors duration-300 shadow-xl shadow-cyan-900/10 z-10">
                             <div className="mb-4">
                                 <h3 className="text-lg font-bold tracking-tight mb-1 text-white uppercase tracking-widest">Pro</h3>
-                                <p className="text-cyan-400/60 text-xs italic">Professional developers</p>
+                                <p className="text-cyan-300 text-xs font-medium">Professional developers</p>
                             </div>
                             <div className="mb-4">
                                 <span className="text-4xl font-bold tracking-tighter text-white">$20</span>
                             </div>
                             <div className="mb-4 p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
-                                <p className="text-cyan-400 text-xs font-medium flex items-center gap-2">
-                                    <Check className="w-3 h-3" /> 5,000 SUs
+                                <p className="text-cyan-200 text-xs font-medium flex items-center gap-2">
+                                    <Check className="w-3 h-3" /> 5,000 SUs / mo
                                 </p>
                             </div>
                             <div className="flex-grow">
-                                <ul className="space-y-2 mb-6 text-xs text-zinc-300">
+                                <ul className="space-y-3 mb-6 text-xs text-zinc-200 font-medium">
                                     <li className="flex items-center gap-2">
                                         <Check className="w-3 h-3 text-cyan-400 shrink-0" />
-                                        <span>Everything in Hobby</span>
+                                        <span>High-Volume Throughput</span>
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <Check className="w-3 h-3 text-cyan-400 shrink-0" />
-                                        <span>Architectural Forensics</span>
+                                        <span>Priority Support</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-cyan-400 shrink-0" />
+                                        <span>Early Access Features</span>
                                     </li>
                                 </ul>
                             </div>
@@ -87,25 +95,29 @@ export default function PricingPage() {
                         <div className="relative p-6 rounded-3xl border border-purple-500/30 bg-zinc-900/80 flex flex-col hover:border-purple-500/50 transition-colors duration-300 shadow-xl shadow-purple-900/10 z-20">
                             <div className="mb-4">
                                 <h3 className="text-lg font-bold tracking-tight mb-1 text-white uppercase tracking-widest">Elite</h3>
-                                <p className="text-purple-400/60 text-xs italic">Power users, small teams</p>
+                                <p className="text-purple-300 text-xs font-medium">Power users, small teams</p>
                             </div>
                             <div className="mb-4">
                                 <span className="text-4xl font-bold tracking-tighter text-white">$60</span>
                             </div>
                             <div className="mb-4 p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                                <p className="text-purple-400 text-xs font-medium flex items-center gap-2">
-                                    <Check className="w-3 h-3" /> 25,000 SUs
+                                <p className="text-purple-200 text-xs font-medium flex items-center gap-2">
+                                    <Check className="w-3 h-3" /> 25,000 SUs / mo
                                 </p>
                             </div>
                             <div className="flex-grow">
-                                <ul className="space-y-2 mb-6 text-xs text-zinc-300">
+                                <ul className="space-y-3 mb-6 text-xs text-zinc-200 font-medium">
                                     <li className="flex items-center gap-2">
                                         <Check className="w-3 h-3 text-purple-400 shrink-0" />
-                                        <span>Unlimited Projects</span>
+                                        <span>Maximum Throughput</span>
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <Check className="w-3 h-3 text-purple-400 shrink-0" />
-                                        <span>Context-Engine (RLM)</span>
+                                        <span>Direct Engineer Support</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="w-3 h-3 text-purple-400 shrink-0" />
+                                        <span>Private Slack Channel</span>
                                     </li>
                                 </ul>
                             </div>
@@ -116,35 +128,35 @@ export default function PricingPage() {
                         <div className="relative p-6 rounded-3xl border border-blue-500/20 bg-zinc-900/50 flex flex-col hover:border-blue-500/40 transition-colors duration-300">
                             <div className="mb-4">
                                 <h3 className="text-lg font-bold tracking-tight mb-1 text-white uppercase tracking-widest">Enterprise</h3>
-                                <p className="text-blue-400/60 text-xs italic">Teams, SSO, Shared Pools</p>
+                                <p className="text-blue-300 text-xs font-medium">Teams, SSO, Shared Pools</p>
                             </div>
                             <div className="mb-4 flex flex-col justify-center h-10">
                                 <span className="text-2xl font-bold tracking-tighter text-white">Custom</span>
                             </div>
                             <div className="flex-grow">
-                                <ul className="space-y-2 mb-6 text-xs text-zinc-400">
+                                <ul className="space-y-3 mb-6 text-xs text-zinc-300 font-medium">
                                     <li className="flex items-center gap-2">
                                         <Check className="w-3 h-3 text-blue-400 shrink-0" />
                                         <span>Shared Context Pools</span>
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <Check className="w-3 h-3 text-blue-400 shrink-0" />
-                                        <span>SAML SSO</span>
+                                        <span>SAML SSO / Enforcement</span>
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <Check className="w-3 h-3 text-blue-400 shrink-0" />
-                                        <span>Team Analytics</span>
+                                        <span>Centralized Billing</span>
                                     </li>
                                 </ul>
                             </div>
-                            <a href="mailto:sales@sidelith.com" className="w-full h-10 rounded-full border border-white/10 flex items-center justify-center text-sm font-medium hover:bg-white hover:text-black transition-all mt-auto">Contact</a>
+                            <a href="mailto:sales@sidelith.com" className="w-full h-10 rounded-full border border-white/10 flex items-center justify-center text-sm font-bold hover:bg-white hover:text-black transition-all mt-auto">Contact</a>
                         </div>
 
                         {/* Airgapped - Custom */}
                         <div className="relative p-6 rounded-3xl border border-emerald-500/20 bg-zinc-900/50 flex flex-col hover:border-emerald-500/40 transition-colors duration-300">
                             <div className="mb-4">
                                 <h3 className="text-lg font-bold tracking-tight mb-1 text-white uppercase tracking-widest">Airgapped</h3>
-                                <p className="text-emerald-400/60 text-xs italic">Regulated industries</p>
+                                <p className="text-emerald-300 text-xs font-medium">Regulated industries</p>
                             </div>
                             <div className="mb-4 flex flex-col justify-center h-10">
                                 <span className="text-2xl font-bold tracking-tighter text-white">Custom</span>

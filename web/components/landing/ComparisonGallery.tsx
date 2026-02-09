@@ -145,9 +145,9 @@ export function ComparisonGallery() {
     const currentScenario = scenarios[activeScenario];
 
     return (
-        <section className="w-full max-w-6xl mx-auto mb-32 px-6">
+        <section className="w-full max-w-6xl mx-auto py-16 px-6">
             <div className="text-center mb-16">
-                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
                     Context is <span className={activeMode === "with" ? "text-emerald-400" : "text-red-500"}>Everything</span>.
                 </h2>
                 <p className="text-white/50 text-lg max-w-2xl mx-auto">
@@ -166,8 +166,8 @@ export function ComparisonGallery() {
                                 key={s}
                                 onClick={() => setActiveScenario(s)}
                                 className={`flex items-center gap-2 px-6 py-2 rounded-md text-sm font-mono font-bold transition-all ${isActive
-                                        ? "bg-white text-black shadow-lg"
-                                        : "text-white/40 hover:text-white hover:bg-white/5"
+                                    ? "bg-white text-black shadow-lg"
+                                    : "text-white/40 hover:text-white hover:bg-white/5"
                                     }`}
                             >
                                 <Icon size={14} />
@@ -180,8 +180,8 @@ export function ComparisonGallery() {
 
             {/* Main Window */}
             <div className={`rounded-3xl border transition-all duration-500 overflow-hidden relative group min-h-[500px] flex flex-col ${activeMode === "with"
-                    ? "border-emerald-500/30 bg-[#0a0f0d] shadow-[0_0_100px_rgba(16,185,129,0.1)]"
-                    : "border-red-500/30 bg-[#0f0a0a] shadow-[0_0_100px_rgba(239,68,68,0.1)]"
+                ? "border-emerald-500/30 bg-[#0a0f0d] shadow-[0_0_100px_rgba(16,185,129,0.1)]"
+                : "border-red-500/30 bg-[#0f0a0a] shadow-[0_0_100px_rgba(239,68,68,0.1)]"
                 }`}>
 
                 {/* Window Controls & Toggle */}
@@ -230,8 +230,8 @@ export function ComparisonGallery() {
 
                     {/* Analysis Sidebar */}
                     <div className={`p-8 border-l backdrop-blur-sm transition-colors duration-500 flex flex-col justify-center ${activeMode === "with"
-                            ? "border-emerald-500/10 bg-emerald-500/[0.02]"
-                            : "border-red-500/10 bg-red-500/[0.02]"
+                        ? "border-emerald-500/10 bg-emerald-500/[0.02]"
+                        : "border-red-500/10 bg-red-500/[0.02]"
                         }`}>
                         <div className="flex items-center gap-2 mb-8 text-xs font-mono uppercase tracking-widest opacity-50">
                             <Terminal size={14} />

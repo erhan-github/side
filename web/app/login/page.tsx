@@ -58,9 +58,9 @@ export default function LoginPage() {
                 </Link>
 
                 {/* Header */}
-                <div className="text-center mb-8">
+                <div className="text-center mb-10">
                     <h1 className="text-3xl font-bold mb-2 tracking-tight">Welcome to Sidelith</h1>
-                    <p className="text-zinc-400">
+                    <p className="text-zinc-300 font-medium">
                         The Intelligence Infrastructure for your Codebase
                     </p>
                 </div>
@@ -69,22 +69,22 @@ export default function LoginPage() {
                 <button
                     onClick={handleGitHubLogin}
                     disabled={isLoading}
-                    className="w-full h-12 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center gap-3 font-bold uppercase tracking-widest text-[11px] hover:bg-zinc-800 transition-all mb-6 disabled:opacity-50"
+                    className="w-full h-12 rounded-full bg-zinc-900 border border-white/20 flex items-center justify-center gap-3 font-bold uppercase tracking-widest text-xs hover:bg-zinc-800 transition-all mb-8 disabled:opacity-50"
                 >
                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Github className="w-5 h-5" />}
                     Authorize with GitHub
                 </button>
 
                 {error && (
-                    <p className="text-red-400 text-sm mb-4 text-center">{error}</p>
+                    <p className="text-red-400 text-sm mb-4 text-center bg-red-500/10 p-2 rounded">{error}</p>
                 )}
 
                 {/* Footer */}
-                <p className="text-center text-xs text-zinc-500 mt-8">
+                <p className="text-center text-xs text-zinc-400 mt-12">
                     By continuing, you agree to our{" "}
-                    <Link href="/terms" className="text-zinc-400 hover:text-white">Terms of Service</Link>
+                    <Link href="/terms" className="text-zinc-300 hover:text-white underline decoration-white/20 underline-offset-4">Terms of Service</Link>
                     {" "}and{" "}
-                    <Link href="/privacy" className="text-zinc-400 hover:text-white">Privacy Policy</Link>.
+                    <Link href="/privacy" className="text-zinc-300 hover:text-white underline decoration-white/20 underline-offset-4">Privacy Policy</Link>.
                 </p>
             </div>
         </div>

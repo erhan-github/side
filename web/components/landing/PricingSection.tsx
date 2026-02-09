@@ -2,9 +2,9 @@ import { Zap } from "lucide-react";
 
 export function PricingSection() {
     return (
-        <section className="section-spacing w-full max-w-6xl px-6 mb-24 relative z-10">
-            <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">Scale for <span className="text-amber-500">Intelligence</span></h2>
+        <section className="w-full max-w-6xl px-6 py-16 relative z-10">
+            <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">Scale for <span className="text-amber-500">Intelligence</span></h2>
                 <p className="text-base text-white/50">Deterministic capacity for your semantic operations.</p>
             </div>
 

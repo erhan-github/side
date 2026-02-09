@@ -2,9 +2,9 @@ import { Wind, Activity, Zap, Shield } from "lucide-react";
 
 export function ProblemSection() {
     return (
-        <section className="section-spacing w-full max-w-6xl px-6">
-            <div className="text-center mb-24">
-                <h2 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-400 mb-6">
+        <section className="py-16 w-full max-w-6xl px-6">
+            <div className="text-center mb-16">
+                <h2 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-400 mb-6">
                     AI tools forget between conversations
                 </h2>
             </div>

@@ -2,13 +2,13 @@ import { InstallWidget } from "@/components/InstallWidget";
 
 export function InstallSection() {
     return (
-        <section id="install-widget" className="section-spacing w-full max-w-5xl px-6 mb-32 relative z-10">
+        <section id="install-widget" className="w-full max-w-5xl px-6 pt-4 pb-32 relative z-10">
             <div className="relative p-12 rounded-[32px] bg-gradient-to-br from-emerald-500/[0.05] to-blue-500/[0.05] border border-emerald-500/20 overflow-hidden">
                 <div className="absolute top-0 left-1/4 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full" />
                 <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full" />
 
                 <div className="relative z-10">
-                    <div className="text-center mb-12">
+                    <div className="text-center mb-16">
                         <div className="inline-block px-4 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-500 font-mono text-[10px] tracking-widest uppercase mb-6">
                             ⚡ The Developer's Shortcut
                         </div>
