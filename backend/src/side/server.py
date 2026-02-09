@@ -204,7 +204,6 @@ async def dashboard_stats(request: Request):
         if summary.get("tokens_used", 0) > 0:
             efficiency = 98.7 # Placeholder
 
-        return JSONResponse({
         # Get real email if available
         profile = identity.get_profile(project_id)
         user_email = profile.email if profile and profile.email else "local@sidelith.com"
