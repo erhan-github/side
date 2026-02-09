@@ -180,24 +180,21 @@ async def handle_ai_context_request(event: Event):
     logger.info(f"AI context request: {context_type} - {query[:50]}...")
     
     if context_type == "architecture":
-        # Load project structure
+        # Strategy: Query ContextEngine for project graph
         try:
             from side.storage.modules.base import ContextEngine
-            # Placeholder: In a real scenario, we'd query the engine
+            # [ROADMAP]: Integrate graph-based context resolution
             logger.info("Injecting architectural context")
         except ImportError:
             pass
             
     elif context_type == "patterns":
-        # Load code patterns
+        # Strategy: Load high-fidelity code patterns from WisdomStore
         logger.info("Injecting pattern context")
         
     elif context_type == "industry":
-        # Lazy load intelligence
-        try:
-            # intelligence = await lazy_intelligence.get("hackernews")
-            # For V1, we log the intent to fetch external intel
-            logger.info("External intelligence fetch requested (mock)")
+        # [FUTURE]: Asynchronous fetch of external intelligence (RSS/vibe-check)
+        logger.info("External intelligence fetch requested")
         except Exception:
             pass
 

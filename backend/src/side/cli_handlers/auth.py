@@ -25,7 +25,6 @@ def handle_login(args):
             "token_balance": limit,
             "tokens_monthly": limit,
             "access_token": args.key,
-            "email": "verified_user@sidelith.com" 
         })
         ux.display_header("Success: Identity Verified", subtitle=f"{tier.upper()} Tier")
         ux.display_status(f"Balance: {limit:,} SUs / month", level="success")

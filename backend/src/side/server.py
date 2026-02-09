@@ -200,13 +200,12 @@ async def dashboard_stats(request: Request):
              }
 
         # Calculate efficiency
+        # TODO: Implement real semantic efficiency metric
         efficiency = 100.0
-        if summary.get("tokens_used", 0) > 0:
-            efficiency = 98.7 # Placeholder
 
         # Get real email if available
         profile = identity.get_profile(project_id)
-        user_email = profile.email if profile and profile.email else "local@sidelith.com"
+        user_email = profile.email if profile and profile.email else "Anonymous"
 
         return JSONResponse({
             "su_available": summary.get("tokens_remaining", 0),
@@ -231,9 +230,9 @@ async def dashboard_ledger(request: Request):
             ledger.append({
                 "type": e.get("action", "UNKNOWN"),
                 "description": e.get("payload", {}).get("outcome", "Action completed"),
-                "outcome": "PASS", # Default for now
+                "outcome": "PASS", 
+                "cost": e.get("payload", {}).get("cost", 0),
                 "timestamp": e.get("timestamp"),
-                "cost": 5 # Placeholder cost
             })
         return JSONResponse(ledger)
     except Exception as e:

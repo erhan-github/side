@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Optional
 from side.utils.crypto import shield
+from side.common.constants import Origin
 from side.utils.hashing import sparse_hasher
 
 logger = logging.getLogger(__name__)
@@ -124,7 +125,7 @@ class DNAHandler:
                                         signal_hash, wisdom_text, source_type, source_file, confidence
                                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """, (
-                                    fragment_id, "local", "documentation", f.name,
+                                    fragment_id, Origin.LOCAL, "documentation", f.name,
                                     sig_hash, section[:1000].strip(), "documentation", str(f), 8
                                 ))
                             
@@ -274,7 +275,7 @@ class DNAHandler:
                                         signal_hash, wisdom_text, source_type, source_file, confidence
                                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """, (
-                                    fragment_id, "local", "documentation", f.name,
+                                    fragment_id, Origin.LOCAL, "documentation", f.name,
                                     sig_hash, section[:1000].strip(), "documentation", str(f), 8
                                 ))
                             

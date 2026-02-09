@@ -17,6 +17,7 @@ from typing import Optional, List, Dict, Any
 from side.storage.modules.base import ContextEngine
 from side.storage.modules.identity import IdentityStore
 from side.storage.modules.transient import OperationalStore
+from side.common.constants import Origin
 
 logger = logging.getLogger(__name__)
 
@@ -179,25 +180,25 @@ class LLMClient:
         # 'Intelligence' purpose always prefers Cloud power (Fuel)
         if self.purpose == "intelligence":
             logger.info("🦅 [HYBRID MODE]: Purpose is 'Intelligence'. Routing to Cloud Fuel.")
-            resolved_preference = "cloud"
+            resolved_preference = Origin.CLOUD
         else:
             # 'Reasoning' purpose respects Tier + Settings
             user_pref = self.operational.get_setting("llm_engine_preference")
             
             if tier == "airgapped":
-                resolved_preference = user_pref or "local"
+                resolved_preference = user_pref or Origin.LOCAL
             elif tier == "enterprise":
-                resolved_preference = user_pref or "cloud"
+                resolved_preference = user_pref or Origin.CLOUD
             else:
                 # trial, pro/free
-                resolved_preference = "cloud"
-                if user_pref == "local":
+                resolved_preference = Origin.CLOUD
+                if user_pref == Origin.LOCAL:
                     logger.warning(f"🚫 [TIER LIMIT]: Local Engine requires Airgapped or Enterprise tier.")
 
         logger.info(f"🧠 [MODEL ROUTING]: {(tier or 'FREE').upper()} Tier. Engine: {resolved_preference.upper()}. Purpose: {self.purpose.upper()}")
 
         # 3. EXECUTION CHAIN
-        if resolved_preference == "local":
+        if resolved_preference == Origin.LOCAL:
             if self._init_provider("ollama"): return
             logger.warning("⚠️ Local Engine unavailable. Sliding into Primary Cloud (Groq)...")
             
@@ -205,7 +206,7 @@ class LLMClient:
         if self._init_provider("groq"): return
                 
         # Final Fallback to Ollama (if not already tried)
-        if resolved_preference != "local" and self._init_provider("ollama"):
+        if resolved_preference != Origin.LOCAL and self._init_provider("ollama"):
             return
             
     def is_available(self) -> bool:
