@@ -149,7 +149,7 @@ class Identity(BaseModel):
     tokens_used: int = Field(default=0, description="Total SUs used this cycle")
     premium_requests: int = Field(default=0, description="Premium requests used")
     premium_limit: int = Field(default=0, description="Premium request limit")
-    access_token: Optional[str] = Field(None, description="Sovereign access token (sk-...)")
+    access_token: Optional[str] = Field(None, description="System access token (sk-...)")
     email: Optional[str] = Field(None, description="User email")
     design_pattern: str = Field(default="declarative", description="Preferred design pattern")
     is_airgapped: bool = Field(default=False, description="Air-gapped mode enabled")
@@ -228,7 +228,7 @@ class Rejection(BaseModel):
     rejection_reason: str = Field(..., description="Reason for rejection")
     diff_signature: Optional[str] = Field(None, description="Signature of the rejected diff")
     signal_hash: Optional[int] = Field(None, description="Sparse semantic hash")
-    is_pinned: bool = Field(default=False, description="Whether to prevent neural decay")
+    is_pinned: bool = Field(default=False, description="Whether to prevent decay")
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
     
     @classmethod
@@ -277,7 +277,7 @@ class Activity(BaseModel):
 
 
 class HardwareStats(BaseModel):
-    """Hardware snapshots from Silicon Pulse."""
+    """Hardware snapshots from System Health."""
     
     temp: float = Field(default=0.0, description="CPU temperature in Celsius")
     cpu_total: float = Field(default=0.0, description="CPU utilization percentage")

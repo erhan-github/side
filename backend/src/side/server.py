@@ -1,5 +1,4 @@
 """
-"""
 Sidelith MCP Server - The Official Side SDK Gateway.
 Compliance: Model Context Protocol (MCP) standards.
 Philosophy: Natural platform integration over custom extensions.
@@ -10,13 +9,13 @@ HANDOVER NOTE: Resource URIs use the 'side://' scheme.
 from mcp.server.fastmcp import FastMCP
 from side.storage.modules.base import ContextEngine
 from .storage.modules.identity import IdentityStore
-from .storage.modules.chronos import ChronosStore
+from .storage.modules.strategy import StrategyStore
 from .storage.modules.audit import AuditStore
 from .storage.modules.transient import OperationalStore
 from .intel.auto_intelligence import AutoIntelligence
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from .intel.log_scavenger import LogScavenger
+from .intel.log_monitor import LogMonitor
 from .utils.crypto import shield
 import json
 import asyncio
@@ -29,9 +28,14 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# System Metadata
+VERSION = "1.1.0-STABLE"
+CODENAME = "SystemCore"
+
 # Setup
 # [Deployment] Allow dynamic port binding (Railway/Heroku/Fly)
-port = int(os.getenv("PORT", 8000))
+DEFAULT_PORT = 8000
+port = int(os.getenv("PORT", DEFAULT_PORT))
 host = "0.0.0.0" # Always bind to all interfaces in production
 
 mcp = FastMCP("Sidelith System", port=port, host=host)
@@ -61,7 +65,12 @@ def start_background_services():
     # Pass the operational store we already have
     governor = ResourceLimiter(operational_store=operational)
     governor.start()
-    return governor
+    
+    # [KAR-8.1] Event-Driven Log Intelligence (LogSentinel)
+    log_monitor = LogMonitor(audit=audit, project_path=Path.cwd())
+    log_monitor.start()
+    
+    return governor, log_monitor
 
 # ---------------------------------------------------------------------
 # RESOURCES (Read-Only State)
@@ -215,8 +224,8 @@ async def health_check(request: Request):
 async def get_version(request: Request):
     """Returns the current architectural version."""
     return JSONResponse({
-        "version": "1.1.0-STABLE",
-        "codename": "SystemCore",
+        "version": VERSION,
+        "codename": CODENAME,
         "system_status": "Online"
     })
 
@@ -226,13 +235,13 @@ async def root_health(request: Request):
     return JSONResponse({
         "status": "ok",
         "service": "Sidelith System",
-        "version": "1.1.0-STABLE"
+        "version": VERSION
     })
 
 def main():
     import uvicorn
     # Railway/Production Standards
-    port = int(os.getenv("PORT", 8080))
+    port = int(os.getenv("PORT", DEFAULT_PORT))
     host = os.getenv("HOST", "0.0.0.0")
     transport = os.getenv("MCP_TRANSPORT", "sse") 
     

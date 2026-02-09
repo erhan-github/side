@@ -1,7 +1,7 @@
 """
 Side Onboarding - Day 1 Magic.
 
-[SOVEREIGN ARCHITECTURE]: All strategic context is stored in the database.
+[SYSTEM ARCHITECTURE]: All strategic context is stored in the database.
 """
 import os
 from pathlib import Path
@@ -83,7 +83,7 @@ async def run_onboarding(project_root: str) -> dict:
     """
     Run the Day 1 onboarding flow with a LIVE Baseline Audit.
     
-    [SOVEREIGN ARCHITECTURE]: Stores all data in the Strategic Database.
+    [SYSTEM ARCHITECTURE]: Stores all data in the System Database.
     
     Returns dict with onboarding results.
     """
@@ -117,7 +117,7 @@ async def run_onboarding(project_root: str) -> dict:
     max_iq = 400
     baseline_score = int((iq_score / max_iq) * 100)
     
-    # 6. Store baseline in Strategic Database
+    # 6. Store baseline in System Database
     # Save as a strategic fact for future reference
     from uuid import uuid4
     db.strategic.save_fact(
@@ -151,7 +151,7 @@ async def run_onboarding(project_root: str) -> dict:
         "baseline_score": baseline_score,
         "grade": "B",  # Default
         "findings_count": len(findings),
-        "message": f"✅ Live Diagnostic Complete! Data stored in Sovereign Ledger.",
+        "message": f"✅ Live Diagnostic Complete! Data stored in System Ledger.",
     }
 
 

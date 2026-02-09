@@ -51,10 +51,10 @@ class TestGenerator:
                 except Exception:
                     pass
 
-        prompt = f"""You are a Senior QA Engineer specializing in TDD.
+        prompt = f"""
+        Generate a pytest reproduction script for this issue.
         
 Context:
-We have detected a potential issue in our codebase.
 Issue Type: {issue_type}
 Description: {notes}
 Files: {', '.join(context_files)}
@@ -74,7 +74,7 @@ Write a SELF-CONTAINED Python script (using pytest) that attempts to REPRODUCE t
             logger.info(f"🧬 Generating Red Test for {issue_type}...")
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are a QA Automation Engineer. Output ONLY the standalone Python script. No markdown blocks.",
+                system_prompt="Output ONLY the standalone Python script. No markdown blocks.",
                 temperature=0.1
             )
             return clean_code_block(response)

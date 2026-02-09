@@ -15,7 +15,7 @@ from sqlalchemy.engine import Engine
 # -----------------------------------------------------------------------------
 
 class Project(SQLModel, table=True):
-    """Sovereign Identity Profile (replaces 'profile' table)."""
+    """System Identity Profile (replaces 'profile' table)."""
     __tablename__ = "profile" # Map to existing table name
     
     id: str = Field(primary_key=True, default="main") # Usually 'main' or project hash

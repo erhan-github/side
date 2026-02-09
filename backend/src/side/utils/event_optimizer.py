@@ -385,7 +385,7 @@ async def handle_ai_code_generation(event: Event):
     """Handle AI code generation - inject context and check patterns."""
     logger.info(f"AI code generation detected: {event.payload.get('file_path')}")
     
-    # Inject sovereign context
+    # Inject system context
     # Check anti-patterns
     # Log for learning
 

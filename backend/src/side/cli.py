@@ -5,6 +5,7 @@ from side.cli_handlers.auth import handle_login, handle_profile, handle_usage
 from side.cli_handlers.connect import handle_connect
 from side.cli_handlers.audit import handle_audit, handle_pulse
 from side.cli_handlers.intel import handle_index, handle_watch, handle_strategy, handle_maintenance
+from side.cli_handlers.wizard import handle_wizard
 
 # Standard libs setup for fast start
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -51,8 +52,8 @@ def main():
     connect_parser.add_argument("--tier", default="hobby", choices=["hobby", "pro", "elite"], help="Tier Activation")
 
     # Diagnostics
-    pulse_parser = subparsers.add_parser("pulse", help="Trigger a system pulse audit")
-    pulse_parser.add_argument("path", nargs="?", default=".", help="Project path")
+    health_parser = subparsers.add_parser("health", help="Trigger a system health audit")
+    health_parser.add_argument("path", nargs="?", default=".", help="Project path")
 
     audit_parser = subparsers.add_parser("audit", help="Run a codebase audit")
     audit_parser.add_argument("dimension", nargs="?", default="general", choices=["general", "security", "performance", "architecture"], help="Audit dimension")
@@ -74,20 +75,22 @@ def main():
     # Signing
     sign_parser = subparsers.add_parser("sign-anchor", help="Cryptographically sign the project.json anchor")
 
-    args = parser.parse_args()
+    # Wizard
+    wizard_parser = subparsers.add_parser("wizard", help="Run the First-Run Experience Setup Wizard")
     
     handlers = {
         "login": handle_login,
         "profile": handle_profile,
         "usage": handle_usage,
         "connect": handle_connect,
-        "pulse": handle_pulse,
+        "health": handle_health,
         "audit": handle_audit,
         "index": handle_index,
         "watch": handle_watch,
         "strategy": handle_strategy,
         "maintenance": handle_maintenance,
-        "sign-anchor": handle_sign_anchor
+        "sign-anchor": handle_sign_anchor,
+        "wizard": handle_wizard
     }
 
     if args.command in handlers:

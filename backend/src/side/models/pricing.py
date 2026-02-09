@@ -1,5 +1,5 @@
 """
-Sovereign Pricing Strategy - Single Source of Truth.
+System Pricing Strategy - Single Source of Truth.
 Aligned with Sidelith Business Model v1.1
 """
 from enum import Enum
@@ -8,23 +8,26 @@ class Tier(str, Enum):
     HOBBY = "hobby"
     PRO = "pro"
     ELITE = "elite"
-    HITECH = "hitech"
+    ENTERPRISE = "enterprise"
+    AIRGAPPED = "airgapped"
 
 class PricingModel:
-    # Monthly Sovereign Unit (SU) Limits
+    # Monthly System Unit (SU) Limits
     LIMITS = {
         Tier.HOBBY: 500,
         Tier.PRO: 5000,
         Tier.ELITE: 25000,
-        Tier.HITECH: 999999999 # effectively unlimited / custom
+        Tier.ENTERPRISE: 1000000, # Custom/Unlimited
+        Tier.AIRGAPPED: 999999999 # Effectively unlimited
     }
 
-    # Display Names
+    # Display Names (Aligned with GTM Phase 0)
     LABELS = {
-        Tier.HOBBY: "Sovereign Node",
-        Tier.PRO: "Mesh Network",
-        Tier.ELITE: "Sovereign Network",
-        Tier.HITECH: "Universal Grid"
+        Tier.HOBBY: "Hobby",
+        Tier.PRO: "Pro",
+        Tier.ELITE: "Elite",
+        Tier.ENTERPRISE: "Enterprise",
+        Tier.AIRGAPPED: "Airgapped"
     }
 
     @classmethod
@@ -34,23 +37,25 @@ class PricingModel:
     @classmethod
     def detect_tier(cls, key: str) -> str:
         """
-        [GENESIS LOGIC]: Determines Tier from the Sovereign Key prefix.
+        [GENESIS LOGIC]: Determines Tier from the Access Key prefix.
         Format: sk_[tier]_[hash]
         """
         if not key: return cls.LABELS[Tier.HOBBY]
         
         if "sk_elite" in key: return Tier.ELITE
         if "sk_pro" in key:   return Tier.PRO
-        if "sk_hitech" in key: return Tier.HITECH
+        if "sk_ent" in key:   return Tier.ENTERPRISE
+        if "sk_air" in key:   return Tier.AIRGAPPED
         
-        if "sk_hitech" in key: return Tier.HITECH
+        # Legacy/Fallback
+        if "sk_hitech" in key: return Tier.AIRGAPPED
         
         # Default for 'sk_hobby' or unknown/legacy keys
         return Tier.HOBBY
 
 class ActionCost:
     """
-    [SOFTWARE 2.0 ECONOMY]: The cost of Sovereign Actions in SUs.
+    [SOFTWARE 2.0 ECONOMY]: The cost of System Actions in SUs.
     """
     SIGNAL_CAPTURE = 1     # Real-time terminal ingestion
     HUB_EVOLVE = 10        # Strategic Hub update (plan/check)
@@ -64,7 +69,7 @@ class ActionCost:
 class LLMUsage:
     """
     [RAW COMPUTE]: The cost of Raw Intelligence (per 1k tokens).
-    Sidelith charges for both 'Strategic Actions' (Value) and 'Raw Compute' (Cost).
+    Sidelith charges for both 'System Actions' (Value) and 'Raw Compute' (Cost).
     """
     # 1 SU = 1 cent roughly (Abstract)
     INPUT_1K = 0.5    # 0.5 SU per 1k input tokens (High quality context)

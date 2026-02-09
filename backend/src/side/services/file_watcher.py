@@ -190,9 +190,9 @@ class FileWatcher:
                                 "reason": reason
                             })
                         else:
-                            from side.storage.modules.chronos import ChronosStore
+                            from side.storage.modules.strategy import StrategyStore
                             from side.storage.modules.base import ContextEngine
-                            strat_store = ChronosStore(ContextEngine())
+                            strat_store = StrategyStore(ContextEngine())
                             strat_store.save_rejection(
                                 rejection_id=f"ghost_{asyncio.get_event_loop().time()}",
                                 file_path=str(signal['path']),

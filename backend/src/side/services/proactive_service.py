@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from side.storage.modules.chronos import ChronosStore
+from side.storage.modules.strategy import StrategyStore
 from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class ProactiveService:
     Checks for TODO/HACK comments and cross-references them with active goals.
     """
 
-    def __init__(self, strategic: ChronosStore, project_path: Path):
+    def __init__(self, strategic: StrategyStore, project_path: Path):
         self.strategic = strategic
         self.project_path = project_path
 

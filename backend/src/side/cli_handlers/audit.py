@@ -2,20 +2,20 @@ import asyncio
 from pathlib import Path
 from .utils import ux
 
-def handle_pulse(args):
-    from side.pulse import pulse
+def handle_health(args):
+    from side.health import health
     ux.display_status("Initiating real-time system scan...", level="info")
     
     target_path = Path(args.path).resolve()
-    # Simplified Pulse Logic
-    pulse_context = {
+    # Simplified Health Logic
+    health_context = {
         "PORT": "3999", 
         "BRANCH": "main", 
         "target_file": str(target_path)
     }
-    result = pulse.check_pulse(pulse_context)
+    result = health.check_health(health_context)
     
-    ux.display_header("System Pulse Report")
+    ux.display_header("System Health Report")
     if result.violations:
         for v in result.violations:
             ux.display_status(v, level="error")

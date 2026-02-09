@@ -200,7 +200,7 @@ Returns: Stats on processed nodes.""",
 Sets up Side and creates the Strategic Hub for a new project:
 - Detects project name and stack
 - Detects project name and stack
-- Initializes the Sovereign Context state
+- Initializes the System Context state
 - Runs baseline audit
 - Stores initial health snapshot
 

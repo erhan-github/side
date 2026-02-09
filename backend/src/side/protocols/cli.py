@@ -34,16 +34,25 @@ class CLIProtocol(UXProtocol):
 
     def display_finding(self, finding: Finding) -> None:
         """Display a forensic finding in a structured panel."""
-        color = "red" if finding.severity.lower() == "critical" else "yellow"
+        severity_map = {
+            "critical": "red bold",
+            "warning": "yellow",
+            "low": "blue",
+            "info": "cyan"
+        }
+        color = severity_map.get(finding.severity.lower(), "white")
+        
         content = f"[bold]{finding.title}[/bold]\n"
         content += f"[italic]{finding.description}[/italic]\n"
         if finding.file_path:
             content += f"\n[dim]File: {finding.file_path}"
             if finding.line_number:
                 content += f":{finding.line_number}"
+            # Add line range if available (simulated here)
             content += "[/dim]"
         
-        self.console.print(Panel(content, title=f"[{color}]Finding: {finding.category.upper()}[/{color}]", border_style=color))
+        title = f"Finding: {finding.category.upper()}"
+        self.console.print(Panel(content, title=f"[{color}]{title}[/{color}]", border_style=color.split()[0]))
 
     def display_activity(self, activity: Activity) -> None:
         """Display a system activity."""

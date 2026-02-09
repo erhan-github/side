@@ -4,7 +4,7 @@ SQLCipher Integration for Full Database Encryption.
 Provides transparent encryption for the entire local.db database
 using SQLCipher (256-bit AES encryption).
 
-For High Tech tier customers requiring full disk encryption.
+For Airgapped tier customers requiring full disk encryption.
 """
 import logging
 import os

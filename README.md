@@ -128,9 +128,11 @@ ignored:
 
 | Tier | Deployment | Audience | Features |
 |:-----|:-----------|:---------|:---------|
-| **Sovereign (Free)** | Local Implementation | Open Source Devs | Full Context Engine, Local Storage, CLI Access. |
-| **High Tech** | Managed Cloud Key | Startups / Scaleups | Encrypted Sync, Team Governance, CI/CD Integration. |
-| **Enterprise** | Air-Gap Binary | Regulated Industries | On-Prem Deployment, SSO, Audit Logs, Custom SLA. |
+| **Hobby** | Cloud SaaS | Individual, evaluation |
+| **Pro** | Cloud SaaS | Professional developers |
+| **Elite** | Cloud SaaS | Power users, small teams |
+| **Enterprise** | Cloud SaaS | Teams, SSO, shared pools |
+| **Airgapped** | On-Premise | Regulated industries |
 
 ---
 

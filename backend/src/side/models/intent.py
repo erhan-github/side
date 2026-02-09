@@ -1,5 +1,5 @@
 """
-Sovereign Intent Models (Pydantic V2).
+System Intent Models (Pydantic V2).
 The Single Source of Truth for User-LLM Exchange.
 """
 from typing import List, Dict, Any, Optional

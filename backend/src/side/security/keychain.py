@@ -1,10 +1,10 @@
 """
 macOS Keychain Integration for Master Key Storage.
 
-Provides secure storage for the NeuralShield master key using
+Provides secure storage for the CryptoShield master key using
 macOS Keychain instead of SQLite settings table.
 
-For High Tech tier customers requiring FIPS 140-2 compliance.
+For Airgapped tier customers requiring FIPS 140-2 compliance.
 """
 import logging
 import subprocess
@@ -14,7 +14,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 # Service name for Keychain
-KEYCHAIN_SERVICE = "com.sidelith.neuralshield"
+KEYCHAIN_SERVICE = "com.sidelith.cryptoshield"
 KEYCHAIN_ACCOUNT = "master_key"
 
 

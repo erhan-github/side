@@ -8,10 +8,10 @@ import fnmatch
 
 logger = logging.getLogger(__name__)
 
-class IgnoreFilter:
+class ProjectIgnore:
     """
     Central authority for file exclusion rules.
-    Reads from .sovereignignore (legacy) or .sideignore and .gitignore.
+    Reads from .projectignore (legacy .sovereignignore) or .sideignore and .gitignore.
     """
     
     # Defaults: What we ALWAYS ignore unless told otherwise.

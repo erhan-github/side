@@ -9,7 +9,7 @@ from side.intel.reasoning_timeline import TimelineManager
 
 logger = logging.getLogger(__name__)
 
-class SovereignMerkle:
+class MerkleTree:
     """
     [AUTHORITY]: Aggregates all active reasoning chains into a single Project Root Hash.
     This fulfills the 'Merkle Injection' capability.
@@ -55,7 +55,7 @@ class SovereignMerkle:
         """
         Returns the formatted injection string for AI context.
         """
-        root = SovereignMerkle.get_project_root()
+        root = MerkleTree.get_project_root()
         return f"[SYSTEM_INTEGRITY_ROOT]: {root}"
 
     @staticmethod

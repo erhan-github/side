@@ -1,5 +1,5 @@
 """
-Sovereign Ledger Models (Pydantic V2).
+System Ledger Models (Pydantic V2).
 The Single Source of Truth for the Transactional Record.
 """
 from typing import List, Dict, Any, Optional
@@ -16,7 +16,7 @@ class LedgerEntryType(str, Enum):
 
 class LedgerEntry(BaseModel):
     """
-    A unified entry in the Sovereign Ledger.
+    A unified entry in the System Ledger.
     """
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     project_id: str

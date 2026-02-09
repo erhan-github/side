@@ -18,14 +18,14 @@ class LLMOrchestrator:
         
     async def synthesize_findings(self, findings: List[Dict]) -> str:
         """
-        Take raw findings and generate a Strategic Insight using the Neural Engine.
+        Take raw findings and generate a Strategic Insight using the AI Engine.
         """
         if not findings:
             return "No findings to synthesize."
             
         # Construct Prompt
         prompt = f"""
-        You are the Sovereign CTO. Analyze these technical findings and provide a Strategic Executive Summary.
+        Analyze these technical findings and provide a Strategic Executive Summary.
         
         FINDINGS:
         {findings}
@@ -39,11 +39,11 @@ class LLMOrchestrator:
         try:
             return self.client.complete(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are Sidelith, the Sovereign Context Engine.",
+                system_prompt="You are an expert engineering strategist. Be concise.",
                 temperature=0.3
             )
         except Exception as e:
-            return f"Neural Synthesis Failed: {e}"
+            return f"AI Analysis Failed: {e}"
 
     async def verify_fix(self, original_code: str, new_code: str) -> bool:
         """
@@ -89,7 +89,7 @@ class LLMOrchestrator:
         try:
             response = self.client.complete(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are a Senior Code Auditor. Strict Verification.",
+                system_prompt="Return YES or NO only.",
                 temperature=0.0
             )
             return "YES" in response.upper()

@@ -5,7 +5,7 @@ Supports:
 - Groq (Primary Strategy)
 - Ollama (Airgap/Local Backup for High Tech)
 
-Strategic Readiness for:
+Future Integrations for:
 - Gemini (Future)
 - Claude (Future)
 """
@@ -45,7 +45,7 @@ class LLMClient:
     Unified client for LLM interactions.
     V1: Stable single-key mode.
     V2: Managed Credit Pool [ACTIVE].
-    V3: Neural Link (Ollama).
+    V3: LLM Connection (Ollama).
     """
     
     def __init__(self, preferred_provider: Optional[str] = None, purpose: str = "reasoning"):
@@ -56,7 +56,7 @@ class LLMClient:
         self.pool: Optional[ManagedCreditPool] = None
         self.purpose = purpose # "reasoning" or "intelligence"
         
-        # SFO Sprint: No Fat Architecture
+        # Lean Architecture
         self.engine = ContextEngine()
         self.identity = IdentityStore(self.engine)
         self.operational = OperationalStore(self.engine)
@@ -85,11 +85,11 @@ class LLMClient:
                 # We must query the identity store directly to verify entitlement
                 project_id = ContextEngine.get_project_id(".")
                 profile = self.identity.get_profile(project_id)
-                tier = profile.get("tier", "trial") if profile else "trial"
+                tier = profile.get("tier", "hobby") if profile else "hobby"
                 
-                # Only 'hitech' or 'enterprise' allowed
-                if tier not in ["hitech", "enterprise"]:
-                    logger.warning("🚫 [AIRGAP BLOCKED]: Ollama requires 'High Tech' tier. Falling back to Cloud.")
+                # Only 'airgapped' or 'enterprise' allowed (Enterprise might get local too)
+                if tier not in ["airgapped", "enterprise"]:
+                    logger.warning("🚫 [AIRGAP BLOCKED]: Ollama requires 'Airgapped' or 'Enterprise' tier. Falling back to Cloud.")
                     return False
                     
                 from openai import OpenAI, AsyncOpenAI
@@ -98,7 +98,7 @@ class LLMClient:
                 self.async_client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
                 self.provider = LLMProvider.OLLAMA
                 self.model = PROVIDER_MODELS[LLMProvider.OLLAMA]
-                logger.info(f"✅ LLM: Neural Link (Ollama/{self.model}) [AIRGAP ACTIVE]")
+                logger.info(f"✅ LLM: LLM Connection (Ollama/{self.model}) [AIRGAP ACTIVE]")
                 return True
 
             api_key = os.getenv(f"{provider_name.upper()}_API_KEY")
@@ -178,13 +178,13 @@ class LLMClient:
         # 2. RESOLVE PREFERENCE
         # 'Intelligence' purpose always prefers Cloud power (Fuel)
         if self.purpose == "intelligence":
-            logger.info("🦅 [HYBRID INTEL]: Purpose is 'Intelligence'. Routing to Cloud Fuel.")
+            logger.info("🦅 [HYBRID MODE]: Purpose is 'Intelligence'. Routing to Cloud Fuel.")
             resolved_preference = "cloud"
         else:
             # 'Reasoning' purpose respects Tier + Settings
             user_pref = self.operational.get_setting("llm_engine_preference")
             
-            if tier == "hitech":
+            if tier == "airgapped":
                 resolved_preference = user_pref or "local"
             elif tier == "enterprise":
                 resolved_preference = user_pref or "cloud"
@@ -192,9 +192,9 @@ class LLMClient:
                 # trial, pro/free
                 resolved_preference = "cloud"
                 if user_pref == "local":
-                    logger.warning(f"🚫 [TIER LIMIT]: Local Engine requires High Tech or Enterprise tier.")
+                    logger.warning(f"🚫 [TIER LIMIT]: Local Engine requires Airgapped or Enterprise tier.")
 
-        logger.info(f"🧠 [NEURAL ROUTING]: {(tier or 'FREE').upper()} Tier. Engine: {resolved_preference.upper()}. Purpose: {self.purpose.upper()}")
+        logger.info(f"🧠 [MODEL ROUTING]: {(tier or 'FREE').upper()} Tier. Engine: {resolved_preference.upper()}. Purpose: {self.purpose.upper()}")
 
         # 3. EXECUTION CHAIN
         if resolved_preference == "local":
@@ -225,7 +225,7 @@ class LLMClient:
                 if current_api_key:
                     self.client.api_key = current_api_key
 
-            from side.utils.shield import shield
+            from side.utils.crypto import shield
             scrubbed_system = shield.scrub(system_prompt)
             scrubbed_messages = [{"role": m["role"], "content": shield.scrub(m["content"])} for m in messages]
             
@@ -237,7 +237,7 @@ class LLMClient:
             return response.choices[0].message.content
         except Exception as e:
             # For direct mandates, we use the same robust failover for sync as well
-            logger.warning(f"🔄 Sync failure on {self.provider.value}, attempting strategic rotation...")
+            logger.warning(f"🔄 Sync failure on {self.provider.value}, attempting provider rotation...")
             return self._handle_error_sync(e, messages, system_prompt, temperature, max_tokens, model_override)
 
     def _handle_error_sync(self, e, messages, system_prompt, temperature, max_tokens, model_override):
@@ -265,7 +265,7 @@ class LLMClient:
                     self.async_client.api_key = current_api_key
         
         try:
-            from side.utils.shield import shield
+            from side.utils.crypto import shield
             scrubbed_system = shield.scrub(system_prompt)
             scrubbed_messages = [{"role": m["role"], "content": shield.scrub(m["content"])} for m in messages]
             
@@ -328,7 +328,7 @@ class LLMClient:
                         return await self.complete_async(messages, system_prompt, temperature, max_tokens, model_override=next_model)
                 
             # --- MACRO-FAILOVER ---
-            # STRATEGIC MANDATE: Groq Only for Cloud, Ollama for local.
+            # SYSTEM POLICY: Groq Only for Cloud, Ollama for local.
             fallback_chain = {
                LLMProvider.GROQ: LLMProvider.OLLAMA,
                LLMProvider.OLLAMA: LLMProvider.GROQ
@@ -345,15 +345,15 @@ class LLMClient:
                     project_id = ContextEngine.get_project_id(".")
                     profile = self.identity.get_profile(project_id)
                     tier = profile.get("tier", "trial") if profile else "trial"
-                    if tier not in ["hitech", "enterprise"]:
-                         logger.critical(f"❌ [NEURAL COLLAPSE]: Total Failure. {e}")
+                    if tier not in ["airgapped", "enterprise"]:
+                         logger.critical(f"❌ [PROVIDER FAILURE]: Total Failure. {e}")
                          raise e
 
-                logger.warning(f"🛡️ [NEURAL FAILOVER]: {self.provider.value} -> {next_provider.value}. Strategic Shift.")
+                logger.warning(f"🛡️ [MODEL FAILOVER]: {self.provider.value} -> {next_provider.value}. Provider Shift.")
                 if self._init_provider(next_provider.value):
                     return await self.complete_async(messages, system_prompt, temperature, max_tokens, model_override)
             
-            logger.critical(f"❌ [NEURAL COLLAPSE]: Total Provider Failure. {e}")
+            logger.critical(f"❌ [PROVIDER FAILURE]: Total Provider Failure. {e}")
             raise e
 
     def _get_next_fallback_model(self, current_model: str) -> Optional[str]:

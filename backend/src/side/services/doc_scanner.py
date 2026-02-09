@@ -3,7 +3,7 @@ import re
 import logging
 import uuid
 from pathlib import Path
-from side.storage.modules.chronos import ChronosStore
+from side.storage.modules.strategy import StrategyStore
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ class DocScanner:
     Ingests strategic intentions from raw documentation files.
     """
     
-    def __init__(self, strategic: ChronosStore):
+    def __init__(self, strategic: StrategyStore):
         self.strategic = strategic
 
     async def scavenge(self, root_path: Path):

@@ -1,21 +1,21 @@
 """
-Sovereign Physics Models (Pydantic V2).
+System Physics Models (Pydantic V2).
 The Single Source of Truth for Invariant Enforcement.
 """
 from typing import List, Dict, Optional
 from enum import Enum
 from pydantic import BaseModel, Field
 
-class PulseStatus(str, Enum):
+class HealthStatus(str, Enum):
     SECURE = "SECURE"
     DRIFT = "DRIFT"
     VIOLATION = "VIOLATION"
 
-class PulseResult(BaseModel):
+class HealthResult(BaseModel):
     """
-    The outcome of a Sovereign Pulse Check.
+    The outcome of a System Health Check.
     """
-    status: PulseStatus
+    status: HealthStatus
     latency_ms: float
     violations: List[str] = Field(default_factory=list)
     context: Dict = Field(default_factory=dict)

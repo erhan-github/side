@@ -13,7 +13,7 @@ def get_spc():
         engine = ContextEngine()
         ops = OperationalStore(engine)
         
-        spc = ops.get_setting("sovereign_perception_coefficient") or "0.8"
+        spc = ops.get_setting("system_perception_coefficient") or "0.8"
         vs = ops.get_setting("silicon_velocity_derived") or "0.8"
         vg = ops.get_setting("temporal_synapse_velocity") or "0.8"
         vc = ops.get_setting("cognitive_flow_score") or "0.8"
@@ -23,8 +23,8 @@ def get_spc():
         l_friction = ops.get_setting("local_friction_contribution") or "0.0"
         
         # [PERCEPTION]: Fetch Strategic Alerts
-        from side.storage.modules.chronos import ChronosStore
-        strat = ChronosStore(engine)
+        from side.storage.modules.strategy import StrategyStore
+        strat = StrategyStore(engine)
         rejections = strat.list_rejections(limit=3)
         alerts = [{"id": r["id"], "reason": r["rejection_reason"], "file": r["file_path"]} for r in rejections]
 

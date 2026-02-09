@@ -8,23 +8,23 @@ import nacl.exceptions
 
 logger = logging.getLogger(__name__)
 
-class SovereignSigner:
+class SystemSigner:
     """
-    Sovereign Signer [Tier-5]: GPG-style signing for metabolic anchors.
+    System Signer [Tier-5]: GPG-style signing for metabolic anchors.
     Ensures the 'project.json' and identity files are untampered.
     """
     
     def __init__(self, key_path: str | Path | None = None):
         if key_path is None:
             from side.env import env
-            key_path = env.get_side_root() / "sovereign.key"
+            key_path = env.get_side_root() / "system.key"
         self.key_path = Path(key_path)
         self._signing_key = None
         self._verify_key = None
         self._initialize_keys()
 
     def _initialize_keys(self):
-        """Load existing key or generate a new Sovereign Identity keypair."""
+        """Load existing key or generate a new System Identity keypair."""
         try:
             if self.key_path.exists():
                 seed_b64 = self.key_path.read_text().strip()
@@ -36,11 +36,11 @@ class SovereignSigner:
                 seed_b64 = base64.b64encode(self._signing_key.encode()).decode()
                 self.key_path.write_text(seed_b64)
                 os.chmod(self.key_path, 0o600)
-                logger.info(f"✨ Generated new Sovereign Identity Key: {self.key_path}")
+                logger.info(f"✨ Generated new System Identity Key: {self.key_path}")
             
             self._verify_key = self._signing_key.verify_key
         except Exception as e:
-            logger.error(f"Failed to initialize SovereignSigner: {e}")
+            logger.error(f"Failed to initialize SystemSigner: {e}")
 
     def sign(self, data: str | bytes) -> str:
         """Signs data and returns a base64 encoded signature."""
@@ -85,4 +85,4 @@ class SovereignSigner:
         return self.verify(content, sig)
 
 # Singleton
-signer = SovereignSigner()
+signer = SystemSigner()

@@ -1,5 +1,5 @@
 """
-Strategic Soul - The voice of the Side Intelligence Engine.
+System Voice - The voice of the System Intelligence Engine.
 
 Transforms generic audit results into conversational, high-fidelity findings
 and machine-optimized actionable prompts.
@@ -8,8 +8,8 @@ and machine-optimized actionable prompts.
 from typing import Any, List
 from pathlib import Path
 
-class StrategicSoul:
-    """Utility to inject 'Soul' and density into forensic findings."""
+class SystemVoice:
+    """Utility to inject context and density into forensic findings."""
 
     @staticmethod
     def _clean_msg(result: Any) -> str:
@@ -37,7 +37,7 @@ class StrategicSoul:
                 if hasattr(first_ev, 'line_number') and first_ev.line_number:
                     file_loc = f"{file_loc}:{first_ev.line_number}"
 
-        msg = StrategicSoul._clean_msg(result)
+        msg = SystemVoice._clean_msg(result)
         dim_key = result.check_id.split("-")[0].lower() if hasattr(result, 'check_id') and "-" in result.check_id else "logic"
         
         # Mapping for discovery
@@ -107,19 +107,19 @@ class StrategicSoul:
         Merge Empathy and Discovery into a single 'Top Notch' prompt.
         Pattern: 'Hey Chat! [Empathy] [Discovery] \n\n So my suggestion is that [Action].'
         """
-        friendly = StrategicSoul.express_friendly(result)
-        why = StrategicSoul.express_why(result)
-        action = StrategicSoul.express_action(result)
+        friendly = SystemVoice.express_friendly(result)
+        why = SystemVoice.express_why(result)
+        action = SystemVoice.express_action(result)
         
         return f"Hey Chat! {friendly} {why}\n\nSo my suggestion is that {action}"
 
     @classmethod
     def inject_fusion(cls, f_dict: dict) -> str:
         """Retrofit or normalize an existing finding."""
-        # SOVEREIGN CHECK: If already perfectly fused AND fluff-free, preserve it.
+        # SYSTEM CHECK: If already perfectly fused AND fluff-free, preserve it.
         msg = f_dict.get('message', '')
         has_fusion = (msg.startswith("Hey Side!") or msg.startswith("Hey Chat!")) and "So my suggestion is that" in msg
-        is_fluffy = any(f in msg.lower() for f in ["strategic iq", "strategic opportunity", "strategic risk", "structural friction"])
+        is_fluffy = any(f in msg.lower() for f in ["system quality", "system opportunity", "system risk", "structural friction"])
         
         if has_fusion and not is_fluffy:
             # User asked to "say Hey Chat", so migration is needed if it's "Hey Side"
@@ -171,15 +171,15 @@ class StrategicSoul:
              
              # 2. Strip Discovery headers globally (Anomaly found in...)
              # Aggressive block-level stripping
-             notes = re.sub(r"(Side Intelligence|Forensic|Logic|Structural|Critical|Security)\s*(anomaly|risk|breach|rot|intelligence|Opportunity)\s*(found|detected|refinement|signals)\s*(in|at|detected|within)\s*.*?(:\d+)?\.\s*", "", notes, flags=re.IGNORECASE)
-             notes = re.sub(r"Scanned \d+ .*? files with Side Intelligence\.\s*", "", notes, flags=re.IGNORECASE)
+             notes = re.sub(r"(System Intelligence|Forensic|Logic|Structural|Critical|Security)\s*(anomaly|risk|breach|rot|intelligence|Opportunity)\s*(found|detected|refinement|signals)\s*(in|at|detected|within)\s*.*?(:\d+)?\.\s*", "", notes, flags=re.IGNORECASE)
+             notes = re.sub(r"Scanned \d+ .*? files with System Intelligence\.\s*", "", notes, flags=re.IGNORECASE)
 
              # 3. Strip all known fluff impact phrases (Global search & destroy)
              fluff_patterns = [
-                 r"This creates structural friction and impacts the project's strategic IQ\.?",
-                 r"This creates technical friction and impacts the project's strategic IQ\.?",
+                 r"This creates structural friction and impacts the project's system quality\.?",
+                 r"This creates technical friction and impacts the project's system quality\.?",
                  r"This creates structural friction and impacts the project's overall reliability\.?",
-                 r"This increases the attack surface and compromises overall system sovereignty\.?",
+                 r"This increases the attack surface and compromises overall system security\.?",
                  r"This increases the attack surface and compromises data integrity\.?",
                  r"This leads to resource exhaustion and degrades the system's operational efficiency\.?",
                  r"This introduces technical debt and reduces the long-term maintainability of the codebase\.?",
@@ -247,8 +247,8 @@ class StrategicSoul:
     def format_combined(result: Any) -> tuple[str, str, str, str]:
         """Convenience method for all modes + Fusion."""
         return (
-            StrategicSoul.express_why(result), 
-            StrategicSoul.express_action(result),
-            StrategicSoul.express_friendly(result),
-            StrategicSoul.express_fusion(result)
+            SystemVoice.express_why(result), 
+            SystemVoice.express_action(result),
+            SystemVoice.express_friendly(result),
+            SystemVoice.express_fusion(result)
         )

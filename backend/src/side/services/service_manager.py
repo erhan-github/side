@@ -15,7 +15,7 @@ from typing import Any, Dict, List
 
 from side.storage.modules.base import ContextEngine
 from side.storage.modules.identity import IdentityStore
-from side.storage.modules.chronos import ChronosStore
+from side.storage.modules.strategy import StrategyStore
 from side.storage.modules.audit import AuditStore
 from side.storage.modules.transient import OperationalStore
 from side.utils.memory_diagnostics import get_diagnostics as get_memory_diagnostics
@@ -35,7 +35,7 @@ class ServiceManager(ServiceLifecycleMixin):
         self.project_path = Path(project_path).resolve()
         self.engine = ContextEngine()
         self.identity = IdentityStore(self.engine)
-        self.strategic = ChronosStore(self.engine)
+        self.strategic = StrategyStore(self.engine)
         self.audit = AuditStore(self.engine)
         self.operational = OperationalStore(self.engine)
         

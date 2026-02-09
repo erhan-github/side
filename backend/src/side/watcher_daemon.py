@@ -17,6 +17,9 @@ from side.storage.modules.base import ContextEngine
 from side.storage.modules.audit import AuditStore
 # from side.common.telemetry import monitor (DELETED)
 
+import logging
+logger = logging.getLogger("side.watcher")
+
 class SidelithEventHandler(FileSystemEventHandler):
     """
     Handles file system events, triggers audits, AND records the Event Clock.
@@ -76,7 +79,7 @@ class SidelithEventHandler(FileSystemEventHandler):
         if self.quiet_mode:
             if now > self.quiet_until:
                 self.quiet_mode = False
-                print("🛡️ [WATCHER]: IO High Load subsided. Resuming Deep Awareness.")
+                logger.info("🛡️ [WATCHER]: IO High Load subsided. Resuming Deep Awareness.")
             else:
                 return True
 
@@ -88,7 +91,7 @@ class SidelithEventHandler(FileSystemEventHandler):
         if len(self.event_window) > config.watcher_high_io_threshold:
             self.quiet_mode = True
             self.quiet_until = now + 30.0 # 30s Silence
-            print(f"⚠️ [WATCHER]: High IO detected ({len(self.event_window)} events/10s). Entering Quiet Mode for 30s.")
+            logger.warning(f"⚠️ [WATCHER]: High IO detected ({len(self.event_window)} events/10s). Entering Quiet Mode for 30s.")
             return True
         return False
 
@@ -103,7 +106,7 @@ class SidelithEventHandler(FileSystemEventHandler):
         - State Snapshot: High-fidelity records of these discovered truths.
         """
         try:
-            print(f"\n⏳ [CONSISTENCY CHECK]: Discovering intent from outcomes...")
+            logger.info(f"⏳ [CONSISTENCY CHECK]: Discovering intent from outcomes...")
             self.audit.log_activity(
                 project_id=self.project_id,
                 tool="watcher",
@@ -113,7 +116,7 @@ class SidelithEventHandler(FileSystemEventHandler):
             # Remove fat
             self.audit.cleanup_expired_data()
         except Exception as e:
-            print(f"⚠️ Consistency Check Error: {e}")
+            logger.error(f"⚠️ Consistency Check Error: {e}")
 
     def _should_ignore(self, filepath: str) -> bool:
         # [GITIGNORE INHERITANCE]: Dimension 3 of Strategic Audit
@@ -135,31 +138,31 @@ class SidelithEventHandler(FileSystemEventHandler):
         try:
             rel_path = Path(filepath).name
             
-            # 1. RUN THE PULSE
-            from side.pulse import pulse, PulseStatus
+            # 1. RUN THE HEALTH CHECK
+            from side.health import health, HealthStatus
             
             context = {
                 "user": "Developer",
                 "target_file": filepath,
             }
             
-            # 1.1 Read file content for pulse check
+            # 1.1 Read file content for health check
             try:
                 content = Path(filepath).read_text()
                 context["file_content"] = content
             except Exception:
                 pass
 
-            result = pulse.check_pulse(context)
+            result = health.check_health(context)
             
             # 2. LOG THE OUTCOME (SYSTEM CORE)
             outcome_status = "PASS"
-            if result.status == PulseStatus.VIOLATION:
+            if result.status == HealthStatus.VIOLATION:
                 outcome_status = "VIOLATION"
-            elif result.status == PulseStatus.DRIFT:
+            elif result.status == HealthStatus.DRIFT:
                 outcome_status = "DRIFT"
             
-            # Pulse check costs 0 SU for background watcher
+            # Health check costs 0 SU for background watcher
             self.audit.log_activity(
                 project_id=self.project_id,
                 tool="watcher",
@@ -168,31 +171,31 @@ class SidelithEventHandler(FileSystemEventHandler):
                 payload={"outcome": outcome_status}
             )
             
-            # 3. Console Feedback
-            if result.status == PulseStatus.VIOLATION:
-                 print(f"\n🚨 [RED LINE VIOLATION]: {filepath}")
+            # 3. Console Feedback -> Logger Feedback
+            if result.status == HealthStatus.VIOLATION:
+                 logger.error(f"🚨 [CRITICAL VIOLATION]: {filepath}")
                  for v in result.violations:
-                     print(f"   ❌ {v}")
-            elif result.status == PulseStatus.DRIFT:
-                 print(f"\n⚠️ [INTENT DRIFT]: {filepath}")
+                     logger.error(f"   ❌ {v}")
+            elif result.status == HealthStatus.DRIFT:
+                 logger.warning(f"⚠️ [INTENT DRIFT]: {filepath}")
         
         except Exception as e:
-            print(f"⚠️ Watcher Error: {e}", file=sys.stderr)
+            logger.error(f"⚠️ Watcher Error: {e}")
 
 async def start_watcher(path: str):
     """
     Starts the Sidelith Watcher Daemon (The Event Clock).
     """
     path_obj = Path(path).resolve()
-    print(f"🔭 Sidelith Watcher active on: {path_obj}")
+    logger.info(f"🔭 Sidelith Watcher active on: {path_obj}")
 
     # [SILENT PARTNER]: Set low process priority
     try:
         if sys.platform != 'win32':
             os.nice(10) # 0 is normal, 20 is lowest. 10 is very polite.
-            print("🍃 [POLITE]: Background priority set (os.nice).")
+            logger.info("🍃 [POLITE]: Background priority set (os.nice).")
     except Exception as e:
-        print(f"⚠️ Could not set process niceness: {e}")
+        logger.warning(f"⚠️ Could not set process niceness: {e}")
     engine = ContextEngine()
     audit = AuditStore(engine)
     project_id = ContextEngine.get_project_id(str(path_obj))

@@ -1,5 +1,5 @@
 """
-Sovereign Brain Models (Pydantic V2).
+System Brain Models (Pydantic V2).
 The Single Source of Truth for the Fractal Graph.
 """
 from typing import List, Dict, Any, Optional
@@ -43,7 +43,7 @@ class IntentSnapshot(BaseModel):
 class ContextSnapshot(BaseModel):
     """
     The Serialized State of the Context Engine at a specific point in time.
-    Replaces `sovereign.schema.json`.
+    Replaces `context.schema.json`.
     """
     version: str = "3.1.0"
     last_scan: datetime = Field(default_factory=datetime.now)

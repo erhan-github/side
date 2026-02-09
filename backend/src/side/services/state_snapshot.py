@@ -83,7 +83,7 @@ class StateSnapshotService:
         self.forensic.log_activity(
             project_id=project_id,
             tool="ROLLING_CHRONICLE",
-            action="neural_decay",
+            action="cache_decay",
             payload={
                 "forgotten": total_forgotten,
                 "strat": strat_counts,

@@ -1,7 +1,7 @@
 """
 Sidelith Configuration Engine.
 
-Centralized configuration for the Sidelith Sovereign SDK.
+Centralized configuration for the Sidelith SDK.
 """
 
 import os

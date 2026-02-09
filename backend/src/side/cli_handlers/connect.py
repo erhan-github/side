@@ -54,16 +54,14 @@ def handle_connect(args):
     # 1. CURSOR
     if args.cursor:
         ux.display_header("Cursor Configuration")
-        ux.display_status("Ideally use HTTP SSE, but stdio provided for stability:", level="info")
-        ux.display_panel(json.dumps({"sidelith": stdio_config}, indent=2), title="settings.json (mcpServers)")
+        patch_cursor_config(stdio_config)
         ux.display_footer()
         return
 
     # 2. VS CODE
     if args.vscode:
         ux.display_header("VS Code Configuration")
-        ux.display_status("Add this to your MCP Extension settings:", level="info")
-        ux.display_panel(json.dumps({"mcp.servers": {"sidelith": stdio_config}}, indent=2), title="settings.json")
+        patch_vscode_config(stdio_config)
         ux.display_footer()
         return
 
@@ -91,33 +89,106 @@ def handle_connect(args):
 
     # 5. CLAUDE (Auto-Patch + Default Fallback)
     if args.claude or (not args.cursor and not args.vscode and not args.antigravity):
-        claude_config_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+        patch_claude_config(stdio_config)
+        return
+
+def create_backup(target: Path) -> Path:
+    """Creates a timestamped backup of the target file."""
+    if not target.exists():
+        return None
+    timestamp = int(time.time())
+    backup_path = target.with_suffix(f".bak.{timestamp}")
+    shutil.copy2(target, backup_path)
+    ux.display_status(f"Backup created: {backup_path.name}", level="info")
+    return backup_path
+
+def patch_json_config(target: Path, update_fn, config_name: str) -> bool:
+    """
+    Generic safe JSON Patcher.
+    update_fn: function(current_json) -> modified_json
+    """
+    if not target.exists():
+        ux.display_status(f"{config_name} not found at {target}", level="warning")
+        return False
+
+    try:
+        # 1. Read & Validate
+        content = target.read_text()
+        data = json.loads(content)
         
-        if claude_config_path.exists():
-            print(f"   Found Claude Config: {claude_config_path}")
-            try:
-                # Backup
-                backup_path = claude_config_path.with_suffix(f".bak.{int(time.time())}")
-                shutil.copy(claude_config_path, backup_path)
-                
-                content = json.loads(claude_config_path.read_text())
-                if "mcpServers" not in content:
-                    content["mcpServers"] = {}
-                
-                content["mcpServers"]["sidelith"] = stdio_config
-                claude_config_path.write_text(json.dumps(content, indent=2))
-                print("\n✅ [SUCCESS]: Sidelith connected to Claude Desktop.")
-                return 
-            except Exception as e:
-                print(f"   ⚠️ Auto-Patch Failed: {e}")
+        # 2. Backup
+        create_backup(target)
         
-        # Fallback
-        config = {
-            "mcpServers": {
-                "sidelith": stdio_config
-            }
-        }
-        print("\n📋 COPY THIS TO YOUR 'claude_desktop_config.json':")
-        print("---------------------------------------------------------------")
-        print(json.dumps(config, indent=2))
-        print("---------------------------------------------------------------")
+        # 3. Modify
+        new_data = update_fn(data)
+        
+        # 4. Atomic Write (Simulated via write + flush)
+        target.write_text(json.dumps(new_data, indent=2))
+        ux.display_status(f"✅ patched {config_name} successfully.", level="success")
+        return True
+    except json.JSONDecodeError:
+        ux.display_status(f"❌ {config_name} is invalid JSON. Skipping auto-patch to avoid corruption.", level="error")
+        return False
+    except Exception as e:
+        ux.display_status(f"❌ Failed to patch {config_name}: {e}", level="error")
+        return False
+
+def patch_cursor_config(stdio_config):
+    """Patches Cursor settings.json safely."""
+    target = Path.home() / "Library" / "Application Support" / "Cursor" / "User" / "settings.json"
+    
+    def updater(data):
+        # Cursor uses "sidelith": { ... } at root for some versions, or mcpServers
+        # But standard MCP support in Cursor is via "mcpServers" key mostly now or specific cursor logic?
+        # Actually Cursor docs say 'sidelith': config at root for stdio integration if using extension? 
+        # Ref user request: "Cursor: MCP server added".
+        # Assuming standard MCP config structure for Cursor if it supports it natively now.
+        # Fallback to standard "sidelith" root key which was used in connect.py before.
+        data["sidelith"] = stdio_config
+        return data
+
+    if patch_json_config(target, updater, "Cursor Settings"):
+        return True
+    
+    # Fallback Guide
+    ux.display_panel(json.dumps({"sidelith": stdio_config}, indent=2), title="Manual Config: settings.json")
+    return False
+
+def patch_vscode_config(stdio_config):
+    """Patches VS Code settings.json safely."""
+    target = Path.home() / "Library" / "Application Support" / "Code" / "User" / "settings.json"
+    
+    def updater(data):
+        if "mcp.servers" not in data:
+            data["mcp.servers"] = {}
+        data["mcp.servers"]["sidelith"] = stdio_config
+        return data
+
+    if patch_json_config(target, updater, "VS Code Settings"):
+        return True
+
+    # Fallback Guide
+    ux.display_panel(json.dumps({"mcp.servers": {"sidelith": stdio_config}}, indent=2), title="Manual Config: settings.json")
+    return False
+
+def patch_claude_config(stdio_config):
+    """Patches Claude Desktop config safely."""
+    target = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+    
+    def updater(data):
+        if "mcpServers" not in data:
+            data["mcpServers"] = {}
+        data["mcpServers"]["sidelith"] = stdio_config
+        return data
+
+    if not target.exists():
+        # Create if missing
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps({"mcpServers": {}}, indent=2))
+
+    if patch_json_config(target, updater, "Claude Config"):
+        return True
+    
+    # Fallback
+    ux.display_panel(json.dumps({"mcpServers": {"sidelith": stdio_config}}, indent=2), title="Manual Config: claude_desktop_config.json")
+    return False

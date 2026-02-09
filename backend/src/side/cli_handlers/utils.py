@@ -13,8 +13,8 @@ def get_identity(engine):
     return IdentityStore(engine)
 
 def get_strategic(engine):
-    from side.storage.modules.chronos import ChronosStore
-    return ChronosStore(engine)
+    from side.storage.modules.strategy import StrategyStore
+    return StrategyStore(engine)
 
 def get_audit(engine):
     from side.storage.modules.audit import AuditStore

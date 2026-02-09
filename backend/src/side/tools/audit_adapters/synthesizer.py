@@ -65,9 +65,8 @@ Code:
 """)
 
         system_prompt = """
-You are a Security Architect. 
-Your task is to analyze security scanner findings and provide:
-1. EXPLANATION: A concise, one-sentence explanation of the danger in this specific context.
+Analyze security scanner findings and provide:
+1. EXPLANATION: A concise, one-sentence explanation of the danger.
 2. SUGGESTED_FIX: Precise code that resolves the issue.
 3. PRIORITIZATION: Assessment of strategic impact.
 

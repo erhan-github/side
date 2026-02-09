@@ -16,7 +16,7 @@ from side.utils.paths import get_side_dir, get_repo_root
 logger = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# THE STRATEGIC HUB: Higher-Dimensional Strategic Sovereignty
+# THE STRATEGIC HUB: System Strategy Center
 # ═══════════════════════════════════════════════════════════════════════════
 # Removed: HUB_NAME - The Hub is now database-first.
 
@@ -108,7 +108,7 @@ async def handle_check(arguments: dict[str, Any]) -> str:
 async def handle_plan(arguments: dict[str, Any]) -> str:
     """
     STRATEGIC VECTORING (Planning).
-    The Strategic Hub: Sovereign Machine Intelligence.
+    The Strategic Hub: System Machine Intelligence.
     """
     db = get_database()
     auto_intel = get_auto_intel()

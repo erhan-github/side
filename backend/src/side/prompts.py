@@ -14,7 +14,7 @@ from mcp.types import (
 
 from side.storage.modules.base import ContextEngine
 from side.storage.modules.audit import AuditStore
-from side.storage.modules.chronos import ChronosStore
+from side.storage.modules.strategy import StrategyStore
 from side.storage.modules.transient import OperationalStore
 from side.storage.modules.identity import IdentityStore
 
@@ -25,7 +25,7 @@ class DynamicPromptManager:
         # Lean Architecture
         self.engine = ContextEngine()
         self.audit = AuditStore(self.engine)
-        self.strategic = ChronosStore(self.engine)
+        self.strategic = StrategyStore(self.engine)
         self.operational = OperationalStore(self.engine)
         self.identity = IdentityStore(self.engine)
         self.project_path = Path.cwd()
@@ -34,13 +34,13 @@ class DynamicPromptManager:
     def get_prompts(self) -> list[Prompt]:
         prompts = [
             Prompt(
-                name="strategy",
-                description="Get strategic advice - 'What should I focus on?'",
+                name="ask_technical_question",
+                description="Get technical advice on a specific question.",
                 arguments=[
                     PromptArgument(
-                        name="context",
-                        description="Optional context about what you're working on",
-                        required=False,
+                        name="question",
+                        description="Your technical question (e.g., 'Components vs Hooks?')",
+                        required=True,
                     ),
                 ],
             ),
@@ -56,50 +56,37 @@ class DynamicPromptManager:
             
             if security_issues:
                 prompts.append(Prompt(
-                    name="fix-security-critical",
-                    description=f"🚨 Fix {len(security_issues)} Critical Security Issues (Auth, Secrets, etc.)",
+                    name="fix_security_issues",
+                    description=f"Fix {len(security_issues)} Security Issues identified in logs.",
                     arguments=[]
                 ))
             
             # [Level 3 Interaction: fix_flow]
             if findings:
                 prompts.append(Prompt(
-                    name="fix_flow",
-                    description="✨ Smart Fix: Auto-resolves the most pressing issue found.",
+                    name="fix_general_issues",
+                    description="Auto-resolve the most pressing issue found in logs.",
                     arguments=[]
                 ))
             
             # [Experience V2: The Executive Briefing]
             prompts.append(Prompt(
-                name="brief",
-                description="☀️ Mission Briefing: Strategic status, recent work, and today's focus.",
+                name="get_status",
+                description="Get a status update based on recent activity and plans.",
                 arguments=[]
-            ))
-            
-            # [Experience V2: The Technical Consult]
-            prompts.append(Prompt(
-                name="consult",
-                description="🧠 Technical Consultation: Get a CTO-level decision on a technical or business choice.",
-                arguments=[
-                     PromptArgument(
-                        name="question",
-                        description="The strategic question (e.g., 'Should we switch to Next.js?')",
-                        required=True,
-                    ),
-                ]
             ))
             
             # [Experience V2: The Gatekeeper]
             prompts.append(Prompt(
-                name="verify",
-                description="🛡️ Pre-Flight Check: Verify system health before shipping/deploying.",
+                name="verify_readiness",
+                description="Check if the system is ready for deployment/shipping.",
                 arguments=[]
             ))
             
             # [Experience V3: The Frontend Guard]
             prompts.append(Prompt(
-                name="check_design",
-                description="🎨 Design System Guard: Enforce UI consistency and prevent ad-hoc styling.",
+                name="review_design",
+                description="Review code for UI consistency and component usage.",
                 arguments=[
                     PromptArgument(
                         name="code",
@@ -111,19 +98,19 @@ class DynamicPromptManager:
             
             # [Experience V3: The Truth Engine]
             prompts.append(Prompt(
-                name="check_truth",
-                description="🔍 Truth Engine: Verify that documentation matches reality.",
+                name="verify_documentation",
+                description="Check if documentation matches the actual codebase.",
                 arguments=[]
             ))
 
             # [Experience V4: Deep Audit]
             prompts.append(Prompt(
                 name="audit_deep",
-                description="🕵️ Deep Recursive Audit: Scan codebase for complex patterns.",
+                description="Scan codebase for specific patterns or issues.",
                 arguments=[
                     PromptArgument(
                         name="query",
-                        description="What to look for (e.g. 'security vulnerabilities' or 'unused code')",
+                        description="What to look for (e.g. 'unused code')",
                         required=True,
                     )
                 ]
@@ -131,8 +118,8 @@ class DynamicPromptManager:
             
             if perf_issues:
                 prompts.append(Prompt(
-                    name="fix-performance-critical",
-                    description=f"⚡ Fix {len(perf_issues)} Performance bottlenecks (N+1 queries, loops)",
+                    name="fix_performance_issues",
+                    description=f"Fix {len(perf_issues)} Performance bottlenecks.",
                     arguments=[]
                 ))
                 
@@ -142,7 +129,7 @@ class DynamicPromptManager:
         return prompts
 
     def get_prompt_result(self, name: str, args: dict[str, str]) -> GetPromptResult:
-        if name == "fix_flow":
+        if name == "fix_general_issues":
             # Smart Logic: Find the worst issue
             findings = self.audit.get_recent_activities(self.project_id, limit=50)
             # Filter for violations
@@ -150,7 +137,7 @@ class DynamicPromptManager:
             if not violations:
                  return GetPromptResult(
                     description="No issues found",
-                    messages=[PromptMessage(role="user", content=TextContent(type="text", text="Side, run a deep audit to find new things to fix."))]
+                    messages=[PromptMessage(role="user", content=TextContent(type="text", text="Run a deep audit to find new things to fix."))]
                 )
             
             # Sort by severity (CRITICAL > HIGH > MEDIUM > LOW)
@@ -165,17 +152,16 @@ class DynamicPromptManager:
                         role="user",
                         content=TextContent(
                             type="text",
-                            text=f"Side, fix this {top_issue.get('severity')} issue:\n\n"
+                            text=f"Fix this {top_issue.get('severity')} issue:\n\n"
                                  f"**Issue**: {top_issue.get('message')}\n"
                                  f"**File**: {top_issue.get('file_path')}\n"
-                                 f"**Fix**: Analyze the code and apply a robust patch.\n"
-                                 f"**Verify**: Ensure tests pass after fixing."
+                                 f"**Instructions**: Analyze the code and apply a robust patch. Ensure tests pass."
                         ),
                     ),
                 ],
             )
             
-        if name == "brief":
+        if name == "get_status":
             # 1. Get Profile
             profile = self.identity.get_profile(self.project_id) or {}
             
@@ -188,23 +174,23 @@ class DynamicPromptManager:
             recent_context = "\n".join([f"- {a['action']} ({a['tool']})" for a in activities]) if activities else "None."
             
             return GetPromptResult(
-                description="Mission Briefing",
+                description="Status Update",
                 messages=[
                     PromptMessage(
                         role="user",
                         content=TextContent(
                             type="text",
-                            text=f"Side, give me a Strategic Mission Briefing.\n\n"
-                                 f"**Pilot**: {profile.get('name', 'Founder')} ({profile.get('tier', 'free').upper()})\n"
+                            text=f"Give me a Status Update.\n\n"
+                                 f"**User**: {profile.get('name', 'Founder')}\n"
                                  f"**Current Focus**: {top_focus}\n"
                                  f"**Recent Context**:\n{recent_context}\n\n"
-                                 f"**Goal**: Analyze my recent context and tell me exactly what I should do next to advance the Focus. Be concise and strategic."
+                                 f"Analyze recent context and tell me what I should do next to advance the Focus. Be concise."
                         ),
                     ),
                 ],
             )
 
-        if name == "consult":
+        if name == "ask_technical_question":
             question = args.get("question", "What should we do?")
             
             # 1. Get Strategic Context
@@ -217,29 +203,25 @@ class DynamicPromptManager:
             past_decisions = "\n".join([f"- Q: {r['question']} -> A: {r['answer']}" for r in decisions]) if decisions else "None."
 
             return GetPromptResult(
-                description="Strategic Consultation",
+                description="Technical Consultation",
                 messages=[
                     PromptMessage(
                         role="user",
                         content=TextContent(
                             type="text",
-                            text=f"Side, I need a CTO-level decision.\n\n"
+                            text=f"I need a technical decision.\n\n"
                                  f"**Question**: \"{question}\"\n\n"
                                  f"**Context**:\n"
                                  f"- **Stage**: {stage}\n"
                                  f"- **Stack**: {stack}\n"
                                  f"- **Precedent** (Last 3 Decisions):\n{past_decisions}\n\n"
-                                 f"**Directives**:\n"
-                                 f"1. Analyze the trade-offs (Cost, Speed, Debt).\n"
-                                 f"2. Check alignment with our Stage (e.g. don't over-engineer for MVP).\n"
-                                 f"3. Give a Verdict: **YES/NO/DEFER**.\n"
-                                 f"4. Provide a 1-sentence Strategic Rationale."
+                                 f"Analyze the trade-offs (Cost, Speed, Debt) and give a verdict (YES/NO/DEFER) with a one-sentence rationale."
                         ),
                     ),
                 ],
             )
 
-        if name == "verify":
+        if name == "verify_readiness":
             # 1. Get Security Posture
             # SFO Sprint: Simplified audit summary from audit store
             findings = self.audit.get_recent_activities(self.project_id, limit=100)
@@ -253,19 +235,18 @@ class DynamicPromptManager:
             status = "🔴 BLOCKED" if crit > 0 else ("🟠 RISKY" if high > 0 else "🟢 CLEAR")
             
             return GetPromptResult(
-                description="Pre-Flight Verification",
+                description="Readiness Check",
                 messages=[
                     PromptMessage(
                         role="user",
                         content=TextContent(
                             type="text",
-                            text=f"Side, Perform a Pre-Flight Verification.\n\n"
+                            text=f"Perform a Readiness Check.\n\n"
                                  f"**Current Status**: {status}\n"
                                  f"- Critical Issues: {crit}\n"
                                  f"- High Issues: {high}\n\n"
-                                 f"**Protocol**:\n"
                                  f"1. Run `audit` on any modified files.\n"
-                                 f"2. Verify no 'print' debugging or secrets are left.\n"
+                                 f"2. Verify no debugging code or secrets are left.\n"
                                  f"3. Confirm compliance with the Active Plan.\n"
                                  f"4. Verdict: **SHIP IT** or **BLOCK**."
                         ),
@@ -273,7 +254,7 @@ class DynamicPromptManager:
                 ],
             )
 
-        if name == "check_design":
+        if name == "review_design":
             code_snippet = args.get("code", "")
             
             # 1. Discover Design System
@@ -291,25 +272,22 @@ class DynamicPromptManager:
             component_list = ", ".join(sorted(components)) or "None detected."
 
             return GetPromptResult(
-                description="Design System Review",
+                description="Design Review",
                 messages=[
                     PromptMessage(
                         role="user",
                         content=TextContent(
                             type="text",
-                            text=f"Side, review this frontend code for Design System compliance.\n\n"
-                                 f"**Approved Components**: [{component_list}]\n\n"
-                                 f"**Code to Review**:\n```tsx\n{code_snippet}\n```\n\n"
-                                 f"**Directives**:\n"
-                                 f"1. Identify unauthorized HTML elements (e.g. `button`, `input`) that should be Reusable Components.\n"
-                                 f"2. Identify hardcoded CSS/Tailwind that duplicates Design System tokens.\n"
-                                 f"3. Rewrite the code to use the Approved Components."
+                            text=f"Review this frontend code for consistency.\n\n"
+                                 f"**Available Components**: [{component_list}]\n\n"
+                                 f"**Code**:\n```tsx\n{code_snippet}\n```\n\n"
+                                 f"Identify authorized components that should be used instead of raw HTML elements. Rewrite the code using them."
                         ),
                     ),
                 ],
             )
 
-        if name == "check_truth":
+        if name == "verify_documentation":
             # 1. Discover Strategy Docs
             docs_context = ""
             for doc_name in ["README.md", "backend/VISION.md", "docs/MASTER_ROADMAP.md"]:
@@ -320,61 +298,51 @@ class DynamicPromptManager:
                      docs_context += f"\n--- {doc_name} ---\n{content[:1000]}...\n"
             
             if not docs_context:
-                docs_context = "No strategic documentation found (README.md, VISION.md, etc.)."
+                docs_context = "No strategic documentation found."
 
             return GetPromptResult(
-                description="Strategic Reality Check",
+                description="Documentation Verification",
                 messages=[
                     PromptMessage(
                         role="user",
                         content=TextContent(
                             type="text",
-                            text=f"Side, Perform a Strategic Reality Check (Truth Engine).\n\n"
-                                 f"**Documentation Context**:\n{docs_context}\n\n"
-                                 f"**Directives**:\n"
-                                 f"1. Identify every 'Feature Claim' or 'Strategic Goal' mentioned in the docs.\n"
-                                 f"2. Verify if the code for these features actually exists in the monorepo.\n"
-                                 f"3. Identify Omissions (Built but not Doc'd) or Hallucinations (Doc'd but not Built).\n"
-                                 f"4. Report 'Documentation Debt' as a list of actionable tasks."
+                            text=f"Verify that documentation matches reality.\n\n"
+                                 f"**Docs Context**:\n{docs_context}\n\n"
+                                 f"Identify feature claims in logs vs docs. Report any missing documentation or unimplemented claims."
                         ),
                     ),
                 ],
             )
             
-        if name == "fix-security-critical":
+        if name == "fix_security_issues":
             return GetPromptResult(
-                description="Fix Critical Security Issues",
+                description="Fix Security Issues",
                 messages=[
                     PromptMessage(
                         role="user",
                         content=TextContent(
                             type="text",
-                            text="Hey Side, list all critical/high security issues. For each one:\n1. Explain the risk.\n2. Propose a code fix.\n3. Apply the fix.\n4. Call `verify_fix` to confirm resolution.\n\nCRITICAL: If `verify_fix` fails, you MUST attempt a different fix and verify again. Do NOT report back until the fix is verified as PASS.",
+                            text="List all critical security issues. For each one:\n1. Explain the risk.\n2. Propose a code fix.\n3. Apply the fix.\n4. Verify the fix.",
                         ),
                     ),
                 ],
             )
         
-        if name == "fix-performance-critical":
+        if name == "fix_performance_issues":
             return GetPromptResult(
-                description="Fix Critical Performance Issues",
+                description="Fix Performance Issues",
                 messages=[
                     PromptMessage(
                         role="user",
                         content=TextContent(
                             type="text",
-                            text="Hey Side, identify the top performance bottlenecks. Focus on N+1 queries and expensive loops. optimize them and verify the speedup.",
+                            text="Identify top performance bottlenecks (N+1 queries, loops). Optimize them and verify the speedup.",
                         ),
                     ),
                 ],
             )
-            
-        if name == "strategy":
-            context = args.get('context', '')
-            return GetPromptResult(
-                description=f"Strategic advice{f' for {context}' if context else ''}",
-                messages=[PromptMessage(role="user", content=TextContent(type="text", text=f"Side, what should I focus on?{f' Context: {context}' if context else ''}"))],
-            )
+
             
         raise ValueError(f"Unknown prompt: {name}")
 
