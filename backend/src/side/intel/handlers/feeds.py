@@ -272,6 +272,7 @@ class FeedHandler:
         return list(symbols)
 
     async def incremental_feed(self, file_path: Path):
+        """
         Incremental Sync.
         """
         logger.info(f"⚡ [BRAIN]: Incremental sync triggered for {file_path.name}")

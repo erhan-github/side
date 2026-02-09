@@ -39,5 +39,3 @@ class VerificationTool:
                 content=f"❌ VERIFICATION FAILED: Report indicates remaining issues.\n\n{report}",
                 metadata={"status": "fail"}
             )
-
-            )

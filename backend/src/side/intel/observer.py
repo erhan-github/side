@@ -1,6 +1,7 @@
+"""
 [LAYER 4] Activity Distiller - The Activity Log Compiler.
 Distills raw transaction streams into high-fidelity "Observations" (Facts).
-
+"""
 import logging
 import json
 import uuid
