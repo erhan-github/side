@@ -195,8 +195,6 @@ async def handle_ai_context_request(event: Event):
     elif context_type == "industry":
         # [FUTURE]: Asynchronous fetch of external intelligence (RSS/vibe-check)
         logger.info("External intelligence fetch requested")
-        except Exception:
-            pass
 
 
 # ============================================================================
