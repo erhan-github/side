@@ -1,5 +1,5 @@
 # Multi-stage build for side-backend
-FROM python:3.11-slim as builder
+FROM python:3.11-slim-bookworm as builder
 
 WORKDIR /app
 
@@ -15,15 +15,19 @@ RUN pip wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
 
 
 # Final Stage
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
-WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
-# Install curl for healthchecks
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
+    tini \
     && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
 
 # Copy wheels from builder
 COPY --from=builder /app/wheels /wheels
@@ -51,4 +55,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Graceful shutdown signal
 STOPSIGNAL SIGTERM
 
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["python", "run_server.py"]

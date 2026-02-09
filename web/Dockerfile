@@ -26,8 +26,10 @@ RUN npm run build
 
 # Production image, copy all the files and run next
 # Use slim for the runner to keep image size down
-FROM node:20-slim AS runner
+FROM node:20-bookworm-slim AS runner
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 # Uncomment the following line in case you want to disable telemetry during runtime.
@@ -57,4 +59,5 @@ ENV HOSTNAME="0.0.0.0"
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "server.js"]
