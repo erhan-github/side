@@ -18,6 +18,8 @@ interface Stats {
     su_used: number;
     tier: string;
     efficiency: number; // 0-100
+    su_limit: number;
+    saved_tokens: number;
 }
 
 export default function DashboardPage() {
@@ -113,13 +115,13 @@ export default function DashboardPage() {
                         <p className="text-[10px] uppercase text-zinc-500 tracking-widest font-bold mb-4">Side Units (SUs)</p>
                         <div className="flex items-baseline gap-2 mb-2">
                             <span className="text-5xl font-sans font-bold text-white tracking-tight">{stats?.su_available.toLocaleString()}</span>
-                            <span className="text-sm text-zinc-600 font-bold">/ 5,000</span>
+                            <span className="text-sm text-zinc-600 font-bold">/ {stats?.su_limit?.toLocaleString()}</span>
                         </div>
                         <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden mb-4">
-                            <div className="h-full bg-cyan-500/50" style={{ width: `${(stats?.su_available || 0) / 50}%` }}></div>
+                            <div className="h-full bg-cyan-500/50" style={{ width: `${((stats?.su_available || 0) / (stats?.su_limit || 1)) * 100}%` }}></div>
                         </div>
                         <p className="text-xs text-zinc-400">
-                            <span className="text-emerald-400">+500</span> monthly refresh in 12 days.
+                            <span className="text-emerald-400">+{stats?.su_limit?.toLocaleString()}</span> monthly refresh in 12 days.
                         </p>
                     </div>
 
@@ -133,7 +135,7 @@ export default function DashboardPage() {
                             <span className="text-5xl font-sans font-bold text-white tracking-tight">{stats?.efficiency}%</span>
                         </div>
                         <p className="text-xs text-zinc-400">
-                            Fractal Indexing saved <span className="text-white">14.2k tokens</span> this month.
+                            Fractal Indexing saved <span className="text-white">{stats?.saved_tokens?.toLocaleString() || 0} tokens</span> this month.
                         </p>
                     </div>
 

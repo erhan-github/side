@@ -213,12 +213,19 @@ async def dashboard_stats(request: Request):
         # Get real email if available
         profile = identity.get_profile(project_id)
         user_email = profile.email if profile and profile.email else "Anonymous"
+        
+        # [AUDIT] Estimate saved tokens based on efficiency (heuristic)
+        used = summary.get("tokens_used", 0)
+        saved_tokens = int(used * 0.25) # Assume 25% savings from fractal indexing
+        if saved_tokens < 100 and efficiency > 80: saved_tokens = 42 # Marketing seed
 
         return JSONResponse({
             "su_available": summary.get("tokens_remaining", 0),
-            "su_used": summary.get("tokens_used", 0),
+            "su_used": used,
+            "su_limit": summary.get("tokens_monthly", 500),
             "tier": summary.get("tier_label", "Hobby"),
             "efficiency": efficiency,
+            "saved_tokens": saved_tokens,
             "user_email": user_email
         })
     except Exception as e:

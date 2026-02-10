@@ -54,14 +54,14 @@ export async function POST(request: Request) {
         if (eventName === "subscription_created" || eventName === "subscription_updated") {
             const variantId = String(payload.data.attributes.variant_id);
             let tier = "hobby";
-            let tokens = 50;
+            let tokens = 500;
 
             if (variantId === process.env.LEMONSQUEEZY_VARIANT_ID_PRO) {
                 tier = "pro";
-                tokens = 500;
+                tokens = 5000;
             } else if (variantId === process.env.LEMONSQUEEZY_VARIANT_ID_ELITE) {
                 tier = "elite";
-                tokens = 2500;
+                tokens = 25000;
             }
 
             // Capture Billing IDs for Portal Access
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
 
             // Handle Refill
             if (variantId === process.env.LEMONSQUEEZY_VARIANT_ID_REFILL) {
-                const refillAmount = 250;
+                const refillAmount = 2500;
 
                 const { data: profile } = await supabaseAdmin
                     .from("profiles")
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
                     user_id: userId,
                     amount: refillAmount,
                     type: 'refill',
-                    description: 'Refill Pack (+250)',
+                    description: 'Refill Pack (+2500)',
                     external_id: String(payload.data.id),
                     balance_after: newLimit - currentUsed
                 });

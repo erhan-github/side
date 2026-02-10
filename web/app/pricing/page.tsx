@@ -200,7 +200,7 @@ export default function PricingPage() {
                                 </div>
                                 <div className="h-10 w-[1px] bg-white/10" />
                                 <div className="text-center">
-                                    <div className="text-3xl font-black tracking-tighter text-cyan-400 font-mono">250</div>
+                                    <div className="text-3xl font-black tracking-tighter text-cyan-400 font-mono">2,500</div>
                                     <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Extra SUs</div>
                                 </div>
                                 <CheckoutButton
