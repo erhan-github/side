@@ -6,7 +6,7 @@ export default function DashboardLoading() {
                 <div className="p-6">
                     <div className="flex items-center gap-2 mb-8">
                         <div className="h-6 w-6 bg-white rounded-sm" />
-                        <span className="font-bold tracking-tight">CSO.ai</span>
+                        <span className="font-bold tracking-tight">Sidelith</span>
                     </div>
                     <div className="flex flex-col gap-2">
                         {[1, 2, 3, 4].map((i) => (
