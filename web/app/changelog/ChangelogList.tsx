@@ -83,7 +83,7 @@ export default function ChangelogList() {
                 },
                 {
                     general: "**Smart Restart:** The system knows when to stop trying if something is fundamentally broken, preventing endless loops.",
-                    technical: "**Crash Forensics:** Added a `CrashLoopBackoff` mechanism to prevent recursive restart loops during catastrophic failure modes."
+                    technical: "**Crash Analysis:** Added a `CrashLoopBackoff` mechanism to prevent recursive restart loops during catastrophic failure modes."
                 },
             ],
         },
@@ -167,7 +167,7 @@ export default function ChangelogList() {
                 },
                 {
                     general: "**Timeline View:** See events from every part of your stack in a single, unified timeline.",
-                    technical: "**Polyglot Cross-Entropy Scavenging:** Added a log scavenger to correlate events across Next.js, Docker, and Python processes for unified forensic timelines."
+                    technical: "**Polyglot Cross-Entropy Scavenging:** Added a log scavenger to correlate events across Next.js, Docker, and Python processes for unified audit timelines."
                 },
                 {
                     general: "**Drift Alert:** Get notified the moment your code starts to drift away from the plan.",
@@ -194,7 +194,7 @@ export default function ChangelogList() {
                 },
                 {
                     general: "**Scalable Database:** The system handles massive projects without slowing down.",
-                    technical: "**Modular Persistence:** Refactored the monolithic `simple_db` into specialized persistence domains (Strategic, Identity, Forensic) for better scalability."
+                    technical: "**Modular Persistence:** Refactored the monolithic `simple_db` into specialized persistence domains (Strategic, Identity, Audit) for better scalability."
                 },
                 {
                     general: "**Smooth UI:** Background tasks never freeze or stutter your interface.",

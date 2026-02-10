@@ -15,7 +15,7 @@ from collections import deque
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-from side.storage.modules.audit import AuditStore
+from side.storage.modules.audit import AuditService
 from side.storage.modules.base import ContextEngine
 from side.intel.scavengers.mobile import AndroidScavenger
 from side.intel.scavengers.docker import DockerScavenger
@@ -55,7 +55,7 @@ class LogMonitor:
     Event-Driven Log Intelligence.
     Monitors friction points using FS Events (High Performance) + Async Streams.
     """
-    def __init__(self, audit: AuditStore, project_path: Path):
+    def __init__(self, ledger: AuditService, project_path: Path):
         self.audit = audit
         self.project_path = project_path
         self.stop_event = threading.Event()

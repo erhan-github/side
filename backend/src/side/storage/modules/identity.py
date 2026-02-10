@@ -12,7 +12,7 @@ from .base import ContextEngine, InsufficientTokensError
 
 logger = logging.getLogger(__name__)
 
-class IdentityStore:
+class IdentityService:
     def __init__(self, engine: ContextEngine):
         self.engine = engine
         with self.engine.connection() as conn:

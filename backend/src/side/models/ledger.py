@@ -8,19 +8,19 @@ from enum import Enum
 import uuid
 from pydantic import BaseModel, Field
 
-class LedgerEntryType(str, Enum):
+class EventType(str, Enum):
     ACTIVITY = "ACTIVITY"
     AUDIT = "AUDIT"
     WORK_CONTEXT = "WORK_CONTEXT"
     OUTCOME = "OUTCOME"
 
-class LedgerEntry(BaseModel):
+class SystemEvent(BaseModel):
     """
-    A unified entry in the System Ledger.
+    A unified entry in the System Log.
     """
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     project_id: str
-    entry_type: LedgerEntryType
+    entry_type: EventType
     
     # Metadata
     tool: Optional[str] = None
@@ -38,9 +38,9 @@ class LedgerEntry(BaseModel):
     # Temporal
     created_at: datetime = Field(default_factory=datetime.now)
     
-class ForensicEvent(BaseModel):
+class AuditLog(BaseModel):
     """
-    A specific forensic finding or audit log.
+    A specific audit finding or log entry.
     """
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     project_id: str

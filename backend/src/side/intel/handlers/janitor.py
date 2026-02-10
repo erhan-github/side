@@ -3,7 +3,7 @@ from side.utils.hashing import sparse_hasher
 
 logger = logging.getLogger(__name__)
 
-class JanitorHandler:
+class MaintenanceService:
     def __init__(self, strategic, engine):
         self.strategic = strategic
         self.engine = engine

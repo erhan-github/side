@@ -8,7 +8,7 @@ import asyncio
 import logging
 from datetime import datetime, time, timezone
 
-from side.storage.modules.audit import AuditStore
+from side.storage.modules.audit import AuditService
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class CleanupScheduler:
     Runs daily at 3 AM to clean up expired data.
     """
 
-    def __init__(self, audit: AuditStore):
+    def __init__(self, ledger: AuditService):
         """
         Initialize cleanup scheduler.
 
@@ -78,8 +78,8 @@ class CleanupScheduler:
             )
 
             # Get database stats after cleanup
-            from side.storage.modules.transient import OperationalStore
-            op_store = OperationalStore(self.audit.engine)
+            from side.storage.modules.transient import SessionCache
+            cache = SessionCache(self.ledger.engine)
             stats = op_store.get_database_stats(self.audit.engine.db_path)
             logger.info(
                 f"Database size: {stats['db_size_mb']:.2f} MB "

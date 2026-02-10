@@ -79,7 +79,7 @@ class CapacityLimiter:
         }
 
     def get_ledger(self, user_id: str, limit: int = 50) -> list:
-        """Get the forensic ledger for a user."""
+        """Get the audit ledger for a user."""
         # Return last N transactions, newest first
         return sorted(self._ledger[user_id], key=lambda x: x['timestamp'], reverse=True)[:limit]
         

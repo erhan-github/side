@@ -3,23 +3,23 @@ import uuid
 import time
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from side.storage.modules.strategy import StrategyStore
+from side.storage.modules.strategy import StrategyRegistry
 
 logger = logging.getLogger(__name__)
 
 class MemoryManager:
     """
     The Hippocampus. Manages store and recall of strategic facts.
-    Now backed by SQLite (StrategyStore) for atomic, no-fat persistence.
+    Now backed by SQLite (StrategyRegistry) for atomic, no-fat persistence.
     """
-    def __init__(self, strategic: StrategyStore, project_id: str = "default"):
-        self.strategic = strategic
+    def __init__(self, registry: StrategyRegistry, project_id: str = "default"):
+        self.registry = registry
         self.project_id = project_id
         
     def memorize(self, fact: str, tags: List[str] = None, metadata: Dict = None):
         """Commit a fact to long-term memory via the Strategic Store."""
         mid = str(uuid.uuid4())
-        self.strategic.save_fact(
+        self.registry.save_fact(
             fact_id=mid,
             project_id=self.project_id,
             content=fact,
@@ -31,7 +31,7 @@ class MemoryManager:
         
     def recall(self, query: str, limit: int = 5) -> str:
         """Recall relevant facts for a query from the Strategic Store."""
-        memories = self.strategic.recall_facts(
+        memories = self.registry.recall_facts(
             query=query,
             project_id=self.project_id,
             limit=limit

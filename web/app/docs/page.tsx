@@ -214,6 +214,21 @@ export default function DocsPage() {
                                 </div>
                             </a>
                         </div>
+
+                        <div className="mt-4">
+                            <a
+                                href="/docs/glossary"
+                                className="block p-4 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-emerald-500/30 transition-all group"
+                            >
+                                <div className="font-medium text-white group-hover:text-emerald-400 transition-colors">
+                                    Terminology Glossary →
+                                </div>
+                                <div className="text-xs text-zinc-400 mt-1">
+                                    Component definitions and naming conventions
+                                </div>
+                            </a>
+                        </div>
+
                     </div>
 
                     {/* Help */}

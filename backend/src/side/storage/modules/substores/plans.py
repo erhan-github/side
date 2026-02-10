@@ -144,7 +144,7 @@ class PlanStore:
             ).fetchall()
             return [dict(row) for row in rows]
 
-    # --- FRACTAL ONTOLOGY (RECURSIVE CONTEXT) ---
+    # --- PLAN LINEAGE (RECURSIVE CONTEXT) ---
 
     def resolve_hierarchy(self, plan_id: str) -> List[Dict[str, Any]]:
         """
@@ -174,7 +174,7 @@ class PlanStore:
     def get_plan_hierarchy(self, plan_id: str) -> Dict[str, Any]:
         """
         [CONTEXT HIERARCHY]: Generates the 'Full Context' for a task.
-        Combines the specific task with the strategic intent of its ancestors.
+        Combines the specific task with the high-level goal of its ancestors.
         """
         chain = self.resolve_hierarchy(plan_id)
         if not chain:

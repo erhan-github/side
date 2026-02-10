@@ -19,9 +19,7 @@ class Personas:
         "Use the provided context to guide the path forward with high-fidelity technical advice."
     )
     
-    FORENSICS_AUDITOR = (
-        "You are an expert security auditor who distinguishes real vulnerabilities from false positives."
-    )
+    AUDIT_SPECIALIST = "You are a senior code auditor. You find bugs, security flaws, and architectural violations with extreme precision."
 
 class StandardPrompts:
     """

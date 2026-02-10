@@ -5,7 +5,7 @@ Pattern Distiller - Intelligent analysis for strategic harvesting.
 import logging
 from typing import List, Dict, Any
 from side.storage.modules.substores.patterns import PublicPatternStore
-from side.tools.forensics import Finding
+from side.tools.audit_adapters import Finding
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class PatternDistiller:
 
     async def distill_audit_findings(self, findings: List[Finding]):
         """
-        Analyzes forensic audit findings and logs them as anti-patterns
+        Analyzes audit findings and logs them as anti-patterns
         if they exceed a certain confidence/severity threshold.
         """
         for finding in findings:
@@ -39,7 +39,7 @@ class PatternDistiller:
             }
             
             self.store.store_anti_pattern(
-                issue_type="FORENSIC_VIOLATION",
+                issue_type="AUDIT_VIOLATION",
                 context_trigger=context_trigger,
                 risk_description=risk,
                 remedy_json=remedy

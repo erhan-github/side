@@ -13,7 +13,7 @@ export interface LedgerEntry {
 }
 
 /**
- * Fetches the forensic ledger (financial history).
+ * Fetches the billing ledger (financial history).
  */
 export const getLedger = cache(async (): Promise<LedgerEntry[]> => {
     // 1. Auth Gate

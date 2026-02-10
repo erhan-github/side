@@ -36,7 +36,7 @@ export function ArtifactGallery() {
 
     const fetchFindings = useCallback(async (offset: number) => {
         try {
-            const response = await fetch(`/api/forensics?action=alerts&limit=${PAGE_SIZE}&offset=${offset}`);
+            const response = await fetch(`/api/audit?action=artifacts&limit=${PAGE_SIZE}&offset=${offset}`);
             if (!response.ok) throw new Error("Failed to fetch findings");
             const { data, count } = await response.json();
 
@@ -136,8 +136,8 @@ export function ArtifactGallery() {
                         <Shield className="w-5 h-5" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-white">Forensic Findings</h2>
-                        <p className="text-xs text-zinc-500">Virtual Neural Surface • {totalCount.toLocaleString()} Entries</p>
+                        <h2 className="text-lg font-bold text-white">Audit Findings</h2>
+                        <p className="text-xs text-zinc-500">System Audit Stream • {totalCount.toLocaleString()} Entries</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">

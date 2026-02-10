@@ -28,7 +28,7 @@ MODELS = {
 FREE_TASKS = {
     "pulse_scan",
     "ast_extraction",
-    "forensic_log",
+    "audit_log",
     "file_watcher",
     "git_hook_detection",
     "intent_correlation"

@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import List, Dict, Any
 from side.storage.modules.base import ContextEngine
-from side.storage.modules.transient import OperationalStore
+from side.storage.modules.transient import SessionCache
 
 logger = logging.getLogger(__name__)
 
@@ -12,11 +12,11 @@ class ProactiveForensicObserver:
     The 'Always-Watching' Strategic Eye.
     Runs lightweight forensic checks on file content to detect structural drift.
     """
-    def __init__(self, project_path: Path):
+    def __init__(self, project_path: Path, cache: SessionCache): # Modified signature
         self.project_path = Path(project_path).resolve()
         self.engine = ContextEngine()
-        self.operational = OperationalStore(self.engine)
         self.project_id = ContextEngine.get_project_id(self.project_path)
+        self.cache = cache # Added cache initialization
         
         # High-Speed Forensic Rules (Subset of Pulse)
         self.rules = [
@@ -57,7 +57,7 @@ class ProactiveForensicObserver:
                 findings.append(finding)
                 
                 # Log to System Ledger
-                self.operational.save_telemetry_alert(
+                self.cache.save_telemetry_alert(
                     project_id=self.project_id,
                     alert_type=rule["id"],
                     severity=rule["severity"],
@@ -73,9 +73,9 @@ class ProactiveForensicObserver:
         Analyzes systemic friction from silicon pulse telemetry.
         [HYPER-PERCEPTION]: Correlates hardware stress with architectural state.
         """
-        pulse_score = self.operational.get_setting("silicon_pulse_score")
+        pulse_score = self.cache.get_setting("silicon_pulse_score")
         if pulse_score and float(pulse_score) > 0.8:
-            stats = self.operational.get_setting("silicon_pulse_stats")
+            stats = self.cache.get_setting("silicon_pulse_stats")
             message = f"Hyper-Ralph detected severe hardware friction ({pulse_score}). Possible infinite loop or unoptimized logic."
             
             # Log to System Ledger
@@ -102,7 +102,8 @@ def run_proactive_scan(project_path: Path, file_path: Path):
             return
             
         content = file_path.read_text(errors="ignore")
-        observer = ProactiveForensicObserver(project_path)
+        from side.tools.core import get_cache
+        observer = ProactiveForensicObserver(project_path, get_cache())
         observer.scan_file(file_path, content)
         
         # [HYPER-PERCEPTION] Check systemic friction

@@ -4,11 +4,11 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from side.tools.recursive_utils import partition, peek, grep, chunk_list
 from side.llm.client import LLMClient
-from side.intel.forensic_allowlist import allowlist
+from side.intel.audit_allowlist import allowlist
 
 logger = logging.getLogger(__name__)
 
-class ForensicsTool:
+class AuditTool:
     """
     Implements "Deep Audit" capabilities using Recursive Language Models (RLMs).
     Instead of reading the whole codebase, we:
@@ -74,7 +74,7 @@ class ForensicsTool:
         chunks = chunk_list(targets, size=5)
         
         findings = []
-        logger.info(f"🔎 [FORENSICS] Scanning {len(all_files)} files in {len(chunks)} chunks...")
+        logger.info(f"🔎 [AUDIT] Scanning {len(all_files)} files in {len(chunks)} chunks...")
 
         for chunk in chunks[:10]: # Limit to top 50 files for speed in V1
             chunk_content = ""
@@ -117,7 +117,7 @@ class ForensicsTool:
         
         from side.llm.prompts import Personas, StandardPrompts
         
-        prompt = StandardPrompts.FORENSICS_TASK.format(
+        prompt = StandardPrompts.AUDIT_TASK.format(
             query=query,
             content=content,
             context_guidance=context_guidance
@@ -126,7 +126,7 @@ class ForensicsTool:
         try:
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt=Personas.FORENSICS_AUDITOR,
+                system_prompt=Personas.AUDIT_SPECIALIST,
                 temperature=0.0
             )
             if "PASS" in response:
@@ -221,12 +221,12 @@ class ForensicsTool:
 
     def _synthesize_report(self, findings: List[str], query: str) -> str:
         if not findings:
-            return f"✅ **Forensics Clean:** No issues found for '{query}'."
+            return f"✅ **Audit Clean:** No issues found for '{query}'."
         
         issue_count = len(findings)
         
         # 1. THE HOOK
-        report = [f"🕵️ **Forensics Alert: {issue_count} Issues Detected**"]
+        report = [f"🕵️ **Audit Alert: {issue_count} Issues Detected**"]
         report.append("")
         
         # 2. THE EVIDENCE
@@ -248,6 +248,6 @@ class ForensicsTool:
         report.append(f"> *Run this to create a remediation plan.*")
         
         # Tool Proposal Signal
-        report.append(f"tool_code: call_tool('plan', {{'goal': 'Remediate {issue_count} forensic issues found in {query}', 'due': 'today'}})")
+        report.append(f"tool_code: call_tool('plan', {{'goal': 'Remediate {issue_count} audit issues found in {query}', 'due': 'today'}})")
         
         return "\n".join(report)

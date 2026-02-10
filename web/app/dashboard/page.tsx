@@ -129,7 +129,7 @@ export default function DashboardPage() {
                         <div className="space-y-1">
                             <div className="text-4xl font-bold text-white">{stats?.efficiency}%</div>
                             <p className="text-xs text-zinc-500 leading-relaxed font-mono">
-                                Fractal Indexing saved <span className="text-emerald-400/80">{stats?.saved_tokens?.toLocaleString() || 0} tokens</span>.
+                                Local Indexing saved <span className="text-emerald-400/80">{stats?.saved_tokens?.toLocaleString() || 0} tokens</span>.
                             </p>
                         </div>
                     </div>
@@ -157,7 +157,7 @@ export default function DashboardPage() {
                 {/* Ledger Section */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-bold">Activity History</h2>
+                        <h2 className="text-lg font-bold">Activity Ledger</h2>
                         <span className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest">Last 20 operations</span>
                     </div>
                     <UsageLedger entries={ledger} />

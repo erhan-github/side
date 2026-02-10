@@ -79,6 +79,8 @@ def ensure_gitignore_entry(project_root: Path) -> None:
         gitignore.write_text("# Side AI\n.side-id\n")
 
 
+from side.decorators import audit_log
+@audit_log("system_onboarding", capture_tokens=True)
 async def run_onboarding(project_root: str) -> dict:
     """
     Run the Day 1 onboarding flow with a LIVE Baseline Audit.

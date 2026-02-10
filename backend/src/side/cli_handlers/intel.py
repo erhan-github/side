@@ -6,10 +6,10 @@ from .utils import ux, get_engine
 def handle_index(args):
     """Manual Indexer."""
     ux.display_status("Analyzing Project Structure...", level="info")
-    from side.intel.auto_intelligence import AutoIntelligence
+    from side.intel.auto_intelligence import ContextService
     
     path = Path(args.path).resolve()
-    intel = AutoIntelligence(path, engine=get_engine())
+    intel = ContextService(path, engine=get_engine())
     
     # Run the Feed
     graph = asyncio.run(intel.feed())
@@ -25,11 +25,11 @@ def handle_index(args):
 def handle_watch(args):
     """Real-time File Watcher."""
     from side.services.file_watcher import FileWatcher
-    from side.intel.auto_intelligence import AutoIntelligence
+    from side.intel.auto_intelligence import ContextService
     
     ux.display_status("Active Monitoring Engaged...", level="info")
     path = Path(args.path).resolve()
-    intel = AutoIntelligence(path, engine=get_engine())
+    intel = ContextService(path, engine=get_engine())
     
     watcher = FileWatcher(path, on_change=lambda files: asyncio.run(intel.incremental_feed(list(files)[0] if files else path)))
     try:

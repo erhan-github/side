@@ -117,7 +117,7 @@ export function InstallWidget() {
                         <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold border border-blue-500/30 text-lg group-hover:scale-110 transition-transform">⚡</div>
                         <div>
                             <h4 className="text-lg font-bold text-white uppercase tracking-widest">Run in your Project Root</h4>
-                            <p className="text-sm text-white/40">Open your terminal in your <b>active project directory</b> and run the command. Sidelith will anchor your local DNA and bridge your entire IDE mesh in a single shot.</p>
+                            <p className="text-sm text-white/40">Open your terminal in your <b>active project directory</b> and run the command. Sidelith will anchor your Code Structure and bridge your entire IDE mesh in a single shot.</p>
                         </div>
                     </div>
 

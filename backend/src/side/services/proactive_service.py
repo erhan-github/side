@@ -1,15 +1,15 @@
 """
-Proactive IAnonymous Telemetry Service for sideMCP.deMCP.
+Proactive Telemetry Service for sideMCP.
 
 Monitors the codebase for technical signals (HACK, TODO) that might indicate
-strategic friction or vision drift.
+strategic friction or objective drift.
 """
 
 import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from side.storage.modules.strategy import StrategyStore
+from side.storage.modules.strategy import StrategyRegistry
 from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)
@@ -20,8 +20,8 @@ class ProactiveService:
     Checks for TODO/HACK comments and cross-references them with active goals.
     """
 
-    def __init__(self, strategic: StrategyStore, project_path: Path):
-        self.strategic = strategic
+    def __init__(self, registry: StrategyRegistry, project_path: Path):
+        self.registry = registry
         self.project_path = project_path
 
     async def check_for_friction(self) -> List[Dict[str, Any]]:
@@ -33,7 +33,7 @@ class ProactiveService:
         # 1. Get Strategic Context from the Hub
         from side.storage.modules.base import ContextEngine
         project_id = ContextEngine.get_project_id(self.project_path)
-        active_plans = self.strategic.list_plans(project_id, status="active")
+        active_plans = self.registry.list_plans(project_id, status="active")
         
         # 2. Scan for Technical Signals (TODO, HACK, FIXME)
         # We limit scan to source files

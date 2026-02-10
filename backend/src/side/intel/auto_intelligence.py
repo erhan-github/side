@@ -13,20 +13,21 @@ from side.utils.crypto import shield
 if TYPE_CHECKING:
     from side.storage.modules.base import ContextEngine
 
-from side.intel.handlers.topology import DNAHandler
-from side.intel.handlers.feeds import FeedHandler
-from side.intel.handlers.janitor import JanitorHandler
-from side.intel.handlers.context import ContextHandler
+from side.intel.handlers.topology import CodeIndexer
+from side.intel.handlers.feeds import HistoryAnalyzer
+from side.intel.handlers.janitor import MaintenanceService
+from side.intel.handlers.context import PromptBuilder
+from side.services.doc_scanner import DocScanner
 
 logger = logging.getLogger(__name__)
 
-class AutoIntelligence:
+class ContextService:
     """
     Orchestrates system intelligence, delegating to specialized handlers:
-    - DNAHandler: File structure & indexing.
-    - FeedHandler: Historical data & commits.
-    - JanitorHandler: Maintenance & pruning.
-    - ContextHandler: Prompt construction.
+    - CodeIndexer: File structure & indexing.
+    - HistoryAnalyzer: Historical data & commits.
+    - MaintenanceService: Maintenance & pruning.
+    - PromptBuilder: Prompt construction.
     """
 
     def __init__(self, project_path: Path, engine: ContextEngine, buffer=None):
@@ -48,11 +49,11 @@ class AutoIntelligence:
         self.brain_path = Path(env_brain) if env_brain else default_brain
 
         # Initialize Handlers
-        self.dna_handler = DNAHandler(project_path, engine, self.brain_path, buffer)
-        self.feed_handler = FeedHandler(project_path, engine, self.brain_path, self.strategic)
-        self.janitor_handler = JanitorHandler(self.strategic, engine)
-        self.context_handler = ContextHandler(project_path, engine, self.strategic, self.memory)
-
+        self.indexer = CodeIndexer(self.project_path, self.engine, self.brain_path, self.buffer)
+        self.history = HistoryAnalyzer(self.project_path, self.engine, self.brain_path, self.strategic)
+        self.janitor = MaintenanceService(self.strategic, self.engine)
+        self.orchestrator = PromptBuilder(self.project_path, self.engine, self.strategic, self.memory)
+        self.doc_scanner = DocScanner(self.strategic, self.engine)
     async def setup(self):
         """Initializes the intelligence context."""
         from side.intel.fractal_indexer import run_context_scan
@@ -150,28 +151,28 @@ class AutoIntelligence:
     # --- Delegated Methods ---
 
     async def incremental_feed(self, file_path: Path):
-        await self.feed_handler.incremental_feed(file_path)
+        await self.history.incremental_feed(file_path)
 
     async def historic_feed(self, months: int = 3) -> List[Dict[str, Any]]:
-        return await self.feed_handler.historic_feed(months)
+        return await self.history.historic_feed(months)
 
     async def autonomous_janitor(self, throttle_hook=None) -> int:
-        return await self.janitor_handler.autonomous_janitor(throttle_hook)
+        return await self.janitor.autonomous_janitor(throttle_hook)
 
     async def prune_patterns(self) -> int:
-        return await self.janitor_handler.autonomous_janitor()
+        return await self.janitor.autonomous_janitor()
 
     def gather_context(self, active_file: str = None, topic: str = None, include_code: bool = True) -> str:
-        return self.context_handler.gather_context(active_file, topic, include_code)
+        return self.orchestrator.gather_context(active_file, topic, include_code)
 
     def get_surgical_context(self, query: str, limit: int = 3) -> str:
-        return self.context_handler.get_surgical_context(query, limit)
+        return self.orchestrator.get_surgical_context(query, limit)
 
     def get_episodic_context(self, limit: int = 15) -> str:
-        return self.context_handler.get_episodic_context(self.forensic, limit)
+        return self.orchestrator.get_episodic_context(self.forensic, limit)
 
     def get_condensed_dna(self) -> str:
-        return self.dna_handler.get_condensed_dna()
+        return self.indexer.get_condensed_dna()
 
     async def optimize_weights(self) -> dict:
         """Regenerate the context cache."""
@@ -190,7 +191,7 @@ class AutoIntelligence:
         return f"{base_prompt}\n\n=== CONTEXT ===\n{context}\n===============\n"
 
     def _get_operational_reality(self) -> str:
-        return self.context_handler.get_git_status()
+        return self.orchestrator.get_git_status()
 
     # --- Event-Driven Architecture ---
 
@@ -210,14 +211,14 @@ class AutoIntelligence:
             if event_type == "deleted":
                 pass
             elif event_type == "created":
-                await self.dna_handler.scan_single(path)
+                await self.indexer.scan_single(path)
                 
             if path.suffix in {'.py', '.ts', '.tsx', '.js', '.md'}:
-                await self.context_handler.refresh_context_for_file(path)
+                await self.orchestrator.refresh_context_for_file(path)
 
         @event_bus.on(FrictionPoint.GIT_COMMIT, EventPriority.NORMAL)
         async def handle_commit(event: Event):
             message = event.payload.get("message")
             logger.info(f"Analyzing commit: {message}")
-            await self.feed_handler.process_latest_commit()
+            await self.history.process_latest_commit()
 

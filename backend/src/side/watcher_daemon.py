@@ -14,7 +14,7 @@ sys.path.append(str(project_root))
 # from side.forensic_audit.runner import ForensicAuditRunner (DELETED)
 # from side.intel.intelligence_store import IntelligenceStore (DELETED)
 from side.storage.modules.base import ContextEngine
-from side.storage.modules.audit import AuditStore
+from side.storage.modules.audit import AuditService
 # from side.common.telemetry import monitor (DELETED)
 
 import logging
@@ -24,9 +24,9 @@ class SidelithEventHandler(FileSystemEventHandler):
     """
     Handles file system events, triggers audits, AND records the Event Clock.
     """
-    def __init__(self, engine: ContextEngine, audit: AuditStore, loop: asyncio.AbstractEventLoop, project_id: str):
+    def __init__(self, engine: ContextEngine, ledger: AuditService, loop: asyncio.AbstractEventLoop, project_id: str):
         self.engine = engine
-        self.audit = audit
+        self.ledger = ledger
         self.loop = loop
         self.project_id = project_id
         self.last_scan_time: Dict[str, float] = {}
@@ -107,7 +107,7 @@ class SidelithEventHandler(FileSystemEventHandler):
         """
         try:
             logger.info(f"⏳ [CONSISTENCY CHECK]: Discovering intent from outcomes...")
-            self.audit.log_activity(
+            self.ledger.log_activity(
                 project_id=self.project_id,
                 tool="watcher",
                 action="CONSISTENCY_CHECK",
@@ -197,7 +197,7 @@ async def start_watcher(path: str):
     except Exception as e:
         logger.warning(f"⚠️ Could not set process niceness: {e}")
     engine = ContextEngine()
-    audit = AuditStore(engine)
+    ledger = AuditService(engine)
     project_id = ContextEngine.get_project_id(str(path_obj))
     loop = asyncio.get_running_loop()
     

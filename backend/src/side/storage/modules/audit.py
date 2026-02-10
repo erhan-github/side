@@ -14,7 +14,7 @@ from .base import ContextEngine, InsufficientTokensError
 
 logger = logging.getLogger(__name__)
 
-class AuditStore:
+class AuditService:
     def __init__(self, engine: ContextEngine, post_log_hook: Optional[callable] = None):
         self.engine = engine
         self.post_log_hook = post_log_hook
@@ -24,7 +24,7 @@ class AuditStore:
     def init_schema(self, conn):
         """Initialize forensic tables."""
         # ─────────────────────────────────────────────────────────────
-        # CORE TABLE 7: AUDITS - Forensic History
+        # CORE TABLE 7: AUDITS - Audit History
         # ─────────────────────────────────────────────────────────────
         conn.execute("""
             CREATE TABLE IF NOT EXISTS audits (

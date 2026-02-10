@@ -2,6 +2,6 @@
 Decorators package for Sidelith backend.
 """
 
-from side.decorators.forensic_logger import forensic_log
+from .audit_logger import audit_log
 
-__all__ = ["forensic_log"]
+__all__ = ["audit_log"]

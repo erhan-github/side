@@ -8,7 +8,7 @@ Each handler is optimized to:
 1. Process events quickly (< 100ms for most)
 2. Inject context intelligently
 3. Learn from patterns
-4. Preserve strategic decisions
+4. Preserve project decisions
 """
 
 import logging
@@ -22,8 +22,8 @@ from side.utils.event_optimizer import (
     Event,
     lazy_intelligence
 )
-from side.storage.modules.transient import OperationalStore
-from side.storage.modules.audit import AuditStore
+from side.storage.modules.transient import SessionCache
+from side.storage.modules.audit import AuditService
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +53,8 @@ async def handle_ai_code_generation(event: Event):
     logger.info(f"AI code generation detected: {file_path} ({ai_model})")
     
     # Get storage instances (will be injected via dependency injection)
-    from side.storage import get_audit_store
-    audit = get_audit_store()
+    from side.storage import get_activity_ledger
+    ledger = get_activity_ledger()
     
     # Log AI interaction to audit store
     audit.log_activity(
@@ -88,7 +88,7 @@ async def handle_ai_code_generation(event: Event):
     if warnings:
         for warning in warnings:
             logger.warning(f"{file_path}: {warning}")
-            audit.log_activity(
+            ledger.log_activity(
                 project_id=project_id,
                 tool="pattern_detector",
                 action="anti_pattern_warning",
@@ -107,12 +107,12 @@ async def handle_ai_code_generation(event: Event):
 @event_bus.on(FrictionPoint.GIT_COMMIT, EventPriority.HIGH)
 async def handle_git_commit(event: Event):
     """
-    Handle git commit - log strategic intent.
+    Handle git commit - log commit goal.
     
     Value:
     - Capture the "why" behind changes
     - Build decision history
-    - Enable forensic time-travel
+    - Enable history auditing
     
     Processing time: < 100ms
     """
@@ -125,10 +125,10 @@ async def handle_git_commit(event: Event):
     
     logger.info(f"Git commit detected: {message[:50]}... ({len(files)} files)")
     
-    from side.storage import get_audit_store
-    audit = get_audit_store()
+    from side.storage import get_activity_ledger
+    ledger = get_activity_ledger()
     
-    # Extract strategic intent from commit message
+    # Extract commit goal from commit message
     intent_type = "feature"  # Default
     if any(keyword in message.lower() for keyword in ["fix", "bug", "error"]):
         intent_type = "bugfix"
@@ -139,8 +139,8 @@ async def handle_git_commit(event: Event):
     elif any(keyword in message.lower() for keyword in ["doc", "readme", "comment"]):
         intent_type = "documentation"
     
-    # Log to audit store with strategic context
-    audit.log_activity(
+    # Log to ledger store with goal context
+    ledger.log_activity(
         project_id=project_id,
         tool="git",
         action="commit",
@@ -152,7 +152,7 @@ async def handle_git_commit(event: Event):
             "intent_type": intent_type,
             "file_count": len(files),
             "timestamp": event.timestamp.isoformat(),
-            "silent": False  # Strategic decisions are never silent
+            "silent": False  # Critical decisions are never silent
         }
     )
 
@@ -180,20 +180,20 @@ async def handle_ai_context_request(event: Event):
     logger.info(f"AI context request: {context_type} - {query[:50]}...")
     
     if context_type == "architecture":
-        # Strategy: Query DNAHandler for real project graph
+        # Strategy: Query CoreIndexer for real project graph
         try:
-            from side.intel.handlers.topology import DNAHandler
+            from side.intel.handlers.topology import CoreIndexer
             from side.config import config
             
-            dna_handler = DNAHandler(
+            indexer = CoreIndexer(
                 project_path=config.PROJECT_ROOT,
                 engine=engine,
                 brain_path=config.BRAIN_PATH
             )
-            dna_summary = dna_handler.get_condensed_dna()
-            logger.info(f"AI: Injected DNA Context: {dna_summary[:50]}...")
+            project_graph = await indexer.get_topology()
+            logger.info(f"AI: Injected DNA Context: {project_graph[:50]}...")
             # Real implementation: Append DNA to AI context payload
-            payload["architectural_dna"] = dna_summary
+            payload["architectural_dna"] = project_graph
         except Exception as e:
             logger.error(f"Failed to inject DNA Context: {e}")
             
@@ -203,8 +203,8 @@ async def handle_ai_context_request(event: Event):
         
     elif context_type == "industry":
         # Strategy: Real-time intelligence capture via OperationalStore
-        from side.storage.modules.transient import OperationalStore
-        ops = OperationalStore(engine)
+        from side.storage.modules.transient import SessionCache
+        cache = SessionCache(engine)
         intel_signals = ops.get_setting("external_intel_cache")
         logger.info(f"AI: Injected External Intel: {len(intel_signals or '')} chars")
         payload["external_intelligence"] = intel_signals
@@ -217,14 +217,14 @@ async def handle_ai_context_request(event: Event):
 @event_bus.on(FrictionPoint.DEVELOPER_DEBUG, EventPriority.HIGH)
 async def handle_developer_debug(event: Event):
     """
-    Handle developer debug session - enable forensic time-travel.
+    Handle developer debug session - enable activity history.
     
     Value:
     - Show what happened before error
     - Link to related decisions
     - Suggest similar past fixes
     
-    Processing time: < 300ms (forensic query)
+    Processing time: < 300ms (history query)
     """
     payload = event.payload
     error_message = payload.get("error_message", "")
@@ -233,8 +233,8 @@ async def handle_developer_debug(event: Event):
     
     logger.info(f"Debug session started: {file_path}:{line_number}")
     
-    from side.storage import get_audit_store
-    audit = get_audit_store()
+    from side.storage import get_activity_ledger
+    ledger = get_activity_ledger()
 
     # Forensic time-travel
     # Query forensic store for file history
@@ -242,7 +242,7 @@ async def handle_developer_debug(event: Event):
     
     # Suggest fixes (Placeholder for V1)
     # in V2 this would query a vector DB
-    audit.log_activity(
+    ledger.log_activity(
         project_id=project_id,
         tool="debugger",
         action="context_injection",
@@ -276,11 +276,11 @@ async def handle_ai_mistake_repeat(event: Event):
     
     logger.warning(f"AI repeating rejected pattern: {pattern}")
     
-    from side.storage import get_audit_store
-    audit = get_audit_store()
+    from side.storage import get_activity_ledger
+    ledger = get_activity_ledger()
 
     # Inject rejection context
-    audit.log_activity(
+    ledger.log_activity(
         project_id="global",
         tool="pattern_detector",
         action="rejection_context_injected",
@@ -324,12 +324,12 @@ async def handle_file_structure_change(event: Event):
     if event_type in {"created", "deleted"}:
         logger.info(f"Significant structure change: {event_type} - {path}")
         
-        from side.storage import get_audit_store, get_operational_store
-        audit = get_audit_store()
-        operational = get_operational_store()
+        from side.storage import get_activity_ledger, get_transient_cache
+        ledger = get_activity_ledger()
+        cache = get_transient_cache()
         
         # Log structural change
-        audit.log_activity(
+        ledger.log_activity(
             project_id=project_id,
             tool="file_watcher",
             action=f"file_{event_type}",

@@ -392,11 +392,11 @@ async def handle_ai_code_generation(event: Event):
 
 @event_bus.on(FrictionPoint.GIT_COMMIT, EventPriority.HIGH)
 async def handle_git_commit(event: Event):
-    """Handle git commit - log strategic intent."""
+    """Handle git commit - log commit goal."""
     logger.info(f"Git commit detected: {event.payload.get('message')}")
     
-    # Extract strategic intent
-    # Log to forensic store
+    # Extract commit goal
+    # Log to ledger store
     # Update patterns
 
 

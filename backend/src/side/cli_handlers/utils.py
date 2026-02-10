@@ -9,17 +9,17 @@ def get_engine():
     return ContextEngine()
 
 def get_identity(engine):
-    from side.storage.modules.identity import IdentityStore
-    return IdentityStore(engine)
+    from side.storage.modules.identity import IdentityService
+    return IdentityService(engine)
 
 def get_strategic(engine):
-    from side.storage.modules.strategy import StrategyStore
-    return StrategyStore(engine)
+    from side.storage.modules.strategy import DecisionStore
+    return DecisionStore(engine)
 
 def get_audit(engine):
-    from side.storage.modules.audit import AuditStore
-    return AuditStore(engine)
+    from side.storage.modules.audit import AuditService
+    return AuditService(engine)
 
 def get_transient(engine):
-    from side.storage.modules.transient import OperationalStore
-    return OperationalStore(engine)
+    from side.storage.modules.transient import SessionCache
+    return SessionCache(engine)

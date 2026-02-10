@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from collections import deque
-from side.storage.modules.transient import OperationalStore
+from side.storage.modules.transient import SessionCache
 from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)

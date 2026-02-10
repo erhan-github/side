@@ -212,7 +212,7 @@ class PublicPatternStore:
     # --- Backward Compatibility ---
 
     def list_public_patterns(self, limit: int = 100) -> List[Dict[str, Any]]:
-        """Backwards compatibility for AutoIntelligence sync."""
+        """Backwards compatibility for ContextService sync."""
         return self.get_patterns(limit=limit)
 
     def save_public_pattern(self, pattern_id: str, pattern_text: str, origin_node: str | None = None,

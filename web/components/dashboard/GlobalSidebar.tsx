@@ -39,7 +39,7 @@ const SIDEBAR_ITEMS = [
     {
         category: "Project",
         items: [
-            { label: "Sidelith Rules", href: "/dashboard/forensics", icon: Shield },
+            { label: "Audit Rules", href: "/dashboard/audit", icon: Shield },
             { label: "API Keys", href: "/dashboard/account", icon: Settings },
         ]
     }

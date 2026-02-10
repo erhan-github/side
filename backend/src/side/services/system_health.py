@@ -13,7 +13,7 @@ import psutil
 from pathlib import Path
 from typing import Any, Dict
 
-from side.storage.modules.transient import OperationalStore
+from side.storage.modules.transient import SessionCache
 from side.models.core import HardwareStats
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class SystemHealthService:
     Monitors hardware-level signals to provide System Load metrics.
     """
 
-    def __init__(self, operational: OperationalStore, interval: float = 10.0):
+    def __init__(self, cache: SessionCache, interval: float = 10.0):
         self.operational = operational
         self.interval = interval
         self._running = False

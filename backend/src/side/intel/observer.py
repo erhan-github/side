@@ -7,14 +7,14 @@ import json
 import uuid
 from typing import List, Dict, Any
 from datetime import datetime, timezone
-from side.storage.modules.audit import AuditStore
+from side.storage.modules.audit import AuditService
 from side.llm.client import LLMClient
 from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)
 
 class StrategicObserver:
-    def __init__(self, audit: AuditStore):
+    def __init__(self, ledger: AuditService):
         self.audit = audit
         self.llm = LLMClient()
 

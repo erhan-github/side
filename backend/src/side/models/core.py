@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class Finding(BaseModel):
-    """Forensic finding from the intelligence layer."""
+    """Audit finding from the intelligence layer."""
     
     model_config = ConfigDict(from_attributes=True)
     

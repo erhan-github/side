@@ -7,9 +7,9 @@ export function DefensiveMoats() {
 
             <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                    Defensive <span className="text-blue-400">Moats</span>.
+                    Built for <span className="text-blue-400">Privacy</span>.
                 </h2>
-                <p className="text-white/40 text-lg md:text-xl font-light">Built for the air-gapped technician.</p>
+                <p className="text-white/40 text-lg md:text-xl font-light">Your code never leaves your machine. Local-first by design.</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">

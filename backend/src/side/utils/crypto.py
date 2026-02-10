@@ -95,7 +95,7 @@ class CryptoShield:
         """Retrieves or generates a machine-persisted master key."""
         if not op_store:
             from side.storage.modules.base import ContextEngine
-            from side.storage.modules.transient import OperationalStore
+            from side.storage.modules.transient import SessionCache
             engine = engine or ContextEngine()
             op_store = OperationalStore(engine)
         

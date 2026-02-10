@@ -1,7 +1,7 @@
 """
 Outcome Verifier.
 
-Triangulates LLM claims against System Forensic Signals.
+Triangulates LLM claims against System Audit Signals.
 Determines if a "fixed" issue actually stopped occuring in the logs.
 """
 
@@ -22,7 +22,7 @@ class OutcomeVerifier:
 
     def __init__(self, db: SimplifiedDatabase):
         self.db = db
-        self.forensic = db.forensic
+        self.audit = db.audit
         self.store = db.intent_fusion
 
     def verify_session(self, session: ConversationSession) -> VerifiedOutcome:
@@ -41,9 +41,9 @@ class OutcomeVerifier:
         window_start = session.ended_at
         window_end = window_start + timedelta(hours=config.verification_window_hours)
         
-        # 2. Check Forensic Audits for Errors
+        # 2. Check Audit Logs for Errors
         # We look for high-severity audits in the project window
-        recent_audits = self.forensic.get_recent_audits(session.project_id, limit=50)
+        recent_audits = self.audit.get_recent_audits(session.project_id, limit=50)
         
         relevant_errors = []
         for audit in recent_audits:
@@ -65,7 +65,7 @@ class OutcomeVerifier:
             return VerifiedOutcome.FALSE_POSITIVE
             
         # 3. Check for immediate user "undo" or "revert" (from FileWatcher/Activities)
-        recent_activities = self.forensic.get_recent_activities(session.project_id, limit=50)
+        recent_activities = self.audit.get_recent_activities(session.project_id, limit=50)
         for act in recent_activities:
             # Parse timestamp (handle various formats)
             try:

@@ -11,26 +11,19 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parents[3]))
 
-from side.forensic_audit.runner import ForensicAuditRunner
-
-async def main():
-    if len(sys.argv) < 3:
-        print("Usage: python3 micro_audit.py <probe_id> <file_path>")
-        return
-
-    probe_id = sys.argv[1]
-    file_path = sys.argv[2]
+    from side.tools.audit_tool import AuditTool
     
     # Project root assumption: 3 levels up from tools/
     project_root = Path(__file__).parents[3]
     
-    runner = ForensicAuditRunner(str(project_root))
+    auditor = AuditTool(project_root)
     
-    # Force loading of keys if needed? 
-    # Runner handles LLMClient init which handles .env
-    
-    result = await runner.run_single_probe(probe_id, file_path)
-    print(result)
+    # Simple direct scan for now
+    print(f"Running audit on {file_path}...")
+    # AuditTool.scan_codebase expects a query, not a probe_id in this version
+    # Adapting to use scan_codebase with a specific query
+    result = await auditor.scan_codebase(f"Audit file {file_path} for issues related to {probe_id}")
+    print(result[0]) # print report
 
 if __name__ == "__main__":
     try:

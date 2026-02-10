@@ -9,7 +9,7 @@ This package integrates proven open-source security tools:
 Sidelith's value-add: LLM synthesis for remediation, not detection.
 """
 
-from .base import ForensicsAdapter, Finding, Severity
+from .base import AuditAdapter, Finding, Severity
 from .semgrep import SemgrepAdapter
 from .bandit import BanditAdapter
 from .eslint import ESLintAdapter
@@ -17,10 +17,10 @@ from .gosec import GosecAdapter
 from .swiftlint import SwiftLintAdapter
 from .detekt import DetektAdapter
 from .doc_verify import DocVerifyAdapter
-from .synthesizer import ForensicSynthesizer
+from .synthesizer import AuditSynthesizer
 
 __all__ = [
-    "ForensicsAdapter",
+    "AuditAdapter",
     "Finding",
     "Severity",
     "SemgrepAdapter",
@@ -30,5 +30,5 @@ __all__ = [
     "SwiftLintAdapter",
     "DetektAdapter",
     "DocVerifyAdapter",
-    "ForensicSynthesizer"
+    "AuditSynthesizer"
 ]

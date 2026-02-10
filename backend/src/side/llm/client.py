@@ -15,8 +15,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from side.storage.modules.base import ContextEngine
-from side.storage.modules.identity import IdentityStore
-from side.storage.modules.transient import OperationalStore
+from side.storage.modules.identity import IdentityService
+from side.storage.modules.transient import SessionCache
 from side.common.constants import Origin
 
 logger = logging.getLogger(__name__)
@@ -59,8 +59,8 @@ class LLMClient:
         
         # Lean Architecture
         self.engine = ContextEngine()
-        self.identity = IdentityStore(self.engine)
-        self.operational = OperationalStore(self.engine)
+        self.profile = IdentityService(self.engine)
+        self.cache = SessionCache(self.engine)
         
         self._load_dotenv()
         

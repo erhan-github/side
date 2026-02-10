@@ -4,7 +4,7 @@ import { Copy, ArrowRight, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-// Derived from ACTUAL Forensic Audit Run (2026-01-20)
+// Derived from ACTUAL Audit Run (2026-01-20)
 const OPPORTUNITIES = [
     {
         id: "DEEP-SEC-001",
@@ -14,6 +14,11 @@ const OPPORTUNITIES = [
         prompt: "Refactor `web/app/api/auth/magic-link/route.ts` to ensure the `isSupabaseConfigured` check properly blocks unauthenticated access and doesn't return a success response prematurely.",
         impact: "Critical Security"
     },
+    // ... (rest of the array content is actually fine, but I need to make sure I don't cut it off. The view_file showed lines 1-127. I will use a targeted replacement for the start of the file and the function definition separately or just replace the top part if I can match it unique enough.
+    // Actually, I can just replace the top block and the function definition block.
+    // Let's do it in one go if they are close, or two chunks.
+    // Lines 7-8 and line 59.
+
     {
         id: "PERF-001",
         emoji: "✍️",
@@ -56,7 +61,7 @@ const OPPORTUNITIES = [
     }
 ];
 
-export function ForensicOpportunities() {
+export function AuditOpportunities() {
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
     const handleCopy = (id: string, prompt: string) => {

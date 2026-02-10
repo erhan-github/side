@@ -9,7 +9,7 @@ export function Hero() {
                 </h1>
 
                 <p className="text-xl md:text-2xl text-zinc-300 max-w-2xl mb-12 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-200 fill-mode-both leading-relaxed font-light">
-                    Stop re-explaining your codebase every conversation. Sidelith gives Cursor and Claude <span className="text-white font-medium">long-term memory</span>.
+                    Stop re-explaining your codebase every conversation. Sidelith gives Cursor and Claude <span className="text-white font-medium">Persistent Context</span>.
                 </p>
 
                 <div className="mb-12 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-200 fill-mode-both">

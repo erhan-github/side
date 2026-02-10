@@ -62,7 +62,7 @@ class Finding:
         }
 
 
-class ForensicsAdapter(ABC):
+class AuditAdapter(ABC):
     """
     Abstract base class for security tool adapters.
     

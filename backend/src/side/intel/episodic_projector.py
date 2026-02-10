@@ -8,11 +8,11 @@ from pathlib import Path
 from datetime import datetime, timezone
 import json
 
-from side.storage.modules.audit import AuditStore
-from side.storage.modules.strategy import StrategyStore
+from side.storage.modules.audit import AuditService
+from side.storage.modules.strategy import DecisionStore
 
 class EpisodicProjector:
-    def __init__(self, audit: AuditStore, strategic: StrategyStore):
+    def __init__(self, ledger: AuditService, registry: DecisionStore):
         self.audit = audit
         self.strategic = strategic
 

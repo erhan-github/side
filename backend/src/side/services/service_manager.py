@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from side.storage.modules.base import ContextEngine
-from side.storage.modules.identity import IdentityStore
-from side.storage.modules.strategy import StrategyStore
-from side.storage.modules.audit import AuditStore
-from side.storage.modules.transient import OperationalStore
+from side.storage.modules.identity import IdentityService
+from side.storage.modules.strategy import DecisionStore
+from side.storage.modules.audit import AuditService
+from side.storage.modules.transient import SessionCache
 from side.utils.memory_diagnostics import get_diagnostics as get_memory_diagnostics
 
 logger = logging.getLogger(__name__)
@@ -34,17 +34,17 @@ class ServiceManager(ServiceLifecycleMixin):
         super().__init__()
         self.project_path = Path(project_path).resolve()
         self.engine = ContextEngine()
-        self.identity = IdentityStore(self.engine)
-        self.strategic = StrategyStore(self.engine)
-        self.audit = AuditStore(self.engine)
-        self.operational = OperationalStore(self.engine)
+        self.profile = IdentityService(self.engine)
+        self.registry = DecisionStore(self.engine)
+        self.ledger = AuditService(self.engine)
+        self.cache = SessionCache(self.engine)
         
         from side.services.unified_buffer import SignalBuffer
         from side.config import config
         self.buffer = SignalBuffer({
-            'strategic': self.strategic,
-            'audit': self.audit,
-            'operational': self.operational
+            'strategic': self.registry,
+            'audit': self.ledger,
+            'operational': self.cache
         })
         
         self._running = False
@@ -127,8 +127,8 @@ class ServiceManager(ServiceLifecycleMixin):
         from side.services.system_monitor import SystemMonitorService
         from side.services.intent_tracker import IntentTrackerService
         from side.services.roi_simulator import ROISimulatorService
-        from side.services.doc_scanner import DocScanner
-        from side.intel.auto_intelligence import AutoIntelligence
+        from side.services.doc_scanner import GoalIngestor
+        from side.intel.auto_intelligence import ContextService
         from side.services.file_watcher import FileWatcher
         
         # 0. File Watcher
@@ -163,9 +163,9 @@ class ServiceManager(ServiceLifecycleMixin):
         self.state_snapshot = StateSnapshotService(self.engine, self.strategic, self.audit, self.operational)
         await self.launch_service("state_snapshot", self.state_snapshot.start)
         
-        # 7. AutoIntelligence
-        self.auto_intel = AutoIntelligence(self.project_path, buffer=self.buffer)
-        await self.launch_service("auto_intel", self.auto_intel.feed)
+        # 7. ContextService
+        self.context_service = ContextService(self.project_path, buffer=self.buffer)
+        await self.launch_service("auto_intel", self.context_service.feed)
 
         # 8. System Monitor
         self.system_monitor = SystemMonitorService(self.buffer, self.project_path)
@@ -186,8 +186,8 @@ class ServiceManager(ServiceLifecycleMixin):
         self.roi_simulator = ROISimulatorService(self.buffer)
         
         # 13. Doc Scanner
-        self.scanner = DocScanner(self.strategic)
-        await self.launch_service("doc_scanner", self.scanner.scavenge, self.project_path)
+        self.goal_ingestor = GoalIngestor(self.strategic)
+        await self.launch_service("doc_scanner", self.goal_ingestor.scavenge, self.project_path)
         
         if hasattr(self, "event_ledger"):
             self.event_ledger.roi_callback = self.roi_simulator.simulate_resolution_impact

@@ -8,57 +8,51 @@ from side.storage.simple_db import SimplifiedDatabase
 
 __all__ = [
     "SimplifiedDatabase",
-    "get_audit_store",
-    "get_operational_store",
+    "get_activity_ledger",
+    "get_transient_cache",
 ]
 
 from typing import Optional, TYPE_CHECKING
 from side.storage.simple_db import SimplifiedDatabase
 
 if TYPE_CHECKING:
-    from side.storage.modules.audit import AuditStore
-    from side.storage.modules.transient import OperationalStore
+    from side.storage.modules.audit import AuditService
+    from side.storage.modules.transient import SessionCache
     from side.storage.modules.base import ContextEngine
 
-__all__ = [
-    "SimplifiedDatabase",
-    "get_audit_store",
-    "get_operational_store",
-]
-
-_audit_store: Optional["AuditStore"] = None
-_operational_store: Optional["OperationalStore"] = None
+_activity_ledger: Optional["AuditService"] = None
+_transient_cache: Optional["SessionCache"] = None
 _engine: Optional["ContextEngine"] = None
 
 
 def initialize_storage(db_path: str = None):
     """Initialize storage instances."""
-    global _audit_store, _operational_store, _engine
+    global _activity_ledger, _transient_cache, _engine
     
     from ..env import env
     from .modules.base import ContextEngine
-    from side.storage.modules.audit import AuditStore
-    from side.storage.modules.transient import OperationalStore
+    from side.storage.modules.audit import AuditService
+    from side.storage.modules.transient import SessionCache
 
     if db_path is None:
         db_path = env.get_side_root() / "data.db"
     
     _engine = ContextEngine(db_path=db_path)
-    _audit_store = AuditStore(_engine)
-    _operational_store = OperationalStore(_engine)
+    _activity_ledger = AuditService(_engine)
+    _transient_cache = SessionCache(_engine)
 
 
-def get_audit_store() -> "AuditStore":
-    """Get audit store instance."""
-    global _audit_store
-    if _audit_store is None:
+def get_activity_ledger() -> "AuditService":
+    """Get activity ledger instance."""
+    global _activity_ledger
+    if _activity_ledger is None:
         initialize_storage()
-    return _audit_store
+    return _activity_ledger
 
 
-def get_operational_store() -> "OperationalStore":
-    """Get operational store instance."""
-    global _operational_store
-    if _operational_store is None:
+def get_transient_cache() -> "SessionCache":
+    """Get transient cache instance."""
+    global _transient_cache
+    if _transient_cache is None:
         initialize_storage()
-    return _operational_store
+    return _transient_cache

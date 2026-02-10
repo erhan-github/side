@@ -8,14 +8,14 @@ HANDOVER NOTE: Resource URIs use the 'side://' scheme.
 
 from mcp.server.fastmcp import FastMCP
 from side.storage.modules.base import ContextEngine
-from .storage.modules.identity import IdentityStore
-from .storage.modules.strategy import StrategyStore
-from .storage.modules.audit import AuditStore
-from .storage.modules.transient import OperationalStore
-from .intel.auto_intelligence import AutoIntelligence
+from .storage.modules.identity import IdentityService
+from .storage.modules.strategy import DecisionStore
+from .storage.modules.audit import AuditService
+from .storage.modules.transient import SessionCache
+from .intel.auto_intelligence import ContextService
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from .intel.log_monitor import LogMonitor
+from .intel.handlers.context import PromptBuilder
 from .services.file_watcher import FileWatcher
 from .utils.event_optimizer import event_bus
 from .utils.crypto import shield
@@ -49,7 +49,7 @@ strategic = engine.strategic
 audit = engine.audit
 operational = engine.operational
 
-intel = AutoIntelligence(Path.cwd(), engine=engine)
+context_service = ContextService(Path.cwd(), engine=engine)
 
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
@@ -169,6 +169,15 @@ def record_intent(action: str, outcome: str) -> str:
     return "Intent Recorded in System Ledger."
 
 @mcp.tool()
+async def audit_codebase(query: str) -> str:
+    """
+    Perform a deep audit of the codebase for specific issues.
+    Args:
+        query: What to look for (e.g., "Find hardcoded secrets")
+    """
+    return await tools.handle_tool_call("audit", {"query": query})
+
+@mcp.tool()
 def query_patterns(topic: str) -> str:
     """
     Research: Semantic search over historical patterns.
@@ -216,7 +225,7 @@ async def dashboard_stats(request: Request):
         
         # [AUDIT] Estimate saved tokens based on efficiency (heuristic)
         used = summary.get("tokens_used", 0)
-        saved_tokens = int(used * 0.25) # Assume 25% savings from fractal indexing
+        saved_tokens = int(used * 0.25) # Assume 25% savings from local indexing
         if saved_tokens < 100 and efficiency > 80: saved_tokens = 42 # Marketing seed
 
         return JSONResponse({

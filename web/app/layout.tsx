@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s | Side"
   },
   description: "The professional System of Record for modern engineering. Side monitors project trajectory and architectural integrity in real-time.",
-  keywords: ["Deterministic Memory", "Code Audit", "Strategic Registry", "System of Record", "Architecture Forensics", "Local-First AI"],
+  keywords: ["AI Memory", "Code Audit", "Project Registry", "System of Record", "Architecture Tracking", "Local-First AI"],
   authors: [{ name: "Sidelith OS" }],
   viewport: "width=device-width, initial-scale=1, maximum-scale=5",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://sidelith.com"),

@@ -5,7 +5,7 @@ from side.utils.crypto import shield
 
 logger = logging.getLogger(__name__)
 
-class ContextHandler:
+class PromptBuilder:
     def __init__(self, project_path: Path, engine, strategic, memory):
         self.project_path = project_path
         self.engine = engine
@@ -113,13 +113,13 @@ class ContextHandler:
         except Exception as e:
             return f"Retrieval failed: {e}"
 
-    def get_episodic_context(self, forensic, limit: int = 15) -> str:
+    def get_episodic_context(self, audit_service, limit: int = 15) -> str:
         """
         Retrieves recent context from the Ledger.
         """
         try:
             from side.intel.episodic_projector import EpisodicProjector
-            projector = EpisodicProjector(forensic, self.strategic)
+            projector = EpisodicProjector(audit_service, self.strategic)
             return projector.get_episode_stream(limit=limit)
         except Exception as e:
             return f"Failed to load episodic context: {e}"

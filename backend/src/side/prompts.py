@@ -13,10 +13,10 @@ from mcp.types import (
 )
 
 from side.storage.modules.base import ContextEngine
-from side.storage.modules.audit import AuditStore
-from side.storage.modules.strategy import StrategyStore
-from side.storage.modules.transient import OperationalStore
-from side.storage.modules.identity import IdentityStore
+from side.storage.modules.audit import AuditService
+from side.storage.modules.transient import SessionCache
+from side.storage.modules.identity import IdentityService
+from side.storage.modules.strategy import DecisionStore
 
 logger = logging.getLogger("side-mcp")
 
@@ -24,10 +24,10 @@ class DynamicPromptManager:
     def __init__(self):
         # Lean Architecture
         self.engine = ContextEngine()
-        self.audit = AuditStore(self.engine)
-        self.strategic = StrategyStore(self.engine)
-        self.operational = OperationalStore(self.engine)
-        self.identity = IdentityStore(self.engine)
+        self.ledger = AuditService(self.engine)
+        self.registry = DecisionStore(self.engine)
+        self.cache = SessionCache(self.engine)
+        self.profile = IdentityService(self.engine)
         self.project_path = Path.cwd()
         self.project_id = ContextEngine.get_project_id(self.project_path)
 
@@ -47,7 +47,7 @@ class DynamicPromptManager:
         ]
         
         try:
-            # Lean Architecture - Direct AuditStore access
+            # Lean Architecture - Direct AuditService access
             findings = self.audit.get_recent_activities(self.project_id, limit=100)
             
             # Filter for meaningful architectural or security findings
@@ -226,7 +226,7 @@ class DynamicPromptManager:
             # SFO Sprint: Simplified audit summary from audit store
             findings = self.audit.get_recent_activities(self.project_id, limit=100)
             crit = len([f for f in findings if f.get('outcome') == 'VIOLATION'])
-            high = 0 # Placeholder for severity mapping in AuditStore
+            high = 0 # Placeholder for severity mapping in AuditService
             
             # 2. Get Recent Work
             # Determine what to verify (e.g. files changed recently, though we can't easily get diffs here without git tool)

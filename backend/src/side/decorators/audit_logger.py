@@ -20,7 +20,7 @@ import os
 from typing import Any, Callable, Optional
 from side.logging_config import get_logger
 
-logger = get_logger("forensic")
+logger = get_logger("audit")
 
 # Import telemetry clients
 try:
@@ -38,13 +38,13 @@ except ImportError:
     ph_client = None
 
 
-def forensic_log(
+def audit_log(
     event_name: str,
     capture_tokens: bool = False,
     critical: bool = False
 ):
     """
-    Decorator for comprehensive forensic logging of MCP tool calls.
+    Decorator for comprehensive audit logging of MCP tools. calls.
     
     Args:
         event_name: Unique identifier for this operation (e.g., "scan_project", "audit_file")
@@ -67,7 +67,7 @@ def forensic_log(
                 "project_id": project_id,
                 "tool": func.__name__,
             }
-            logger.info(f"[FORENSIC] Starting: {event_name}", extra={"data": log_context})
+            logger.info(f"[{event_name}] Starting...", extra={"data": log_context})
             
             if SENTRY_AVAILABLE:
                 sentry_sdk.add_breadcrumb(
@@ -94,7 +94,7 @@ def forensic_log(
                     "tokens_used": tokens_used,
                     "status": "success"
                 }
-                logger.info(f"[FORENSIC] Completed: {event_name} ({duration_ms}ms)", extra={"data": success_context})
+                logger.info(f"[{event_name}] Completed ({duration_ms}ms)", extra={"data": success_context})
                 
                 # PostHog analytics
                 if ph_client:
@@ -130,11 +130,11 @@ def forensic_log(
                 }
                 
                 log_level = logger.error if critical else logger.warning
-                log_level(f"[FORENSIC] Failed: {event_name} - {e}", extra={"data": error_context})
+                log_level(f"[{event_name}] Failed: {e}", extra={"data": error_context})
                 
                 # Sentry exception capture
                 if SENTRY_AVAILABLE:
-                    sentry_sdk.set_context("forensic", error_context)
+                    sentry_sdk.set_context("audit", error_context)
                     sentry_sdk.capture_exception(e)
                 
                 # PostHog failure event

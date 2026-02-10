@@ -14,7 +14,7 @@ from .base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
-class OperationalStore:
+class SessionCache:
     def __init__(self, engine: ContextEngine):
         self.engine = engine
         with self.engine.connection() as conn:

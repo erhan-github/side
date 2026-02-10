@@ -14,7 +14,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, List
 
-from side.storage.modules.transient import OperationalStore
+from side.storage.modules.transient import SessionCache
 from side.models.core import SignalReport
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class SignalAuditorService:
     Analyzes 'Dark Signals' from the OS to feed the Intelligence Substrate.
     """
 
-    def __init__(self, operational: OperationalStore):
+    def __init__(self, cache: SessionCache):
         self.operational = operational
         self._running = False
         self._task: asyncio.Task | None = None

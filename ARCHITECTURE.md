@@ -6,39 +6,39 @@ This document provides a deep dive into the internal components and engineering 
 
 ## Core Components
 
-### 1. Auto-Intelligence Orchestrator
-*   **Component**: `AutoIntelligence` (`backend/src/side/intel/auto_intelligence.py`)
-*   **Function**: The central brain that orchestrates context retrieval. It dynamically selects the most relevant "Context Slice" based on the user's current task.
+### 1. Context Manager
+*   **Component**: `ContextManager` (`backend/src/side/intel/auto_intelligence.py`)
+*   **Function**: The central service that orchestrates context retrieval. It dynamically selects the most relevant "Context Slice" based on the user's current task.
 *   **Sub-Systems**:
-    *   **DNAHandler**: Extracts structural truth (classes, functions) from code.
-    *   **ContextHandler**: Constructs high-fidelity prompts for the LLM.
-    *   **JanitorHandler**: Manages stale context.
+    *   **StructureParser**: Extracts classes and functions from code.
+    *   **PromptBuilder**: Constructs clear prompts for the LLM.
+    *   **ContextJanitor**: Manages stale or irrelevant context.
 
-### 2. Distributed Fractal Indexing
-*   **Component**: `FractalIndexer` (`backend/src/side/intel/fractal_indexer.py`)
-*   **Algorithm**: Split-Contiguous Mmap storage for high-frequency pattern matching.
-*   **Data Structure**: **Merkle-Validated** fractal usage of `local.json` files in every directory.
-*   **Throughput**: Optimized for ARM NEON (Apple Silicon) via SIMD instructions.
-*   **Mechanism**: Only changed files are re-indexed, ensuring the tree remains accurate with O(1) incremental updates.
+### 2. Code Indexing
+*   **Component**: `CoreIndexer` (`backend/src/side/intel/fractal_indexer.py`)
+*   **Algorithm**: Incremental Tree-sitter parsing for high-frequency pattern matching.
+*   **Data Structure**: **Checksum-validated** structure using `local.json` files in every directory.
+*   **Throughput**: Optimized for Apple Silicon (ARM NEON) via SIMD instructions.
+*   **Mechanism**: Only changed files are re-indexed, ensuring the index remains accurate with O(1) incremental updates.
 
-### 3. Latency-Optimized Rule Engine
-*   **Component**: `PulseEngine` (`backend/src/side/pulse.py`)
+### 3. Verification Engine
+*   **Component**: `RuleEngine` (`backend/src/side/pulse.py`)
 *   **Implementation**: Pre-compiled regex and AST-based rule evaluation.
 *   **Performance**: Low-latency execution optimized for file save events.
-*   **Function**: Intercepts code modifications to block secrets (API keys) and enforce architectural invariants.
-*   **Configuration**: Reads deterministic rules from `.side/rules/`.
+*   **Function**: Intercepts code modifications to block secrets (API keys) and enforce architectural patterns.
+*   **Configuration**: Reads rules from `.side/rules/`.
 
-### 4. Forensic Audit Store
-*   **Component**: `AuditStore` (`backend/src/side/storage/modules/audit.py`)
+### 4. Activity Ledger Store
+*   **Component**: `LedgerStore` (`backend/src/side/storage/modules/audit.py`)
 *   **Storage**: SQLite (`data.db`).
 *   **Schema**:
-    *   `audits`: A tamper-proof log of every rule violation and AI interaction.
-*   **Capabilities**: Allows for "Time-Travel Debugging" by reconstructing the exact context state that led to a specific decision.
+    *   `audits`: A log of every rule violation and AI interaction.
+*   **Capabilities**: Allows for history tracking by reconstructing the exact context state that led to a specific decision.
 
-### 5. Cryptographic Reasoning Chain
+### 5. Reasoning Logs
 *   **Component**: `ReasoningTimeline` (`backend/src/side/intel/reasoning_timeline.py`)
-*   **Function**: Manages an immutable audit trail for every verified fix.
-*   **Integrity**: Each event node is cryptographically linked to its parent, ensuring the "Chain of Reasoning" cannot be tampered with.
+*   **Function**: Manages a log for every verified fix.
+*   **Integrity**: Each event node is linked to its parent, ensuring the history of decisions is preserved.
 
 ---
 
@@ -48,9 +48,9 @@ Sidelith uses a specific set of runtime files to manage state.
 
 | Artifact | File Type | Purpose | Source |
 |:---------|:----------|:--------|:-------|
-| **Intent Store** | `data.db` (SQLite) | Relational store for user intent, audits, and strategic facts. | `backend/src/side/config.py` |
-| **Fractal Cache** | `local.json` | Directory-level semantic index & Merkle checksums. | `backend/src/side/intel/fractal_indexer.py` |
-| **Project Anchor** | `project.json` | Verification anchor for project identity and integrity. | `backend/src/side/pulse.py` |
+| **Intent Store** | `data.db` (SQLite) | Relational store for user intent, audits, and facts. | `backend/src/side/config.py` |
+| **Index Cache** | `local.json` | Directory-level semantic index & checksums. | `backend/src/side/intel/fractal_indexer.py` |
+| **Project Anchor** | `project.json` | Identity anchor for project connectivity. | `backend/src/side/pulse.py` |
 
 ---
 
@@ -58,13 +58,13 @@ Sidelith uses a specific set of runtime files to manage state.
 
 | Capability | Engineering Stack | Operational Impact |
 |:-----------|:------------------|:-------------------|
-| **Policy-as-Code** | `PulseEngine` (Regex/AST) | Blocks architectural drift (e.g., "No API Keys in Commit"). |
-| **AST Shadowing** | Tree-sitter AST Analysis | Indexes the meaning of code (Classes, Functions), not just text. |
-| **Memory Persistence** | `AutoIntelligence` + `data.db` | The system remembers architectural decisions across sessions. |
-| **Forensic Context** | `AuditStore` (SQLite) | Reconstructs the reasoning chain to prevent context regression. |
-| **Unified Bootstrapping** | `curl | sh` pipeline | Achieves a ready state in <15s, bridging local IDEs. |
-| **Performance Substrate** | Adaptive Throttling | Minimal CPU impact during deep-AST scanning. |
-| **Log Scavenging** | `log_scavenger.py` | Correlates logs from various stacks to reconstruct failure states. |
+| **Policy-as-Code** | `RuleEngine` (Regex/AST) | Blocks architectural drift (e.g., "No API Keys in Commit"). |
+| **AST Analysis** | Tree-sitter AST Analysis | Indexes the meaning of code (Classes, Functions), not just text. |
+| **Context Persistence** | `ContextManager` + `data.db` | The system remembers architectural decisions across sessions. |
+| **History Tracking** | `LedgerStore` (SQLite) | Reconstructs the reasoning chain to prevent context regression. |
+| **Ready-to-Use** | `curl | sh` pipeline | Achieves a ready state in <15s, bridging local IDEs. |
+| **Performance** | Adaptive Throttling | Minimal CPU impact during background scanning. |
+| **Log Management** | `log_scavenger.py` | Correlates logs from various stacks to reconstruct failure states. |
 
 ---
 
@@ -75,6 +75,6 @@ Sidelith uses a specific set of runtime files to manage state.
 | **Search Architecture** | SIMD-Accelerated Mmap |
 | **Context Latency** | Optimized for Real-Time |
 | **CPU Overhead** | Adaptive throttling (Idle/Active states) |
-| **Storage Overhead** | ~36 bytes per project (UUID) + centralized SQLite |
-| **Encryption** | AES-256 (Data at Rest) |
+| **Storage Overhead** | Minimal per-project footprints |
+| **Security** | AES-256 (Data at Rest) |
 | **Transport** | TLS 1.3 + HMAC Signatures |

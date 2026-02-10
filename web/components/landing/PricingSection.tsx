@@ -6,7 +6,7 @@ export function PricingSection() {
         <section className="w-full max-w-6xl px-6 py-16 relative z-10">
             <div className="text-center mb-16">
                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">Scale for <span className="text-amber-500">Intelligence</span></h2>
-                <p className="text-base text-white/50">Deterministic capacity for your semantic operations.</p>
+                <p className="text-base text-white/50">Persistent context capacity for your semantic operations.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

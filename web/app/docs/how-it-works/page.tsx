@@ -3,7 +3,7 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 
 export const metadata = {
     title: "How It Works | Sidelith",
-    description: "Understanding fractal indexing and local-first architecture.",
+    description: "Understanding localindexing and architecture context.",
 };
 
 export default function HowItWorksPage() {
@@ -24,7 +24,7 @@ export default function HowItWorksPage() {
                         <div className="grid grid-cols-1 gap-6">
                             {[
                                 {
-                                    title: "Fractal Indexing",
+                                    title: "Local Indexing",
                                     desc: "We extract structural signals using Tree-sitter to create a map of your entire project. This allows Sidelith to understand the relationships between files, classes, and functions."
                                 },
                                 {

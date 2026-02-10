@@ -9,7 +9,7 @@ from side.utils.hashing import sparse_hasher
 
 logger = logging.getLogger(__name__)
 
-class DNAHandler:
+class CodeIndexer:
     def __init__(self, project_path: Path, engine, brain_path: Path, buffer=None):
         self.project_path = project_path
         self.engine = engine

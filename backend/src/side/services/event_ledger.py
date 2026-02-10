@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List
 
-from side.storage.modules.audit import AuditStore
-from side.storage.modules.transient import OperationalStore
+from side.storage.modules.audit import AuditService
+from side.storage.modules.transient import TransientCache
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class EventLedgerService:
     Monitors logs/activity to close the loop between problem and solution.
     """
 
-    def __init__(self, audit: AuditStore, operational: OperationalStore, buffer=None):
+    def __init__(self, ledger: AuditService, cache: SessionCache, buffer=None):
         self.audit = audit
         self.operational = operational
         self.buffer = buffer

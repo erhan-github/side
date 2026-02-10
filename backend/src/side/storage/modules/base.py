@@ -53,20 +53,20 @@ class ContextEngine:
         
         # Initialize sub-stores
         # Initialize sub-stores
-        from side.storage.modules.strategy import StrategyStore
-        from side.storage.modules.audit import AuditStore
+        from side.storage.modules.strategy import DecisionStore
+        from side.storage.modules.audit import AuditService
         from side.storage.modules.accounting import AccountingStore
-        from .identity import IdentityStore
-        from .transient import OperationalStore
+        from .identity import IdentityService
+        from .transient import SessionCache
         from .substores.patterns import PublicPatternStore
         
         from side.storage.modules.ontology import OntologyStore
         
-        self.strategic = StrategyStore(self)
-        self.audit = AuditStore(self)
+        self.strategic = DecisionStore(self)
+        self.audit = AuditService(self)
         self.accounting = AccountingStore(self)
-        self.identity = IdentityStore(self)
-        self.operational = OperationalStore(self)
+        self.identity = IdentityService(self)
+        self.operational = SessionCache(self)
         self.wisdom = PublicPatternStore(self)
         self.ontology = OntologyStore(self)
 

@@ -44,7 +44,7 @@ async def generate_report():
     print(f"   ✅ Claimed Outcome: {session['claimed_outcome']}")
 
     # 2. Verify
-    print("\n👉 Phase 2: Verification (Forensic Triangulation)")
+    print("\n👉 Phase 2: Verification (Audit Triangulation)")
     verifier = OutcomeVerifier(db)
     
     # Convert dict back to dataclass for verification logic

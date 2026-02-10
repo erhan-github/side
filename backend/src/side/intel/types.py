@@ -41,7 +41,7 @@ class Difficulty(Enum):
 @dataclass
 class Signal:
     """A single intelligence signal from any source."""
-    source: str              # e.g., "FORENSIC", "LOG_SCAVENGER", "SHADOW_INTENT"
+    source: str              # e.g., "AUDIT", "LOG_SCAVENGER", "SHADOW_INTENT"
     file_path: str           # The file this signal relates to (if any)
     content: str             # The actual data (error message, code snippet, etc.)
     severity: str            # "CRITICAL", "ERROR", "WARNING", "INFO"

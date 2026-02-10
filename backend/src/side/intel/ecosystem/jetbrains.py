@@ -61,15 +61,16 @@ class JetBrainsBridge:
             
             # Refactor: Use Phoenix Protocol (AuditStore)
             # We treat IDE context updates as 'Work Context' signals for Layer 2 RAM.
+            # Refactor: Use Phoenix Protocol (AuditService)
             from side.storage.modules.base import ContextEngine
-            from side.storage.modules.audit import AuditStore
+            from side.storage.modules.audit import AuditService
             from pathlib import Path
             
             engine = ContextEngine()
-            audit = AuditStore(engine)
+            ledger = AuditService(engine)
             
             # Save as active work context
-            audit.save_work_context(
+            ledger.save_work_context(
                 project_path=str(Path(ctx.project_path)),
                 focus_area=ctx.file_path,
                 recent_files=[ctx.file_path],

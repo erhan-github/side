@@ -108,10 +108,10 @@ ignored:
 
 Sidelith consists of:
 
-- **FractalIndexer** - Parses code structure using Tree-sitter
-- **AutoIntelligence** - Manages context injection
-- **PulseEngine** - Enforces rules in real-time
-- **AuditStore** - Logs all interactions
+- **Core Indexer** - Parses code structure using Tree-sitter
+- **Context Service** - Manages context injection via MCP
+- **Rule Engine** - Enforces security and architecture rules
+- **Audit Store** - Tracks usage and operations
 
 Built with: Python, SQLite, Tree-sitter, MCP
 

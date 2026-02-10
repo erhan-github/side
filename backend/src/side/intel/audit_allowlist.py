@@ -1,5 +1,5 @@
 """
-Audit Allowlist - Eliminates Known False Positives.
+Audit Allowlist & Heuristics. Eliminates Known False Positives.
 
 This module provides a knowledge base of patterns that are safe by design,
 preventing the LLM from flagging legitimate security patterns as vulnerabilities.

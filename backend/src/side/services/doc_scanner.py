@@ -3,24 +3,24 @@ import re
 import logging
 import uuid
 from pathlib import Path
-from side.storage.modules.strategy import StrategyStore
+from side.storage.modules.strategy import StrategyRegistry
 
 logger = logging.getLogger(__name__)
 
 class DocScanner:
     """
     Documentation Scanner.
-    Ingests strategic intentions from raw documentation files.
+    Ingests project goals from raw documentation files.
     """
     
-    def __init__(self, strategic: StrategyStore):
-        self.strategic = strategic
+    def __init__(self, registry: StrategyRegistry):
+        self.registry = registry
 
     async def scavenge(self, root_path: Path):
         """
-        Scans the project root for strategic signals.
+        Scans the project root for goal signals.
         """
-        logger.info("🔭 [DOC_SCANNER]: Scanning for Strategic Plans...")
+        logger.info("🔭 [DOC_SCANNER]: Scanning for Project Goals...")
         
         # Database is the primary source; Scavenger acts as a bridge for existing docs.
 
@@ -42,7 +42,7 @@ class DocScanner:
             for title in matches:
                 # Add to Strategic Store if not exists
                 plan_id = f"scan_{uuid.uuid5(uuid.NAMESPACE_DNS, title).hex[:8]}"
-                self.strategic.save_plan(
+                self.registry.save_goal(
                     project_id="default",
                     plan_id=plan_id,
                     title=title,

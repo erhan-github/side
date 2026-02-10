@@ -13,6 +13,7 @@ from side.tools.audit import handle_run_audit
 from side.tools.welcome import handle_welcome
 from side.storage.simple_db import SimplifiedDatabase, InsufficientTokensError
 from side.tools.core import get_database
+from side.decorators import audit_log
 
 from side.models.pricing import ActionCost
 
@@ -28,6 +29,7 @@ TOOL_COSTS = {
 }
 
 
+@audit_log("route_tool", capture_tokens=False)
 async def handle_tool_call(name: str, arguments: dict[str, Any]) -> str:
     """Route tool calls to appropriate handlers."""
     from side.tools.indexing import handle_reindex_dna

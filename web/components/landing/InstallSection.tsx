@@ -52,7 +52,7 @@ export function InstallSection() {
                         </div>
                         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
                             <div className="text-xl font-bold text-emerald-500 mb-1">Real-Time</div>
-                            <div className="text-[10px] text-white/40 uppercase tracking-wider">Pulse Latency</div>
+                            <div className="text-[10px] text-white/40 uppercase tracking-wider">System Latency</div>
                         </div>
                         <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
                             <div className="text-xl font-bold text-emerald-500 mb-1">Instant</div>

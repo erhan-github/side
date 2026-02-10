@@ -28,7 +28,7 @@ export function UsageLedger({ entries }: UsageLedgerProps) {
             <div className="h-10 bg-white/5 border-b border-white/5 flex items-center justify-between px-6">
                 <div className="flex items-center gap-2">
                     <Terminal className="w-3 h-3 text-zinc-500" />
-                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest font-mono">Operations Ledger</span>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest font-mono">Billing Ledger</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>

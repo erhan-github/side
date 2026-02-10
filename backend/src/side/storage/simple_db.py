@@ -15,10 +15,10 @@ from typing import Any, Dict, List, Optional
 from side.utils.helpers import safe_get
 
 from .modules.base import ContextEngine, InsufficientTokensError
-from .modules.strategy import StrategyStore
-from .modules.identity import IdentityStore
-from .modules.audit import AuditStore
-from .modules.transient import OperationalStore
+from .modules.strategy import DecisionStore
+from .modules.identity import IdentityService
+from .modules.audit import AuditService
+from .modules.transient import SessionCache
 from .modules.intent_fusion import IntentFusionStore
 
 logger = logging.getLogger(__name__)
@@ -37,10 +37,10 @@ class SimplifiedDatabase:
         self.db_path = self.engine.db_path
         
         # Initialize sub-stores (The Source of Truth)
-        self.identity = IdentityStore(self.engine)
-        self.strategic = StrategyStore(self.engine)
-        self.audit = AuditStore(self.engine)
-        self.operational = OperationalStore(self.engine)
+        self.identity = IdentityService(self.engine)
+        self.strategic = DecisionStore(self.engine)
+        self.audit = AuditService(self.engine)
+        self.operational = SessionCache(self.engine)
         self.intent_fusion = IntentFusionStore(self.engine)
 
         # Startup lifecycle

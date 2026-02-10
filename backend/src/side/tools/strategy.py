@@ -1,7 +1,7 @@
 from typing import Any
 from pathlib import Path
 from side.llm.client import LLMClient
-from side.intel.auto_intelligence import AutoIntelligence
+from side.intel.auto_intelligence import ContextService
 from side.storage.modules.base import ContextEngine
 
 from side.utils.paths import get_repo_root

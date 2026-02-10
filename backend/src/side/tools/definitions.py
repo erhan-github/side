@@ -122,14 +122,14 @@ Speed: < 1 second""",
     ),
     Tool(
         name="run_audit",
-        description="""FORENSIC PULSE. "I'm checking the vitals."
+        description="""AUDIT PULSE. "I'm checking the vitals."
         
 Scans your codebase via static analysis for security leaks or anti-patterns.
 
 Triggers:
 - "Side, audit my code"
 - "Side, check for anti-patterns"
-- "Side, run a forensic pulse"
+- "Side, run a system pulse"
 - "Side, how's my codebase?"
 
 Value: Not just a scan—it **extracts patterns** and **verifies documentation truth** into your local Pattern Store.

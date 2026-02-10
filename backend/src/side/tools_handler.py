@@ -11,12 +11,13 @@ from typing import Any
 
 from mcp.types import TextContent
 
+from side.tools.audit_tool import AuditTool
 from side.tools import handle_tool_call
 
 logger = logging.getLogger("side-mcp")
 
 async def call_tool_handler(server, name: str, arguments: dict[str, Any] | None, 
-                          _forensics_tool, _memory_interceptor) -> list[TextContent]:
+                          _audit_tool, _memory_interceptor) -> list[TextContent]:
     """
     Handle tool calls with Extreme Fuzz-Resistance & Environment Isolation.
     """
@@ -38,11 +39,10 @@ async def call_tool_handler(server, name: str, arguments: dict[str, Any] | None,
     
     try:
         # Billing logic removed (Sidelith Prime is Free/Open Core)
-        if name == "audit_deep":
-            # Execute global forensics tool
-            query = arguments.get("query", "general audit") if arguments else "general audit"
-            report = await _forensics_tool.scan_codebase(query)
-            result = report
+        # Audit Tools
+        if name == "audit":
+            query = arguments.get("query", "general security audit") if arguments else "general security audit"
+            result = await _audit_tool.scan_codebase(query)
         else:
             result = await handle_tool_call(name, arguments or {})
         

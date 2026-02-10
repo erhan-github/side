@@ -17,7 +17,7 @@ export function ActivityLedger({ activities }: { activities: ActivityItem[] }) {
         <div className="flex flex-col gap-4">
             <h2 className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
                 <Activity className="w-3 h-3" />
-                Operational Ledger (Real-time)
+                Live Activity Stream
             </h2>
 
             <div className="flex flex-col border border-white/5 rounded-lg bg-zinc-900/10 overflow-hidden divide-y divide-white/5">
@@ -32,8 +32,8 @@ export function ActivityLedger({ activities }: { activities: ActivityItem[] }) {
                                             {activity.action}
                                         </span>
                                         <span className={`px-1.5 py-0.5 rounded-[4px] text-[8px] font-bold uppercase tracking-tighter border ${activity.tier === 'pro' || activity.tier === 'enterprise'
-                                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                                : 'bg-zinc-800 text-zinc-500 border-white/5'
+                                            ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                            : 'bg-zinc-800 text-zinc-500 border-white/5'
                                             }`}>
                                             {activity.tier}
                                         </span>

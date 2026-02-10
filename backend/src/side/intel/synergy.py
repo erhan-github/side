@@ -2,9 +2,10 @@ import logging
 import hashlib
 from pathlib import Path
 from typing import List, Dict, Any
-from side.storage.modules.base import ContextEngine
-from side.storage.modules.strategy import StrategyStore
+from side.storage.modules.identity import IdentityService
+from side.storage.modules.strategy import DecisionStore
 from side.storage.modules.transient import OperationalStore
+from side.storage.modules.base import ContextEngine # Keep ContextEngine for ContextEngine.get_project_id and OperationalStore
 
 logger = logging.getLogger(__name__)
 
@@ -13,10 +14,11 @@ class SynergyEngine:
     The 'Collective Intelligence' Layer.
     Identifies shared signals between Projects and harvests Technical Patterns.
     """
-    def __init__(self, project_path: Path, buffer=None):
-        self.project_path = Path(project_path).resolve()
-        self.engine = ContextEngine()
-        self.strategic = StrategyStore(self.engine)
+    def __init__(self, engine: ContextEngine, profile: IdentityService, registry: DecisionStore, project_path: Path, buffer=None):
+        self.engine = engine
+        self.profile = profile
+        self.registry = registry
+        self.project_path = Path(project_path).resolve() # project_path is still needed for identify_signals
         self.operational = OperationalStore(self.engine)
         self.buffer = buffer
         self.project_id = ContextEngine.get_project_id(self.project_path)
@@ -39,11 +41,11 @@ class SynergyEngine:
         Pulls relevant technical patterns from other nodes using Sparse Semantic Similarity.
         """
         from side.utils.hashing import sparse_hasher
-        from side.storage.modules.identity import IdentityStore
+        from side.storage.modules.identity import IdentityService
         
         # 1. Check Identity Boundaries
-        identity = IdentityStore(self.engine)
-        profile = identity.get_profile(self.project_id)
+        profile_store = IdentityService(self.engine)
+        profile = profile_store.get_profile(self.project_id)
         
         if profile and profile.get("is_airgapped"):
             logger.warning(f"🛡️ [SYNERGY]: Project {self.project_id} is AIRGAPPED. Mesh sync disabled.")
@@ -59,15 +61,15 @@ class SynergyEngine:
         # 1. Generate Bit-Hashes for each local signal
         for signal in signals:
             # [SILO PROTOCOL]: Technical patterns use Global Salt to allow cross-project synergy.
-            # Strategic Intent is handled separately and BLOCKED from Mesh.
+            # Project Goals are handled separately and BLOCKED from Mesh.
             signal_hash = sparse_hasher.fingerprint(signal, salt="GLOBAL_TECH_V1")
             
             # 2. Search Mesh by Hash (Threshold: 0.8)
             results = self.operational.search_mesh_by_hash(signal_hash, threshold=0.8)
             
             for res in results:
-                # [STRATEGIC PIVOT] Block local intent leakage
-                if res.get('category') == 'strategic-intent':
+                # [GOAL PIVOT] Block local goal leakage
+                if res.get('category') == 'project-goal':
                     continue
                     
                 pattern_id = hashlib.sha256(f"{res['type']}:{res['title']}:{res.get('detail', '')}".encode()).hexdigest()[:12]
@@ -84,7 +86,7 @@ class SynergyEngine:
                     })
                 else:
                     # Sync fallback
-                    self.strategic.save_public_pattern(
+                    self.registry.save_public_pattern(
                         wisdom_id=wisdom_id,
                         wisdom_text=f"Inherited Technical Pattern: {res['title']}. (Similarity: {res['similarity']})",
                         origin_node=res.get('node', 'unknown'),
@@ -95,15 +97,19 @@ class SynergyEngine:
                 harvest_count += 1
                         
         if harvest_count > 0:
-            logger.info(f"✨ [SYNERGY]: Harvested {harvest_count} strategic patterns via Sparse Semantic Similarity.")
+            logger.info(f"✨ [SYNERGY]: Harvested {harvest_count} shared patterns via Sparse Semantic Similarity.")
         return harvest_count
 
 def run_synergy_sync(project_path: Path):
     """Entry point for pattern synchronization."""
     import asyncio
     try:
-        engine = SynergyEngine(project_path)
-        return asyncio.run(engine.harvest_mesh_patterns())
+        from side.tools.core import get_engine, get_profile, get_registry
+        engine = get_engine()
+        profile = get_profile()
+        registry = get_registry()
+        synergy = SynergyEngine(engine, profile, registry, project_path)
+        return asyncio.run(synergy.harvest_mesh_patterns())
     except Exception as e:
         logger.error(f"❌ [SYNERGY_ERROR]: Sync failed: {e}")
         return 0

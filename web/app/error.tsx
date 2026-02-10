@@ -11,7 +11,6 @@ export default function Error({
     reset: () => void;
 }) {
     useEffect(() => {
-        // Log error to monitoring service
         console.error("Application error:", error);
     }, [error]);
 
@@ -23,8 +22,7 @@ export default function Error({
                 </div>
                 <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
                 <p className="text-zinc-400 mb-8">
-                    Our strategic intelligence encountered an unexpected error.
-                    We&apos;ve been notified and are looking into it.
+                    An unexpected error occurred. We've been notified and will fix it soon.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                     <button

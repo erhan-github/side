@@ -8,7 +8,7 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-from side.intel.auto_intelligence import AutoIntelligence
+from side.intel.auto_intelligence import ContextService
 from side.storage.modules.base import ContextEngine
 
 from side.utils.paths import get_repo_root
@@ -35,7 +35,7 @@ async def handle_reindex_dna(arguments: dict[str, Any]) -> str:
     
     print(f"🧠 [CONTEXT DENSIFICATION]: Building the codebase architecture at {project_path}...")
     
-    intel = AutoIntelligence(project_path, engine)
+    intel = ContextService(project_path, engine)
     
     try:
         # Run the multi-threaded feed (tree-sitter indexing)

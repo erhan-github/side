@@ -6,7 +6,7 @@ from side.utils.llm_helpers import extract_json
 
 logger = logging.getLogger(__name__)
 
-class ForensicSynthesizer:
+class AuditSynthesizer:
     """
     Sidelith's Core Moat - The LLM Synthesis Layer.
     Transforms raw security scanner findings into contextual explanations and actionable fixes.

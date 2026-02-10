@@ -7,7 +7,7 @@ from side.utils.crypto import shield
 
 logger = logging.getLogger(__name__)
 
-class FeedHandler:
+class HistoryAnalyzer:
     def __init__(self, project_path: Path, engine, brain_path: Path, strategic):
         self.project_path = project_path
         self.engine = engine
