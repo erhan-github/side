@@ -113,9 +113,16 @@ export default function DashboardPage() {
                             <Database className="w-16 h-16 text-cyan-500" />
                         </div>
                         <p className="text-[10px] uppercase text-zinc-500 tracking-widest font-bold mb-4">Side Units (SUs)</p>
-                        <div className="flex items-baseline gap-2 mb-2">
-                            <span className="text-5xl font-sans font-bold text-white tracking-tight">{stats?.su_available.toLocaleString()}</span>
-                            <span className="text-sm text-zinc-600 font-bold">/ {stats?.su_limit?.toLocaleString()}</span>
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-5xl font-sans font-bold text-white tracking-tight">{stats?.su_available.toLocaleString()}</span>
+                                <span className="text-sm text-zinc-600 font-bold">/ {stats?.su_limit?.toLocaleString()}</span>
+                            </div>
+                            <CheckoutButton
+                                variantId={process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_REFILL || ""}
+                                label="Refill"
+                                className="w-auto h-10 px-6 text-[10px] scale-90"
+                            />
                         </div>
                         <div className="w-full bg-white/5 h-1 rounded-full overflow-hidden mb-4">
                             <div className="h-full bg-cyan-500/50" style={{ width: `${((stats?.su_available || 0) / (stats?.su_limit || 1)) * 100}%` }}></div>

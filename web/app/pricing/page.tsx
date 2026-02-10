@@ -203,11 +203,6 @@ export default function PricingPage() {
                                     <div className="text-3xl font-black tracking-tighter text-cyan-400 font-mono">2,500</div>
                                     <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Extra SUs</div>
                                 </div>
-                                <CheckoutButton
-                                    variantId={process.env.LEMONSQUEEZY_VARIANT_ID_REFILL!}
-                                    label="REFILL SUs"
-                                    className="ml-4 h-12 px-6"
-                                />
                             </div>
                         </div>
                     </div>

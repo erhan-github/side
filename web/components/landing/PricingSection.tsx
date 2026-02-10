@@ -119,16 +119,9 @@ export function PricingSection() {
                     </div>
                 </div>
                 <div className="flex items-center gap-8 pr-4">
-                    <div className="text-right flex items-center gap-4">
-                        <div>
-                            <div className="text-2xl font-bold text-white">$10</div>
-                            <div className="text-[10px] text-white/40 uppercase tracking-wider">2,500 SUs</div>
-                        </div>
-                        <CheckoutButton
-                            variantId={process.env.LEMONSQUEEZY_VARIANT_ID_REFILL!}
-                            label="Refill"
-                            className="h-10 px-6 w-auto text-[10px]"
-                        />
+                    <div className="text-right">
+                        <div className="text-2xl font-bold text-white">$10</div>
+                        <div className="text-[10px] text-white/40 uppercase tracking-wider">2,500 SUs</div>
                     </div>
                 </div>
             </div>
