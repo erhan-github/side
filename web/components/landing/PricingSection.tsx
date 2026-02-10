@@ -1,4 +1,5 @@
 import { Zap } from "lucide-react";
+import { CheckoutButton } from "@/components/dashboard/CheckoutButton";
 
 export function PricingSection() {
     return (
@@ -40,9 +41,11 @@ export function PricingSection() {
                             <div className="text-[8px] font-mono text-amber-500/60 mt-2 uppercase tracking-widest">5K SU Capacity</div>
                         </div>
 
-                        <a href="#install-widget" className="block text-center py-3 px-6 rounded-xl bg-amber-500/20 border border-amber-500/40 hover:bg-amber-500/30 text-sm font-bold text-white transition-colors uppercase tracking-widest">
-                            Get Started
-                        </a>
+                        <CheckoutButton
+                            variantId={process.env.LEMONSQUEEZY_VARIANT_ID_PRO!}
+                            label="Get Started"
+                            className="bg-amber-500/20 border-amber-500/40 hover:bg-amber-500/30 text-white rounded-xl h-12"
+                        />
                     </div>
                 </div>
 
@@ -52,9 +55,12 @@ export function PricingSection() {
                     <div className="text-3xl font-bold text-white mb-1">$60</div>
                     <div className="text-[10px] font-mono text-white/40 mb-4">25,000 SUs / MO</div>
                     <p className="text-xs text-white/30 mb-6">For power users and small teams.</p>
-                    <a href="#install-widget" className="block text-center py-2 px-4 rounded-xl border border-white/10 hover:border-purple-500/30 text-xs font-bold text-white transition-colors uppercase tracking-widest">
-                        Upgrade
-                    </a>
+                    <CheckoutButton
+                        variantId={process.env.LEMONSQUEEZY_VARIANT_ID_ELITE!}
+                        label="Upgrade"
+                        variant="purple"
+                        className="rounded-xl h-10 text-[10px]"
+                    />
                 </div>
             </div>
 
@@ -113,9 +119,16 @@ export function PricingSection() {
                     </div>
                 </div>
                 <div className="flex items-center gap-8 pr-4">
-                    <div className="text-right">
-                        <div className="text-2xl font-bold text-white">$10</div>
-                        <div className="text-[10px] text-white/40 uppercase tracking-wider">2,500 SUs</div>
+                    <div className="text-right flex items-center gap-4">
+                        <div>
+                            <div className="text-2xl font-bold text-white">$10</div>
+                            <div className="text-[10px] text-white/40 uppercase tracking-wider">2,500 SUs</div>
+                        </div>
+                        <CheckoutButton
+                            variantId={process.env.LEMONSQUEEZY_VARIANT_ID_REFILL!}
+                            label="Refill"
+                            className="h-10 px-6 w-auto text-[10px]"
+                        />
                     </div>
                 </div>
             </div>
