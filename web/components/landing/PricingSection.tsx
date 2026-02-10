@@ -42,7 +42,7 @@ export function PricingSection() {
                         </div>
 
                         <CheckoutButton
-                            variantId={process.env.LEMONSQUEEZY_VARIANT_ID_PRO!}
+                            variantId={process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_PRO!}
                             label="Get Started"
                             className="bg-amber-500/20 border-amber-500/40 hover:bg-amber-500/30 text-white rounded-xl h-12"
                         />
@@ -56,7 +56,7 @@ export function PricingSection() {
                     <div className="text-[10px] font-mono text-white/40 mb-4">25,000 SUs / MO</div>
                     <p className="text-xs text-white/30 mb-6">For power users and small teams.</p>
                     <CheckoutButton
-                        variantId={process.env.LEMONSQUEEZY_VARIANT_ID_ELITE!}
+                        variantId={process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_ELITE!}
                         label="Upgrade"
                         variant="purple"
                         className="rounded-xl h-10 text-[10px]"

@@ -153,7 +153,7 @@ export default function DashboardPage() {
                         <h3 className="text-sm font-bold text-white mb-1">Unlock Deep Meaning</h3>
                         <p className="text-[10px] text-zinc-400 mb-4 max-w-[200px]">Upgrade to Elite for 10x throughput and Cloud Distillation.</p>
                         <CheckoutButton
-                            variantId={process.env.NEXT_PUBLIC_VARIANT_ID_PRO || ""}
+                            variantId={process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_ELITE || ""}
                             label="Upgrade Plan"
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition-colors"
                         />

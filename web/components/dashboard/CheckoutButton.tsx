@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 interface CheckoutButtonProps {
     variantId: string;
@@ -17,6 +18,19 @@ export function CheckoutButton({ variantId, label, className, variant = "default
     const handleCheckout = async () => {
         try {
             setIsLoading(true);
+
+            // 1. Proactive Auth Check
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                // If not logged in, redirect to login with this variant as context
+                // We'll use a standard redirect to /login
+                window.location.href = `/login?next=pricing&ref=${variantId}`;
+                return;
+            }
+
+            // 2. Proceed to Backend Checkout API
             const response = await fetch("/api/lemonsqueezy/checkout", {
                 method: "POST",
                 headers: {
@@ -27,15 +41,15 @@ export function CheckoutButton({ variantId, label, className, variant = "default
 
             const data = await response.json();
 
-            if (data.url) {
+            if (response.ok && data.url) {
                 window.location.href = data.url;
             } else {
-                console.error("No checkout URL returned");
-                alert("Failed to initiate checkout. Please try again.");
+                console.error("Checkout failed:", data.error || "No URL");
+                alert(`Checkout failed: ${data.error || "Please try again."}`);
             }
         } catch (error) {
             console.error("Checkout error:", error);
-            alert("An error occurred. Please check your connection and try again.");
+            alert("Connection error: Unable to reach the billing server. Please check your internet or try again later.");
         } finally {
             setIsLoading(false);
         }

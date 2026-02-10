@@ -88,7 +88,7 @@ export default function PricingPage() {
                                     </li>
                                 </ul>
                             </div>
-                            <CheckoutButton variantId={process.env.LEMONSQUEEZY_VARIANT_ID_PRO!} label="UPGRADE" />
+                            <CheckoutButton variantId={process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_PRO!} label="UPGRADE" />
                         </div>
 
                         {/* Elite - $60 */}
@@ -121,7 +121,7 @@ export default function PricingPage() {
                                     </li>
                                 </ul>
                             </div>
-                            <CheckoutButton variantId={process.env.LEMONSQUEEZY_VARIANT_ID_ELITE!} label="GO ELITE" variant="purple" />
+                            <CheckoutButton variantId={process.env.NEXT_PUBLIC_LEMONSQUEEZY_VARIANT_ID_ELITE!} label="GO ELITE" variant="purple" />
                         </div>
 
                         {/* Enterprise - Custom */}
