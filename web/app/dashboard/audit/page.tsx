@@ -6,8 +6,8 @@ export default function AuditPage() {
     return (
         <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen flex flex-col gap-6 mt-16 md:mt-0">
             <PageHeader
-                title="System Audit"
-                description="Live stream of security artifacts, architectural drifts, and audit signals."
+                title="Security Audit"
+                description="Recent security scans and code analysis results."
                 icon={Shield}
                 iconColor="text-purple-400"
             />

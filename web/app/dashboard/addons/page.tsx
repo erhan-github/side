@@ -9,11 +9,10 @@ export default function AddonsPage() {
                 <Zap className="w-8 h-8 text-cyan-500" />
             </div>
             <h1 className="text-3xl font-bold text-white tracking-tight text-center">
-                Add-on Capabilities
+                Add-ons
             </h1>
             <p className="text-zinc-500 text-center max-w-md">
-                Infrastructure extensions for the Sidelith Registry are currently being synthesized.
-                System egress and high-throughput adapters arriving soon.
+                Additional features and integrations coming soon.
             </p>
             <div className="flex items-center gap-2 text-zinc-600 text-xs uppercase tracking-[0.2em] font-black italic">
                 <Construction className="w-4 h-4" /> Under Construction

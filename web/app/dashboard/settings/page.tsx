@@ -13,7 +13,7 @@ export default async function SettingsPage() {
         <div className="p-4 md:p-8 max-w-[1200px] mx-auto min-h-screen flex flex-col gap-8 mt-16 md:mt-0">
             <PageHeader
                 title="Privacy & Data"
-                description='System control over your context. Sidelith is designed to be "Local First", giving you absolute authority over data egress.'
+                description="Sidelith is local-first. Your code stays on your machine."
                 icon={Shield}
                 iconColor="text-emerald-500"
             />

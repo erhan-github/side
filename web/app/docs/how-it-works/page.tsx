@@ -18,7 +18,7 @@ export default function HowItWorksPage() {
                             How It Works
                         </h1>
                         <p className="text-xl text-zinc-400 leading-relaxed mb-12">
-                            Sidelith builds a persistent, fractal index of your codebase. Unlike standard RAG which chunks text blindly, we understand your code's abstract syntax tree (AST).
+                            Sidelith indexes your codebase using Tree-sitter. Unlike standard RAG which treats code as text, we parse the actual structure (AST).
                         </p>
 
                         <div className="grid grid-cols-1 gap-6">
