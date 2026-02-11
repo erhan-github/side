@@ -10,8 +10,8 @@ export default async function BillingPage() {
     return (
         <div className="p-4 md:p-8 max-w-[1200px] mx-auto min-h-screen flex flex-col gap-8 mt-16 md:mt-0">
             <PageHeader
-                title="Value Vault"
-                description="Manage your System Capacity (CP). Unlike traditional billing, Side treats capacity as fuel for your strategic engine."
+                title="Billing"
+                description="Manage your Side Units and subscription."
                 icon={CreditCard}
                 iconColor="text-blue-500"
                 action={
@@ -29,8 +29,8 @@ export default async function BillingPage() {
                     {/* Left: Usage Radial/Bar */}
                     <div className="md:col-span-2 flex flex-col justify-between gap-8">
                         <div>
-                            <h3 className="text-lg font-medium text-white mb-1">Capacity Fuel</h3>
-                            <p className="text-sm text-zinc-500 mb-6"> Monthly refueling cycle resets in {new Date(billing.capacity.resetDate).toLocaleDateString()}.</p>
+                            <h3 className="text-lg font-medium text-white mb-1">Side Units Balance</h3>
+                            <p className="text-sm text-zinc-500 mb-6">Resets on {new Date(billing.capacity.resetDate).toLocaleDateString()}</p>
 
                             {/* Big Progress Bar (Segmented Style) */}
                             <div className="flex bg-zinc-800/30 rounded-full h-4 overflow-hidden p-[2px] gap-[2px] mb-2">
@@ -48,8 +48,8 @@ export default async function BillingPage() {
                                 })}
                             </div>
                             <div className="flex justify-between text-xs font-mono text-zinc-500 uppercase tracking-widest">
-                                <span>Used: {billing.capacity.used.toLocaleString()} CP</span>
-                                <span>Limit: {billing.capacity.limit.toLocaleString()} CP</span>
+                                <span>Used: {billing.capacity.used.toLocaleString()} SU</span>
+                                <span>Limit: {billing.capacity.limit.toLocaleString()} SU</span>
                             </div>
                         </div>
                     </div>
@@ -72,11 +72,10 @@ export default async function BillingPage() {
                 <div className="bg-[#0c0c0e] border border-white/10 rounded-xl p-6 flex flex-col justify-between">
                     <div>
                         <h3 className="text-white font-medium mb-2 flex items-center gap-2">
-                            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                            Secure Billing
+                            Need More Side Units?
                         </h3>
                         <p className="text-sm text-zinc-500">
-                            We use LemonSqueezy as our Merchant of Record. They handle all tax compliance, invoicing, and secure payment processing.
+                            Buy additional units without changing your plan. Perfect for high-intensity development bursts.
                         </p>
                     </div>
                 </div>

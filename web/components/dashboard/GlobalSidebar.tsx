@@ -26,7 +26,6 @@ const SIDEBAR_ITEMS = [
         items: [
             { label: "Overview", href: "/dashboard", icon: Home },
             { label: "Activity Ledger", href: "/dashboard/ledger", icon: FileText },
-            { label: "Performance", href: "/dashboard/impact", icon: BarChart3 },
         ]
     },
     {
