@@ -47,7 +47,7 @@ const GLOSSARY_ITEMS = [
         term: "Project Plan",
         category: "Intelligence",
         definition: "The store for long-term project decisions and roadmap items.",
-        technical: "StrategicStore"
+        technical: "DecisionStore"
     },
     {
         term: "Side Units (SU)",
