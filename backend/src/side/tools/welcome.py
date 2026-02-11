@@ -9,7 +9,7 @@ from typing import Any
 from pathlib import Path
 
 from side.onboarding import run_onboarding, is_side_initialized, detect_project_name, detect_stack
-from side.tools.core import get_database
+from side.tools.core import get_engine
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ async def handle_welcome(arguments: dict[str, Any]) -> str:
         stack = detect_stack(Path(project_path))
         
         # Database is source of truth
-        db = get_database()
+        db = get_engine()
         
         # Get latest health
         # memory = AuditMemory(project_path)
@@ -83,7 +83,7 @@ Say "Side, audit my code" to get your first health score!
     # memory.save_snapshot(snapshot)
     
     # Database serves as the Source of Truth
-    db = get_database()
+    db = get_engine()
     
     return f"""
 ## 👋 Welcome to Sidelith.

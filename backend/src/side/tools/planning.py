@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from side.tools.core import get_auto_intel, get_database
+from side.tools.core import get_ai_memory, get_engine
 from side.tools.formatting import format_plan
 from side.utils.errors import handle_tool_errors
 from side.services.billing import BillingService, SystemAction
@@ -42,7 +42,7 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     Side fulfills a directive and evolves the Strategic Hub.
     The user communicates intent; Side executes and records.
     """
-    db = get_database()
+    db = get_engine()
     query = arguments.get("goal") or arguments.get("task")
     
     if not query:
@@ -85,7 +85,7 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     
     # LOG COMPLETION
     try:
-        profile = db.identity.get_profile(db.get_project_id())
+        profile = db.identity.get_user_profile(db.get_project_id())
         db.forensic.log_activity(
             project_id=db.get_project_id(),
             tool="check",
@@ -110,8 +110,8 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
     STRATEGIC VECTORING (Planning).
     The Strategic Hub: System Machine Intelligence.
     """
-    db = get_database()
-    auto_intel = get_auto_intel()
+    db = get_engine()
+    auto_intel = get_ai_memory()
     
     goal_text = arguments.get("goal")
     due_date = arguments.get("due")
@@ -128,7 +128,7 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
             
             # LOG AUTO-COMPLETION
             try:
-                profile = db.identity.get_profile(db.get_project_id())
+                profile = db.identity.get_user_profile(db.get_project_id())
                 db.forensic.log_activity(
                     project_id=db.get_project_id(),
                     tool="plan",
@@ -161,7 +161,7 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         
         # LOG NEW PLAN
         try:
-            profile = db.identity.get_profile(db.get_project_id())
+            profile = db.identity.get_user_profile(db.get_project_id())
             db.forensic.log_activity(
                 project_id=db.get_project_id(),
                 tool="plan",

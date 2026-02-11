@@ -211,9 +211,9 @@ class LogMonitor:
             logger.warning(f"Failed to process log change {file_path}: {e}")
 
     def _analyze_chunk(self, content: str, source: Path):
-        """Analyzes text chunk for friction signals."""
+        """Analyzes text chunk for friction signals with High-Fidelity Causal Framing."""
         lines = content.splitlines()
-        for line in lines:
+        for i, line in enumerate(lines):
             self.generic_buffer.append(line)
             
             # Heuristics: Detecting deep runtime signatures
@@ -236,10 +236,20 @@ class LogMonitor:
                     break
                 
             if is_error:
+                # [CAUSAL FRAMING]: Extract ±10 lines around the hit
+                start_idx = max(0, i - 10)
+                end_idx = min(len(lines), i + 10)
+                causal_frame = "\n".join(lines[start_idx:end_idx])
+                
                 self._log_friction(
                     source.name.upper(), 
                     "RUNTIME_ERROR", 
-                    {"snippet": line, "type": err_type, "file": str(source)}
+                    {
+                        "snippet": line, 
+                        "type": err_type, 
+                        "file": str(source),
+                        "causal_frame": causal_frame # [PALANTIR HI-FI]
+                    }
                 )
 
     def _log_friction(self, source: str, event_type: str, payload: dict):

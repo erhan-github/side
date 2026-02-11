@@ -8,15 +8,15 @@ def get_engine():
     from side.storage.modules.base import ContextEngine
     return ContextEngine()
 
-def get_identity(engine):
+def get_user_profile(engine):
     from side.storage.modules.identity import IdentityService
     return IdentityService(engine)
 
-def get_strategic(engine):
+def get_project_plan(engine):
     from side.storage.modules.strategy import DecisionStore
     return DecisionStore(engine)
 
-def get_audit(engine):
+def get_audit_log(engine):
     from side.storage.modules.audit import AuditService
     return AuditService(engine)
 

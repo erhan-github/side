@@ -59,6 +59,7 @@ class ContextEngine:
         from .identity import IdentityService
         from .transient import SessionCache
         from .substores.patterns import PublicPatternStore
+        from .cloud import CloudDistiller
         
         from side.storage.modules.ontology import OntologyStore
         
@@ -69,6 +70,8 @@ class ContextEngine:
         self.operational = SessionCache(self)
         self.wisdom = PublicPatternStore(self)
         self.ontology = OntologyStore(self)
+        self.global_lobe = CloudDistiller(self)
+        self.global_lobe.start()
 
     @contextmanager
     def connection(self) -> Generator[sqlite3.Connection, None, None]:

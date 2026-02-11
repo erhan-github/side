@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional
 
 from side.llm.client import LLMClient
 from side.utils.llm_helpers import clean_code_block
+from side.prompts import Personas, TestGenerationPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class TestGenerator:
     def __init__(self, project_path: Path):
         self.project_path = project_path
         self.llm = LLMClient()
+        self.config = LLMConfigs.get_config("test_generation")
 
     async def generate_repro(self, finding: Dict[str, Any]) -> str:
         """
@@ -46,36 +48,23 @@ class TestGenerator:
                     full_path = self.project_path / fpath
                     if full_path.exists():
                         content = full_path.read_text()
-                        # Extract surrounding lines? For now just header
                         code_snippets += f"\n--- {fpath} ---\n{content[:1000]}\n..."
                 except Exception:
                     pass
 
-        prompt = f"""
-        Generate a pytest reproduction script for this issue.
-        
-Context:
-Issue Type: {issue_type}
-Description: {notes}
-Files: {', '.join(context_files)}
-
-Code Snippet:
-{code_snippets}
-
-Task:
-Write a SELF-CONTAINED Python script (using pytest) that attempts to REPRODUCE this issue.
-- The test should FAIL if the issue is present (Red Test).
-- The test should PASS if the issue is fixed.
-- Mock external dependencies where possible.
-- Output ONLY the python code for the test file. No markdown, no explanations.
-"""
+        prompt = TestGenerationPrompt.format(
+            issue_type=issue_type,
+            notes=notes,
+            context_files_str=", ".join(context_files),
+            code_snippets=code_snippets
+        )
         
         try:
             logger.info(f"🧬 Generating Red Test for {issue_type}...")
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="Output ONLY the standalone Python script. No markdown blocks.",
-                temperature=0.1
+                system_prompt=Personas.TEST_GENERATOR,
+                **self.config
             )
             return clean_code_block(response)
         except Exception as e:

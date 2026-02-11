@@ -256,14 +256,26 @@ class PromptBuilder:
         except Exception as e:
             return f"- [LAYER 3 ERROR]: Surgical retrieval failed: {e}"
 
-    def get_episodic_context(self, forensic, limit: int = 15) -> str:
+    def get_episodic_context(self, forensic, limit: int = 15, project_id: str = "global") -> str:
         """
         Retrieves recent context from the Ledger.
+        [UPGRADE]: Now supports Causal Threading if a session is detected.
         """
         try:
             from side.intel.episodic_projector import EpisodicProjector
             projector = EpisodicProjector(forensic, self.strategic)
-            return projector.get_episode_stream(limit=limit)
+            
+            # 1. Attempt to find current session from forensic store
+            # This is a heuristic: get the latest activity and see if it has a session_id
+            latest = forensic.get_recent_activities(project_id, limit=1)
+            session_id = getattr(latest[0], 'session_id', None) if latest else None
+            
+            if session_id:
+                # [PALANTIR HI-FI]: Return the Causal Thread
+                return projector.get_causal_context(session_id, limit=limit)
+            
+            # [FALLBACK]: Traditional narrative summary
+            return projector.get_session_history(limit=limit)
         except Exception as e:
             return f"## [RAM ERROR]: Failed to load episodic context: {e}"
 

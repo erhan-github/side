@@ -59,8 +59,8 @@ class LLMClient:
         
         # Lean Architecture
         self.engine = ContextEngine()
-        self.profile = IdentityService(self.engine)
-        self.cache = SessionCache(self.engine)
+        self.identity = IdentityService(self.engine)
+        self.operational = SessionCache(self.engine)
         
         self._load_dotenv()
         
@@ -85,8 +85,8 @@ class LLMClient:
                 # AIRGAP TIER CHECK
                 # We must query the identity store directly to verify entitlement
                 project_id = ContextEngine.get_project_id(".")
-                profile = self.identity.get_profile(project_id)
-                tier = profile.get("tier", "hobby") if profile else "hobby"
+                profile = self.identity.get_user_profile(project_id)
+                tier = profile.tier if profile else "hobby"
                 
                 # Only 'airgapped' or 'enterprise' allowed (Enterprise might get local too)
                 if tier not in ["airgapped", "enterprise"]:
@@ -165,8 +165,8 @@ class LLMClient:
         4. User Preference (Settings Toggle)
         """
         project_id = ContextEngine.get_project_id(".")
-        profile = self.identity.get_profile(project_id)
-        tier = profile.get("tier", "trial") if profile else "trial"
+        profile = self.identity.get_user_profile(project_id)
+        tier = profile.tier if profile else "trial"
         
         # 1. AIRGAP: Force local, no exceptions
         if self.operational.get_setting("airgap_enabled") == "true":
@@ -344,7 +344,7 @@ class LLMClient:
                 # Check for High Tech entitlement before switching to Ollama
                 if next_provider == LLMProvider.OLLAMA:
                     project_id = ContextEngine.get_project_id(".")
-                    profile = self.identity.get_profile(project_id)
+                    profile = self.identity.get_user_profile(project_id)
                     tier = profile.get("tier", "trial") if profile else "trial"
                     if tier not in ["airgapped", "enterprise"]:
                          logger.critical(f"❌ [PROVIDER FAILURE]: Total Failure. {e}")

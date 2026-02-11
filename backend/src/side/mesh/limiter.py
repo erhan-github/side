@@ -78,8 +78,8 @@ class CapacityLimiter:
             "month": month_key,
         }
 
-    def get_ledger(self, user_id: str, limit: int = 50) -> list:
-        """Get the audit ledger for a user."""
+    def get_billing_ledger(self, user_id: str, limit: int = 50) -> list:
+        """Get the billing ledger for a user (**Billing Ledger**)."""
         # Return last N transactions, newest first
         return sorted(self._ledger[user_id], key=lambda x: x['timestamp'], reverse=True)[:limit]
         

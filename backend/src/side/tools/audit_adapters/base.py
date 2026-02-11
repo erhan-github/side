@@ -138,3 +138,4 @@ class AuditAdapter(ABC):
             Installation command/instructions
         """
         return f"Tool '{self.get_tool_name()}' is not installed."
+        return f"Tool '{self.get_tool_name()}' is not installed."

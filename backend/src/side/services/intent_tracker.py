@@ -2,7 +2,7 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict
-from side.services.unified_buffer import UnifiedBuffer
+from side.services.unified_buffer import SignalBuffer
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ class IntentTrackerService:
     Captures the 'Lost Context' of development by monitoring unsaved buffer changes.
     """
     
-    def __init__(self, buffer: UnifiedBuffer):
+    def __init__(self, buffer: SignalBuffer):
         self.buffer = buffer
         self._last_buffers: Dict[str, str] = {} # path -> content
         self._running = False

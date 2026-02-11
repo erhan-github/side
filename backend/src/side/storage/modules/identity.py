@@ -198,7 +198,7 @@ class IdentityService:
                 )
             )
 
-    def get_profile(self, project_id: str) -> Identity | None:
+    def get_user_profile(self, project_id: str) -> Identity | None:
         """Get the unified profile."""
         with self.engine.connection() as conn:
             row = conn.execute(

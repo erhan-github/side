@@ -19,6 +19,11 @@ from .intel.handlers.context import PromptBuilder
 from .services.file_watcher import FileWatcher
 from .utils.event_optimizer import event_bus
 from .utils.crypto import shield
+from .intel.causal_miner import CausalMiner
+from .intel.rule_synthesizer import RuleSynthesizer
+from .intel.proprioceptor import Proprioceptor
+from .intel.log_monitor import LogMonitor
+from .prompts import DynamicPromptManager, register_prompt_handlers
 import json
 import asyncio
 import time
@@ -51,6 +56,10 @@ operational = engine.operational
 
 context_service = ContextService(Path.cwd(), engine=engine)
 
+# Dynamic Intent Hub: MCP Prompts
+prompt_manager = DynamicPromptManager()
+register_prompt_handlers(mcp, prompt_manager)
+
 # ---------------------------------------------------------------------
 # ---------------------------------------------------------------------
 # DIMENSION 5: RESOURCE GOVERNOR (Resources)
@@ -77,10 +86,17 @@ def start_background_services():
     file_watcher = FileWatcher(Path.cwd())
     file_watcher.start()
     
-    # [NEURAL] Connect Intelligence to Events
-    intel.attach_to_event_bus(event_bus)
+    # [PHASE 7]: Recursive Wisdom (Self-Healing)
+    synthesizer = RuleSynthesizer(engine=engine)
+    miner = CausalMiner(engine=engine, synthesizer=synthesizer)
+    miner.start()
     
-    return governor, log_monitor, file_watcher
+    # [PHASE 8]: Proprioceptive Awareness (Neural Sync)
+    brain_dir = Path("/Users/erhanerdogan/.gemini/antigravity/brain/04116347-7316-4c02-9296-5252e02bc954")
+    proprioceptor = Proprioceptor(engine=engine, brain_dir=brain_dir)
+    proprioceptor.start()
+    
+    return governor, log_monitor, file_watcher, miner, proprioceptor
 
 # ---------------------------------------------------------------------
 # RESOURCES (Read-Only State)
@@ -220,13 +236,18 @@ async def dashboard_stats(request: Request):
         efficiency = round((usage_opt + context_density) / 2, 1)
 
         # Get real email if available
-        profile = identity.get_profile(project_id)
+        profile = identity.get_user_profile(project_id)
         user_email = profile.email if profile and profile.email else "Anonymous"
         
         # [AUDIT] Estimate saved tokens based on efficiency (heuristic)
         used = summary.get("tokens_used", 0)
         saved_tokens = int(used * 0.25) # Assume 25% savings from local indexing
         if saved_tokens < 100 and efficiency > 80: saved_tokens = 42 # Marketing seed
+
+        # [PHASE 8]: Proprioceptive HUD Data
+        neural_pulse = {}
+        if 'proprioceptor' in globals():
+            neural_pulse = proprioceptor.get_health_pulse()
 
         return JSONResponse({
             "su_available": summary.get("tokens_remaining", 0),
@@ -235,7 +256,8 @@ async def dashboard_stats(request: Request):
             "tier": summary.get("tier_label", "Hobby"),
             "efficiency": efficiency,
             "saved_tokens": saved_tokens,
-            "user_email": user_email
+            "user_email": user_email,
+            "neural_pulse": neural_pulse
         })
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -251,11 +273,11 @@ async def dashboard_ledger(request: Request):
         ledger = []
         for e in events:
             ledger.append({
-                "type": e.get("action", "UNKNOWN"),
-                "description": e.get("payload", {}).get("outcome", "Action completed"),
-                "outcome": "PASS", 
-                "cost": e.get("payload", {}).get("cost", 0),
-                "timestamp": e.get("timestamp"),
+                "type": e.action,
+                "description": e.payload.get("strategic_summary") or e.payload.get("outcome") or "Action completed",
+                "outcome": "DRIFT" if "drift" in e.action.lower() else "PASS", 
+                "cost": e.payload.get("cost", 0) if isinstance(e.payload, dict) else 0,
+                "timestamp": e.created_at.isoformat() if e.created_at else None,
             })
         return JSONResponse(ledger)
     except Exception as e:

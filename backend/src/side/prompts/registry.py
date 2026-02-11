@@ -1,5 +1,5 @@
 """
-Prompt management for Side MCP.
+MCP Prompt Registry - Dynamic User-Facing Scenarios.
 """
 
 import logging
@@ -17,17 +17,17 @@ from side.storage.modules.audit import AuditService
 from side.storage.modules.transient import SessionCache
 from side.storage.modules.identity import IdentityService
 from side.storage.modules.strategy import DecisionStore
+from side.prompts.library import SecurityAudit, CodeQuality, PerformanceCheck
 
 logger = logging.getLogger("side-mcp")
 
 class DynamicPromptManager:
     def __init__(self):
-        # Lean Architecture
         self.engine = ContextEngine()
-        self.ledger = AuditService(self.engine)
-        self.registry = DecisionStore(self.engine)
+        self.audit = AuditService(self.engine)
+        self.strategic = DecisionStore(self.engine)
         self.cache = SessionCache(self.engine)
-        self.profile = IdentityService(self.engine)
+        self.identity = IdentityService(self.engine)
         self.project_path = Path.cwd()
         self.project_id = ContextEngine.get_project_id(self.project_path)
 
@@ -47,10 +47,7 @@ class DynamicPromptManager:
         ]
         
         try:
-            # Lean Architecture - Direct AuditService access
             findings = self.audit.get_recent_activities(self.project_id, limit=100)
-            
-            # Filter for meaningful architectural or security findings
             security_issues = [f for f in findings if f.get('outcome') == 'VIOLATION' or 'security' in str(f.get('payload', '')).lower()]
             perf_issues = [f for f in findings if 'performance' in str(f.get('payload', '')).lower()]
             
@@ -61,7 +58,6 @@ class DynamicPromptManager:
                     arguments=[]
                 ))
             
-            # [Level 3 Interaction: fix_flow]
             if findings:
                 prompts.append(Prompt(
                     name="fix_general_issues",
@@ -69,21 +65,18 @@ class DynamicPromptManager:
                     arguments=[]
                 ))
             
-            # [Experience V2: The Executive Briefing]
             prompts.append(Prompt(
                 name="get_status",
                 description="Get a status update based on recent activity and plans.",
                 arguments=[]
             ))
             
-            # [Experience V2: The Gatekeeper]
             prompts.append(Prompt(
                 name="verify_readiness",
                 description="Check if the system is ready for deployment/shipping.",
                 arguments=[]
             ))
             
-            # [Experience V3: The Frontend Guard]
             prompts.append(Prompt(
                 name="review_design",
                 description="Review code for UI consistency and component usage.",
@@ -96,14 +89,12 @@ class DynamicPromptManager:
                 ]
             ))
             
-            # [Experience V3: The Truth Engine]
             prompts.append(Prompt(
                 name="verify_documentation",
                 description="Check if documentation matches the actual codebase.",
                 arguments=[]
             ))
 
-            # [Experience V4: Deep Audit]
             prompts.append(Prompt(
                 name="audit_deep",
                 description="Scan codebase for specific patterns or issues.",
@@ -130,9 +121,7 @@ class DynamicPromptManager:
 
     def get_prompt_result(self, name: str, args: dict[str, str]) -> GetPromptResult:
         if name == "fix_general_issues":
-            # Smart Logic: Find the worst issue
             findings = self.audit.get_recent_activities(self.project_id, limit=50)
-            # Filter for violations
             violations = [f for f in findings if f.get('outcome') == 'VIOLATION']
             if not violations:
                  return GetPromptResult(
@@ -140,7 +129,6 @@ class DynamicPromptManager:
                     messages=[PromptMessage(role="user", content=TextContent(type="text", text="Run a deep audit to find new things to fix."))]
                 )
             
-            # Sort by severity (CRITICAL > HIGH > MEDIUM > LOW)
             severity_map = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
             findings.sort(key=lambda x: severity_map.get(x.get('severity', 'INFO'), 5))
             top_issue = findings[0]
@@ -162,14 +150,9 @@ class DynamicPromptManager:
             )
             
         if name == "get_status":
-            # 1. Get Profile
-            profile = self.identity.get_profile(self.project_id) or {}
-            
-            # 2. Get Active Plans
+            profile = self.identity.get_user_profile(self.project_id) or {}
             all_plans = self.strategic.list_plans(self.project_id, status="active")
             top_focus = all_plans[0]['title'] if all_plans else "No active directives."
-            
-            # 3. Get Recent Activity (Context)
             activities = self.audit.get_recent_activities(self.project_id, limit=5)
             recent_context = "\n".join([f"- {a['action']} ({a['tool']})" for a in activities]) if activities else "None."
             
@@ -192,13 +175,9 @@ class DynamicPromptManager:
 
         if name == "ask_technical_question":
             question = args.get("question", "What should we do?")
-            
-            # 1. Get Strategic Context
-            profile = self.identity.get_profile(self.project_id) or {}
+            profile = self.identity.get_user_profile(self.project_id) or {}
             stack = profile.get("tech_stack", "Unknown Stack")
             stage = profile.get("stage", "Unknown Stage")
-            
-            # 2. Get Past Decisions (Consistency)
             decisions = self.strategic.list_rejections(self.project_id, limit=3)
             past_decisions = "\n".join([f"- Q: {r['question']} -> A: {r['answer']}" for r in decisions]) if decisions else "None."
 
@@ -222,16 +201,9 @@ class DynamicPromptManager:
             )
 
         if name == "verify_readiness":
-            # 1. Get Security Posture
-            # SFO Sprint: Simplified audit summary from audit store
             findings = self.audit.get_recent_activities(self.project_id, limit=100)
             crit = len([f for f in findings if f.get('outcome') == 'VIOLATION'])
-            high = 0 # Placeholder for severity mapping in AuditService
-            
-            # 2. Get Recent Work
-            # Determine what to verify (e.g. files changed recently, though we can't easily get diffs here without git tool)
-            # We'll ask the Agent to check Logic and Security.
-            
+            high = 0 
             status = "🔴 BLOCKED" if crit > 0 else ("🟠 RISKY" if high > 0 else "🟢 CLEAR")
             
             return GetPromptResult(
@@ -256,15 +228,11 @@ class DynamicPromptManager:
 
         if name == "review_design":
             code_snippet = args.get("code", "")
-            
-            # 1. Discover Design System
             web_root = self.project_path / "web"
             components = []
             if web_root.exists():
-                # Naive scan for components/ui or components
                 ui_dir = web_root / "components"
                 if ui_dir.exists():
-                     # Recursively find .tsx files
                      for f in ui_dir.rglob("*.tsx"):
                          if not f.name.startswith("index"):
                              components.append(f.stem)
@@ -288,13 +256,11 @@ class DynamicPromptManager:
             )
 
         if name == "verify_documentation":
-            # 1. Discover Strategy Docs
             docs_context = ""
             for doc_name in ["README.md", "backend/VISION.md", "docs/MASTER_ROADMAP.md"]:
                 doc_path = self.project_path / doc_name
                 if doc_path.exists():
                      content = doc_path.read_text()
-                     # Extract first 1000 chars to avoid prompt overflow but give enough context
                      docs_context += f"\n--- {doc_name} ---\n{content[:1000]}...\n"
             
             if not docs_context:
@@ -342,17 +308,14 @@ class DynamicPromptManager:
                     ),
                 ],
             )
-
-            
+        
         raise ValueError(f"Unknown prompt: {name}")
 
 def register_prompt_handlers(server, prompt_manager: DynamicPromptManager):
     @server.list_prompts()
     async def list_prompts() -> list[Prompt]:
-        """Return the list of available prompts."""
         return prompt_manager.get_prompts()
 
     @server.get_prompt()
     async def get_prompt(name: str, arguments: dict[str, str] | None) -> GetPromptResult:
-        """Handle prompt requests."""
         return prompt_manager.get_prompt_result(name, arguments or {})

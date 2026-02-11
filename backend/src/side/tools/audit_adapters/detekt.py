@@ -4,11 +4,11 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .base import Finding, ForensicsAdapter, Severity
+from .base import Finding, AuditAdapter, Severity
 
 logger = logging.getLogger(__name__)
 
-class DetektAdapter(ForensicsAdapter):
+class DetektAdapter(AuditAdapter):
     """
     Adapter for Detekt (Android/Kotlin Security/Quality Scanner).
     Checks for security issues and code quality in Kotlin code.

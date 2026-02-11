@@ -26,8 +26,8 @@ async def handle_reindex_dna(arguments: dict[str, Any]) -> str:
         project_path = get_repo_root()
     
     # [ECONOMY]: Charge for Context Densification (15 SUs)
-    from side.tools.core import get_database
-    db = get_database()
+    from side.tools.core import get_engine
+    db = get_engine()
     project_id = db.get_project_id()
     
     if not db.identity.charge_action(project_id, "CONTEXT_BOOST"):

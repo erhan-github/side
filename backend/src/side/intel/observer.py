@@ -10,13 +10,15 @@ from datetime import datetime, timezone
 from side.storage.modules.audit import AuditService
 from side.llm.client import LLMClient
 from side.utils.llm_helpers import extract_json
+from side.prompts import Personas, FactExtractionPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
 class StrategicObserver:
     def __init__(self, ledger: AuditService):
-        self.audit = audit
+        self.audit = ledger
         self.llm = LLMClient()
+        self.config = LLMConfigs.get_config("fact_extraction")
 
     async def distill_observations(self, project_id: str, limit: int = 20) -> int:
         """
@@ -32,33 +34,13 @@ class StrategicObserver:
             for a in activities
         ])
         
-        prompt = f"""
-Analyze the provided activity stream and extract INVARIANT FACTS.
-        
-RULES:
-1. Ignore transient noise (file reads, minor edits).
-2. Focus on ARCHITECTURAL DECISIONS (e.g., "User added Tailwind", "Auth is via Supabase").
-3. Extract User Preferences (e.g., "User prefers Pydantic V2").
-4. Output strictly a JSON list of objects.
-
-Stream:
-{stream_text}
-
-Format:
-[
-    {{
-        "content": "Fact description",
-        "tags": ["tag1", "tag2"],
-        "confidence": 0.9
-    }}
-]
-"""
+        prompt = FactExtractionPrompt.format(stream_text=stream_text)
         
         try:
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are a Fact Extraction Engine. Output strictly JSON.",
-                temperature=0.1
+                system_prompt=Personas.FACT_ENGINE,
+                **self.config
             )
             
             facts = extract_json(response)

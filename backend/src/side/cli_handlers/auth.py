@@ -1,11 +1,11 @@
 from argparse import Namespace
 import time
 import os
-from .utils import ux, get_engine, get_identity
+from .utils import ux, get_engine, get_profile
 
 def handle_login(args):
     engine = get_engine()
-    identity = get_identity(engine)
+    identity = get_user_profile(engine)
     project_id = engine.get_project_id(".")
     
     # 1. PATH A: API Key (Pro Flow)
@@ -96,9 +96,9 @@ def handle_login(args):
 def check_auth_or_login(tier=None):
     """JIT Auth check: triggers login if no profile exists."""
     engine = get_engine()
-    identity = get_identity(engine)
+    identity = get_user_profile(engine)
     project_id = engine.get_project_id(".")
-    profile = identity.get_profile(project_id)
+    profile = identity.get_user_profile(project_id)
     
     if not profile or not profile.access_token or profile.access_token.startswith("sk_hobby_"):
         # We allow sk_hobby_ but if it's completely missing, we need a handshake
@@ -106,15 +106,15 @@ def check_auth_or_login(tier=None):
             ux.display_status(f"Welcome to Sidelith: Let's activate your Identity ({tier.upper() if tier else 'HOBBY'} Tier).", level="info")
             handle_login(Namespace(key=None, tier=tier))
             # Re-fetch after login
-            profile = identity.get_profile(project_id)
+            profile = identity.get_user_profile(project_id)
     return profile
 
 def handle_profile(args):
     """View current Identity & detailed SU Balance."""
     engine = get_engine()
-    identity = get_identity(engine)
+    identity = get_user_profile(engine)
     project_id = engine.get_project_id(".")
-    profile = identity.get_profile(project_id)
+    profile = identity.get_user_profile(project_id)
     
     if not profile:
         ux.display_status("No active profile found. Run 'side login' first.", level="error")
@@ -134,7 +134,7 @@ def handle_profile(args):
 def handle_usage(args):
     """Exposes high-fidelity Cursor-level usage summary."""
     engine = get_engine()
-    identity = get_identity(engine)
+    identity = get_user_profile(engine)
     project_id = engine.get_project_id(".")
     
     summary = identity.get_cursor_usage_summary(project_id)

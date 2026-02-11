@@ -1,11 +1,10 @@
-"""
-Side LLM Orchestrator - The Fallback Brain.
-
-Part of Phase IV.
-Handles "Reasoning" and "Synthesis" when deterministic tools fail.
-"""
-
-from typing import List, Dict, Any
+from typing import List, Dict
+from side.prompts import (
+    Personas, 
+    LLMConfigs, 
+    StrategicInsightPrompt, 
+    FixVerifierPrompt
+)
 
 class LLMOrchestrator:
     """
@@ -15,6 +14,8 @@ class LLMOrchestrator:
     def __init__(self, provider="groq"):
         from side.llm.client import LLMClient
         self.client = LLMClient(preferred_provider=provider)
+        self.insight_config = LLMConfigs.get_config("strategic_insight")
+        self.fix_config = LLMConfigs.get_config("fix_verifier")
         
     async def synthesize_findings(self, findings: List[Dict]) -> str:
         """
@@ -24,23 +25,13 @@ class LLMOrchestrator:
             return "No findings to synthesize."
             
         # Construct Prompt
-        prompt = f"""
-        Analyze these technical findings and provide a Strategic Executive Summary.
-        
-        FINDINGS:
-        {findings}
-        
-        Format:
-        1. Executive Summary (1-2 sentences)
-        2. Critical Risks (Bullet points)
-        3. Strategic Recommendation (Actionable)
-        """
+        prompt = StrategicInsightPrompt.format(findings=findings)
         
         try:
             return self.client.complete(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are an expert engineering strategist. Be concise.",
-                temperature=0.3
+                system_prompt=Personas.STRATEGIC_STRATEGIST,
+                **self.insight_config
             )
         except Exception as e:
             return f"AI Analysis Failed: {e}"
@@ -57,8 +48,6 @@ class LLMOrchestrator:
             return False
             
         # 2. Semantic Check (Pulse Engine)
-        # "Experience Perfection": Don't ask the LLM if the code is safe 
-        # if the Deterministic Engine already knows it isn't.
         from side.pulse import pulse
         
         ctx = {
@@ -69,29 +58,20 @@ class LLMOrchestrator:
         
         pulse_result = pulse.check_pulse(ctx)
         if pulse_result.status.value != "SECURE":
-            # If Pulse fails, we don't even bother the LLM. 
-            # We save tokens and return False immediately.
             return False
 
         # 3. Semantic Insight (LLM)
-        prompt = f"""
-        Compare the Original Code and the New Fix.
-        Does the New Fix resolve the issue without introducing new bugs?
-        Return ONLY 'YES' or 'NO'.
-        
-        ORIGINAL:
-        {original_code[:1000]}
-        
-        NEW:
-        {new_code[:1000]}
-        """
+        prompt = FixVerifierPrompt.format(
+            original_code=original_code[:1000],
+            new_code=new_code[:1000]
+        )
         
         try:
             response = self.client.complete(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="Return YES or NO only.",
-                temperature=0.0
+                system_prompt=Personas.FIX_JUDGE,
+                **self.fix_config
             )
             return "YES" in response.upper()
         except Exception:
-            return True # Fail open on LLM error to avoid blocking valid fixes
+            return True # Fail open on LLM error

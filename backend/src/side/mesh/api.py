@@ -168,17 +168,17 @@ async def run_audit(
     )
 
 
-@app.get("/v1/audit/ledger", response_model=List[LedgerItem])
-async def get_ledger(
+@app.get("/v1/billing/ledger", response_model=List[LedgerItem])
+async def get_billing_ledger(
     user: UserInfo = Depends(get_current_user),
     limit: int = 50
 ):
     """
-    Get forensic transaction ledger.
+    Get forensic transaction ledger (**Billing Ledger**).
     PALANTIR-LEVEL TRANSPARENCY:
     Every capacity deduction is logged and auditable.
     """
-    return limiter.get_ledger(user.user_id, limit)
+    return limiter.get_billing_ledger(user.user_id, limit)
 
 @app.get("/v1/usage", response_model=UsageResponse)
 async def get_usage(user: UserInfo = Depends(get_current_user)) -> UsageResponse:

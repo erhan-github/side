@@ -102,11 +102,26 @@ class AuditService:
                 cost_tokens INTEGER DEFAULT 0,
                 tier TEXT DEFAULT 'free',
                 payload JSON,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                session_id TEXT,
+                parent_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(parent_id) REFERENCES activities(id)
             )
         """)
+        # Migration: Add session_id and parent_id if missing
+        try:
+            conn.execute("ALTER TABLE activities ADD COLUMN session_id TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE activities ADD COLUMN parent_id INTEGER")
+        except sqlite3.OperationalError:
+            pass
+
         conn.execute("CREATE INDEX IF NOT EXISTS idx_activities_project ON activities(project_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_activities_tool ON activities(tool)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_activities_session ON activities(session_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_activities_parent ON activities(parent_id)")
 
         # ─────────────────────────────────────────────────────────────
         # CORE TABLE 12: OUTCOMES_LEDGER - Result history
@@ -155,6 +170,8 @@ class AuditService:
     def log_activity(self, project_id: str, tool: str, action: str, 
                      cost_tokens: int = 0, tier: str = 'free', 
                      payload: dict[str, Any] | None = None,
+                     session_id: str | None = None,
+                     parent_id: int | None = None,
                      silent: bool = False) -> None:
         """Log a single activity."""
         self.log_activities_batch([{
@@ -164,6 +181,8 @@ class AuditService:
             'cost_tokens': cost_tokens,
             'tier': tier,
             'payload': payload,
+            'session_id': session_id,
+            'parent_id': parent_id,
             'silent': silent
         }])
 
@@ -204,18 +223,39 @@ class AuditService:
                         logger.warning(f"🚫 Hard Stop: Insufficient tokens for {masked_id}")
                         continue
 
-                # SEAL SENSITIVE PAYLOAD (Using Pydantic serialization)
-                sealed_payload = shield.seal(act.model_dump_json(include={'payload'}))
+                # SEAL SENSITIVE PAYLOAD
+                sealed_payload = shield.seal(json.dumps(act.payload))
+                session_id = getattr(act, 'session_id', act.payload.get('session_id'))
+                parent_id = getattr(act, 'parent_id', act.payload.get('parent_id'))
+
+                # [CAUSAL THREADING]: If no parent_id provided, link to the last activity in this session
+                if parent_id is None and session_id:
+                    cursor = conn.execute(
+                        "SELECT id FROM activities WHERE session_id = ? ORDER BY id DESC LIMIT 1",
+                        (session_id,)
+                    )
+                    row = cursor.fetchone()
+                    if row:
+                        parent_id = row['id']
 
                 conn.execute(
                     """
                     INSERT INTO activities (
-                        project_id, tool, action, cost_tokens, tier, payload
-                    ) VALUES (?, ?, ?, ?, ?, ?)
+                        project_id, tool, action, cost_tokens, tier, payload, session_id, parent_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (project_id, tool, action, cost_tokens, tier, sealed_payload)
+                    (project_id, tool, action, cost_tokens, tier, sealed_payload, session_id, parent_id)
                 )
                 
+                # [GLOBAL LOBE]: Trigger shadow distillation on high-friction events
+                if tool == "LOG_MONITOR" or "error" in action.lower():
+                    if hasattr(self.engine, 'global_lobe'):
+                        self.engine.global_lobe.trigger_distillation(session_id, {
+                            "tool": tool,
+                            "action": action,
+                            "payload": act.payload
+                        })
+
                 if cost_tokens > 0:
                     conn.execute(
                         "UPDATE profile SET token_balance = token_balance - ? WHERE id = ?",
@@ -238,7 +278,19 @@ class AuditService:
             ).fetchall()
             results = []
             for row in rows:
-                results.append(Activity.from_row(row))
+                data = dict(row)
+                # [UNSEAL TRANSPARENCY]: Intelligence requires decrypted payloads
+                if data.get('payload'):
+                    try:
+                        payload_raw = shield.unseal(data['payload'])
+                        data['payload'] = json.loads(payload_raw)
+                    except Exception:
+                        # Fallback for unencrypted or malformed data
+                        if isinstance(data['payload'], (bytes, str)):
+                            try: data['payload'] = json.loads(data['payload'])
+                            except: pass
+                
+                results.append(Activity.from_row(data))
             return results
 
     def get_recent_audits(self, project_id: str, limit: int = 10) -> list[Finding]:
@@ -258,6 +310,31 @@ class AuditService:
                 (project_id,)
             ).fetchall()
             return {row['severity']: row['count'] for row in rows}
+
+    def get_causal_timeline(self, session_id: str) -> list[dict[str, Any]]:
+        """Retrieves the full causal timeline for a session."""
+        with self.engine.connection() as conn:
+            # Fetch activities for this session
+            activities = conn.execute(
+                "SELECT * FROM activities WHERE session_id = ? ORDER BY id ASC",
+                (session_id,)
+            ).fetchall()
+            
+            timeline = []
+            for row in activities:
+                # Use simplified representation for Context Projection
+                timeline.append({
+                    "type": "SIGNAL",
+                    "data": {
+                        "id": row['id'],
+                        "tool": row['tool'],
+                        "action": row['action'],
+                        "payload": json.loads(shield.unseal(row['payload'])) if isinstance(row['payload'], (bytes, str)) else {},
+                        "parent_id": row['parent_id'],
+                        "created_at": row['created_at']
+                    }
+                })
+            return timeline
 
     def save_work_context(self, project_path: str, focus_area: str, 
                           recent_files: list[str], recent_commits: list[dict[str, Any]],

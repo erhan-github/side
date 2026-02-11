@@ -10,7 +10,7 @@ const GLOSSARY_ITEMS = [
     {
         term: "AI Memory",
         category: "Core",
-        definition: "The user-facing name for the Context Service. It orchestrates context retrieval and injection via MCP, giving your AI tools awareness of your codebase.",
+        definition: "Makes AI tools remember your project structure across sessions. When you use Cursor or VS Code, AI knows your folders, patterns, and architecture.",
         technical: "ContextService"
     },
     {
@@ -70,7 +70,7 @@ const GLOSSARY_ITEMS = [
     {
         term: "Code Structure",
         category: "Core",
-        definition: "A compressed Abstract Syntax Tree (AST) representation of your codebase, used for efficient context injection.",
+        definition: "Your code parsed into a structured format. Sidelith analyzes your files to understand classes, functions, and how they connect.",
         technical: "DNA"
     },
     {
@@ -111,15 +111,39 @@ const GLOSSARY_ITEMS = [
     },
     {
         term: "MCP",
-        category: "Standard",
+        category: "Protocol",
         definition: "Model Context Protocol. An open standard that enables AI tools to connect to external data sources like your codebase.",
         technical: "Model Context Protocol"
     },
     {
         term: "AST",
-        category: "Standard",
+        category: "Protocol",
         definition: "Abstract Syntax Tree. A tree representation of the abstract syntactic structure of source code, used by Sidelith for precise indexing.",
         technical: "Abstract Syntax Tree"
+    },
+    {
+        term: ".side/ Directory",
+        category: "Concept",
+        definition: "The local folder where Sidelith stores your project index. This stays on your machine and never gets uploaded.",
+        technical: "Local Storage"
+    },
+    {
+        term: "Context",
+        category: "Concept",
+        definition: "Information about your project (folder structure, patterns, decisions) that Sidelith provides to AI tools.",
+        technical: "Context"
+    },
+    {
+        term: "Cursor",
+        category: "Tool",
+        definition: "An AI-powered code editor that works with Sidelith via MCP.",
+        technical: "IDE Integration"
+    },
+    {
+        term: "VS Code",
+        category: "Tool",
+        definition: "Microsoft's code editor. Sidelith integrates via MCP to provide AI context.",
+        technical: "IDE Integration"
     },
     {
         term: "Local-First",
@@ -129,7 +153,7 @@ const GLOSSARY_ITEMS = [
     }
 ];
 
-const CATEGORIES = ["All", "Core", "Security", "Intelligence", "Billing", "System", "Concept", "Standard"];
+const CATEGORIES = ["All", "Core", "Security", "Intelligence", "Billing", "System", "Concept", "Protocol", "Tool"];
 
 export default function GlossaryPage() {
     const [search, setSearch] = useState("");
@@ -161,8 +185,7 @@ export default function GlossaryPage() {
                             Glossary
                         </h1>
                         <p className="text-lg text-zinc-400 leading-relaxed">
-                            A standardized dictionary of Sidelith terminology. We use precise language to describe
-                            how we handle your code and data.
+                            Common terms and concepts in Sidelith. If you see an unfamiliar word in our docs, look it up here.
                         </p>
                     </div>
 
@@ -185,8 +208,8 @@ export default function GlossaryPage() {
                                     key={category}
                                     onClick={() => setSelectedCategory(category)}
                                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === category
-                                            ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30"
-                                            : "bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800"
+                                        ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30"
+                                        : "bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:bg-zinc-800"
                                         }`}
                                 >
                                     {category}
@@ -212,7 +235,7 @@ export default function GlossaryPage() {
                                 </p>
                                 <div className="flex items-center gap-2 text-xs text-zinc-600 font-mono">
                                     <Activity className="w-3 h-3" />
-                                    <span>Internal ID: </span>
+                                    <span>Technical Term: </span>
                                     <code className="text-zinc-500">{item.technical}</code>
                                 </div>
                             </div>

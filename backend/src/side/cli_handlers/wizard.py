@@ -7,7 +7,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
 
-from .utils import ux, get_engine, get_identity
+from .utils import ux, get_engine, get_profile
 from .auth import handle_login
 from .connect import patch_cursor_config, patch_vscode_config, patch_claude_config, check_auth_or_login
 
@@ -31,9 +31,9 @@ def handle_wizard(args):
     
     # Check current identity
     engine = get_engine()
-    identity = get_identity(engine)
+    identity = get_user_profile(engine)
     project_id = engine.get_project_id(".")
-    profile = identity.get_profile(project_id)
+    profile = identity.get_user_profile(project_id)
     
     if not profile or not profile.access_token:
         ux.display_status("No active session found.", level="warning")
@@ -42,7 +42,7 @@ def handle_wizard(args):
             # Trigger login flow
             handle_login(Namespace(key=None, tier="hobby"))
             # Re-fetch
-            profile = identity.get_profile(project_id)
+            profile = identity.get_user_profile(project_id)
     
     if profile:
         ux.display_status(f"Authenticated as [bold]{profile.email or 'User'}[/bold]", level="success")

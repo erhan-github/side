@@ -11,6 +11,7 @@ from typing import List, Dict, Any
 
 from side.storage.modules.strategy import StrategyRegistry
 from side.utils.llm_helpers import extract_json
+from side.prompts import Personas, StrategicFrictionPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,9 @@ class ProactiveService:
     """
 
     def __init__(self, registry: StrategyRegistry, project_path: Path):
-        self.registry = registry
+        self.strategic = registry # Normalized name
         self.project_path = project_path
+        self.config = LLMConfigs.get_config("strategic_auditor")
 
     async def check_for_friction(self) -> List[Dict[str, Any]]:
         """
@@ -81,43 +83,20 @@ class ProactiveService:
         active_plans = self.strategic.list_plans(project_id, status="active")
         context_str = "\n".join([f"- {p['title']}" for p in active_plans])
         
-        prompt = f"""
-Analyze if this technical comment represents a strategic risk.
-        
-STRATEGIC CONTEXT (Current Goals):
-{context_str}
-
-THE FINDING:
-File: {file_path}:{line_no}
-Comment: "{comment}"
-
-YOUR MISSION:
-Analyze if this comment represents:
-1. **Vision Drift**: Building features we didn't plan?
-2. **Reinventing the Wheel**: Building something that exists as OSS?
-3. **Dead End**: Implementing a pattern we explicitly rejected?
-4. **Strategic Risk**: A 'HACK' in a critical path?
-
-OUTPUT:
-If minor/irrelevant, output NONE.
-If it is a strategic violation, output strictly a JSON object.
-
-Format:
-{{
-    "type": "drift|leverage|risk",
-    "severity": "high|medium",
-    "message": "A concise, technical explanation of the risk and remediation."
-}}
-"""
+        prompt = StrategicFrictionPrompt.format(
+            context_str=context_str,
+            file_path=file_path,
+            line_no=line_no,
+            comment=comment
+        )
         try:
             from side.llm.client import LLMClient
             client = LLMClient()
             # We use a lower latency model if possible, or standard.
-            # Temperature 0.3 for consistent but creative roasts.
             response = await client.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are a Strategic Auditor. Be concise and technical.",
-                temperature=0.3
+                system_prompt=Personas.STRATEGIC_AUDITOR,
+                **self.config
             )
             
             if "NONE" in response.upper():

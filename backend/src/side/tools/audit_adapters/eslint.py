@@ -4,11 +4,11 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .base import Finding, ForensicsAdapter, Severity
+from .base import Finding, AuditAdapter, Severity
 
 logger = logging.getLogger(__name__)
 
-class ESLintAdapter(ForensicsAdapter):
+class ESLintAdapter(AuditAdapter):
     """
     Adapter for ESLint (JavaScript/TypeScript Security Scanner).
     Uses eslint-plugin-security and other security-focused plugins.

@@ -12,7 +12,7 @@ from side.tools.planning import handle_plan, handle_check
 from side.tools.audit import handle_run_audit
 from side.tools.welcome import handle_welcome
 from side.storage.simple_db import SimplifiedDatabase, InsufficientTokensError
-from side.tools.core import get_database
+from side.tools.core import get_engine
 from side.decorators import audit_log
 
 from side.models.pricing import ActionCost
@@ -56,7 +56,7 @@ async def handle_tool_call(name: str, arguments: dict[str, Any]) -> str:
 
     # CURSOR-STYLE ENFORCEMENT
     # 1. Get project ID and DB
-    db = get_database()
+    db = get_engine()
     project_id = db.get_project_id()
     
     # 2. Check cost

@@ -110,7 +110,7 @@ class AntiPattern(BaseModel):
     
     id: str = Field(..., description="Unique pattern identifier")
     issue_type: str = Field(..., description="Type of anti-pattern (complexity, security, etc)")
-    context_trigger: str = Field(..., description="Keyword or code structure that triggers this warning")
+    context_trigger: str = Field(..., description="Keyword or DNA that triggers this warning")
     risk_description: str = Field(..., description="Why is this a risk?")
     remedy: Optional[Dict[str, Any]] = Field(None, description="Suggested refactor or remedy")
     occurrence_count: int = Field(default=1)
@@ -177,6 +177,12 @@ class Identity(BaseModel):
             import json
             data["metadata"] = json.loads(data["metadata"])
             
+        # [DRY HARDENING]: Fill None values for fields with defaults to prevent Pydantic errors
+        for field_name, field in cls.model_fields.items():
+            # If the value is None but the field is required/has a non-Pydantic-None default
+            if data.get(field_name) is None and not isinstance(field.default, type(None)):
+                data[field_name] = field.default
+                
         return cls(**data)
 
 
@@ -259,21 +265,31 @@ class Activity(BaseModel):
     cost_tokens: int = Field(default=0, description="Cost in Structural Units (SUs)")
     tier: str = Field(default="free", description="Subscription tier at time of action")
     payload: Dict[str, Any] = Field(default_factory=dict, description="Activity payload (usually JSON)")
+    session_id: Optional[str] = Field(None, description="Optional session grouping")
+    parent_id: Optional[int] = Field(None, description="Causal parent activity ID")
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
     
     @classmethod
-    def from_row(cls, row: tuple) -> "Activity":
+    def from_row(cls, row: tuple | dict) -> "Activity":
         """Create Activity from SQLite row."""
-        return cls(
-            id=row[0] if len(row) > 0 else None,
-            project_id=row[1] if len(row) > 1 else "default",
-            tool=row[2] if len(row) > 2 else "",
-            action=row[3] if len(row) > 3 else "",
-            cost_tokens=row[4] if len(row) > 4 else 0,
-            tier=row[5] if len(row) > 5 else "free",
-            payload=row[6] if len(row) > 6 and isinstance(row[6], dict) else {},
-            created_at=row[7] if len(row) > 7 else datetime.utcnow()
-        )
+        if isinstance(row, tuple):
+             # Map tuple to dict using field keys
+             data = dict(zip(cls.model_fields.keys(), row))
+        else:
+             data = dict(row)
+             
+        # Handle JSON fields
+        if isinstance(data.get("payload"), str):
+            import json
+            try: data["payload"] = json.loads(data["payload"])
+            except: data["payload"] = {}
+            
+        # [DRY HARDENING]: Fill None values for fields with defaults to prevent Pydantic errors
+        for field_name, field in cls.model_fields.items():
+            if data.get(field_name) is None and not isinstance(field.default, type(None)):
+                data[field_name] = field.default
+                
+        return cls(**data)
 
 
 class HardwareStats(BaseModel):

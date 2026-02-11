@@ -4,11 +4,11 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .base import Finding, ForensicsAdapter, Severity
+from .base import Finding, AuditAdapter, Severity
 
 logger = logging.getLogger(__name__)
 
-class SwiftLintAdapter(ForensicsAdapter):
+class SwiftLintAdapter(AuditAdapter):
     """
     Adapter for SwiftLint (iOS Security/Quality Scanner).
     Checks for security issues and code quality in Swift code.

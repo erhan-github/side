@@ -26,6 +26,7 @@ class FrictionPoint(Enum):
     AI_MISTAKE_REPEAT = "ai_mistake_repeat"
     FILE_STRUCTURE_CHANGE = "file_structure_change"
     ERROR_OCCURRED = "error_occurred"
+    GENERATIVE_ADVISORY = "generative_advisory"
 
 
 class EventPriority(Enum):

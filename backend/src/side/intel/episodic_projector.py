@@ -12,14 +12,64 @@ from side.storage.modules.audit import AuditService
 from side.storage.modules.strategy import DecisionStore
 
 class EpisodicProjector:
-    def __init__(self, ledger: AuditService, registry: DecisionStore):
+    def __init__(self, audit: AuditService, strategic: DecisionStore):
         self.audit = audit
         self.strategic = strategic
 
+    def get_causal_context(self, session_id: str, limit: int = 5) -> str:
+        """
+        [ANCESTRAL FILTERING]: Traverses the causal DAG to inject the most relevant chain.
+        Prioritizes: Root Cause (Edit) -> Intermediary Friction -> Terminal Error.
+        """
+        try:
+            # 1. Fetch activities for this session
+            activities = self.audit.get_causal_timeline(session_id)
+            if not activities:
+                return "## [TIMELINE]: No causal history for this session."
+
+            # 2. Extract the Thread (Backwards traversal from latest)
+            # Find terminal signal (usually the latest)
+            signals = [a for a in activities if a["type"] == "SIGNAL"]
+            if not signals:
+                return "## [TIMELINE]: No signals captured in this session."
+
+            thread = []
+            current = signals[-1]["data"] # Start from latest signal
+            
+            while current and len(thread) < limit:
+                thread.append(current)
+                parent_id = current.get("parent_id")
+                if not parent_id:
+                    break
+                # Find parent in signals
+                parent = next((s["data"] for s in signals if s["data"].get("id") == parent_id), None)
+                current = parent
+
+            thread.reverse() # Chronological order
+
+            # 3. Format the "Low-Fat" Context
+            report = ["## 2. CAUSAL THREAD (Low-Fat Reasoning)"]
+            for node in thread:
+                tool = node.get('tool', 'SYSTEM')
+                action = node.get('action', 'unknown')
+                payload = node.get('payload', {})
+                
+                # Check for Causal Frames (High-Fidelity Capture)
+                frame = ""
+                if "causal_frame" in payload:
+                    frame = f"\n   [FRAME]:\n   ```\n   {payload['causal_frame']}\n   ```"
+                
+                snippet = payload.get('snippet', payload.get('file', ''))
+                report.append(f"- **{tool}**.{action} ({snippet}){frame}")
+
+            return "\n".join(report)
+
+        except Exception as e:
+            return f"## [PROTOCOL ERROR]: Causal projection failed: {e}"
+
     def get_session_history(self, project_id: str = "global", limit: int = 15) -> str:
         """
-        [CONTEXT RECOVERY]: Generates a summary of recent sessions.
-        Fetches events and summarizes them into a narrative format.
+        [CONTEXT RECOVERY]: Legacy narrative summary.
         """
         try:
             # 1. Fetch Recent Activities (The Raw Stream)

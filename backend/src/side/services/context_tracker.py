@@ -14,6 +14,7 @@ from typing import Any
 from collections import deque
 from side.storage.modules.transient import SessionCache
 from side.utils.llm_helpers import extract_json
+from side.prompts import Personas, ArchitecturalPivotPrompt, FocusDetectionPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
@@ -223,24 +224,20 @@ class ContextTracker:
             
             goal_str = f"ACTIVE GOALS: {', '.join(goals)}" if goals else ""
 
-            prompt = f"""
-Compare the DEVS MESSAGE with the ACTUAL DIFF. Identify the ARCHITECTURAL PIVOT.
+            goal_str = f"ACTIVE GOALS: {', '.join(goals)}" if goals else ""
+
+            prompt = ArchitecturalPivotPrompt.format(
+                goal_str=goal_str,
+                commit_msg=commit_msg,
+                symbols=symbols,
+                best_chunk=best_chunk
+            )
+            config = LLMConfigs.get_config("architectural_pivot")
             
-CONTEXT (Active Goals):
-{goal_str}
-
-INPUT:
-MESSAGE: {commit_msg}
-SYMBOLS: {symbols}
-DIFF: {best_chunk}
-
-TASK:
-Output a concise (one-sentence) summary of the architectural change.
-"""
             signature = await client.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="Architecture Analyst. Be extremely concise.",
-                temperature=0.1
+                system_prompt=Personas.ARCHITECTURE_ANALYST,
+                **config
             )
             
             # [BOOST-ECONOMY] Deduct SUs
@@ -306,33 +303,20 @@ Output a concise (one-sentence) summary of the architectural change.
         files_str = "\n".join(recent_files[:10])
         commits_str = "\n".join([f"- {c['message']}" for c in recent_commits[:5]])
         
-        prompt = f"""You are a Technical Project Manager.
+        commits_str = "\n".join([f"- {c['message']}" for c in recent_commits[:5]])
         
-RECENT FILES CHANGED:
-{files_str}
-
-RECENT COMMITS:
-{commits_str}
-
-TASK:
-Classify the developer's current "Focus Area" into ONE of these categories:
-[Authentication, API Design, Frontend UI, Database/Schema, Testing, Infrastructure/DevOps, Security, Performance, Refactoring]
-
-If it's ambiguous, choose "General Development".
-
-OUTPUT JSON:
-{{
-    "focus": "Category Name",
-    "confidence": 0.0 to 1.0
-}}
-"""
+        prompt = FocusDetectionPrompt.format(
+            files_str=files_str,
+            commits_str=commits_str
+        )
+        config = LLMConfigs.get_config("focus_detection")
         try:
             from side.llm.client import LLMClient
             client = LLMClient()
             response = await client.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="You are a classifier. Output JSON only.",
-                temperature=0.1
+                system_prompt=Personas.CLASSIFIER,
+                **config
             )
             
             data = extract_json(response)

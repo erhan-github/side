@@ -9,12 +9,14 @@ import json
 from typing import Dict, Any, Tuple
 from side.llm.client import LLMClient
 from side.utils.llm_helpers import extract_json
+from side.prompts import Personas, SurpriseAnalysisPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
 class ReflectionEngine:
     def __init__(self):
         self.llm = LLMClient()
+        self.config = LLMConfigs.get_config("reflection")
 
     async def reflect_on_outcome(self, tool: str, intent: str, outcome: str) -> Tuple[str, float]:
         """
@@ -26,31 +28,17 @@ class ReflectionEngine:
         if tool in ["read_file", "list_dir"] and "error" not in outcome.lower():
             return "ROUTINE", 0.1
 
-        prompt = f"""
-Analyze this Action/Outcome pair. Calculate the SURPRISE SCORE (0.0 - 1.0) based on how unexpected the reality was compared to the intent.
-        
-Intent: {intent}
-Tool: {tool}
-Actual Outcome: {outcome}
-        
-ONTOLOGY:
-- CRITICAL (>0.8): Failed expectations, bugs, architectural pivots.
-- STRATEGIC (0.4-0.8): User preferences, new features, non-standard success.
-- ROUTINE (<0.4): Expected success, standard operations.
-        
-Output strictly JSON:
-{{
-    "tag": "CRITICAL" | "STRATEGIC" | "ROUTINE",
-    "score": float,
-    "reason": "Why?"
-}}
-"""
+        prompt = SurpriseAnalysisPrompt.format(
+            intent=intent,
+            tool=tool,
+            outcome=outcome
+        )
         
         try:
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt="Analyze the outcome against the intent. Be critical.",
-                temperature=0.0
+                system_prompt=Personas.OUTCOME_ANALYST,
+                **self.config
             )
             
             data = extract_json(response)

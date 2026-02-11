@@ -11,12 +11,12 @@ import shutil
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from .base import ForensicsAdapter, Finding, Severity
+from .base import AuditAdapter, Finding, Severity
 
 logger = logging.getLogger(__name__)
 
 
-class SemgrepAdapter(ForensicsAdapter):
+class SemgrepAdapter(AuditAdapter):
     """
     Adapter for Semgrep static analysis tool.
     

@@ -90,18 +90,18 @@ async def run_onboarding(project_root: str) -> dict:
     Returns dict with onboarding results.
     """
     from collections import Counter
-    from side.tools.core import get_database, get_auto_intel
+    from side.tools.core import get_engine, get_ai_memory
     from side.services.billing import BillingService
     
     root = Path(project_root)
-    db = get_database()
+    db = get_engine()
     
     # 1. Detect project info
     project_name = detect_project_name(root)
     stack = detect_stack(root)
     
     # 2. Get/Create Profile (this creates .side-id)
-    auto_intel = get_auto_intel()
+    auto_intel = get_ai_memory()
     profile = await auto_intel.get_or_create_profile(project_root)
     project_id = db.get_project_id()
     

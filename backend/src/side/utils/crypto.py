@@ -97,7 +97,7 @@ class CryptoShield:
             from side.storage.modules.base import ContextEngine
             from side.storage.modules.transient import SessionCache
             engine = engine or ContextEngine()
-            op_store = OperationalStore(engine)
+            op_store = SessionCache(engine)
         
         key_str = op_store.get_setting("crypto_shield_key")
         

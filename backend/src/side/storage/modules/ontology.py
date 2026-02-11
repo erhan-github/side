@@ -65,6 +65,21 @@ class OntologyStore:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_relationships_target ON relationships(target_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_relationships_type ON relationships(relation_type)")
 
+        # ─────────────────────────────────────────────────────────────
+        # CORE TABLE 3: CONCEPTS - Abstract Knowledge (Goals, Mindset)
+        # ─────────────────────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS concepts (
+                id TEXT PRIMARY KEY,
+                topic TEXT NOT NULL,
+                content TEXT NOT NULL,
+                category TEXT DEFAULT 'general',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_concepts_topic ON concepts(topic)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_concepts_category ON concepts(category)")
+
     def save_entities_batch(self, entities: List[Dict[str, Any]]) -> None:
         """Batch save structural entities."""
         with self.engine.connection() as conn:
@@ -121,4 +136,46 @@ class OntologyStore:
                 params.append(target_id)
             
             rows = conn.execute(query, params).fetchall()
+            return [dict(row) for row in rows]
+
+    def save_concept(self, topic: str, content: str, category: str = 'general') -> None:
+        """Saves or updates a high-level concept/goal."""
+        import uuid
+        with self.engine.connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO concepts (id, topic, content, category)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    content = excluded.content,
+                    category = excluded.category
+                """,
+                (str(uuid.uuid4()), topic, content, category)
+            )
+
+    def search_concepts(self, query: str) -> List[Dict[str, Any]]:
+        """Search concepts by topic or content."""
+        with self.engine.connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM concepts WHERE topic LIKE ? OR content LIKE ? ORDER BY created_at DESC",
+                (f"%{query}%", f"%{query}%")
+            ).fetchall()
+            return [dict(row) for row in rows]
+
+    def get_concept(self, topic: str) -> Dict[str, Any] | None:
+        """Fetch a specific concept by its topic."""
+        with self.engine.connection() as conn:
+            row = conn.execute(
+                "SELECT * FROM concepts WHERE topic = ? ORDER BY created_at DESC LIMIT 1",
+                (topic,)
+            ).fetchone()
+            return dict(row) if row else None
+
+    def list_concepts_by_category(self, category: str) -> List[Dict[str, Any]]:
+        """List all concepts within a specific category."""
+        with self.engine.connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM concepts WHERE category = ? ORDER BY created_at DESC",
+                (category,)
+            ).fetchall()
             return [dict(row) for row in rows]

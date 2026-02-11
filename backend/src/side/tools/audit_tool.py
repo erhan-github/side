@@ -115,19 +115,21 @@ class AuditTool:
         # Extract file paths from content to get context guidance
         context_guidance = self._extract_context_guidance(content)
         
-        from side.llm.prompts import Personas, StandardPrompts
+        from side.prompts import Personas, ForensicsTask, LLMConfigs
         
-        prompt = StandardPrompts.AUDIT_TASK.format(
+        prompt = ForensicsTask.format(
             query=query,
             content=content,
             context_guidance=context_guidance
         )
         
+        config = LLMConfigs.get_config("forensics")
+        
         try:
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
                 system_prompt=Personas.AUDIT_SPECIALIST,
-                temperature=0.0
+                **config
             )
             if "PASS" in response:
                 return None

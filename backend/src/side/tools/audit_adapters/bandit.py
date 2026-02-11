@@ -4,11 +4,11 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .base import Finding, ForensicsAdapter, Severity
+from .base import Finding, AuditAdapter, Severity
 
 logger = logging.getLogger(__name__)
 
-class BanditAdapter(ForensicsAdapter):
+class BanditAdapter(AuditAdapter):
     """
     Adapter for Bandit (Python Security Scanner).
     Provides deep Python-specific analysis for SQL injection, shell injection, etc.

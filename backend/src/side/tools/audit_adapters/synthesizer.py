@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 from .base import Finding
 from side.llm.client import LLMClient
 from side.utils.llm_helpers import extract_json
+from side.prompts import Personas, AuditSynthesisPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
@@ -11,10 +12,11 @@ class AuditSynthesizer:
     Sidelith's Core Moat - The LLM Synthesis Layer.
     Transforms raw security scanner findings into contextual explanations and actionable fixes.
     """
-
+    
     def __init__(self):
         # We use 'reasoning' purpose to get high-quality explanations
         self.llm = LLMClient(purpose="reasoning")
+        self.config = LLMConfigs.get_config("audit_synthesis")
 
     async def synthesize(self, findings: List[Finding]) -> List[Finding]:
         """
@@ -64,33 +66,16 @@ Code:
 ```
 """)
 
-        system_prompt = """
-Analyze security scanner findings and provide:
-1. EXPLANATION: A concise, one-sentence explanation of the danger.
-2. SUGGESTED_FIX: Precise code that resolves the issue.
-3. PRIORITIZATION: Assessment of strategic impact.
-
-RULES:
-- Be technical and direct.
-- Output strictly JSON objects.
-- Ensure fixes are idiomatic and safe.
-
-Format:
-[
-  {
-    "explanation": "string",
-    "suggested_fix": "string",
-    "strategic_impact": "string"
-  }
-]
-"""
-
-        user_prompt = f"Analyze these {len(findings)} findings and provide synthesis:\n\n" + "\n".join(findings_context)
+        system_prompt = AuditSynthesisPrompt
 
         messages = [{"role": "user", "content": user_prompt}]
         
         try:
-            response_text = await self.llm.complete_async(messages, system_prompt)
+            response_text = await self.llm.complete_async(
+                messages, 
+                system_prompt=Personas.AUDIT_SYNTHESIZER,
+                **self.config
+            )
             synthesis_data = extract_json(response_text)
             
             if not synthesis_data or not isinstance(synthesis_data, list):

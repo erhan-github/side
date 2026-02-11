@@ -16,9 +16,10 @@ from side.storage.modules.transient import SessionCache
 _engine: ContextEngine | None = None
 _profile: IdentityService | None = None
 _registry: DecisionStore | None = None
-_ledger: AuditService | None = None
+_audit_log: AuditService | None = None
 _cache: SessionCache | None = None
-_context_service: ContextService | None = None
+_ai_memory: ContextService | None = None
+_billing_ledger: Any | None = None
 
 
 def get_engine() -> ContextEngine:
@@ -29,28 +30,28 @@ def get_engine() -> ContextEngine:
     return _engine
 
 
-def get_profile() -> IdentityService:
-    """Provides a thread-local IdentityService instance."""
+def get_user_profile() -> IdentityService:
+    """Provides a thread-local IdentityService instance (**User Profile**)."""
     global _profile
     if _profile is None:
         _profile = IdentityService(get_engine())
     return _profile
 
 
-def get_strategic() -> DecisionStore:
-    """Provides a thread-local DecisionStore instance."""
+def get_project_plan() -> DecisionStore:
+    """Provides a thread-local DecisionStore instance (**Project Plan**)."""
     global _registry
     if _registry is None:
         _registry = DecisionStore(get_engine())
     return _registry
 
 
-def get_ledger() -> AuditService:
-    """Provides a thread-local AuditService instance."""
-    global _ledger
-    if _ledger is None:
-        _ledger = AuditService(get_engine())
-    return _ledger
+def get_audit_log() -> AuditService:
+    """Provides a thread-local AuditService instance (**Audit Log**)."""
+    global _audit_log
+    if _audit_log is None:
+        _audit_log = AuditService(get_engine())
+    return _audit_log
 
 
 def get_cache() -> SessionCache:
@@ -61,23 +62,30 @@ def get_cache() -> SessionCache:
     return _cache
 
 
-def get_context_service() -> ContextService:
-    """Provides a thread-local ContextService instance."""
-    global _context_service
-    if _context_service is None:
-        _context_service = ContextService()
-    return _context_service
+def get_ai_memory() -> ContextService:
+    """Provides a thread-local ContextService instance (**AI Memory**)."""
+    global _ai_memory
+    if _ai_memory is None:
+        _ai_memory = ContextService()
+    return _ai_memory
 
 
-# Legacy Aliases
-get_identity = get_profile
-get_strategic = get_registry
-get_audit = get_ledger
-get_operational = get_cache
-get_auto_intel = get_context_service
+def get_billing_ledger():
+    """Provides a thread-local Billing Ledger (AccountingStore)."""
+    global _billing_ledger
+    if _billing_ledger is None:
+        from side.storage.modules.accounting import AccountingStore
+        _billing_ledger = AccountingStore(get_engine())
+    return _billing_ledger
 
 
 def get_database():
-    """Legacy compatibility bridge."""
-    from side.storage.simple_db import SimplifiedDatabase
-    return SimplifiedDatabase()
+    """Legacy compatibility bridge: REDIRECTING to engine."""
+    return get_engine()
+
+# --- Legacy Compatibility Shims (Remove in v2) ---
+def get_ledger(): return get_audit_log()
+def get_profile(): return get_user_profile()
+def get_strategic(): return get_project_plan()
+def get_context_service(): return get_ai_memory()
+def get_auto_intel(): return get_ai_memory()

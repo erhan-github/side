@@ -45,7 +45,7 @@ class SynergyEngine:
         
         # 1. Check Identity Boundaries
         profile_store = IdentityService(self.engine)
-        profile = profile_store.get_profile(self.project_id)
+        profile = profile_store.get_user_profile(self.project_id)
         
         if profile and profile.get("is_airgapped"):
             logger.warning(f"🛡️ [SYNERGY]: Project {self.project_id} is AIRGAPPED. Mesh sync disabled.")
@@ -106,7 +106,7 @@ def run_synergy_sync(project_path: Path):
     try:
         from side.tools.core import get_engine, get_profile, get_registry
         engine = get_engine()
-        profile = get_profile()
+        profile = get_user_profile()
         registry = get_registry()
         synergy = SynergyEngine(engine, profile, registry, project_path)
         return asyncio.run(synergy.harvest_mesh_patterns())

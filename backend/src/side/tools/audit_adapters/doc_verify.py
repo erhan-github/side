@@ -7,17 +7,17 @@ import re
 import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from side.tools.forensics.base import ForensicsAdapter, Finding, Severity
+from .base import AuditAdapter, Finding, Severity
 from side.storage.modules.base import ContextEngine
-from side.storage.modules.identity import IdentityStore
+from side.storage.modules.identity import IdentityService
 
 logger = logging.getLogger(__name__)
 
-class DocVerifyAdapter(ForensicsAdapter):
+class DocVerifyAdapter(AuditAdapter):
     def __init__(self, project_path: Path):
         super().__init__(project_path)
         self.engine = ContextEngine()
-        self.identity = IdentityStore(self.engine)
+        self.identity = IdentityService(self.engine)
 
     def is_available(self) -> bool:
         """Always available as it uses internal regex/logic."""
@@ -35,7 +35,7 @@ class DocVerifyAdapter(ForensicsAdapter):
         
         # 1. Get Structural Reality
         project_id = ContextEngine.get_project_id(self.project_path)
-        profile = self.identity.get_profile(project_id)
+        profile = self.identity.get_user_profile(project_id)
         if not profile:
             logger.warning("DocVerify: No profile found for project.")
             return []

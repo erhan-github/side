@@ -24,7 +24,7 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     4. LLM synthesizes remediation (Phase 4)
     """
     import asyncio
-    from side.tools.core import get_database
+    from side.tools.core import get_engine
     from side.intel.language_detector import detect_primary_languages
     from side.tools.audit_adapters import (
         SemgrepAdapter, 
@@ -41,8 +41,8 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     project_path = get_repo_root()
     
     # Charge for Audit (10 SUs)
-    from side.tools.core import get_database
-    db = get_database()
+    from side.tools.core import get_engine
+    db = get_engine()
     project_id = db.get_project_id()
     
     if not db.identity.charge_action(project_id, "SYSTEM_AUDIT"):
@@ -121,7 +121,7 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
         all_findings[i] = sr
     
     # 5. Save structured findings to database
-    db = get_database()
+    db = get_engine()
     project_id = db.get_project_id()
     
     saved_count = 0

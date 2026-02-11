@@ -12,8 +12,12 @@ This package consolidates all MCP tool handlers into focused modules:
 """
 
 from side.tools.core import (
-    get_auto_intel,
-    get_database,
+    get_ai_memory,
+    get_audit_log,
+    get_billing_ledger,
+    get_project_plan,
+    get_user_profile,
+    get_engine,
 )
 from side.tools.definitions import TOOLS
 from side.tools.router import handle_tool_call
@@ -21,6 +25,10 @@ from side.tools.router import handle_tool_call
 __all__ = [
     "TOOLS",
     "handle_tool_call",
-    "get_auto_intel",
-    "get_database",
+    "get_ai_memory",
+    "get_audit_log",
+    "get_billing_ledger",
+    "get_project_plan",
+    "get_user_profile",
+    "get_engine",
 ]

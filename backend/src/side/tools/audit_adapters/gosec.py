@@ -4,11 +4,11 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .base import Finding, ForensicsAdapter, Severity
+from .base import Finding, AuditAdapter, Severity
 
 logger = logging.getLogger(__name__)
 
-class GosecAdapter(ForensicsAdapter):
+class GosecAdapter(AuditAdapter):
     """
     Adapter for Gosec (Go Security Scanner).
     Checks for security issues in Go code.
