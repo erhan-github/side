@@ -3,16 +3,16 @@ import uuid
 import time
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from side.storage.modules.strategy import StrategyRegistry
+from side.storage.modules.strategy import DecisionStore
 
 logger = logging.getLogger(__name__)
 
 class MemoryManager:
     """
     The Hippocampus. Manages store and recall of strategic facts.
-    Now backed by SQLite (StrategyRegistry) for atomic, no-fat persistence.
+    Now backed by SQLite (DecisionStore) for atomic, no-fat persistence.
     """
-    def __init__(self, registry: StrategyRegistry, project_id: str = "default"):
+    def __init__(self, registry: DecisionStore, project_id: str = "default"):
         self.registry = registry
         self.project_id = project_id
         

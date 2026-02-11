@@ -15,16 +15,14 @@ class ReasoningTimeline:
     Each event is linked to its parent, forming a verifiable chain.
     """
     
-    def __init__(self, fix_id: str, ledger: Optional[Any] = None, session_id: Optional[str] = None):
+    def __init__(self, fix_id: str):
         self.fix_id = fix_id
-        self.ledger = ledger
-        self.session_id = session_id
         self.chain: List[ReasoningNode] = []
         self._head_id: Optional[str] = None
 
     def record(self, event_type: str, payload: Dict[str, Any]) -> ReasoningNode:
         """
-        Records a new event in the reasoning chain and persists it if ledger available.
+        Records a new event in the reasoning chain.
         
         Args:
             event_type: One of EventType values.
@@ -41,14 +39,6 @@ class ReasoningTimeline:
         
         self.chain.append(node)
         self._head_id = node.event_id
-        
-        # [CIP]: PALANTIR-LEVEL CAUSAL PERSISTENCE
-        if self.ledger:
-            try:
-                self.ledger.save_reasoning_node(node, session_id=self.session_id)
-                logger.info(f"💾 [TIMELINE]: Persisted {event_type} to SQLite.")
-            except Exception as e:
-                logger.error(f"❌ [TIMELINE]: Persistence failed for {node.event_id}: {e}")
         
         logger.info(f"📝 [TIMELINE]: Recorded {event_type} (chain length: {len(self.chain)})")
         return node
@@ -141,10 +131,10 @@ class TimelineManager:
     _timelines: Dict[str, ReasoningTimeline] = {}
 
     @classmethod
-    def get_or_create(cls, fix_id: str, ledger: Optional[Any] = None, session_id: Optional[str] = None) -> ReasoningTimeline:
-        """Gets an existing timeline or creates a new one with optional persistence."""
+    def get_or_create(cls, fix_id: str) -> ReasoningTimeline:
+        """Gets an existing timeline or creates a new one."""
         if fix_id not in cls._timelines:
-            cls._timelines[fix_id] = ReasoningTimeline(fix_id, ledger=ledger, session_id=session_id)
+            cls._timelines[fix_id] = ReasoningTimeline(fix_id)
         return cls._timelines[fix_id]
 
     @classmethod

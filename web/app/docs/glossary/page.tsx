@@ -14,9 +14,9 @@ const GLOSSARY_ITEMS = [
         technical: "ContextService"
     },
     {
-        term: "Project Scanner",
+        term: "DNA",
         category: "Core",
-        definition: "The component that parses your code structure using Tree-sitter AST to create a local index.",
+        definition: "Your project's structural map. Sidelith analyzes your files to understand classes, functions, and how they connect in a machine-readable format.",
         technical: "CodeIndexer"
     },
     {
@@ -50,10 +50,10 @@ const GLOSSARY_ITEMS = [
         technical: "DecisionStore"
     },
     {
-        term: "Side Units",
+        term: "Side Units (SU)",
         category: "Billing",
-        definition: "The billing unit for Sidelith operations. 1 Side Unit equals 1 AI context injection.",
-        technical: "Side Unit (SU)"
+        definition: "The standardized unit for Sidelith operations. 1 SU corresponds to a single intelligent context fulfillment.",
+        technical: "Side Unit"
     },
     {
         term: "Billing Ledger",
@@ -68,10 +68,10 @@ const GLOSSARY_ITEMS = [
         technical: "SystemEvent"
     },
     {
-        term: "Code Structure",
-        category: "Core",
-        definition: "Your code parsed into a structured format. Sidelith analyzes your files to understand classes, functions, and how they connect.",
-        technical: "DNA"
+        term: "Proprioceptor",
+        category: "Intelligence",
+        definition: "Internal system awareness that monitors Sidelith's own health, memory usage, and performance metrics.",
+        technical: "Proprioceptor"
     },
     {
         term: "System Cleanup",
@@ -86,10 +86,10 @@ const GLOSSARY_ITEMS = [
         technical: "Digital Amnesia Solution"
     },
     {
-        term: "Local Index",
+        term: "Tree-sitter Indexing",
         category: "Concept",
-        definition: "The parsed code structure stored locally on your machine in the .side/ directory.",
-        technical: "Fractal Memory"
+        definition: "High-precision code parsing that understands the actual structure of your code rather than just treating it as text.",
+        technical: "AST Analysis"
     },
     {
         term: "Prompt Builder",
@@ -146,10 +146,16 @@ const GLOSSARY_ITEMS = [
         technical: "IDE Integration"
     },
     {
+        term: "Sidelith Lobe",
+        category: "Concept",
+        definition: "The global intelligence network that facilitates cross-project wisdom sharing while preserving local privacy.",
+        technical: "Global Lobe"
+    },
+    {
         term: "Local-First",
         category: "Concept",
-        definition: "A design philosophy where data stays on the user's machine. Sidelith does not upload your source code to the cloud.",
-        technical: "Zero-Leak Isolation"
+        definition: "A design philosophy where data stays on your machine. Sidelith ensures zero-leak isolation, meaning your code is never used for training.",
+        technical: "Sovereign Privacy"
     }
 ];
 

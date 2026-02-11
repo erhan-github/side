@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from side.storage.modules.strategy import StrategyRegistry
+from side.storage.modules.strategy import DecisionStore
 from side.utils.llm_helpers import extract_json
 from side.prompts import Personas, StrategicFrictionPrompt, LLMConfigs
 
@@ -21,7 +21,7 @@ class ProactiveService:
     Checks for TODO/HACK comments and cross-references them with active goals.
     """
 
-    def __init__(self, registry: StrategyRegistry, project_path: Path):
+    def __init__(self, registry: DecisionStore, project_path: Path):
         self.strategic = registry # Normalized name
         self.project_path = project_path
         self.config = LLMConfigs.get_config("strategic_auditor")

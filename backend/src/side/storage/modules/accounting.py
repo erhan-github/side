@@ -87,7 +87,7 @@ class AccountingStore:
     
     # Task-type cost mapping (base algorithmic costs)
     ALGO_MULTIPLIERS = {
-        "fractal_search": 2.0,      # Fast fractal index search
+        "dna_search": 2.0,          # Fast structural search
         "ast_extraction": 1.5,      # Python AST symbol extraction
         "intent_correlation": 3.0,  # Strategic linking (SQL + fuzzy match)
         "pulse_scan": 0.5,          # Regex pre-commit validation
