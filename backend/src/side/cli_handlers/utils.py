@@ -13,8 +13,8 @@ def get_user_profile(engine):
     return IdentityService(engine)
 
 def get_project_plan(engine):
-    from side.storage.modules.strategy import DecisionStore
-    return DecisionStore(engine)
+    from side.storage.modules.strategy import StrategicStore
+    return StrategicStore(engine)
 
 def get_audit_log(engine):
     from side.storage.modules.audit import AuditService

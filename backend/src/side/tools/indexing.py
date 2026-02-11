@@ -8,7 +8,7 @@ import asyncio
 from pathlib import Path
 from typing import Any
 
-from side.intel.auto_intelligence import ContextService
+from side.intel.context_service import ContextService
 from side.storage.modules.base import ContextEngine
 
 from side.utils.paths import get_repo_root

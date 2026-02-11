@@ -12,9 +12,9 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-from side.models.physics import HealthStatus, HealthResult
+from side.models.metrics import HealthStatus, HealthResult
 
-# [MIGRATED]: HealthStatus and HealthResult are now Pydantic Models in side.models.physics
+# [MIGRATED]: HealthStatus and HealthResult are now Pydantic Models in side.models.metrics
 
 
 @dataclass

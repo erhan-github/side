@@ -58,7 +58,7 @@ async def handle_check(arguments: dict[str, Any]) -> str:
 
     # STRATEGIC OUTCOME: Record Directive Fulfillment
     try:
-        db.forensic.log_activity(
+        db.audit.log_activity(
             project_id=db.get_project_id(),
             tool="instrumentation",
             action=f"Directive Fulfilled: {matching['title'][:30]}",
@@ -86,7 +86,7 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     # LOG COMPLETION
     try:
         profile = db.identity.get_user_profile(db.get_project_id())
-        db.forensic.log_activity(
+        db.audit.log_activity(
             project_id=db.get_project_id(),
             tool="check",
             action=f"Completed: {matching['title'][:50]}{'...' if len(matching['title']) > 50 else ''}",
@@ -129,7 +129,7 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
             # LOG AUTO-COMPLETION
             try:
                 profile = db.identity.get_user_profile(db.get_project_id())
-                db.forensic.log_activity(
+                db.audit.log_activity(
                     project_id=db.get_project_id(),
                     tool="plan",
                     action=f"Auto-alignment: {d['goal_title'][:40]}{'...' if len(d['goal_title']) > 40 else ''}",
@@ -162,7 +162,7 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         # LOG NEW PLAN
         try:
             profile = db.identity.get_user_profile(db.get_project_id())
-            db.forensic.log_activity(
+            db.audit.log_activity(
                 project_id=db.get_project_id(),
                 tool="plan",
                 action=f"INTENTION CAPTURE: {goal_text[:50]}{'...' if len(goal_text) > 50 else ''}",

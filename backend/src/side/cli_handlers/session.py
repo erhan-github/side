@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 from side.tools.core import get_engine, get_ledger
 from side.intel.session_manager import SessionManager
-from side.intel.rewind_engine import RewindEngine
+from side.intel.history_player import HistoryPlayer
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def handle_session(args: argparse.Namespace):
         confirm = input("   Are you sure? (type 'rewind' to confirm): ")
         
         if confirm == "rewind":
-            rewinder = RewindEngine(project_path, audit)
+            player = HistoryPlayer(project_path, audit)
             # We need the start_commit for this session. 
             # In a real impl, we'd query the DB/Session Ledger to find the start_commit for this SID.
             # For this MVP, we might need to load it from disk or assume the user provides the commit?
@@ -107,7 +107,7 @@ def handle_session(args: argparse.Namespace):
                     return
                 
                 if start_commit:
-                    result = rewinder.rewind_to_session_start(sid, start_commit)
+                    result = player.rollback_to_session(sid, start_commit)
                     if result["success"]:
                         print(f"✅ Rewind Successful. You are now back at {start_commit[:8]}.")
                     else:

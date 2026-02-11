@@ -4,18 +4,18 @@ sideMCP Tools Core.
 Single source of truth for auto-intelligence, database, and market analyzer.
 """
 
-from side.intel.auto_intelligence import ContextService
+from side.intel.context_service import ContextService
 
 from side.storage.modules.base import ContextEngine
 from side.storage.modules.identity import IdentityService
-from side.storage.modules.strategy import DecisionStore
+from side.storage.modules.strategy import StrategicStore
 from side.storage.modules.audit import AuditService
 from side.storage.modules.transient import SessionCache
 
 # Global singletons - initialized lazily
 _engine: ContextEngine | None = None
 _profile: IdentityService | None = None
-_registry: DecisionStore | None = None
+_registry: StrategicStore | None = None
 _audit_log: AuditService | None = None
 _cache: SessionCache | None = None
 _ai_memory: ContextService | None = None
@@ -38,11 +38,11 @@ def get_user_profile() -> IdentityService:
     return _profile
 
 
-def get_project_plan() -> DecisionStore:
-    """Provides a thread-local DecisionStore instance (**Project Plan**)."""
+def get_project_plan() -> StrategicStore:
+    """Provides a thread-local StrategicStore instance (**Project Plan**)."""
     global _registry
     if _registry is None:
-        _registry = DecisionStore(get_engine())
+        _registry = StrategicStore(get_engine())
     return _registry
 
 
