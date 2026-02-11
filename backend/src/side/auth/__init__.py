@@ -1,4 +1,7 @@
-"""Side Auth - Supabase-based authentication."""
+"""
+Sidelith Authentication Service.
+Provides Supabase-backed identity verification and token management.
+"""
 from .supabase_auth import (
     validate_api_key,
     get_api_key_from_header,

@@ -1,6 +1,6 @@
 """
-Sidelith Intelligence Package - Optimized Exports.
-This module provides a clean, standardized API for all intelligence components.
+Sidelith Intelligence Package.
+The core reasoning and orchestration layer for project-aware context extraction.
 """
 
 from .context_service import ContextService
