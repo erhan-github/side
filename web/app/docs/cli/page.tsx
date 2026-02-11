@@ -40,7 +40,7 @@ export default function CliPage() {
                                             {[
                                                 {
                                                     cmd: "side wizard",
-                                                    desc: "Interactive setup (detects IDEs, indexes project)"
+                                                    desc: "Run interactive setup wizard"
                                                 },
                                                 {
                                                     cmd: "side login",
