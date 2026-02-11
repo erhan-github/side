@@ -69,8 +69,8 @@ export default function DashboardPage() {
                 {/* Header Area */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight mb-2">Usage Overview</h1>
-                        <p className="text-zinc-500 text-sm">Account usage and operational telemetry.</p>
+                        <h1 className="text-3xl font-bold tracking-tight mb-2">Dashboard</h1>
+                        <p className="text-zinc-500 text-sm">Your Side Unit usage and account status.</p>
                     </div>
 
                     <div className="flex gap-4 p-4 rounded-xl bg-zinc-900/50 border border-white/5">
@@ -117,22 +117,6 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* Efficiency Card */}
-                    <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-6">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                                <Activity className="w-5 h-5 text-emerald-400" />
-                            </div>
-                            <span className="text-[10px] uppercase text-zinc-500 tracking-widest font-bold">Context Efficiency</span>
-                        </div>
-
-                        <div className="space-y-1">
-                            <div className="text-4xl font-bold text-white">{stats?.efficiency}%</div>
-                            <p className="text-xs text-zinc-500 leading-relaxed font-mono">
-                                Local Indexing saved <span className="text-emerald-400/80">{stats?.saved_tokens?.toLocaleString() || 0} tokens</span>.
-                            </p>
-                        </div>
-                    </div>
 
                     {/* Quick Upgrade/Promotion */}
                     {stats?.tier?.toUpperCase() !== "ELITE" && (
@@ -165,7 +149,7 @@ export default function DashboardPage() {
 
                 <div className="pt-12 border-t border-white/5 text-center">
                     <p className="text-[10px] text-zinc-700 font-mono uppercase tracking-[0.2em]">
-                        Sidelith Intelligence Layer · v1.1.0 · Stockholm Active
+                        Sidelith v1.1.0
                     </p>
                 </div>
             </div>
