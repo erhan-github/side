@@ -1,7 +1,19 @@
 import os
 from pathlib import Path
-from typing import List, Optional
-import pathspec
+from typing import List, Optional, Any
+
+try:
+    import pathspec
+except ImportError:
+    pathspec = None
+
+class FallbackSpec:
+    """Safe fallback if pathspec is unavailable."""
+    def match_file(self, path: str) -> bool:
+        return False
+    @staticmethod
+    def from_lines(style, patterns):
+        return FallbackSpec()
 
 class IgnoreStore:
     """
@@ -13,8 +25,11 @@ class IgnoreStore:
         self.root_path = Path(root_path).resolve()
         self.spec = self._load_all_gitignores()
 
-    def _load_all_gitignores(self) -> pathspec.PathSpec:
+    def _load_all_gitignores(self) -> Any:
         """Finds and combines all .gitignore files from the root downwards."""
+        if pathspec is None:
+            return FallbackSpec()
+
         patterns = []
         # Standard Sidelith ignores
         patterns.extend([
