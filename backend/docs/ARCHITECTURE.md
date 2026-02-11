@@ -1,152 +1,110 @@
-# Side Architecture
+# Sidelith Architecture
 
-> **"Grammarly for Strategy"** - A silent, always-on Strategic Language Server for modern IDEs.
+> **"AI Memory for your Codebase"** - A local-first, privacy-focused context injection engine.
 
 ## System Overview
 
 ```mermaid
 graph TB
-    subgraph IDE["🖥️ IDE (Cursor/Windsurf)"]
+    subgraph IDE["🖥️ IDE (Cursor/VS Code)"]
         User[Developer]
         Chat[AI Chat]
     end
     
     subgraph MCP["📡 MCP Server"]
         Router[Tool Router]
-        Tools[6 Strategic Tools]
+        Tools[Dynamic Toolset]
     end
     
     subgraph Intel["🧠 Intelligence Layer"]
-        FE[ForensicEngine]
-        IS[IntelligenceStore]
-        Strategist[Strategist LLM]
+        CS[ContextService]
+        LB[LogMonitor]
+        SA[SystemAwareness]
     end
     
     subgraph Storage["💾 Local Storage"]
-        DB[(SQLite)]
+        DB[(SQLite / WAL)]
+        MM[Mmap Pattern Store]
     end
     
     subgraph Dashboard["🌐 Web Dashboard"]
-        API[/api/forensics]
+        API[/api/metrics]
         UI[Dashboard UI]
     end
     
-    User -->|"ask strategic questions"| Chat
+    User -->|"ask code questions"| Chat
     Chat -->|"MCP protocol"| Router
     Router --> Tools
-    Tools --> FE
-    Tools --> Strategist
-    FE --> IS
-    IS --> DB
+    Tools --> CS
+    CS --> DB
     
-    API -->|"fetch findings"| IS
+    LB -->|"log events"| DB
+    SA -->|"health alerts"| DB
+    
+    API -->|"fetch stats"| DB
     UI -->|"display"| API
 ```
 
-## DRY Architecture: Single Source of Truth
+## Layered Architecture
 
-```mermaid
-flowchart LR
-    subgraph Detection["Layer 1: Detection"]
-        FE[ForensicEngine]
-    end
-    
-    subgraph Intelligence["Layer 2: Intelligence"]
-        IS[IntelligenceStore]
-        IQ[Strategic IQ]
-    end
-    
-    subgraph Delivery["Layer 3: Adapters"]
-        MCP[MCP Server]
-        API[Dashboard API]
-        CLI[CLI Tool]
-    end
-    
-    FE -->|"Finding[]"| IS
-    IS --> IQ
-    IS --> MCP
-    IS --> API
-    IS --> CLI
-```
+### Layer 1: Ingestion & Monitoring
+- **FileWatcher**: Real-time detection of filesystem changes.
+- **LogMonitor**: Scavenges system and application logs for error context.
+- **TreeIndexer**: High-precision AST parsing using Tree-sitter to build the project structural map.
 
-**Key Principle**: All intelligence flows through `IntelligenceStore`. No adapter does its own analysis.
+### Layer 2: Intelligence & Orchestration
+- **ContextService**: The central hub for gathering and injecting project context.
+- **PromptBuilder**: Constructively gathers code fragments and rules to build optimized LLM prompts.
+- **SystemAwareness**: Monitors local system health and environment state.
+- **PatternAnalyzer**: Identifies recurring code patterns and violations.
+
+### Layer 3: Delivery (Adapters)
+- **MCP Server**: Provides a standardized interface for AI tools via the Model Context Protocol.
+- **CLI**: Standard commands (`side connect`, `side audit`) for developer interaction.
+- **Web UI**: Provides visual insights into project stats and system health.
 
 ## Core Components
 
-### ForensicEngine (`intel/forensic_engine.py`)
-- **Purpose**: AST-based code analysis for architectural violations & deployment risks
-- **Detections**: Stale docs, complexity, security holes, over-engineering, **Deployment Gotchas**
-- **Output**: Structured `Finding` objects
+### ContextService (`intel/context_service.py`)
+- **Purpose**: Core orchestrator for all intelligence operations.
+- **Responsibility**: Delegating to specialized handlers for indexing, history analysis, and context gathering.
 
-### IntelligenceStore (`intel/intelligence_store.py`)
-- **Purpose**: Persistence and aggregation of findings
-- **Features**: Strategic IQ calculation, finding resolution, stats
-- **Storage**: Local SQLite database
+### TreeIndexer (`intel/tree_indexer.py`)
+- **Purpose**: Fast, incremental indexing of code structure.
+- **Responsibility**: Extracting classes, functions, and technological "signals" without full file parsing.
 
-### MCP Server (`mcp_server.py`)
-- **Purpose**: Expose intelligence as IDE tools
-- **Tools**: 6 strategic tools (decide, strategy, plan, check, simulate, audit)
-- **Protocol**: Model Context Protocol (stdio)
+### CodeMonitor (`intel/code_monitor.py`)
+- **Purpose**: Watches for structural changes and updates the index.
+- **Responsibility**: Ensuring the "Project DNA" remains in sync with the live code.
 
-### Tools Package (`tools/`)
-- **Modular structure**: core, definitions, router, strategy, planning, simulation, audit
-- **DRY**: Shared utilities in `core.py`, formatting in `formatting.py`
+### SchemaStore (`storage/modules/schema.py`)
+- **Purpose**: Persistence layer for structural code maps (Ontology).
+- **Responsibility**: Storing and retrieving code entities and their relationships.
 
-## Data Flow
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant IDE as IDE (Cursor)
-    participant MCP as MCP Server
-    participant FE as ForensicEngine
-    participant IS as IntelStore
-    participant DB as SQLite
-    
-    Dev->>IDE: "audit my code"
-    IDE->>MCP: call_tool("run_audit")
-    MCP->>FE: scan()
-    FE->>FE: AST analysis
-    FE-->>MCP: Finding[]
-    MCP->>IS: store_findings()
-    IS->>DB: persist
-    IS-->>MCP: stats
-    MCP-->>IDE: formatted report
-    IDE-->>Dev: 🔍 Strategic IQ: 142
-```
-
-## Security Model
-
-- **Local-First**: All data stored in local SQLite (`.side/local.db`)
-- **No Cloud Leaks**: Sensitive keys stripped before subprocess calls
-- **RLS Enforcement**: ForensicEngine detects missing Row Level Security
+## Security & Privacy
+- **Local-First**: All indexing and context storage remains in the `.side/` directory.
+- **Zero-Trust**: No code is transmitted to external servers for indexing.
+- **Privacy Masking**: Pattern Sync anonymizes coding patterns before any optional cloud sharing.
 
 ## File Structure
 
 ```
 side/
 ├── src/side/
-│   ├── tools/              # Modular tool handlers
-│   │   ├── __init__.py
-│   │   ├── core.py         # Singletons
-│   │   ├── definitions.py  # Tool schemas
-│   │   ├── router.py       # Dispatch
-│   │   ├── strategy.py     # decide, strategy
-│   │   ├── planning.py     # plan, check
-│   │   ├── simulation.py   # simulate
-│   │   ├── audit.py        # run_audit
-│   │   └── formatting.py   # Output formatting
-│   ├── intel/
-│   │   ├── forensic_engine.py    # AST-based detection
-│   │   ├── intelligence_store.py # Persistence layer
-│   │   ├── strategist.py         # LLM reasoning
+│   ├── intel/              # Intelligence modules
+│   │   ├── context_service.py
+│   │   ├── tree_indexer.py
+│   │   ├── system_awareness.py
 │   │   └── ...
-│   ├── storage/
-│   │   └── simple_db.py    # SQLite wrapper
-│   ├── server.py           # Main MCP server entry
-│   └── mcp_server.py       # Alternative MCP server
-├── docs/
-│   └── ARCHITECTURE.md     # This file
-├── tests/
-└── README.md
+│   ├── storage/            # Persistence modules
+│   │   ├── modules/
+│   │   │   ├── strategy.py
+│   │   │   ├── audit.py
+│   │   │   └── schema.py
+│   │   └── simple_db.py
+│   ├── services/           # Background services
+│   │   ├── file_watcher.py
+│   │   └── ...
+│   ├── server.py           # MCP Server Entry
+│   └── cli.py              # CLI Entry
 ```

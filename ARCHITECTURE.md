@@ -6,16 +6,15 @@ This document provides a deep dive into the internal components and engineering 
 
 ## Core Components
 
-### 1. Context Manager
-*   **Component**: `ContextManager` (`backend/src/side/intel/auto_intelligence.py`)
-*   **Function**: The central service that orchestrates context retrieval. It dynamically selects the most relevant "Context Slice" based on the user's current task.
+*   **Component**: `ContextService` (`backend/src/side/intel/context_service.py`)
+*   **Function**: The central service that orchestrates context retrieval. It dynamically selects the most relevant "Context Snapshot" based on the user's current task.
 *   **Sub-Systems**:
     *   **StructureParser**: Extracts classes and functions from code.
     *   **PromptBuilder**: Constructs clear prompts for the LLM.
     *   **ContextJanitor**: Manages stale or irrelevant context.
 
 ### 2. Code Indexing
-*   **Component**: `CoreIndexer` (`backend/src/side/intel/fractal_indexer.py`)
+*   **Component**: `TreeIndexer` (`backend/src/side/intel/tree_indexer.py`)
 *   **Algorithm**: Incremental Tree-sitter parsing for high-frequency pattern matching.
 *   **Data Structure**: **Checksum-validated** structure using `local.json` files in every directory.
 *   **Throughput**: Optimized for Apple Silicon (ARM NEON) via SIMD instructions.
@@ -36,7 +35,7 @@ This document provides a deep dive into the internal components and engineering 
 *   **Capabilities**: Allows for history tracking by reconstructing the exact context state that led to a specific decision.
 
 ### 5. Reasoning Logs
-*   **Component**: `ReasoningTimeline` (`backend/src/side/intel/reasoning_timeline.py`)
+*   **Component**: `SessionAnalyzer` (`backend/src/side/intel/session_analyzer.py`)
 *   **Function**: Manages a log for every verified fix.
 *   **Integrity**: Each event node is linked to its parent, ensuring the history of decisions is preserved.
 
@@ -48,8 +47,8 @@ Sidelith uses a specific set of runtime files to manage state.
 
 | Artifact | File Type | Purpose | Source |
 |:---------|:----------|:--------|:-------|
-| **Intent Store** | `data.db` (SQLite) | Relational store for user intent, audits, and facts. | `backend/src/side/config.py` |
-| **Index Cache** | `local.json` | Directory-level semantic index & checksums. | `backend/src/side/intel/fractal_indexer.py` |
+| **Goal Tracker** | `data.db` (SQLite) | Relational store for user goals, audits, and facts. | `backend/src/side/config.py` |
+| **Index Cache** | `local.json` | Directory-level semantic index & checksums. | `backend/src/side/intel/tree_indexer.py` |
 | **Project Anchor** | `project.json` | Identity anchor for project connectivity. | `backend/src/side/pulse.py` |
 
 ---
@@ -60,7 +59,7 @@ Sidelith uses a specific set of runtime files to manage state.
 |:-----------|:------------------|:-------------------|
 | **Policy-as-Code** | `RuleEngine` (Regex/AST) | Blocks architectural drift (e.g., "No API Keys in Commit"). |
 | **AST Analysis** | Tree-sitter AST Analysis | Indexes the meaning of code (Classes, Functions), not just text. |
-| **Context Persistence** | `ContextManager` + `data.db` | The system remembers architectural decisions across sessions. |
+| **Context Persistence** | `ContextService` + `data.db` | The system remembers architectural decisions across sessions. |
 | **History Tracking** | `LedgerStore` (SQLite) | Reconstructs the reasoning chain to prevent context regression. |
 | **Ready-to-Use** | `curl | sh` pipeline | Achieves a ready state in <15s, bridging local IDEs. |
 | **Performance** | Adaptive Throttling | Minimal CPU impact during background scanning. |
