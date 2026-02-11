@@ -28,8 +28,8 @@ This document provides a deep dive into the internal components and engineering 
 *   **Configuration**: Reads rules from `.side/rules/`.
 
 ### 4. Activity Ledger Store
-*   **Component**: `LedgerStore` (`backend/src/side/storage/modules/audit.py`)
-*   **Storage**: SQLite (`data.db`).
+*   **Component**: `EventLogger` (`backend/src/side/services/event_logger.py`)
+*   **Storage**: SQLite (`data.db`) via `AuditService`.
 *   **Schema**:
     *   `audits`: A log of every rule violation and AI interaction.
 *   **Capabilities**: Allows for history tracking by reconstructing the exact context state that led to a specific decision.
@@ -63,7 +63,8 @@ Sidelith uses a specific set of runtime files to manage state.
 | **History Tracking** | `LedgerStore` (SQLite) | Reconstructs the reasoning chain to prevent context regression. |
 | **Ready-to-Use** | `curl | sh` pipeline | Achieves a ready state in <15s, bridging local IDEs. |
 | **Performance** | Adaptive Throttling | Minimal CPU impact during background scanning. |
-| **Log Management** | `log_scavenger.py` | Correlates logs from various stacks to reconstruct failure states. |
+| **Log Management** | `EventLogger` | Correlates logs from various stacks to reconstruct failure states. |
+| **Background Engine** | `BackgroundService` | Orchestrates non-blocking tasks like indexing and health checks. |
 
 ---
 

@@ -50,6 +50,7 @@ graph TB
 ### Layer 1: Ingestion & Monitoring
 - **FileWatcher**: Real-time detection of filesystem changes.
 - **LogMonitor**: Scavenges system and application logs for error context.
+- **EventLogger**: Records all project activities and AI interactions for the local audit trail.
 - **TreeIndexer**: High-precision AST parsing using Tree-sitter to build the project structural map.
 
 ### Layer 2: Intelligence & Orchestration
@@ -57,6 +58,7 @@ graph TB
 - **PromptBuilder**: Constructively gathers code fragments and rules to build optimized LLM prompts.
 - **SystemAwareness**: Monitors local system health and environment state.
 - **PatternAnalyzer**: Identifies recurring code patterns and violations.
+- **BackgroundService**: Orchestrates non-blocking project intelligence tasks.
 
 ### Layer 3: Delivery (Adapters)
 - **MCP Server**: Provides a standardized interface for AI tools via the Model Context Protocol.

@@ -17,13 +17,13 @@ const GLOSSARY_ITEMS = [
         term: "DNA",
         category: "Core",
         definition: "Your project's structural map. Sidelith analyzes your files to understand classes, functions, and how they connect in a machine-readable format.",
-        technical: "CodeIndexer"
+        technical: "TreeIndexer"
     },
     {
         term: "Code Rules",
         category: "Security",
         definition: "Your team's coding standards and patterns (e.g., 'Always use TypeScript strict mode').",
-        technical: "Rule Store"
+        technical: "SchemaStore"
     },
     {
         term: "Audit Log",
@@ -35,7 +35,7 @@ const GLOSSARY_ITEMS = [
         term: "Project Documentation",
         category: "Intelligence",
         definition: "Your README and docs that explain what your project does. Sidelith reads these to understand your goals.",
-        technical: "Documentation Scanner"
+        technical: "GoalTracker"
     },
     {
         term: "User Profile",
@@ -47,7 +47,7 @@ const GLOSSARY_ITEMS = [
         term: "Project Plan",
         category: "Intelligence",
         definition: "The store for long-term project decisions and roadmap items.",
-        technical: "DecisionStore"
+        technical: "StrategicStore"
     },
     {
         term: "Side Units (SU)",
@@ -77,7 +77,7 @@ const GLOSSARY_ITEMS = [
         term: "System Cleanup",
         category: "System",
         definition: "Routine maintenance service that performs cleanup and optimization of the local index.",
-        technical: "MaintenanceService"
+        technical: "ContextEngine"
     },
     {
         term: "Persistent Context",
@@ -168,6 +168,24 @@ const GLOSSARY_ITEMS = [
         category: "Security",
         definition: "Code that breaks your team's standards or architectural rules.",
         technical: "Rule Engine"
+    },
+    {
+        term: "Context Snapshot",
+        category: "Core",
+        definition: "The atomic state of project intelligence injected into the AI tool. Contains the relevant code, rules, and historical context needed for a specific task.",
+        technical: "ContextSnapshot"
+    },
+    {
+        term: "Event Logger",
+        category: "System",
+        definition: "A resilient background recorder that tracks every project activity and AI interaction for auditability and reasoning reconstruction.",
+        technical: "EventLogger"
+    },
+    {
+        term: "Background Service",
+        category: "System",
+        definition: "A dedicated process for handling non-blocking project intelligence tasks like indexing and health monitoring.",
+        technical: "BackgroundService"
     }
 ];
 
