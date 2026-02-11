@@ -11,7 +11,7 @@ export default async function DashboardLayout({
     const user = await getAuthenticatedUser();
 
     return (
-        <div className="flex min-h-screen bg-[#000000] text-foreground">
+        <div className="flex min-h-screen bg-[#050505] text-foreground">
             <CreditReviver userId={user?.id || ""} />
             <GlobalSidebar />
             <main className="flex-1 overflow-y-auto h-screen bg-[#050505]">

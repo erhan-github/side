@@ -20,10 +20,10 @@ const GLOSSARY_ITEMS = [
         technical: "CodeIndexer"
     },
     {
-        term: "Code Guard",
+        term: "Code Rules",
         category: "Security",
-        definition: "Enforces security and architectural policies in real-time to prevent unauthorized access or bad patterns.",
-        technical: "RuleEngine"
+        definition: "Your team's coding standards and patterns (e.g., 'Always use TypeScript strict mode').",
+        technical: "Rule Store"
     },
     {
         term: "Audit Log",
@@ -32,10 +32,10 @@ const GLOSSARY_ITEMS = [
         technical: "AuditService"
     },
     {
-        term: "Goal Extractor",
+        term: "Project Documentation",
         category: "Intelligence",
-        definition: "Scans project documentation to extract and understand project goals and architectural decisions.",
-        technical: "DocScanner"
+        definition: "Your README and docs that explain what your project does. Sidelith reads these to understand your goals.",
+        technical: "Documentation Scanner"
     },
     {
         term: "User Profile",
@@ -68,10 +68,10 @@ const GLOSSARY_ITEMS = [
         technical: "SystemEvent"
     },
     {
-        term: "Proprioceptor",
+        term: "System Health",
         category: "Intelligence",
         definition: "Internal system awareness that monitors Sidelith's own health, memory usage, and performance metrics.",
-        technical: "Proprioceptor"
+        technical: "SystemAwareness"
     },
     {
         term: "System Cleanup",
@@ -146,20 +146,32 @@ const GLOSSARY_ITEMS = [
         technical: "IDE Integration"
     },
     {
-        term: "Sidelith Lobe",
-        category: "Concept",
-        definition: "The global intelligence network that facilitates cross-project wisdom sharing while preserving local privacy.",
-        technical: "Global Lobe"
+        term: "Project Timeline",
+        category: "Analysis",
+        definition: "Chronological history of your project's development. Tracks major changes and decisions over time.",
+        technical: "Timeline Store"
     },
     {
-        term: "Local-First",
-        category: "Concept",
-        definition: "A design philosophy where data stays on your machine. Sidelith ensures zero-leak isolation, meaning your code is never used for training.",
-        technical: "Sovereign Privacy"
+        term: "Pattern Sync",
+        category: "Intelligence",
+        definition: "Shares anonymized coding patterns to improve AI suggestions. Can be disabled in Settings.",
+        technical: "Cloud Sync"
+    },
+    {
+        term: "Error Context",
+        category: "Analysis",
+        definition: "Code surrounding an error (±10 lines) to help understand what went wrong.",
+        technical: "Error Monitor"
+    },
+    {
+        term: "Pattern Violations",
+        category: "Security",
+        definition: "Code that breaks your team's standards or architectural rules.",
+        technical: "Rule Engine"
     }
 ];
 
-const CATEGORIES = ["All", "Core", "Security", "Intelligence", "Billing", "System", "Concept", "Protocol", "Tool"];
+const CATEGORIES = ["All", "Core", "Security", "Intelligence", "Analysis", "Billing", "System", "Concept", "Protocol", "Tool"];
 
 export default function GlossaryPage() {
     const [search, setSearch] = useState("");

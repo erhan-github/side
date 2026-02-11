@@ -6,7 +6,7 @@ import { ProblemSection } from "@/components/landing/ProblemSection";
 import { MiddlewareFlow } from "@/components/landing/MiddlewareFlow";
 import { StruggleBento } from "@/components/landing/StruggleBento";
 import { ComparisonGallery } from "@/components/landing/ComparisonGallery";
-import { IntelligenceLoop } from "@/components/landing/IntelligenceLoop";
+import { ContextFlow } from "@/components/landing/ContextFlow";
 import { DefensiveMoats } from "@/components/landing/DefensiveMoats";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { InstallSection } from "@/components/landing/InstallSection";
@@ -22,7 +22,7 @@ export default function LandingPage() {
                 <MiddlewareFlow />
                 <StruggleBento />
                 <ComparisonGallery />
-                <IntelligenceLoop />
+                <ContextFlow />
                 <DefensiveMoats />
                 <PricingSection />
                 <InstallSection />

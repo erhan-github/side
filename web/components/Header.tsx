@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -19,11 +20,7 @@ export function Header() {
             <nav className="max-w-7xl mx-auto px-6 py-4">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="text-2xl font-bold bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent group-hover:from-emerald-500 group-hover:to-blue-500 transition-all duration-300">
-                            Sidelith
-                        </div>
-                    </Link>
+                    <BrandLogo />
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-8">

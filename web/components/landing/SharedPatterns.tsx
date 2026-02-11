@@ -1,6 +1,6 @@
 import { Activity } from "lucide-react";
 
-export function CollectiveIntelligence() {
+export function SharedPatterns() {
     return (
         <section className="section-spacing w-full max-w-4xl px-6 py-20 bg-gradient-to-b from-white/[0.02] to-transparent rounded-[40px] border border-white/5 relative z-10 mb-32">
             <div className="flex flex-col items-center text-center">

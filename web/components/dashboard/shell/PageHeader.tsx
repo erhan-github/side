@@ -17,7 +17,7 @@ export function PageHeader({ title, description, icon: Icon, iconColor = "text-w
                     {Icon && <Icon className={cn("w-8 h-8", iconColor)} />}
                     {title}
                 </h1>
-                <p className="text-zinc-300 max-w-xl font-medium">
+                <p className="text-zinc-500 max-w-xl font-medium">
                     {description}
                 </p>
             </div>

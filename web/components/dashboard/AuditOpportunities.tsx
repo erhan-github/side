@@ -39,8 +39,8 @@ const OPPORTUNITIES = [
         id: "ARCH-002",
         emoji: "✍️",
         title: "Enforce Layer Boundary in `intel/`",
-        desc: "Detected direct DB access in Intelligence Layer.",
-        prompt: "Check `backend/src/side/intel/strategist.py` for direct import of `SimplifiedDatabase`. This violates the layered architecture rules. Refactor to use the abstract `IntelligenceStore` repository pattern instead.",
+        desc: "Detected direct DB access in Intelligence Service.",
+        prompt: "Check `backend/src/side/intel/strategist.py` for direct import of `SimplifiedDatabase`. This violates the layered architecture rules. Refactor to use the abstract `SchemaStore` repository pattern instead.",
         impact: "Architecture Rule"
     },
     {

@@ -24,12 +24,12 @@ export default async function BillingPage() {
             />
 
             {/* Main Capacity Card */}
-            <div className="bg-[#0c0c0e] border border-white/10 rounded-2xl p-6 md:p-8 relative overflow-hidden">
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 md:p-8 relative overflow-hidden group hover:border-white/10 transition-colors">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                     {/* Left: Usage Radial/Bar */}
                     <div className="md:col-span-2 flex flex-col justify-between gap-8">
                         <div>
-                            <h3 className="text-lg font-medium text-white mb-1">Side Units Balance</h3>
+                            <h3 className="text-xl font-bold text-white mb-1">Side Units Balance</h3>
                             <p className="text-sm text-zinc-500 mb-6">Resets on {new Date(billing.capacity.resetDate).toLocaleDateString()}</p>
 
                             {/* Big Progress Bar (Segmented Style) */}
@@ -47,7 +47,7 @@ export default async function BillingPage() {
                                     )
                                 })}
                             </div>
-                            <div className="flex justify-between text-xs font-mono text-zinc-500 uppercase tracking-widest">
+                            <div className="flex justify-between text-xs text-zinc-500 uppercase tracking-[0.2em] font-medium">
                                 <span>Used: {billing.capacity.used.toLocaleString()} SU</span>
                                 <span>Limit: {billing.capacity.limit.toLocaleString()} SU</span>
                             </div>
@@ -59,8 +59,8 @@ export default async function BillingPage() {
                         <div className="space-y-3 pt-4">
                             <RefuelAction />
                             <div className="text-center">
-                                <span className="text-xs text-zinc-500">Unbilled: </span>
-                                <span className="text-white font-mono text-sm">$0.00</span>
+                                <span className="text-xs text-zinc-500">Unbilled usage </span>
+                                <span className="text-white font-medium text-sm">$0.00</span>
                             </div>
                         </div>
                     </div>
@@ -69,7 +69,7 @@ export default async function BillingPage() {
 
             {/* Invoices & Subscription Management (Portal) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-[#0c0c0e] border border-white/10 rounded-xl p-6 flex flex-col justify-between">
+                <div className="bg-white/[0.02] border border-white/5 rounded-xl p-6 flex flex-col justify-between hover:border-white/10 transition-colors">
                     <div>
                         <h3 className="text-white font-medium mb-2 flex items-center gap-2">
                             Need More Side Units?
@@ -80,7 +80,7 @@ export default async function BillingPage() {
                     </div>
                 </div>
 
-                <div className="bg-[#0c0c0e] border border-white/10 rounded-xl p-6 flex flex-col justify-between items-start">
+                <div className="bg-white/[0.02] border border-white/5 rounded-xl p-6 flex flex-col justify-between items-start hover:border-white/10 transition-colors">
                     <div>
                         <h3 className="text-white font-medium mb-2">Subscription & Invoices</h3>
                         <p className="text-sm text-zinc-500 mb-4">

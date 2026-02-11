@@ -19,6 +19,7 @@ import {
     X
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 const SIDEBAR_ITEMS = [
     {
@@ -56,11 +57,8 @@ export function GlobalSidebar() {
     return (
         <>
             {/* Mobile Header Trigger */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-white/10 bg-[#0c0c0e]/95 backdrop-blur-md z-50 flex items-center justify-between px-4">
-                <Link href="/" className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 bg-white rounded-sm" />
-                    <span className="font-bold tracking-tight text-white uppercase italic">Side<span className="not-italic lowercase font-light text-zinc-500">lith</span></span>
-                </Link>
+            <div className="md:hidden fixed top-0 left-0 right-0 h-16 border-b border-white/10 bg-[#050505]/95 backdrop-blur-md z-50 flex items-center justify-between px-4">
+                <BrandLogo size="sm" />
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     className="p-2 text-zinc-400 hover:text-white"
@@ -79,13 +77,12 @@ export function GlobalSidebar() {
 
             {/* Sidebar Container */}
             <aside className={cn(
-                "fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-[#0c0c0e] border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0",
+                "fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-[#08080a] border-r border-white/5 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0",
                 isOpen ? "translate-x-0" : "-translate-x-full"
             )}>
-                <Link href="/" className="hidden md:flex h-16 items-center px-6 border-b border-white/5 gap-2.5 group">
-                    <div className="w-5 h-5 bg-white rounded-sm group-hover:rotate-90 transition-transform duration-500" />
-                    <span className="font-bold tracking-tight text-white uppercase italic">Side<span className="not-italic lowercase font-light text-zinc-500">lith</span></span>
-                </Link>
+                <div className="hidden md:flex h-16 items-center px-6 border-b border-white/5">
+                    <BrandLogo size="sm" />
+                </div>
 
                 {/* Navigation */}
                 <div className="flex-1 overflow-y-auto py-6 px-3 space-y-8 mt-16 md:mt-0">

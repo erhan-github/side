@@ -52,7 +52,7 @@ export default function ChangelogList() {
                 },
                 {
                     general: "**Unified Logs:** All your system events, errors, and actions are now searchable in one place.",
-                    technical: "**Unified Signal Buffer:** Implemented `SignalBuffer` to aggregate disparate logging streams (system, user, network) into a single structured storage pipeline."
+                    technical: "**Unified Data Buffer:** Implemented `DataBuffer` to aggregate disparate logging streams (system, user, network) into a single structured storage pipeline."
                 },
                 {
                     general: "**Bank-Grade Security:** Your data is encrypted from the moment you start the application.",
@@ -129,7 +129,7 @@ export default function ChangelogList() {
                 },
                 {
                     general: "**Intent Detection:** It understands what you're trying to do without you having to explain it.",
-                    technical: "**Intent Fusion:** Added a 'MetaJSON' extractor to derive user intent from artifact modifications without requiring full LLM parsing."
+                    technical: "**Goal Tracking:** Added a 'MetaJSON' extractor to derive user intent from artifact modifications without requiring full LLM parsing."
                 },
             ],
         },

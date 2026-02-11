@@ -3,8 +3,8 @@
 import { TrendingUp, BarChart3, ArrowUpRight } from "lucide-react";
 
 // Simplified Visual-Only Chart (to avoid heavy recharts dependency for now)
-export function StrategicImpact() {
-    const data = [12, 18, 10, 24, 32, 28, 45]; // Hours saved per day
+export function UsageStats() {
+    const data = [12, 18, 10, 24, 32, 28, 45]; // Activity units
     const max = Math.max(...data);
 
     return (
@@ -13,12 +13,12 @@ export function StrategicImpact() {
             <div className="flex justify-between items-start mb-4">
                 <div>
                     <h3 className="text-sm font-medium text-white flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-zinc-500" /> Strategic Impact
+                        <BarChart3 className="w-4 h-4 text-zinc-500" /> Usage Stats
                     </h3>
-                    <p className="text-xs text-zinc-500 mt-0.5">Hours of manual review saved</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">System Activity (7d)</p>
                 </div>
                 <div className="text-xl font-bold text-white font-mono tracking-tight flex items-baseline gap-1">
-                    169 <span className="text-zinc-600 text-xs font-sans">hrs/mo</span>
+                    Active <span className="text-emerald-500 text-[10px] font-sans animate-pulse">●</span>
                 </div>
             </div>
 
@@ -28,10 +28,6 @@ export function StrategicImpact() {
                     const height = (val / max) * 100;
                     return (
                         <div key={i} className="flex-1 group relative h-full flex items-end">
-                            {/* Tooltip */}
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none border border-white/10 shadow-lg">
-                                {val} hours
-                            </div>
                             {/* Bar */}
                             <div
                                 className="w-full bg-zinc-800/50 hover:bg-blue-500 transition-colors duration-300 rounded-t-[1px] relative cursor-crosshair backdrop-blur-sm group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]"
@@ -56,7 +52,7 @@ export function StrategicImpact() {
                     <TrendingUp className="w-3 h-3 text-blue-400" />
                 </div>
                 <p className="text-zinc-400 text-[11px]">
-                    <span className="text-blue-300 font-bold">Top 5% Strategy:</span> Your audit frequency puts you in the top tier of builders.
+                    <span className="text-blue-300 font-bold">Activity Trend:</span> Your project's semantic velocity is increasing.
                 </p>
             </div>
         </div>

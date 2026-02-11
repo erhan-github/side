@@ -3,14 +3,14 @@
 import { CreditCard, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type ValueVaultProps = {
+type BillingOverviewProps = {
     used: number;
     limit: number;
     unbilled?: number;
     planName?: string; // e.g. "PRO Plan"
 };
 
-export function ValueVault({ used, limit, unbilled = 0, planName = "PRO Plan" }: ValueVaultProps) {
+export function BillingOverview({ used, limit, unbilled = 0, planName = "PRO Plan" }: BillingOverviewProps) {
     const percentage = Math.min(100, (used / limit) * 100);
     // Cursor uses a blue/purple gradient for their "On-Demand" usage
     // We will use Side's Blue/Purple neon brand

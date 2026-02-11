@@ -1,6 +1,6 @@
 import { ArrowRight, ArrowDown } from "lucide-react";
 
-export function IntelligenceLoop() {
+export function ContextFlow() {
     return (
         <section className="w-full max-w-7xl mx-auto px-6 py-16">
 
