@@ -17,13 +17,13 @@ const GLOSSARY_ITEMS = [
         term: "DNA",
         category: "Core",
         definition: "Your project's structural map. Sidelith analyzes your files to understand classes, functions, and how they connect in a machine-readable format.",
-        technical: "TreeIndexer"
+        technical: "CodeIndexer"
     },
     {
         term: "Code Rules",
         category: "Security",
         definition: "Your team's coding standards and patterns (e.g., 'Always use TypeScript strict mode').",
-        technical: "SchemaStore"
+        technical: "Rule Store"
     },
     {
         term: "Audit Log",
@@ -35,7 +35,7 @@ const GLOSSARY_ITEMS = [
         term: "Project Documentation",
         category: "Intelligence",
         definition: "Your README and docs that explain what your project does. Sidelith reads these to understand your goals.",
-        technical: "GoalTracker"
+        technical: "Documentation Scanner"
     },
     {
         term: "User Profile",
@@ -77,7 +77,7 @@ const GLOSSARY_ITEMS = [
         term: "System Cleanup",
         category: "System",
         definition: "Routine maintenance service that performs cleanup and optimization of the local index.",
-        technical: "ContextEngine"
+        technical: "MaintenanceService"
     },
     {
         term: "Persistent Context",
