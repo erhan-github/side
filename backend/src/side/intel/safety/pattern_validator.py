@@ -10,14 +10,15 @@ from side.intel.conversation_session import ConversationSession, IntentCategory
 
 logger = logging.getLogger(__name__)
 
-class DriftDetector:
+class PatternValidator:
     """
-    Analyzes "Physical Activity" vs "Stated Intent".
+    Analyzes "Physical Activity" vs "Stated Goal".
+    Detects when user activity diverges from the stated intent (Ghost Tasks).
     """
     
-    def check_drift(self, session: ConversationSession, recent_files: List[str]) -> Optional[Dict[str, Any]]:
+    def check_goal_drift(self, session: ConversationSession, recent_files: List[str]) -> Optional[Dict[str, Any]]:
         """
-        Checks if recent file edits match the session intent.
+        Checks if recent file edits match the session goals.
         
         Args:
             session: The active conversation session.
@@ -31,8 +32,6 @@ class DriftDetector:
             
         # 1. Simple Keyword Matching (Heuristic)
         # Does the file path contain any intent keywords?
-        # e.g. Intent: "Fix auth", Files: ["auth.py", "login.py"] -> Match
-        # e.g. Intent: "Fix auth", Files: ["styles.css"] -> Drift?
         
         intent_keywords = set(session.intent_vector)
         matches = 0
@@ -46,12 +45,11 @@ class DriftDetector:
         match_ratio = matches / len(recent_files)
         
         # 3. Decision
-        # If user touched 5 files and NONE matched keywords, likely Drift.
         if len(recent_files) >= 3 and match_ratio < 0.2:
             return {
                 "detected": True,
-                "reason": "File activity diverges from intent keywords.",
-                "intent": session.raw_intent,
+                "reason": "File activity diverges from stated goal keywords.",
+                "goal": session.raw_intent,
                 "activity": recent_files[:3],
                 "confidence": 0.8
             }

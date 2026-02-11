@@ -55,7 +55,7 @@ class LogMonitor:
     Event-Driven Log Intelligence.
     Monitors friction points using FS Events (High Performance) + Async Streams.
     """
-    def __init__(self, ledger: AuditService, project_path: Path):
+    def __init__(self, audit: AuditService, project_path: Path):
         self.audit = audit
         self.project_path = project_path
         self.stop_event = threading.Event()

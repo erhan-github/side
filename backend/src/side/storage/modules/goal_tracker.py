@@ -11,7 +11,7 @@ from .base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
-class IntentFusionStore:
+class GoalTracker:
     def __init__(self, engine: ContextEngine
 ):
         self.engine = engine

@@ -14,7 +14,7 @@ from side.prompts import Personas, GuardianPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
-class GenerativeGuardian:
+class CodeValidator:
     def __init__(self, engine: ContextEngine):
         self.engine = engine
         self.llm = LLMClient()
@@ -22,11 +22,10 @@ class GenerativeGuardian:
 
     async def audit_generation(self, project_id: str, prompt_intent: str, generated_code: str) -> Dict[str, Any]:
         """
-        [PHASE 9]: Audits a block of generated code against Sovereign Rules.
-        Returns a 'Drift Report'.
+        [CODE VALIDATION]: Audits a block of generated code against Project Rules.
+        Returns a 'Pattern Violation' report.
         """
-        # 1. Retrieve Active Strategic Rules
-        # We fetch both patterns and observations for a complete picture
+        # 1. Retrieve Active Code Rules
         rules = self.engine.wisdom.get_patterns(limit=10)
         observations = []
         with self.engine.connection() as conn:
@@ -47,26 +46,26 @@ class GenerativeGuardian:
         try:
             response = await self.llm.complete_async(
                 messages=[{"role": "user", "content": prompt}],
-                system_prompt=Personas.GENERATIVE_GUARDIAN,
+                system_prompt=Personas.CODE_VALIDATOR,
                 **self.config
             )
             
             report = extract_json(response)
-            if report.get("drift_detected"):
-                await self._log_drift_event(project_id, report)
+            if report.get("drift_detected") or report.get("violation_detected"):
+                await self._log_violation_event(project_id, report)
             
             return report
             
         except Exception as e:
-            logger.error(f"Generative Audit failed: {e}")
-            return {"drift_detected": False, "error": str(e)}
+            logger.error(f"Code Validation failed: {e}")
+            return {"violation_detected": False, "error": str(e)}
 
-    async def _log_drift_event(self, project_id: str, report: Dict[str, Any]):
-        """Logs a drift event and emits a signal to the HUD."""
+    async def _log_violation_event(self, project_id: str, report: Dict[str, Any]):
+        """Logs a pattern violation and emits a signal to the HUD."""
         self.engine.audit.log_activity(
             project_id=project_id,
-            tool="GENERATIVE_GUARDIAN",
-            action="DRIFT_DETECTED",
+            tool="CODE_VALIDATOR",
+            action="VIOLATION_DETECTED",
             payload=report,
             tier="enterprise"
         )
@@ -76,12 +75,12 @@ class GenerativeGuardian:
         await event_bus.emit(
             friction_point=FrictionPoint.GENERATIVE_ADVISORY,
             payload={
-                "type": "ARCHITECTURAL_DRIFT",
+                "type": "PATTERN_VIOLATION",
                 "project_id": project_id,
-                "summary": report.get("summary", "Divergence from Sovereign Rules detected."),
+                "summary": report.get("summary", "Divergence from Code Rules detected."),
                 "findings": report.get("findings", [])
             },
             priority=EventPriority.HIGH
         )
         
-        logger.warning(f"⚠️ [DRIFT]: Generative Guardian detected divergence from Sovereign Rules.")
+        logger.warning(f"⚠️ [VIOLATION]: Code Validator detected divergence from Code Rules.")

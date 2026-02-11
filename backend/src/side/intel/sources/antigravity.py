@@ -1,7 +1,7 @@
 """
 Antigravity Intent Source.
 
-Wraps BrainBridge to provide Antigravity session data via IntentSource protocol.
+Provides Antigravity session data via IntentSource protocol.
 """
 
 from pathlib import Path
@@ -10,24 +10,24 @@ from datetime import datetime, timezone
 import json
 
 from side.intel.sources.base import IntentSource
-from side.intel.bridge import BrainBridge
+from side.intel.connector import Connector
 
 class AntigravitySource(IntentSource):
     """
-    Wraps BrainBridge to read ~/.gemini/antigravity/brain nodes.
+    Wraps Connector to read ~/.gemini/antigravity/brain nodes.
     """
     
     def __init__(self, brain_path: Path | None = None):
         if brain_path is None:
             brain_path = Path.home() / ".gemini" / "antigravity" / "brain"
-        self.bridge = BrainBridge(brain_path)
+        self.connector = Connector(brain_path)
         self.brain_path = brain_path
 
     def scan_nodes(self) -> List[Dict[str, Any]]:
-        bridge_nodes = self.bridge.scan_nodes()
+        connector_nodes = self.connector.scan_nodes()
         results = []
         
-        for node in bridge_nodes:
+        for node in connector_nodes:
             # Translate Bridge format to IntentSource format
             session_id = node.get("node_id")
             

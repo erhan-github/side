@@ -5,9 +5,9 @@ from tree_sitter_languages import get_language, get_parser
 
 logger = logging.getLogger(__name__)
 
-class SemanticAuditor:
+class CodeAuditor:
     """
-    Semantic Auditor [Tier-4].
+    Code Auditor.
     Uses Tree-sitter for deep AST-level invariants across the Project Graph.
     """
 
@@ -121,4 +121,4 @@ class SemanticAuditor:
         return results
 
 # Singleton instance
-semantic_auditor = SemanticAuditor()
+code_auditor = CodeAuditor()

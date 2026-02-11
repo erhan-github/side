@@ -13,26 +13,26 @@ from side.prompts import Personas, IntentAuditPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
-class IntentVerifier:
+class GoalValidator:
     def __init__(self, engine: ContextEngine):
         self.engine = engine
         self.llm = LLMClient()
         self.config = LLMConfigs.get_config("intent_verifier")
 
-    async def verify_mission_alignment(self, project_id: str) -> Dict[str, Any]:
+    async def verify_goal_alignment(self, project_id: str) -> Dict[str, Any]:
         """
-        [PHASE 9]: Verifies if generated code matches the 'Human Intent' (Artifacts + Git).
+        [GOAL VALIDATION]: Verifies if generated code matches the 'Stated Goals' (Artifacts + Git).
         """
-        # 1. Fetch Intent from Multi-Source Ontology
-        objective = self.engine.ontology.get_concept("current_objective")
-        git_intent = self.engine.ontology.get_concept("git_intent")
+        # 1. Fetch Goals from Multi-Source Ontology
+        objective = self.engine.schema.get_concept("current_objective")
+        git_intent = self.engine.schema.get_concept("git_intent")
         
         # [UNIVERSAL INGESTION]: Load all supporting strategic artifacts
-        artifacts = self.engine.ontology.list_concepts_by_category("strategic_artifact")
+        artifacts = self.engine.schema.list_concepts_by_category("strategic_artifact")
         
-        intent_signals = []
-        if objective: intent_signals.append(f"### PRIMARY GOAL (from task.md)\n{objective.get('content')}")
-        if git_intent: intent_signals.append(f"### RECENT COMMIT (Git Intent)\n{git_intent.get('content')}")
+        goal_signals = []
+        if objective: goal_signals.append(f"### PRIMARY GOAL (from task.md)\n{objective.get('content')}")
+        if git_intent: goal_signals.append(f"### RECENT COMMIT (Git State)\n{git_intent.get('content')}")
         
         artifact_signals = []
         for art in artifacts:
@@ -42,7 +42,7 @@ class IntentVerifier:
             content = art.get('content', '')[:1000] 
             artifact_signals.append(f"#### {art.get('topic')}\n{content}")
 
-        intent_context = "\n\n".join(intent_signals) if intent_signals else "No explicit primary intent found."
+        goal_context = "\n\n".join(goal_signals) if goal_signals else "No explicit primary goals found."
         supporting_context = "\n\n".join(artifact_signals) if artifact_signals else "No supporting artifacts found."
 
         # 2. Fetch Recent Activities (Representing code generations)
@@ -57,7 +57,7 @@ class IntentVerifier:
 
         # 3. Semantic Alignment Audit
         prompt = IntentAuditPrompt.format(
-            intent_context=intent_context,
+            intent_context=goal_context,
             supporting_context=supporting_context,
             code_context=code_context
         )
@@ -70,21 +70,21 @@ class IntentVerifier:
             )
             
             report = extract_json(response)
-            if report.get("mission_drift_detected"):
-                await self._log_mission_drift(project_id, report)
+            if report.get("mission_drift_detected") or report.get("goal_drift_detected"):
+                await self._log_goal_drift(project_id, report)
             
             return report
 
         except Exception as e:
-            logger.error(f"Intent Verification failed: {e}")
+            logger.error(f"Goal Validation failed: {e}")
             return {"alignment_score": 0.0, "error": str(e)}
 
-    async def _log_mission_drift(self, project_id: str, report: Dict[str, Any]):
-        """Logs a mission drift event and emits a HUD signal."""
+    async def _log_goal_drift(self, project_id: str, report: Dict[str, Any]):
+        """Logs a goal drift event and emits a HUD signal."""
         self.engine.audit.log_activity(
             project_id=project_id,
-            tool="INTENT_VERIFIER",
-            action="MISSION_DRIFT_DETECTED",
+            tool="GOAL_VALIDATOR",
+            action="GOAL_DRIFT_DETECTED",
             payload=report,
             tier="enterprise"
         )
@@ -94,13 +94,13 @@ class IntentVerifier:
         await event_bus.emit(
             friction_point=FrictionPoint.GENERATIVE_ADVISORY,
             payload={
-                "type": "MISSION_DRIFT",
+                "type": "GOAL_DRIFT",
                 "project_id": project_id,
                 "score": report.get("alignment_score"),
-                "summary": report.get("strategic_summary", "Mission Drift detected."),
+                "summary": report.get("summary", report.get("strategic_summary", "Goal Drift detected.")),
                 "findings": report.get("findings", [])
             },
             priority=EventPriority.CRITICAL
         )
         
-        logger.info(f"🎯 [INTENT]: Mission Drift detected. Alignment: {report.get('alignment_score')}")
+        logger.info(f"🎯 [GOAL_VALIDATOR]: Goal Drift detected. Alignment: {report.get('alignment_score')}")

@@ -15,11 +15,11 @@ from typing import Any, Dict, List, Optional
 from side.utils.helpers import safe_get
 
 from .modules.base import ContextEngine, InsufficientTokensError
-from .modules.strategy import DecisionStore
+from .modules.strategy import StrategicStore
 from .modules.identity import IdentityService
 from .modules.audit import AuditService
 from .modules.transient import SessionCache
-from .modules.intent_fusion import IntentFusionStore
+from .modules.goal_tracker import GoalTracker
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +38,10 @@ class SimplifiedDatabase:
         
         # Initialize sub-stores (The Source of Truth)
         self.identity = IdentityService(self.engine)
-        self.strategic = DecisionStore(self.engine)
+        self.strategic = StrategicStore(self.engine)
         self.audit = AuditService(self.engine)
         self.operational = SessionCache(self.engine)
-        self.intent_fusion = IntentFusionStore(self.engine)
+        self.goal_tracker = GoalTracker(self.engine)
 
         # Startup lifecycle
         self.engine.atomic_backup()

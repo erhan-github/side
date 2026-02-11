@@ -11,23 +11,23 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 from side.intel.types import VerifiedFix, FixMetrics, ReasoningNode
 from side.intel.metrics_calculator import MetricsCalculator
-from side.intel.reasoning_timeline import ReasoningTimeline, TimelineManager
+from side.intel.decision_history import DecisionHistory, HistoryManager
 from side.utils.crypto import shield
 
 logger = logging.getLogger(__name__)
 
-class CloudDistiller:
+class PatternSync:
     """
-    The Cloud Distillation Engine.
+    The Pattern Sync Engine.
     Ensures only meaningful, high-value verified fixes sync to the cloud brain.
     
-    [CLOUD SYNC]:
-    - Filters: Only cloud-worthy fixes (persistence > 0.3, difficulty >= MEDIUM)
+    [PATTERN SYNC]:
+    - Filters: Only sync-worthy fixes (persistence > 0.3, difficulty >= MEDIUM)
     - Anonymizes: No file paths, no code, no project IDs in cloud
     - Syncs: Distilled insights to tenant_insights table
     """
     
-    # Cloud-worthy thresholds
+    # Sync-worthy thresholds
     MIN_PERSISTENCE = 0.3
     MIN_COMMONALITY = 0.5
     MIN_DIFFICULTY = "MEDIUM"
@@ -60,17 +60,17 @@ class CloudDistiller:
 
     def distill_fix(
         self,
-        timeline: ReasoningTimeline,
+        timeline: DecisionHistory,
         focus_file: str,
         focus_cluster: List[str],
         project_id: str,
         distilled_insight: str = None
     ) -> VerifiedFix:
         """
-        Distills a ReasoningTimeline into a cloud-ready VerifiedFix.
+        Distills a DecisionHistory into a cloud-ready VerifiedFix.
         
         Args:
-            timeline: The reasoning timeline for this fix.
+            timeline: The decision history for this fix.
             focus_file: The primary file being fixed.
             focus_cluster: All files in the dependency cluster.
             project_id: The project identifier.
@@ -122,7 +122,7 @@ class CloudDistiller:
             focus_cluster=focus_cluster
         )
         
-        logger.info(f"📦 [DISTILLER]: Distilled fix {verified_fix.fix_id[:8]}... ({metrics.difficulty})")
+        logger.info(f"📦 [PATTERN_SYNC]: Distilled fix {verified_fix.fix_id[:8]}... ({metrics.difficulty})")
         return verified_fix
 
     def _generate_insight(self, chain: List[ReasoningNode]) -> str:
@@ -139,7 +139,7 @@ class CloudDistiller:
 
     def should_sync(self, fix: VerifiedFix) -> bool:
         """
-        Determines if a fix is cloud-worthy.
+        Determines if a fix is sync-worthy.
         
         Criteria:
         - persistence_score > 0.3 OR
@@ -151,17 +151,17 @@ class CloudDistiller:
 
     def queue_for_sync(self, fix: VerifiedFix) -> bool:
         """
-        Adds a fix to the sync queue if it's cloud-worthy.
+        Adds a fix to the sync queue if it's sync-worthy.
         
         Returns:
             True if queued, False if rejected.
         """
         if self.should_sync(fix):
             self.pending_fixes.append(fix)
-            logger.info(f"✅ [DISTILLER]: Queued {fix.fix_id[:8]} for cloud sync.")
+            logger.info(f"✅ [PATTERN_SYNC]: Queued {fix.fix_id[:8]} for sync.")
             return True
         else:
-            logger.info(f"⏭️ [DISTILLER]: Skipped {fix.fix_id[:8]} (not cloud-worthy).")
+            logger.info(f"⏭️ [PATTERN_SYNC]: Skipped {fix.fix_id[:8]} (not sync-worthy).")
             return False
 
     def sync_pending(self) -> Dict[str, Any]:
@@ -195,7 +195,7 @@ class CloudDistiller:
         
         self.pending_fixes = []
         
-        logger.info(f"☁️ [DISTILLER]: Synced {len(synced_local)} local, {len(synced_cloud)} cloud.")
+        logger.info(f"☁️ [PATTERN_SYNC]: Synced {len(synced_local)} local, {len(synced_cloud)} cloud.")
         return {
             "status": "SUCCESS",
             "synced_local": len(synced_local),
@@ -244,10 +244,10 @@ class CloudDistiller:
             response = self.supabase.table("tenant_insights").insert(insight_data).execute()
             
             if response.data:
-                logger.info(f"✅ [CLOUD]: Patterns synced: {fix.distilled_insight[:50]}...")
+                logger.info(f"✅ [PATTERN_SYNC]: Patterns synced: {fix.distilled_insight[:50]}...")
                 return True
         except Exception as e:
-            logger.error(f"❌ [CLOUD]: Failed to sync patterns: {e}")
+            logger.error(f"❌ [PATTERN_SYNC]: Failed to sync patterns: {e}")
         
         return False
 
@@ -284,7 +284,7 @@ def complete_fix_flow(
     project_id: str,
     focus_file: str,
     focus_cluster: List[str],
-    timeline: ReasoningTimeline,
+    timeline: DecisionHistory,
     tenant_id: str = None
 ) -> Dict[str, Any]:
     """
@@ -293,7 +293,7 @@ def complete_fix_flow(
     Returns:
         Summary of the operation.
     """
-    distiller = CloudDistiller(project_path, tenant_id=tenant_id)
+    distiller = PatternSync(project_path, tenant_id=tenant_id)
     
     # Distill the fix
     verified_fix = distiller.distill_fix(
@@ -327,18 +327,18 @@ if __name__ == "__main__":
     # Quick Test
     logging.basicConfig(level=logging.INFO)
     
-    timeline = TimelineManager.get_or_create("test-fix-002")
-    timeline.record_issue_detected([{"content": "NoneType error"}], "auth.py")
-    timeline.record_context_injected(5, 500)
-    timeline.record_fix_applied("session.py", 50)
-    timeline.record_verification_passed(0)
+    history = HistoryManager.get_or_create("test-fix-002")
+    history.record_issue_detected([{"content": "NoneType error"}], "auth.py")
+    history.record_context_injected(5, 500)
+    history.record_fix_applied("session.py", 50)
+    history.record_verification_passed(0)
     
     result = complete_fix_flow(
         project_path=Path.cwd(),
         project_id="test-project",
         focus_file="auth.py",
         focus_cluster=["auth.py", "session.py", "token.py"],
-        timeline=timeline
+        timeline=history
     )
     
     print(json.dumps(result, indent=2))

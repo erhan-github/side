@@ -7,7 +7,6 @@ import logging
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 from side.models.core import Activity, Finding
-from side.intel.audit_allowlist import is_allowed_project
 from pathlib import Path
 from side.utils.crypto import shield
 from .base import ContextEngine, InsufficientTokensError

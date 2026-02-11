@@ -11,14 +11,14 @@ from side.models.core import StrategicDecision, Rejection
 from .base import ContextEngine
 
 from .substores.plans import PlanStore
-from .substores.decisions import DecisionStore
+from .substores.decisions import DecisionStore as DecisionSubStore
 from .substores.rejections import RejectionStore
 from .substores.patterns import PublicPatternStore
 from .substores.memory import MemoryStore
 
 logger = logging.getLogger(__name__)
 
-class DecisionStore:
+class StrategicStore:
     """
     [STRATEGY]: Orchestrator for Time-Weighted Strategic Memory.
     Provides "Fractal Context" and "Temporal Search" capabilities.
@@ -28,7 +28,7 @@ class DecisionStore:
         
         # Initialize Sub-stores
         self.plans = PlanStore(engine)
-        self.decisions = DecisionStore(engine)
+        self.decisions = DecisionSubStore(engine)
         self.rejections = RejectionStore(engine)
         self.patterns = PublicPatternStore(engine)
         self.memory = MemoryStore(engine)

@@ -53,7 +53,7 @@ class ContextEngine:
         
         # Initialize sub-stores
         # Initialize sub-stores
-        from side.storage.modules.strategy import DecisionStore
+        from side.storage.modules.strategy import StrategicStore
         from side.storage.modules.audit import AuditService
         from side.storage.modules.accounting import AccountingStore
         from .identity import IdentityService
@@ -61,15 +61,16 @@ class ContextEngine:
         from .substores.patterns import PublicPatternStore
         from .cloud import CloudDistiller
         
-        from side.storage.modules.ontology import OntologyStore
+        from side.storage.modules.schema import SchemaStore
         
-        self.strategic = DecisionStore(self)
+        self.strategic = StrategicStore(self)
         self.audit = AuditService(self)
+        self.forensic = self.audit # Safety alias for legacy modules
         self.accounting = AccountingStore(self)
         self.identity = IdentityService(self)
         self.operational = SessionCache(self)
         self.wisdom = PublicPatternStore(self)
-        self.ontology = OntologyStore(self)
+        self.schema = SchemaStore(self)
         self.global_lobe = CloudDistiller(self)
         self.global_lobe.start()
 

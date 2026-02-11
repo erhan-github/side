@@ -9,9 +9,9 @@ from side.intel.types import ReasoningNode, EventType, create_reasoning_node
 
 logger = logging.getLogger(__name__)
 
-class ReasoningTimeline:
+class DecisionHistory:
     """
-    Manages the immutable reasoning chain for a single fix session.
+    Manages the immutable decision chain for a single fix session.
     Each event is linked to its parent, forming a verifiable chain.
     """
     
@@ -22,7 +22,7 @@ class ReasoningTimeline:
 
     def record(self, event_type: str, payload: Dict[str, Any]) -> ReasoningNode:
         """
-        Records a new event in the reasoning chain.
+        Records a new event in the decision history.
         
         Args:
             event_type: One of EventType values.
@@ -40,7 +40,7 @@ class ReasoningTimeline:
         self.chain.append(node)
         self._head_id = node.event_id
         
-        logger.info(f"📝 [TIMELINE]: Recorded {event_type} (chain length: {len(self.chain)})")
+        logger.info(f"📝 [DECISION_HISTORY]: Recorded {event_type} (chain length: {len(self.chain)})")
         return node
 
     def record_issue_detected(self, signals: List[Dict], focus_file: str) -> ReasoningNode:
@@ -88,7 +88,7 @@ class ReasoningTimeline:
         })
 
     def get_chain(self) -> List[ReasoningNode]:
-        """Returns the full reasoning chain."""
+        """Returns the full history chain."""
         return self.chain
 
     def verify_integrity(self) -> bool:
@@ -98,22 +98,22 @@ class ReasoningTimeline:
         """
         for node in self.chain:
             if not node.verify():
-                logger.error(f"❌ [TIMELINE]: Integrity check failed for {node.event_id}")
+                logger.error(f"❌ [DECISION_HISTORY]: Integrity check failed for {node.event_id}")
                 return False
         
         # Verify parent links
         seen_ids = set()
         for node in self.chain:
             if node.parent_id and node.parent_id not in seen_ids:
-                logger.error(f"❌ [TIMELINE]: Broken parent link for {node.event_id}")
+                logger.error(f"❌ [DECISION_HISTORY]: Broken parent link for {node.event_id}")
                 return False
             seen_ids.add(node.event_id)
         
-        logger.info(f"✅ [TIMELINE]: Integrity verified for {len(self.chain)} nodes.")
+        logger.info(f"✅ [DECISION_HISTORY]: Integrity verified for {len(self.chain)} nodes.")
         return True
 
     def to_dict(self) -> Dict[str, Any]:
-        """Exports the timeline as a dict for serialization."""
+        """Exports the history as a dict for serialization."""
         return {
             "fix_id": self.fix_id,
             "chain": [n.to_dict() for n in self.chain],
@@ -121,47 +121,47 @@ class ReasoningTimeline:
         }
 
 # ---------------------------------------------------------------------
-# TIMELINE MANAGER (Global Registry)
+# HISTORY MANAGER (Global Registry)
 # ---------------------------------------------------------------------
 
-class TimelineManager:
+class HistoryManager:
     """
-    Global registry for all active reasoning timelines.
+    Global registry for all active decision histories.
     """
-    _timelines: Dict[str, ReasoningTimeline] = {}
+    _histories: Dict[str, DecisionHistory] = {}
 
     @classmethod
-    def get_or_create(cls, fix_id: str) -> ReasoningTimeline:
-        """Gets an existing timeline or creates a new one."""
-        if fix_id not in cls._timelines:
-            cls._timelines[fix_id] = ReasoningTimeline(fix_id)
-        return cls._timelines[fix_id]
+    def get_or_create(cls, fix_id: str) -> DecisionHistory:
+        """Gets an existing history or creates a new one."""
+        if fix_id not in cls._histories:
+            cls._histories[fix_id] = DecisionHistory(fix_id)
+        return cls._histories[fix_id]
 
     @classmethod
-    def get(cls, fix_id: str) -> Optional[ReasoningTimeline]:
-        """Gets an existing timeline."""
-        return cls._timelines.get(fix_id)
+    def get(cls, fix_id: str) -> Optional[DecisionHistory]:
+        """Gets an existing history."""
+        return cls._histories.get(fix_id)
 
     @classmethod
-    def close(cls, fix_id: str) -> Optional[ReasoningTimeline]:
-        """Closes and returns a timeline (removes from active registry)."""
-        return cls._timelines.pop(fix_id, None)
+    def close(cls, fix_id: str) -> Optional[DecisionHistory]:
+        """Closes and returns a history (removes from active registry)."""
+        return cls._histories.pop(fix_id, None)
 
     @classmethod
     def list_active(cls) -> List[str]:
-        """Lists all active timeline IDs."""
-        return list(cls._timelines.keys())
+        """Lists all active history IDs."""
+        return list(cls._histories.keys())
 
 if __name__ == "__main__":
     # Quick Test
     logging.basicConfig(level=logging.INFO)
     
-    timeline = ReasoningTimeline("test-fix-001")
+    history = DecisionHistory("test-fix-001")
     
-    timeline.record_issue_detected([{"content": "session.user is None"}], "auth.py")
-    timeline.record_context_injected(5, 500)
-    timeline.record_fix_applied("session.py", 50, "Added null check")
-    timeline.record_verification_passed(0)
+    history.record_issue_detected([{"content": "session.user is None"}], "auth.py")
+    history.record_context_injected(5, 500)
+    history.record_fix_applied("session.py", 50, "Added null check")
+    history.record_verification_passed(0)
     
-    print(f"Chain length: {len(timeline.chain)}")
-    print(f"Integrity: {timeline.verify_integrity()}")
+    print(f"Chain length: {len(history.chain)}")
+    print(f"Integrity: {history.verify_integrity()}")

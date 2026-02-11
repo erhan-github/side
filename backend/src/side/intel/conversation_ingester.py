@@ -24,7 +24,7 @@ class ConversationIngester:
 
     def __init__(self, db: SimplifiedDatabase | None = None, brain_path: Path | None = None):
         self.db = db or SimplifiedDatabase()
-        self.store = self.db.intent_fusion
+        self.store = self.db.goal_tracker
         
         # Initialize Sources
         self.sources: List[IntentSource] = [
@@ -41,7 +41,12 @@ class ConversationIngester:
         if self._running: return
         self._running = True
         logger.info(f"🧠 [INGESTER]: Watching sources: {[type(s).__name__ for s in self.sources]}")
-        self._task = asyncio.create_task(self._watch_loop())
+        try:
+            loop = asyncio.get_running_loop()
+            self._task = loop.create_task(self._watch_loop())
+        except RuntimeError:
+            logger.debug("🧠 [INGESTER]: No running loop, delay ingester start.")
+            pass
 
     async def stop(self) -> None:
         """Stop watching."""

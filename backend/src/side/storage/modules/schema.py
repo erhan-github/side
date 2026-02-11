@@ -8,7 +8,7 @@ from .base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
-class OntologyStore:
+class SchemaStore:
     def __init__(self, engine: ContextEngine):
         self.engine = engine
         # Self-Initialize Schema

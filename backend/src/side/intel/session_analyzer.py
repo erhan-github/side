@@ -9,29 +9,29 @@ from datetime import datetime, timezone
 import json
 
 from side.storage.modules.audit import AuditService
-from side.storage.modules.strategy import DecisionStore
+from side.storage.modules.strategy import StrategicStore
 
-class EpisodicProjector:
-    def __init__(self, audit: AuditService, strategic: DecisionStore):
+class SessionAnalyzer:
+    def __init__(self, audit: AuditService, strategic: StrategicStore):
         self.audit = audit
         self.strategic = strategic
 
-    def get_causal_context(self, session_id: str, limit: int = 5) -> str:
+    def get_session_context(self, session_id: str, limit: int = 5) -> str:
         """
-        [ANCESTRAL FILTERING]: Traverses the causal DAG to inject the most relevant chain.
+        [SESSION CONTEXT]: Traverses the causal history to inject the most relevant chain.
         Prioritizes: Root Cause (Edit) -> Intermediary Friction -> Terminal Error.
         """
         try:
             # 1. Fetch activities for this session
             activities = self.audit.get_causal_timeline(session_id)
             if not activities:
-                return "## [TIMELINE]: No causal history for this session."
+                return "## [SESSION_HISTORY]: No history for this session."
 
             # 2. Extract the Thread (Backwards traversal from latest)
             # Find terminal signal (usually the latest)
             signals = [a for a in activities if a["type"] == "SIGNAL"]
             if not signals:
-                return "## [TIMELINE]: No signals captured in this session."
+                return "## [SESSION_HISTORY]: No signals captured in this session."
 
             thread = []
             current = signals[-1]["data"] # Start from latest signal
@@ -47,17 +47,18 @@ class EpisodicProjector:
 
             thread.reverse() # Chronological order
 
-            # 3. Format the "Low-Fat" Context
-            report = ["## 2. CAUSAL THREAD (Low-Fat Reasoning)"]
+            # 3. Format the Session Context
+            report = ["## 2. SESSION CONTEXT (Recent History)"]
             for node in thread:
                 tool = node.get('tool', 'SYSTEM')
                 action = node.get('action', 'unknown')
                 payload = node.get('payload', {})
                 
-                # Check for Causal Frames (High-Fidelity Capture)
+                # Check for Code Rules (formerly Causal Frames)
                 frame = ""
-                if "causal_frame" in payload:
-                    frame = f"\n   [FRAME]:\n   ```\n   {payload['causal_frame']}\n   ```"
+                if "code_rule" in payload or "causal_frame" in payload:
+                    rule_content = payload.get("code_rule", payload.get("causal_frame", ""))
+                    frame = f"\n   [RULE]:\n   ```\n   {rule_content}\n   ```"
                 
                 snippet = payload.get('snippet', payload.get('file', ''))
                 report.append(f"- **{tool}**.{action} ({snippet}){frame}")
@@ -65,19 +66,17 @@ class EpisodicProjector:
             return "\n".join(report)
 
         except Exception as e:
-            return f"## [PROTOCOL ERROR]: Causal projection failed: {e}"
+            return f"## [PROTOCOL ERROR]: Session analysis failed: {e}"
 
-    def get_session_history(self, project_id: str = "global", limit: int = 15) -> str:
+    def get_summary_history(self, project_id: str = "global", limit: int = 15) -> str:
         """
-        [CONTEXT RECOVERY]: Legacy narrative summary.
+        [CONTEXT RECOVERY]: Narrative summary history.
         """
         try:
             # 1. Fetch Recent Activities (The Raw Stream)
             activities = self.audit.get_recent_activities(project_id, limit=limit)
             
             # 2. Fetch Work Context (The Focus)
-            # We assume project_path is current working dir for this context
-            # In a real multi-tenant setup, we'd pass the specific path
             work_ctx = self.audit.get_latest_work_context(str(Path.cwd()))
             
             # 3. Construct the Narrative
@@ -91,20 +90,19 @@ class EpisodicProjector:
             report.append("**recent_events**:")
             
             if not activities:
-                 report.append("- [No recent activities recorded in the Ledger]")
+                 report.append("- [No recent activities recorded]")
             else:
                 for act in activities:
                     tool = act.get('tool', 'SYSTEM')
                     action = act.get('action', 'unknown')
-                    # format timestamp relative or short
+                    # format timestamp
                     try:
                         ts = act.get('created_at', '')
-                        # Simple truncation for cleaner visual
                         time_str = ts.split('T')[-1][:5] if 'T' in ts else ts
                     except:
                         time_str = "now"
                         
-                    # Extract payload summary if interesting
+                    # Extract payload summary
                     extra = ""
                     payload = act.get('payload', {})
                     if payload:

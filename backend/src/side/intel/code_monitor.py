@@ -14,7 +14,7 @@ from side.prompts import Personas, FactExtractionPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
-class StrategicObserver:
+class CodeMonitor:
     def __init__(self, ledger: AuditService):
         self.audit = ledger
         self.llm = LLMClient()
@@ -52,7 +52,7 @@ class StrategicObserver:
                     count += 1
             
             if count > 0:
-                logger.info(f"👁️ [DISTILLER]: Extracted {count} new facts from the activity log.")
+                logger.info(f"👁️ [MONITOR]: Extracted {count} new facts from the activity log.")
             return count
             
         except Exception as e:

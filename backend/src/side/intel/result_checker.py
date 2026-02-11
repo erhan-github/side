@@ -14,16 +14,16 @@ from side.storage.simple_db import SimplifiedDatabase
 
 logger = logging.getLogger(__name__)
 
-class OutcomeVerifier:
+class ResultChecker:
     """
-    The Truth Layer.
+    The Results Checker.
     Compares what the LLM *said* happened vs what the System *knows* happened.
     """
 
     def __init__(self, db: SimplifiedDatabase):
         self.db = db
         self.audit = db.audit
-        self.store = db.intent_fusion
+        self.store = db.goal_tracker
 
     def verify_session(self, session: ConversationSession) -> VerifiedOutcome:
         """
@@ -61,7 +61,7 @@ class OutcomeVerifier:
                     relevant_errors.append(audit)
                     
         if relevant_errors:
-            logger.info(f"🚫 [VERIFIER]: False Positive detected for session {session.session_id[:8]}. {len(relevant_errors)} errors found after fix.")
+            logger.info(f"🚫 [RESULT_CHECKER]: False Positive detected for session {session.session_id[:8]}. {len(relevant_errors)} errors found after fix.")
             return VerifiedOutcome.FALSE_POSITIVE
             
         # 3. Check for immediate user "undo" or "revert" (from FileWatcher/Activities)
@@ -78,9 +78,9 @@ class OutcomeVerifier:
                 continue
 
             if window_start <= act_time <= window_end:
-                # Check for Scavenger Friction
+                # Check for External Failures
                 if act['tool'] == 'LOG_SCAVENGER':
-                     logger.info(f"🚫 [VERIFIER]: External Failure detected: {act['action']}")
+                     logger.info(f"🚫 [RESULT_CHECKER]: External Failure detected: {act['action']}")
                      return VerifiedOutcome.FALSE_POSITIVE
 
                 # Check for Reverts
@@ -91,7 +91,7 @@ class OutcomeVerifier:
         # (Advanced: Check if specific previous error stopped)
         # For now, if no errors appear in window -> CONFIRMED
         
-        logger.info(f"✅ [VERIFIER]: Session {session.session_id[:8]} confirmed fixed. No errors in window.")
+        logger.info(f"✅ [RESULT_CHECKER]: Session {session.session_id[:8]} confirmed fixed. No errors in window.")
         return VerifiedOutcome.CONFIRMED
 
     def verify_pending_sessions(self):
@@ -109,7 +109,7 @@ class OutcomeVerifier:
                 self.store.update_outcome(session.session_id, outcome)
                 verified_count += 1
                 
-        logger.info(f"✅ [VERIFIER]: Batch verification complete. {verified_count} sessions finalized.")
+        logger.info(f"✅ [RESULT_CHECKER]: Batch results check complete. {verified_count} sessions finalized.")
 
     def _dict_to_session(self, data: Dict[str, Any]) -> ConversationSession:
         """Helper to hydrate session from DB dict (OutcomeVerifier version)."""

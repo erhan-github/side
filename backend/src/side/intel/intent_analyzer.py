@@ -35,7 +35,7 @@ class IntentAnalyzer:
 
     def __init__(self, db: SimplifiedDatabase):
         self.db = db
-        self.store = self.db.intent_fusion
+        self.store = self.db.goal_tracker
 
     def analyze_session(self, session: ConversationSession) -> List[IntentSignal]:
         """Main analysis pipeline for a session."""

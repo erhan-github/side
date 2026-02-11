@@ -7,12 +7,10 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional, TYPE_CHECKING
 
 from side.intel.memory import MemoryManager
-from side.intel.bridge import BrainBridge
-from side.utils.crypto import shield
-
-if TYPE_CHECKING:
-    from side.storage.modules.base import ContextEngine
-
+from side.intel.connector import Connector
+from side.intel.tree_indexer import run_context_scan
+from side.intel.code_monitor import CodeMonitor
+from side.intel.session_analyzer import SessionAnalyzer
 from side.intel.handlers.topology import CodeIndexer
 from side.intel.handlers.feeds import HistoryAnalyzer
 from side.intel.handlers.janitor import MaintenanceService
@@ -23,11 +21,7 @@ logger = logging.getLogger(__name__)
 
 class ContextService:
     """
-    Orchestrates system intelligence, delegating to specialized handlers:
-    - CodeIndexer: File structure & indexing.
-    - HistoryAnalyzer: Historical data & commits.
-    - MaintenanceService: Maintenance & pruning.
-    - PromptBuilder: Prompt construction.
+    Orchestrates system intelligence, delegating to specialized handlers.
     """
 
     def __init__(self, project_path: Path, engine: ContextEngine, buffer=None):
@@ -37,14 +31,13 @@ class ContextService:
         self.engine = engine
         self.strategic = engine.strategic
         self.forensic = engine.audit
-        self.buffer = buffer # Kept for compatibility if used elsewhere, but marked for removal
+        self.buffer = buffer
         
         self.mmap = MmapStore(project_path)
         self.memory = MemoryManager(self.strategic, project_id=self.engine.get_project_id())
         
         # Brain Path Strategy
         env_brain = os.getenv("SIDE_BRAIN_PATH")
-        # Default to a safe local path if env not set, avoiding hardcoded user paths in production
         default_brain = Path.home() / ".side" / "brain"
         self.brain_path = Path(env_brain) if env_brain else default_brain
 
@@ -53,14 +46,13 @@ class ContextService:
         self.history = HistoryAnalyzer(self.project_path, self.engine, self.brain_path, self.strategic)
         self.janitor = MaintenanceService(self.strategic, self.engine)
         self.orchestrator = PromptBuilder(self.project_path, self.engine, self.strategic, self.memory)
-        self.doc_scanner = DocScanner(self.strategic, self.engine)
+        self.doc_scanner = DocScanner(self.strategic)
+
     async def setup(self):
         """Initializes the intelligence context."""
-        from side.intel.fractal_indexer import run_context_scan
-        
         start_time = time.time()
         logger.info("Initiating Context Scan...")
-        run_context_scan(self.project_path, ontology_store=self.engine.ontology)
+        run_context_scan(self.project_path, schema_store=self.engine.schema)
         logger.info(f"Scan completed in {time.time() - start_time:.2f}s.")
         
         config = await self.sync_checkpoint()
@@ -80,9 +72,9 @@ class ContextService:
         
         stats = self._get_project_stats()
         
-        from side.models.brain import ContextSnapshot, BrainStats, DNA
+        from side.models.project import ContextSnapshot, ProjectStats, DNA
         snapshot_obj = ContextSnapshot(
-            stats=BrainStats(
+            stats=ProjectStats(
                 nodes=stats["nodes"],
                 total_lines=stats["total_lines"]
             ),
@@ -176,9 +168,9 @@ class ContextService:
 
     async def optimize_weights(self) -> dict:
         """Regenerate the context cache."""
-        from side.intel.observer import StrategicObserver
-        observer = StrategicObserver(self.forensic)
-        new_facts = await observer.distill_observations(self.engine.get_project_id(), limit=20)
+        from side.intel.code_monitor import CodeMonitor
+        monitor = CodeMonitor(self.forensic)
+        new_facts = await monitor.distill_observations(self.engine.get_project_id(), limit=20)
         
         from side.utils.context_cache import ContextCache
         cache = ContextCache(self.project_path, self.engine)

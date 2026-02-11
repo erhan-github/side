@@ -23,7 +23,7 @@ logger.setLevel(logging.INFO)
 CURRENT_SESSION_ID = "961563dd-1539-429e-91a0-fea6661096cd"
 
 async def generate_report():
-    print(f"🕵️  GENERATING INTENT FUSION REPORT FOR SESSION: {CURRENT_SESSION_ID}\n")
+    print(f"🕵️  GENERATING GOAL TRACKER REPORT FOR SESSION: {CURRENT_SESSION_ID}\n")
     
     db = SimplifiedDatabase()
     
@@ -33,10 +33,10 @@ async def generate_report():
     # Force ingest of this specific session if possible, or just scan all
     await ingester.ingest_all()
     
-    session = db.intent_fusion.get_session(CURRENT_SESSION_ID)
+    session = db.goal_tracker.get_session(CURRENT_SESSION_ID)
     if not session:
-        print("❌ Session not found in DB! (Check if task.md exists and bridge is working)")
-        # Attempt manual hydration for debugging if bridge fails
+        print("❌ Session not found in DB! (Check if task.md exists and connector is working)")
+        # Attempt manual hydration for debugging if connector fails
         return
 
     print(f"   ✅ Detected Intent: '{session['raw_intent'][:60]}...'")
@@ -53,7 +53,7 @@ async def generate_report():
     # Check if claimed outcome is set; if not (maybe bridge didn't sync walkthrough yet), force it for demo
     if session['claimed_outcome'] == "UNKNOWN":
         print("   ⚠️  Walkthrough not fully synced? Forcing check based on artifacts...")
-        # In a real run, we'd wait for bridge. Here we simulate the bridge update
+        # In a real run, we'd wait for connector. Here we simulate the connector update
         session['claimed_outcome'] = "FIXED" 
 
     session_obj = ConversationSession(
@@ -71,7 +71,7 @@ async def generate_report():
     
     # 3. Signals
     print("\n👉 Phase 3: Derived Signals")
-    signals = db.intent_fusion.get_signals_for_session(CURRENT_SESSION_ID)
+    signals = db.goal_tracker.get_signals_for_session(CURRENT_SESSION_ID)
     if signals:
         for idx, sig in enumerate(signals):
             print(f"   📡 Signal {idx+1}: [{sig['signal_type']}] {sig['context_snippet'][:60]}...")

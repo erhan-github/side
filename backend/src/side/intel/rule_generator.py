@@ -5,24 +5,24 @@ from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
-class RuleSynthesizer:
+class RuleGenerator:
     """
     The Legislator.
-    Converts observed Invariants into Enforceable Rules.
+    Converts observed Invariants into Enforceable Code Rules.
     """
     
     def __init__(self, engine):
         self.engine = engine
         self.project_path = Path(".") # Abstracted away, rules are global to the engine's DB context
 
-    def synthesize(self, invariants: Dict[str, Any]) -> None:
+    def generate_rules(self, invariants: Dict[str, Any]) -> None:
         """
         Generates the Rulebook from Invariants.
         """
         rules = {
             "system": {
                 "version": "AUTO-GENERATED",
-                "source": "Sidelith Auto-Legislator",
+                "source": "Sidelith Rule Generator",
                 "last_updated": "NOW" # In real impl use datetime
             },
             "architecture": {},
@@ -51,7 +51,6 @@ class RuleSynthesizer:
             rules["style"]["type_hints_required"] = True
             rules["style"]["no_any"] = True
             
-        # Write to disk
         # Write to DB
         try:
             # 1. Concurrency Law
@@ -80,7 +79,7 @@ class RuleSynthesizer:
             self.engine.strategic.set_rule("security", "block_hardcoded_secrets", True)
             self.engine.strategic.set_rule("security", "require_env_vars", True)
 
-            logger.info("📜 [LEGISLATOR]: Constitution updated in SQLite.")
+            logger.info("📜 [RULE_GENERATOR]: Code rules updated in SQLite.")
         except Exception as e:
             logger.error(f"❌ Failed to write rules to DB: {e}")
             

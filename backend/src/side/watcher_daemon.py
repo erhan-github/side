@@ -11,11 +11,8 @@ from watchdog.events import FileSystemEventHandler, FileSystemEvent
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(project_root))
 
-# from side.forensic_audit.runner import ForensicAuditRunner (DELETED)
-# from side.intel.intelligence_store import IntelligenceStore (DELETED)
 from side.storage.modules.base import ContextEngine
 from side.storage.modules.audit import AuditService
-# from side.common.telemetry import monitor (DELETED)
 
 import logging
 logger = logging.getLogger("side.watcher")

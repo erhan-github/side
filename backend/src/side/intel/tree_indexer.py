@@ -125,8 +125,8 @@ def get_file_semantics(path: Path, content: str) -> Dict[str, Any]:
         "classes": [],
         "functions": [],
         "signals": [],
-        "entities": [],      # For OntologyStore
-        "relationships": [] # For OntologyStore
+        "entities": [],      # For SchemaStore
+        "relationships": [] # For SchemaStore
     }
     
     # 1. Structural Extraction (Universal)
@@ -233,7 +233,7 @@ def get_file_dna(path: Path) -> Dict[str, Any]:
     except Exception:
         return {"name": path.name, "error": "unreadable"}
 
-def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]:
+def generate_local_index(directory: Path, schema_store=None) -> Dict[str, Any]:
     """Generates the Context Index for a single directory."""
     files = []
     children_checksums = {}
@@ -241,7 +241,7 @@ def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]
     total_classes = 0
     total_functions = 0
     
-    project_id = ontology_store.engine.get_project_id() if ontology_store else "default"
+    project_id = schema_store.engine.get_project_id() if schema_store else "default"
     
     ignore_service = ProjectIgnore(directory)
     # Finding project root for ignore service
@@ -286,8 +286,8 @@ def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]
                 total_classes += len(sem.get("classes", []))
                 total_functions += len(sem.get("functions", []))
 
-                # 🧬 ONTOLOGY PERSISTENCE
-                if ontology_store:
+                # 🧬 SCHEMA PERSISTENCE
+                if schema_store:
                     file_rel_path = str(dna["name"])
                     entities_to_save = []
                     for ent in sem.get("entities", []):
@@ -300,7 +300,7 @@ def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]
                             "file_path": file_rel_path
                         })
                     if entities_to_save:
-                        ontology_store.save_entities_batch(entities_to_save)
+                        schema_store.save_entities_batch(entities_to_save)
                     
                     # Relationships (Simplified logic: entities in same file 'reference' each other)
                     # Future: Use Tree-sitter 'calls' for high-precision
@@ -319,7 +319,7 @@ def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]
                             "relation_type": rel["type"]
                         })
                     if relationships_to_save:
-                        ontology_store.save_relationships_batch(relationships_to_save)
+                        schema_store.save_relationships_batch(relationships_to_save)
 
         for item in items_to_scan:
             if item.is_dir() and item.name != ".side":
@@ -362,7 +362,7 @@ def generate_local_index(directory: Path, ontology_store=None) -> Dict[str, Any]
     
     return index_data
 
-def run_context_scan(root: Path, ontology_store=None):
+def run_context_scan(root: Path, schema_store=None):
     """
     Runs a pruning Top-Down scan to gather directories, 
     then processes them Bottom-Up to ensure Merkle integrity.
@@ -389,7 +389,7 @@ def run_context_scan(root: Path, ontology_store=None):
         # but reversed(dirs_to_process) includes root at the end.
         
         print(f"🔮 Deep Indexing: {current_dir}")
-        index_data = generate_local_index(current_dir, ontology_store=ontology_store)
+        index_data = generate_local_index(current_dir, schema_store=schema_store)
         
         # SPARSE WRITE LOGIC
         is_root = current_dir == root
@@ -403,7 +403,7 @@ def run_context_scan(root: Path, ontology_store=None):
             if side_dir.exists():
                 shutil.rmtree(side_dir)
 
-def update_branch(root: Path, changed_path: Path, ontology_store=None):
+def update_branch(root: Path, changed_path: Path, schema_store=None):
     """
     Optimized update: Only re-indexes the folders from the changed file up to the root.
     """
@@ -427,7 +427,7 @@ def update_branch(root: Path, changed_path: Path, ontology_store=None):
             break
             
         print(f"⚡ Context Update: {current_dir}")
-        index_data = generate_local_index(current_dir, ontology_store=ontology_store)
+        index_data = generate_local_index(current_dir, schema_store=schema_store)
         
         side_dir = current_dir / ".side"
         is_root = current_dir == root

@@ -6,7 +6,7 @@ from .utils import ux, get_engine
 def handle_index(args):
     """Manual Indexer."""
     ux.display_status("Analyzing Project Structure...", level="info")
-    from side.intel.auto_intelligence import ContextService
+    from side.intel.context_service import ContextService
     
     path = Path(args.path).resolve()
     intel = ContextService(path, engine=get_engine())
@@ -25,7 +25,7 @@ def handle_index(args):
 def handle_watch(args):
     """Real-time File Watcher."""
     from side.services.file_watcher import FileWatcher
-    from side.intel.auto_intelligence import ContextService
+    from side.intel.context_service import ContextService
     
     ux.display_status("Active Monitoring Engaged...", level="info")
     path = Path(args.path).resolve()

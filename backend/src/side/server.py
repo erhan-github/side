@@ -8,20 +8,19 @@ HANDOVER NOTE: Resource URIs use the 'side://' scheme.
 
 from mcp.server.fastmcp import FastMCP
 from side.storage.modules.base import ContextEngine
-from .storage.modules.identity import IdentityService
-from .storage.modules.strategy import DecisionStore
+from .storage.modules.strategy import StrategicStore
 from .storage.modules.audit import AuditService
 from .storage.modules.transient import SessionCache
-from .intel.auto_intelligence import ContextService
+from .intel.context_service import ContextService
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from .intel.handlers.context import PromptBuilder
 from .services.file_watcher import FileWatcher
 from .utils.event_optimizer import event_bus
 from .utils.crypto import shield
-from .intel.causal_miner import CausalMiner
-from .intel.rule_synthesizer import RuleSynthesizer
-from .intel.proprioceptor import Proprioceptor
+from .intel.pattern_analyzer import PatternAnalyzer
+from .intel.rule_generator import RuleGenerator
+from .intel.system_awareness import SystemAwareness
 from .intel.log_monitor import LogMonitor
 from .prompts import DynamicPromptManager, register_prompt_handlers
 import json
@@ -46,6 +45,7 @@ port = int(os.getenv("PORT", DEFAULT_PORT))
 host = "0.0.0.0" # Always bind to all interfaces in production
 
 mcp = FastMCP("Sidelith System", port=port, host=host)
+app = mcp.sse_app # Export for uvicorn
 engine = ContextEngine()
 
 # Consolidated Registry: Use engine-provided instances to prevent redundant migrations
@@ -87,16 +87,16 @@ def start_background_services():
     file_watcher.start()
     
     # [PHASE 7]: Recursive Wisdom (Self-Healing)
-    synthesizer = RuleSynthesizer(engine=engine)
-    miner = CausalMiner(engine=engine, synthesizer=synthesizer)
-    miner.start()
+    rule_gen = RuleGenerator(engine=engine)
+    pattern_analyzer = PatternAnalyzer(engine=engine, synthesizer=rule_gen)
+    pattern_analyzer.start()
     
-    # [PHASE 8]: Proprioceptive Awareness (Neural Sync)
+    # [PHASE 8]: System Awareness (Environment Sync)
     brain_dir = Path("/Users/erhanerdogan/.gemini/antigravity/brain/04116347-7316-4c02-9296-5252e02bc954")
-    proprioceptor = Proprioceptor(engine=engine, brain_dir=brain_dir)
-    proprioceptor.start()
+    awareness = SystemAwareness(engine=engine, brain_dir=brain_dir)
+    awareness.start()
     
-    return governor, log_monitor, file_watcher, miner, proprioceptor
+    return governor, log_monitor, file_watcher, pattern_analyzer, awareness
 
 # ---------------------------------------------------------------------
 # RESOURCES (Read-Only State)
@@ -244,10 +244,10 @@ async def dashboard_stats(request: Request):
         saved_tokens = int(used * 0.25) # Assume 25% savings from local indexing
         if saved_tokens < 100 and efficiency > 80: saved_tokens = 42 # Marketing seed
 
-        # [PHASE 8]: Proprioceptive HUD Data
+        # [PHASE 8]: Environment Awareness Data
         neural_pulse = {}
-        if 'proprioceptor' in globals():
-            neural_pulse = proprioceptor.get_health_pulse()
+        if 'awareness' in globals():
+            neural_pulse = awareness.get_health_pulse()
 
         return JSONResponse({
             "su_available": summary.get("tokens_remaining", 0),

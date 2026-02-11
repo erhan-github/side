@@ -28,8 +28,15 @@ class CloudDistiller:
     def start(self):
         """Starts the background sync worker."""
         if not self._worker_task:
-            self._worker_task = asyncio.create_task(self._process_sync_queue())
-            logger.info("📡 [GLOBAL LOBE]: Shadow Distiller started.")
+            try:
+                loop = asyncio.get_running_loop()
+                self._worker_task = loop.create_task(self._process_sync_queue())
+                logger.info("📡 [GLOBAL LOBE]: Shadow Distiller started.")
+            except RuntimeError:
+                # No running event loop, this usually happens at module-level init.
+                # start() should be called again once the loop is active.
+                logger.debug("📡 [GLOBAL LOBE]: No running loop, delay start.")
+                pass
 
     async def _process_sync_queue(self):
         """Background worker to process sync tasks without blocking local execution."""
@@ -53,7 +60,7 @@ class CloudDistiller:
             timeline = self.engine.audit.get_causal_timeline(session_id)
             
             # 2. Extract the relevant ancestral path
-            # (In a real implementation, we'd use EpisodicProjector logic here)
+            # (In a real implementation, we'd use Timeline Projector logic here)
             
             # 3. Anonymize the thread
             anonymized_snippet = self.anonymize(timeline, terminal_event)

@@ -3,18 +3,18 @@ import hashlib
 from pathlib import Path
 from typing import List, Dict, Any
 from side.storage.modules.identity import IdentityService
-from side.storage.modules.strategy import DecisionStore
+from side.storage.modules.strategy import StrategicStore
 from side.storage.modules.transient import OperationalStore
 from side.storage.modules.base import ContextEngine # Keep ContextEngine for ContextEngine.get_project_id and OperationalStore
 
 logger = logging.getLogger(__name__)
 
-class SynergyEngine:
+class Integration:
     """
     The 'Collective Intelligence' Layer.
     Identifies shared signals between Projects and harvests Technical Patterns.
     """
-    def __init__(self, engine: ContextEngine, profile: IdentityService, registry: DecisionStore, project_path: Path, buffer=None):
+    def __init__(self, engine: ContextEngine, profile: IdentityService, registry: StrategicStore, project_path: Path, buffer=None):
         self.engine = engine
         self.profile = profile
         self.registry = registry
@@ -48,13 +48,13 @@ class SynergyEngine:
         profile = profile_store.get_user_profile(self.project_id)
         
         if profile and profile.get("is_airgapped"):
-            logger.warning(f"🛡️ [SYNERGY]: Project {self.project_id} is AIRGAPPED. Mesh sync disabled.")
+            logger.warning(f"🛡️ [INTEGRATION]: Project {self.project_id} is AIRGAPPED. Mesh sync disabled.")
             return 0
             
         design_pattern = profile.get("design_pattern", "declarative") if profile else "declarative"
         
         signals = self.identify_signals()
-        logger.info(f"🌐 [SYNERGY]: Project Era: {design_pattern}. Searching Mesh for signals: {signals}")
+        logger.info(f"🌐 [INTEGRATION]: Project Era: {design_pattern.upper()}. Searching Mesh for signals: {signals}")
         
         harvest_count = 0
         
@@ -97,7 +97,7 @@ class SynergyEngine:
                 harvest_count += 1
                         
         if harvest_count > 0:
-            logger.info(f"✨ [SYNERGY]: Harvested {harvest_count} shared patterns via Sparse Semantic Similarity.")
+            logger.info(f"✨ [INTEGRATION]: Harvested {harvest_count} shared patterns via Sparse Semantic Similarity.")
         return harvest_count
 
 def run_synergy_sync(project_path: Path):
@@ -108,8 +108,8 @@ def run_synergy_sync(project_path: Path):
         engine = get_engine()
         profile = get_user_profile()
         registry = get_registry()
-        synergy = SynergyEngine(engine, profile, registry, project_path)
-        return asyncio.run(synergy.harvest_mesh_patterns())
+        integration = Integration(engine, profile, registry, project_path)
+        return asyncio.run(integration.harvest_mesh_patterns())
     except Exception as e:
-        logger.error(f"❌ [SYNERGY_ERROR]: Sync failed: {e}")
+        logger.error(f"❌ [INTEGRATION_ERROR]: Sync failed: {e}")
         return 0

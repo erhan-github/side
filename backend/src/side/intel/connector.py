@@ -9,9 +9,9 @@ from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-class BrainBridge:
+class Connector:
     """
-    The 'High-Fidelity Bridge'.
+    The 'High-Fidelity Connector'.
     Surgically extracts tasks and walkthroughs from the Antigravity Brain
     and converts them into High-Density Strategic Schemas.
     """
@@ -146,6 +146,6 @@ class BrainBridge:
 
 if __name__ == "__main__":
     # Test Run
-    bridge = BrainBridge(Path("/Users/erhanerdogan/.gemini/antigravity/brain"))
-    nodes = bridge.scan_nodes()
+    connector = Connector(Path("/Users/erhanerdogan/.gemini/antigravity/brain"))
+    nodes = connector.scan_nodes()
     print(json.dumps(nodes[:2], indent=2))

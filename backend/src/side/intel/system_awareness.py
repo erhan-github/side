@@ -6,9 +6,9 @@ from side.storage.modules.base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
-class Proprioceptor:
+class SystemAwareness:
     """
-    The Proprioceptive Awareness Engine.
+    The System Awareness Engine.
     Synchronizes the 'Artifact Goals' with the 'AI Mindset'.
     """
 
@@ -22,8 +22,13 @@ class Proprioceptor:
     def start(self):
         """Starts the awareness sync process."""
         if not self._sync_task:
-            self._sync_task = asyncio.create_task(self._process_awareness())
-            logger.info("📡 [PROPRIOCEPTION]: Awareness Engine active.")
+            try:
+                loop = asyncio.get_running_loop()
+                self._sync_task = loop.create_task(self._process_awareness())
+                logger.info("📡 [SYSTEM_AWARENESS]: Awareness Engine active.")
+            except RuntimeError:
+                logger.debug("📡 [SYSTEM_AWARENESS]: No running loop, delay awareness start.")
+                pass
 
     async def _process_awareness(self):
         """Periodically scans artifacts and git for goal shifts."""
@@ -32,7 +37,7 @@ class Proprioceptor:
                 await self.sync_artifacts()
                 await self.sync_git_state()
             except Exception as e:
-                logger.error(f"❌ [PROPRIOCEPTOR]: Sync failed: {e}")
+                logger.error(f"❌ [SYSTEM_AWARENESS]: Sync failed: {e}")
             await asyncio.sleep(60)  # Check every minute
 
     async def sync_artifacts(self):
@@ -58,21 +63,21 @@ class Proprioceptor:
                 # Only re-ingest if file changed
                 if self._last_state.get(art_path.name) != mtime:
                     content = art_path.read_text()
-                    logger.info(f"📄 [PROPRIOCEPTION]: Ingesting artifact: {art_path.name}")
+                    logger.info(f"📄 [SYSTEM_AWARENESS]: Ingesting artifact: {art_path.name}")
                     
                     # 1. Specialized Goal Parsing for task.md
                     if art_path.name == "task.md":
                         await self._parse_task_goals(content)
                     
                     # 2. General Storage for all artifacts
-                    self.engine.ontology.save_concept(
+                    self.engine.schema.save_concept(
                         topic=f"artifact_{art_path.stem}",
                         content=content,
                         category="strategic_artifact"
                     )
             except Exception as e:
-                logger.warning(f"⚠️ [PROPRIOCEPTOR]: Failed to ingest {art_path.name}: {e}")
-
+                logger.warning(f"⚠️ [SYSTEM_AWARENESS]: Failed to ingest {art_path.name}: {e}")
+        
         # Update tracking state
         self._last_state.update(new_state)
 
@@ -87,8 +92,8 @@ class Proprioceptor:
             if "[/]" in line:
                 in_progress_tasks.append(line.split("]")[1].strip())
 
-        logger.info(f"🎯 [PROPRIOCEPTION]: Goal Sync: {current_phase} -> {in_progress_tasks}")
-        self.engine.ontology.save_concept(
+        logger.info(f"🎯 [SYSTEM_AWARENESS]: Goal Sync: {current_phase} -> {in_progress_tasks}")
+        self.engine.schema.save_concept(
             topic="current_objective",
             content=f"Focusing on {current_phase}. Active tasks: {', '.join(in_progress_tasks)}",
             category="project_state"
@@ -100,6 +105,7 @@ class Proprioceptor:
         """
         import subprocess
         import json
+        from datetime import datetime
         try:
             # 1. Latest Commit Info
             commit_res = subprocess.run(
@@ -136,9 +142,9 @@ class Proprioceptor:
                 "timestamp": datetime.now().isoformat()
             }
 
-            logger.info(f"🌿 [PROPRIOCEPTION]: Git Blueprint synchronized (Branch: {branch}, Head: {blueprint['head']})")
+            logger.info(f"🌿 [SYSTEM_AWARENESS]: Git state synchronized (Branch: {branch}, Head: {blueprint['head']})")
             
-            self.engine.ontology.save_concept(
+            self.engine.schema.save_concept(
                 topic="git_state",
                 content=json.dumps(blueprint),
                 category="git_state"

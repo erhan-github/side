@@ -154,9 +154,9 @@ class HistoryAnalyzer:
         logger.info(f"⚡ [BRAIN]: Incremental sync triggered for {file_path.name}")
         
         if "task.md" in file_path.name or "WALKTHROUGH.md" in file_path.name:
-            from side.intel.bridge import BrainBridge
-            bridge = BrainBridge(self.brain_path)
-            nodes = bridge.scan_nodes()
+            from side.intel.connector import Connector
+            connector = Connector(self.brain_path)
+            nodes = connector.scan_nodes()
             
             from side.utils.context_cache import ContextCache
             cache = ContextCache(self.project_path, self.engine)
