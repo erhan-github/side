@@ -15,7 +15,7 @@ from typing import Any, Dict, List
 
 from side.storage.modules.base import ContextEngine
 from side.storage.modules.identity import IdentityService
-from side.storage.modules.strategy import DecisionStore
+from side.storage.modules.strategy import StrategicStore
 from side.storage.modules.audit import AuditService
 from side.storage.modules.transient import SessionCache
 from side.utils.memory_diagnostics import get_diagnostics as get_memory_diagnostics
@@ -35,13 +35,13 @@ class ServiceManager(ServiceLifecycleMixin):
         self.project_path = Path(project_path).resolve()
         self.engine = ContextEngine()
         self.profile = IdentityService(self.engine)
-        self.registry = DecisionStore(self.engine)
+        self.registry = StrategicStore(self.engine)
         self.ledger = AuditService(self.engine)
         self.cache = SessionCache(self.engine)
         
-        from side.services.unified_buffer import SignalBuffer
+        from side.services.data_buffer import DataBuffer
         from side.config import config
-        self.buffer = SignalBuffer({
+        self.buffer = DataBuffer({
             'strategic': self.registry,
             'audit': self.ledger,
             'operational': self.cache
@@ -90,7 +90,7 @@ class ServiceManager(ServiceLifecycleMixin):
             self._memory_task = asyncio.create_task(self._memory_monitor())
 
             self._setup_signal_handlers()
-            logger.info("✅ All services started successfully (Unified Buffer active)")
+            logger.info("✅ All services started successfully (Data Buffer active)")
 
         except Exception as e:
             logger.error(f"Failed to start services: {e}", exc_info=True)
@@ -122,13 +122,13 @@ class ServiceManager(ServiceLifecycleMixin):
         from side.services.system_health import SystemHealthService
         from side.services.event_ledger import EventLedgerService
         from side.services.socket_listener import SocketListenerService
-        from side.services.signal_auditor import SignalAuditorService
+        from side.services.event_logger import EventLogger
         from side.services.state_snapshot import StateSnapshotService
         from side.services.system_monitor import SystemMonitorService
         from side.services.intent_tracker import IntentTrackerService
-        from side.services.roi_simulator import ROISimulatorService
+        from side.services.metrics_calculator import MetricsCalculator
         from side.services.doc_scanner import GoalIngestor
-        from side.intel.auto_intelligence import ContextService
+        from side.intel.context_service import ContextService
         from side.services.file_watcher import FileWatcher
         
         # 0. File Watcher
@@ -171,9 +171,9 @@ class ServiceManager(ServiceLifecycleMixin):
         self.system_monitor = SystemMonitorService(self.buffer, self.project_path)
         await self.launch_service("system_monitor", self.system_monitor.start)
 
-        # 9. Signal Auditor
-        self.signal_auditor = SignalAuditorService(self.operational)
-        await self.launch_service("signal_auditor", self.signal_auditor.run_forever)
+        # 9. Event Logger
+        self.event_logger = EventLogger(self.operational)
+        await self.launch_service("event_logger", self.event_logger.run_forever)
 
         # 10. Service Reaper (Self-Healing)
         await self.launch_service("service_reaper", self._service_reaper)
@@ -182,15 +182,15 @@ class ServiceManager(ServiceLifecycleMixin):
         self.intent_tracker = IntentTrackerService(self.buffer)
         await self.launch_service("intent_tracker", self.intent_tracker.start)
 
-        # 12. ROI Simulator
-        self.roi_simulator = ROISimulatorService(self.buffer)
+        # 12. Metrics Calculator
+        self.metrics_calculator = MetricsCalculator(self.buffer)
         
         # 13. Doc Scanner
         self.goal_ingestor = GoalIngestor(self.strategic)
         await self.launch_service("doc_scanner", self.goal_ingestor.scavenge, self.project_path)
         
         if hasattr(self, "event_ledger"):
-            self.event_ledger.roi_callback = self.roi_simulator.simulate_resolution_impact
+            self.event_ledger.roi_callback = self.metrics_calculator.simulate_resolution_impact
         
         logger.info("Service Manager started all background engines via Mixin.")
 

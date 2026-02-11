@@ -155,7 +155,7 @@ class SystemMonitorService:
         return weights.get(event, 0.1)
 
     async def _persistence_loop(self):
-        """Pass signals to the SignalBuffer."""
+        """Pass signals to the DataBuffer."""
         while self._running:
             try:
                 signal = await self._queue.get()

@@ -87,7 +87,7 @@ class SocketListenerService:
                     
                     # Offload to Unified Buffer for asynchronous batching
                     # Note: We don't await ingest here to keep the socket reading lightning fast
-                    # SignalBuffer.ingest is already async and uses a lock, but we can fire-and-forget
+                    # DataBuffer.ingest is already async and uses a lock, but we can fire-and-forget
                     # or await it since it's just a buffer append.
                     asyncio.create_task(self.buffer.ingest(category, payload))
                 except json.JSONDecodeError:

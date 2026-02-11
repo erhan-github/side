@@ -9,19 +9,19 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from side.storage.modules.strategy import DecisionStore
+from side.storage.modules.strategy import StrategicStore
 from side.utils.llm_helpers import extract_json
 from side.prompts import Personas, StrategicFrictionPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
-class ProactiveService:
+class BackgroundService:
     """
     Monitors for 'Strategic Friction' signals in the codebase.
     Checks for TODO/HACK comments and cross-references them with active goals.
     """
 
-    def __init__(self, registry: DecisionStore, project_path: Path):
+    def __init__(self, registry: StrategicStore, project_path: Path):
         self.strategic = registry # Normalized name
         self.project_path = project_path
         self.config = LLMConfigs.get_config("strategic_auditor")

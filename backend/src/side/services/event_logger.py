@@ -19,7 +19,7 @@ from side.models.core import SignalReport
 
 logger = logging.getLogger(__name__)
 
-class SignalAuditorService:
+class EventLogger:
     """
     Analyzes 'Dark Signals' from the OS to feed the Intelligence Substrate.
     """
@@ -37,7 +37,7 @@ class SignalAuditorService:
             return
         self._running = True
         self._task = asyncio.create_task(self.run_forever())
-        logger.info("🔍 [SIGNAL AUDITOR]: Deep Discovery Active.")
+        logger.info("🔍 [EVENT LOGGER]: Deep Discovery Active.")
 
     async def stop(self) -> None:
         """Stop the signal auditor."""
@@ -48,7 +48,7 @@ class SignalAuditorService:
                 await self._task
             except asyncio.CancelledError:
                 pass
-        logger.info("🔍 [SIGNAL AUDITOR]: Deep Discovery Halted.")
+        logger.info("🔍 [EVENT LOGGER]: Deep Discovery Halted.")
 
     async def run_forever(self, interval: float = 60.0) -> None:
         """Periodic audit loop."""

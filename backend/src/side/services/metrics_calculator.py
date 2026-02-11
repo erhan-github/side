@@ -1,19 +1,19 @@
 import asyncio
 import logging
 from datetime import datetime, timezone
-from side.services.unified_buffer import SignalBuffer
+from side.services.data_buffer import DataBuffer
 from side.utils.llm_helpers import extract_json
 from side.prompts import Personas, ValueEstimationPrompt, LLMConfigs
 
 logger = logging.getLogger(__name__)
 
-class ROISimulatorService:
+class MetricsCalculator:
     """
     Value Estimator Service.
     Estimates the technical and financial impact of resolved issues.
     """
     
-    def __init__(self, buffer: SignalBuffer):
+    def __init__(self, buffer: DataBuffer):
         self.buffer = buffer
         self.config = LLMConfigs.get_config("value_estimation")
 
@@ -39,7 +39,7 @@ class ROISimulatorService:
                 
                 # Log to Unified Buffer
                 await self.buffer.ingest("insights", {
-                    "tool": "roi_simulator",
+                    "tool": "metrics_calculator",
                     "action": "value_estimation",
                     "payload": {
                         "problem": problem,

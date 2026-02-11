@@ -3,7 +3,7 @@ import re
 import logging
 import uuid
 from pathlib import Path
-from side.storage.modules.strategy import DecisionStore
+from side.storage.modules.strategy import StrategicStore
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ class DocScanner:
     Ingests project goals from raw documentation files.
     """
     
-    def __init__(self, registry: DecisionStore):
+    def __init__(self, registry: StrategicStore):
         self.registry = registry
 
     async def scavenge(self, root_path: Path):

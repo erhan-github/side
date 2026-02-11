@@ -7,7 +7,7 @@ from collections import defaultdict, deque
 
 logger = logging.getLogger(__name__)
 
-class SignalBuffer:
+class DataBuffer:
     """
     Signal Buffer: High-Frequency Context Sync.
     Aggregates strategic, audit, and operational signals into a single 
@@ -42,7 +42,7 @@ class SignalBuffer:
             return
         self._running = True
         self._flush_task = asyncio.create_task(self._run_flush_loop())
-        logger.info(f"⚡ [BUFFER]: Unified Buffer active. (Interval: {self.flush_interval}s)")
+        logger.info(f"⚡ [BUFFER]: Data Buffer active. (Interval: {self.flush_interval}s)")
 
     async def stop(self):
         """Final flush and shutdown."""
@@ -54,7 +54,7 @@ class SignalBuffer:
             except asyncio.CancelledError:
                 pass
         await self.flush()
-        logger.info("⚡ [BUFFER]: Unified Buffer offline.")
+        logger.info("⚡ [BUFFER]: Data Buffer offline.")
 
     async def ingest(self, category: str, data: Dict[str, Any]):
         """
@@ -192,6 +192,6 @@ class SignalBuffer:
 
 # Entry for ServiceManager
 async def create_buffer(stores):
-    buf = SignalBuffer(stores)
+    buf = DataBuffer(stores)
     await buf.start()
     return buf
