@@ -8,8 +8,8 @@ from typing import Dict, Any
 class LLMConfigs:
     # --- [Core Intelligence] ---
     # --- [Core Intelligence] ---
-    GUARDIAN = {"temperature": 0.1, "max_tokens": 1024}
-    INTENT_VERIFIER = {"temperature": 0.1, "max_tokens": 1024}
+    CODE_VALIDATOR = {"temperature": 0.1, "max_tokens": 1024}
+    GOAL_VALIDATOR = {"temperature": 0.1, "max_tokens": 1024}
     FORENSICS = {"temperature": 0.0, "max_tokens": 2048}
     
     # --- [Universal Intelligence] ---

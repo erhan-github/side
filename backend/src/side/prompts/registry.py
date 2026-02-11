@@ -1,321 +1,155 @@
 """
 MCP Prompt Registry - Dynamic User-Facing Scenarios.
+Optimized for 'Thin the Fat' architecture and standard FastMCP SDK usage.
 """
 
 import logging
 from pathlib import Path
+from typing import List, Dict, Any, Optional
 from mcp.types import (
     GetPromptResult,
-    Prompt,
     PromptArgument,
     PromptMessage,
     TextContent,
 )
 
 from side.storage.modules.base import ContextEngine
-from side.storage.modules.audit import AuditService
 from side.storage.modules.transient import SessionCache
 from side.storage.modules.identity import IdentityService
-from side.storage.modules.strategy import DecisionStore
-from side.prompts.library import SecurityAudit, CodeQuality, PerformanceCheck
+from side.storage.modules.strategy import StrategicStore
 
 logger = logging.getLogger("side-mcp")
 
 class DynamicPromptManager:
+    """
+    Manages dynamic MCP prompts with optimized context retrieval.
+    Each method provides the logic for a specific prompt scenario.
+    """
     def __init__(self):
+        from side.storage.modules.audit import AuditService
         self.engine = ContextEngine()
         self.audit = AuditService(self.engine)
-        self.strategic = DecisionStore(self.engine)
+        self.strategic = StrategicStore(self.engine)
         self.cache = SessionCache(self.engine)
         self.identity = IdentityService(self.engine)
         self.project_path = Path.cwd()
         self.project_id = ContextEngine.get_project_id(self.project_path)
 
-    def get_prompts(self) -> list[Prompt]:
-        prompts = [
-            Prompt(
-                name="ask_technical_question",
-                description="Get technical advice on a specific question.",
-                arguments=[
-                    PromptArgument(
-                        name="question",
-                        description="Your technical question (e.g., 'Components vs Hooks?')",
-                        required=True,
-                    ),
-                ],
-            ),
-        ]
+    def handle_technical_question(self, question: str) -> GetPromptResult:
+        profile = self.identity.get_user_profile(self.project_id) or {}
+        decisions = self.strategic.list_rejections(self.project_id, limit=3)
+        past_decisions = "\n".join([f"- Q: {r['question']} -> A: {r['answer']}" for r in decisions]) if decisions else "None."
+
+        text = (
+            f"I need a technical decision.\n\n"
+            f"**Question**: \"{question}\"\n\n"
+            f"**Context**:\n"
+            f"- **Stack**: {profile.get('tech_stack', 'Standard')}\n"
+            f"- **Precedent**:\n{past_decisions}\n\n"
+            f"Analyze trade-offs and give a verdict (YES/NO/DEFER) with rationale."
+        )
+        return GetPromptResult(description="Technical Consultation", messages=[self._msg(text)])
+
+    def handle_status(self) -> GetPromptResult:
+        all_plans = self.strategic.list_plans(self.project_id, status="active")
+        top_focus = all_plans[0]['title'] if all_plans else "No active directives."
+        activities = self.audit.get_recent_activities(self.project_id, limit=5)
+        recent_context = "\n".join([f"- {a['action']} ({a.get('tool', 'manual')})" for a in activities]) if activities else "None."
         
-        try:
-            findings = self.audit.get_recent_activities(self.project_id, limit=100)
-            security_issues = [f for f in findings if f.get('outcome') == 'VIOLATION' or 'security' in str(f.get('payload', '')).lower()]
-            perf_issues = [f for f in findings if 'performance' in str(f.get('payload', '')).lower()]
-            
-            if security_issues:
-                prompts.append(Prompt(
-                    name="fix_security_issues",
-                    description=f"Fix {len(security_issues)} Security Issues identified in logs.",
-                    arguments=[]
-                ))
-            
-            if findings:
-                prompts.append(Prompt(
-                    name="fix_general_issues",
-                    description="Auto-resolve the most pressing issue found in logs.",
-                    arguments=[]
-                ))
-            
-            prompts.append(Prompt(
-                name="get_status",
-                description="Get a status update based on recent activity and plans.",
-                arguments=[]
-            ))
-            
-            prompts.append(Prompt(
-                name="verify_readiness",
-                description="Check if the system is ready for deployment/shipping.",
-                arguments=[]
-            ))
-            
-            prompts.append(Prompt(
-                name="review_design",
-                description="Review code for UI consistency and component usage.",
-                arguments=[
-                    PromptArgument(
-                        name="code",
-                        description="The code snippet or file content to review.",
-                        required=True,
-                    )
-                ]
-            ))
-            
-            prompts.append(Prompt(
-                name="verify_documentation",
-                description="Check if documentation matches the actual codebase.",
-                arguments=[]
-            ))
+        text = (
+            f"Give me a Status Update.\n\n"
+            f"**Current Focus**: {top_focus}\n"
+            f"**Recent Context**:\n{recent_context}\n\n"
+            f"Tell me what I should do next to advance the Focus. Be concise."
+        )
+        return GetPromptResult(description="Status Update", messages=[self._msg(text)])
 
-            prompts.append(Prompt(
-                name="audit_deep",
-                description="Scan codebase for specific patterns or issues.",
-                arguments=[
-                    PromptArgument(
-                        name="query",
-                        description="What to look for (e.g. 'unused code')",
-                        required=True,
-                    )
-                ]
-            ))
-            
-            if perf_issues:
-                prompts.append(Prompt(
-                    name="fix_performance_issues",
-                    description=f"Fix {len(perf_issues)} Performance bottlenecks.",
-                    arguments=[]
-                ))
-                
-        except Exception as e:
-            logger.error(f"Failed to load dynamic prompts: {e}")
-            
-        return prompts
-
-    def get_prompt_result(self, name: str, args: dict[str, str]) -> GetPromptResult:
-        if name == "fix_general_issues":
-            findings = self.audit.get_recent_activities(self.project_id, limit=50)
-            violations = [f for f in findings if f.get('outcome') == 'VIOLATION']
-            if not violations:
-                 return GetPromptResult(
-                    description="No issues found",
-                    messages=[PromptMessage(role="user", content=TextContent(type="text", text="Run a deep audit to find new things to fix."))]
-                )
-            
-            severity_map = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
-            findings.sort(key=lambda x: severity_map.get(x.get('severity', 'INFO'), 5))
-            top_issue = findings[0]
-            
-            return GetPromptResult(
-                description=f"Fix: {top_issue.get('message', 'Issue')}",
-                messages=[
-                    PromptMessage(
-                        role="user",
-                        content=TextContent(
-                            type="text",
-                            text=f"Fix this {top_issue.get('severity')} issue:\n\n"
-                                 f"**Issue**: {top_issue.get('message')}\n"
-                                 f"**File**: {top_issue.get('file_path')}\n"
-                                 f"**Instructions**: Analyze the code and apply a robust patch. Ensure tests pass."
-                        ),
-                    ),
-                ],
-            )
-            
-        if name == "get_status":
-            profile = self.identity.get_user_profile(self.project_id) or {}
-            all_plans = self.strategic.list_plans(self.project_id, status="active")
-            top_focus = all_plans[0]['title'] if all_plans else "No active directives."
-            activities = self.audit.get_recent_activities(self.project_id, limit=5)
-            recent_context = "\n".join([f"- {a['action']} ({a['tool']})" for a in activities]) if activities else "None."
-            
-            return GetPromptResult(
-                description="Status Update",
-                messages=[
-                    PromptMessage(
-                        role="user",
-                        content=TextContent(
-                            type="text",
-                            text=f"Give me a Status Update.\n\n"
-                                 f"**User**: {profile.get('name', 'Founder')}\n"
-                                 f"**Current Focus**: {top_focus}\n"
-                                 f"**Recent Context**:\n{recent_context}\n\n"
-                                 f"Analyze recent context and tell me what I should do next to advance the Focus. Be concise."
-                        ),
-                    ),
-                ],
-            )
-
-        if name == "ask_technical_question":
-            question = args.get("question", "What should we do?")
-            profile = self.identity.get_user_profile(self.project_id) or {}
-            stack = profile.get("tech_stack", "Unknown Stack")
-            stage = profile.get("stage", "Unknown Stage")
-            decisions = self.strategic.list_rejections(self.project_id, limit=3)
-            past_decisions = "\n".join([f"- Q: {r['question']} -> A: {r['answer']}" for r in decisions]) if decisions else "None."
-
-            return GetPromptResult(
-                description="Technical Consultation",
-                messages=[
-                    PromptMessage(
-                        role="user",
-                        content=TextContent(
-                            type="text",
-                            text=f"I need a technical decision.\n\n"
-                                 f"**Question**: \"{question}\"\n\n"
-                                 f"**Context**:\n"
-                                 f"- **Stage**: {stage}\n"
-                                 f"- **Stack**: {stack}\n"
-                                 f"- **Precedent** (Last 3 Decisions):\n{past_decisions}\n\n"
-                                 f"Analyze the trade-offs (Cost, Speed, Debt) and give a verdict (YES/NO/DEFER) with a one-sentence rationale."
-                        ),
-                    ),
-                ],
-            )
-
-        if name == "verify_readiness":
-            findings = self.audit.get_recent_activities(self.project_id, limit=100)
-            crit = len([f for f in findings if f.get('outcome') == 'VIOLATION'])
-            high = 0 
-            status = "🔴 BLOCKED" if crit > 0 else ("🟠 RISKY" if high > 0 else "🟢 CLEAR")
-            
-            return GetPromptResult(
-                description="Readiness Check",
-                messages=[
-                    PromptMessage(
-                        role="user",
-                        content=TextContent(
-                            type="text",
-                            text=f"Perform a Readiness Check.\n\n"
-                                 f"**Current Status**: {status}\n"
-                                 f"- Critical Issues: {crit}\n"
-                                 f"- High Issues: {high}\n\n"
-                                 f"1. Run `audit` on any modified files.\n"
-                                 f"2. Verify no debugging code or secrets are left.\n"
-                                 f"3. Confirm compliance with the Active Plan.\n"
-                                 f"4. Verdict: **SHIP IT** or **BLOCK**."
-                        ),
-                    ),
-                ],
-            )
-
-        if name == "review_design":
-            code_snippet = args.get("code", "")
-            web_root = self.project_path / "web"
-            components = []
-            if web_root.exists():
-                ui_dir = web_root / "components"
-                if ui_dir.exists():
-                     for f in ui_dir.rglob("*.tsx"):
-                         if not f.name.startswith("index"):
-                             components.append(f.stem)
-            
-            component_list = ", ".join(sorted(components)) or "None detected."
-
-            return GetPromptResult(
-                description="Design Review",
-                messages=[
-                    PromptMessage(
-                        role="user",
-                        content=TextContent(
-                            type="text",
-                            text=f"Review this frontend code for consistency.\n\n"
-                                 f"**Available Components**: [{component_list}]\n\n"
-                                 f"**Code**:\n```tsx\n{code_snippet}\n```\n\n"
-                                 f"Identify authorized components that should be used instead of raw HTML elements. Rewrite the code using them."
-                        ),
-                    ),
-                ],
-            )
-
-        if name == "verify_documentation":
-            docs_context = ""
-            for doc_name in ["README.md", "backend/VISION.md", "docs/MASTER_ROADMAP.md"]:
-                doc_path = self.project_path / doc_name
-                if doc_path.exists():
-                     content = doc_path.read_text()
-                     docs_context += f"\n--- {doc_name} ---\n{content[:1000]}...\n"
-            
-            if not docs_context:
-                docs_context = "No strategic documentation found."
-
-            return GetPromptResult(
-                description="Documentation Verification",
-                messages=[
-                    PromptMessage(
-                        role="user",
-                        content=TextContent(
-                            type="text",
-                            text=f"Verify that documentation matches reality.\n\n"
-                                 f"**Docs Context**:\n{docs_context}\n\n"
-                                 f"Identify feature claims in logs vs docs. Report any missing documentation or unimplemented claims."
-                        ),
-                    ),
-                ],
-            )
-            
-        if name == "fix_security_issues":
-            return GetPromptResult(
-                description="Fix Security Issues",
-                messages=[
-                    PromptMessage(
-                        role="user",
-                        content=TextContent(
-                            type="text",
-                            text="List all critical security issues. For each one:\n1. Explain the risk.\n2. Propose a code fix.\n3. Apply the fix.\n4. Verify the fix.",
-                        ),
-                    ),
-                ],
-            )
+    def handle_fix_issues(self) -> GetPromptResult:
+        findings = self.audit.get_recent_activities(self.project_id, limit=20)
+        violations = [f for f in findings if f.get('outcome') == 'VIOLATION']
+        top_issue = violations[0] if violations else (findings[0] if findings else None)
         
-        if name == "fix_performance_issues":
-            return GetPromptResult(
-                description="Fix Performance Issues",
-                messages=[
-                    PromptMessage(
-                        role="user",
-                        content=TextContent(
-                            type="text",
-                            text="Identify top performance bottlenecks (N+1 queries, loops). Optimize them and verify the speedup.",
-                        ),
-                    ),
-                ],
-            )
+        if not top_issue:
+             return GetPromptResult(description="No issues", messages=[self._msg("No issues found to fix.")])
         
-        raise ValueError(f"Unknown prompt: {name}")
+        text = (
+            f"Fix this {top_issue.get('severity', 'HIGH')} issue:\n\n"
+            f"**Issue**: {top_issue.get('message')}\n"
+            f"**File**: {top_issue.get('file_path')}\n"
+            f"**Instructions**: Analyze the code and apply a robust patch."
+        )
+        return GetPromptResult(description=f"Fix: {top_issue.get('message', 'Issue')}", messages=[self._msg(text)])
+
+    def handle_readiness(self) -> GetPromptResult:
+        findings = self.audit.get_recent_activities(self.project_id, limit=50)
+        crit = len([f for f in findings if f.get('outcome') == 'VIOLATION'])
+        status = "🔴 BLOCKED" if crit > 0 else "🟢 CLEAR"
+        
+        text = (
+            f"Perform a Readiness Check. Current Status: {status}\n\n"
+            f"- Critical Issues: {crit}\n"
+            f"1. Run audit on modified files.\n"
+            f"2. Check for leftover debug code.\n"
+            f"3. Verdict: **SHIP IT** or **BLOCK**."
+        )
+        return GetPromptResult(description="Readiness Check", messages=[self._msg(text)])
+
+    def handle_design_review(self, code: str) -> GetPromptResult:
+        # Optimized component discovery
+        components = []
+        ui_dir = self.project_path / "web/components"
+        if ui_dir.exists():
+            components = [f.stem for f in ui_dir.glob("*.tsx") if not f.name.startswith("index")]
+        
+        c_list = ", ".join(sorted(components)) or "Standard Elements"
+        text = (
+            f"Review this frontend code. Available Components: [{c_list}]\n\n"
+            f"**Code**:\n```tsx\n{code}\n```\n\n"
+            f"Advise on component reuse and consistency."
+        )
+        return GetPromptResult(description="Design Review", messages=[self._msg(text)])
+
+    def handle_security_fix(self) -> GetPromptResult:
+        text = "List all detected security violations and provide safe remediation for each."
+        return GetPromptResult(description="Security Fix", messages=[self._msg(text)])
+
+    def handle_audit_deep(self, query: str) -> GetPromptResult:
+        text = f"Perform a deep audit for: {query}\nAnalyze cross-file dependencies and report any architectural gaps."
+        return GetPromptResult(description="Deep Audit", messages=[self._msg(text)])
+
+    def _msg(self, text: str) -> PromptMessage:
+        return PromptMessage(role="user", content=TextContent(type="text", text=text))
 
 def register_prompt_handlers(server, prompt_manager: DynamicPromptManager):
-    @server.list_prompts()
-    async def list_prompts() -> list[Prompt]:
-        return prompt_manager.get_prompts()
+    """
+    Registers the prompts using the server.prompt() decorator-style call.
+    Note: We use the function name 'prompt' as a closure to register individual handlers.
+    """
+    
+    @server.prompt(name="ask_technical_question")
+    def ask_technical_question(question: str) -> GetPromptResult:
+        return prompt_manager.handle_technical_question(question)
 
-    @server.get_prompt()
-    async def get_prompt(name: str, arguments: dict[str, str] | None) -> GetPromptResult:
-        return prompt_manager.get_prompt_result(name, arguments or {})
+    @server.prompt(name="get_status")
+    def get_status() -> GetPromptResult:
+        return prompt_manager.handle_status()
+
+    @server.prompt(name="fix_general_issues")
+    def fix_general_issues() -> GetPromptResult:
+        return prompt_manager.handle_fix_issues()
+
+    @server.prompt(name="verify_readiness")
+    def verify_readiness() -> GetPromptResult:
+        return prompt_manager.handle_readiness()
+
+    @server.prompt(name="review_design")
+    def review_design(code: str) -> GetPromptResult:
+        return prompt_manager.handle_design_review(code)
+
+    @server.prompt(name="fix_security_issues")
+    def fix_security_issues() -> GetPromptResult:
+        return prompt_manager.handle_security_fix()
+
+    @server.prompt(name="audit_deep")
+    def audit_deep(query: str) -> GetPromptResult:
+        return prompt_manager.handle_audit_deep(query)

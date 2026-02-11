@@ -1,5 +1,5 @@
 """
-System Physics Models (Pydantic V2).
+System Metrics Models (Pydantic V2).
 The Single Source of Truth for Invariant Enforcement.
 """
 from typing import List, Dict, Optional
@@ -20,7 +20,7 @@ class HealthResult(BaseModel):
     violations: List[str] = Field(default_factory=list)
     context: Dict = Field(default_factory=dict)
 
-class SiliconVelocity(BaseModel):
+class DevelopmentVelocity(BaseModel):
     """
     [METRIC]: The speed of value delivery sans friction.
     """

@@ -3,8 +3,8 @@ import logging
 import uuid
 from pathlib import Path
 from side.storage.modules.base import ContextEngine
-from side.intel.auto_intelligence import ContextService
-from side.intel.reasoning_timeline import TimelineManager
+from side.intel.context_service import ContextService
+from side.intel.decision_history import HistoryManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("VERIFY_CAUSAL")
@@ -31,16 +31,16 @@ async def test_causal_integrity():
         }
     )
     
-    # 2. Simulate Reasoning Steps
-    logger.info("🧠 Step 2: Simulating AI reasoning chain...")
-    timeline = TimelineManager.get(fix_id)
-    if not timeline:
-        raise Exception("Timeline not created automatically by service!")
+    # 2. Simulate Decision History
+    logger.info("🧠 Step 2: Simulating AI history chain...")
+    history = HistoryManager.get(fix_id)
+    if not history:
+        raise Exception("History not created automatically by service!")
     
-    timeline.session_id = session_id # Explicitly set for test
-    timeline.record_context_injected(5, 1200)
-    timeline.record_fix_applied("AppDelegate.swift", 42, "Added optional binding")
-    timeline.record_verification_passed()
+    history.session_id = session_id # Explicitly set for test
+    history.record_context_injected(5, 1200)
+    history.record_fix_applied("AppDelegate.swift", 42, "Added optional binding")
+    history.record_verification_passed()
     
     # 3. Verify Relational Persistence
     logger.info("💾 Step 3: Verifying relational persistence in SQLite...")

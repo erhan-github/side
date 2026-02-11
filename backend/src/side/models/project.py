@@ -1,12 +1,12 @@
 """
-System Brain Models (Pydantic V2).
-The Single Source of Truth for the Fractal Graph.
+System Project Models (Pydantic V2).
+The Single Source of Truth for the Project Index.
 """
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 
-class BrainStats(BaseModel):
+class ProjectStats(BaseModel):
     nodes: int
     total_size_bytes: int = 0
     total_lines: int = 0
@@ -17,14 +17,14 @@ class DNA(BaseModel):
     primary_languages: List[str] = Field(default_factory=list)
     signals: List[str] = Field(default_factory=list)
 
-class FractalSemantics(BaseModel):
+class CodeSemantics(BaseModel):
     classes: List[str] = Field(default_factory=list)
     functions: List[str] = Field(default_factory=list)
     signals: List[str] = Field(default_factory=list)
 
-class FractalNode(BaseModel):
+class ProjectNode(BaseModel):
     """
-    A single file or directory in the Fractal Index.
+    A single file or directory in the Project Index.
     """
     path: str
     type: str # "file" or "dir"
@@ -32,7 +32,7 @@ class FractalNode(BaseModel):
     size: int
     lines: int
     digest: str # SHA-256
-    semantics: Optional[FractalSemantics] = None
+    semantics: Optional[CodeSemantics] = None
     
 class IntentSnapshot(BaseModel):
     objectives: List[Dict[str, Any]] = Field(default_factory=list)
@@ -48,13 +48,13 @@ class ContextSnapshot(BaseModel):
     version: str = "3.1.0"
     last_scan: datetime = Field(default_factory=datetime.now)
     dna: DNA = Field(default_factory=DNA)
-    stats: BrainStats
+    stats: ProjectStats
     
     # The Intent Layer
     intent: IntentSnapshot = Field(default_factory=IntentSnapshot)
     
-    # The Fractal Layer (Raw Distributed Index)
-    fractal_root: Dict[str, Any] = Field(default_factory=dict)
+    # The Project Layer (Raw Distributed Index)
+    project_root: Dict[str, Any] = Field(default_factory=dict)
     
     # Context
     history_fragments: List[Dict[str, Any]] = Field(default_factory=list)
