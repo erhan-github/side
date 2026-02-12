@@ -51,7 +51,9 @@ export default function RootLayout({
           <CSPostHogProvider>
             <AuthSync />
             <Header />
-            {children}
+            <div className="pt-20">
+              {children}
+            </div>
             <Footer />
           </CSPostHogProvider>
         </GlobalErrorBoundary>

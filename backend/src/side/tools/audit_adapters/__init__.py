@@ -17,6 +17,7 @@ from .gosec import GosecAdapter
 from .swiftlint import SwiftLintAdapter
 from .detekt import DetektAdapter
 from .doc_verify import DocVerifyAdapter
+from .debt import DebtAdapter
 from .synthesizer import AuditSynthesizer
 
 __all__ = [
@@ -30,5 +31,6 @@ __all__ = [
     "SwiftLintAdapter",
     "DetektAdapter",
     "DocVerifyAdapter",
+    "DebtAdapter",
     "AuditSynthesizer"
 ]

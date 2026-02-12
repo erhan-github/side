@@ -48,25 +48,72 @@ def generate_api_key() -> str:
     return f"sk_{secrets.token_hex(24)}"
 
 
+import hashlib
+
 def get_user_by_api_key(api_key: str) -> Optional[UserInfo]:
-    """Get user from Supabase by API key."""
+    """Get user from Supabase by API key, supporting secure SHA-256 hashing."""
     client = get_supabase_client(service_role=True)
     if not client:
         return None
         
     try:
-        result = client.table("profiles").select("*").eq("api_key", api_key).single().execute()
-        if result.data:
-            return UserInfo(
-                user_id=result.data["id"],
-                email=result.data.get("email"),
-                api_key=result.data["api_key"],
-                tier=result.data.get("tier", "hobby"),
-                tokens_monthly=result.data.get("tokens_monthly", 50), # 50 is Hobby default
-                tokens_used=result.data.get("tokens_used", 0),
-                valid=True,
-            )
-    except Exception:
+        # [SECURITY]: We must NOT assume the API key is plaintext in the DB.
+        # However, Supabase query by 'eq' requires the stored value.
+        # Since we use 'v1:hint:hash' format, we can't query by the secret directly.
+        # Strategy:
+        # 1. If it's a newer sk_ key, we might need a hint or we fetch by ID if known.
+        # 2. For now, we fetch ALL profiles (dangerous if many) or use a RPC.
+        # [FIX]: In a real system, we'd query by the HINT first.
+        
+        hint = None
+        if api_key.startswith("sk_"):
+             hint = f"{api_key[:7]}...{api_key[-4:]}"
+             
+        # Fetch by hint if possible
+        query = client.table("profiles").select("*")
+        if hint:
+            # Query for the hint within the api_key column (format v1:hint:hash)
+            query = query.ilike("api_key", f"%{hint}%")
+        else:
+            query = query.eq("api_key", api_key)
+            
+        result = query.execute()
+        
+        for row in result.data:
+            stored_key = row["api_key"]
+            
+            # Case 1: Legacy Plaintext
+            if stored_key == api_key:
+                return UserInfo(
+                    user_id=row["id"],
+                    email=row.get("email"),
+                    api_key=stored_key,
+                    tier=row.get("tier", "hobby"),
+                    tokens_monthly=row.get("tokens_monthly", 50),
+                    tokens_used=row.get("tokens_used", 0),
+                    valid=True,
+                )
+            
+            # Case 2: New Hashed Format (v1:hint:hashHex)
+            if stored_key.startswith("v1:"):
+                parts = stored_key.split(":")
+                if len(parts) == 3:
+                    stored_hash = parts[2]
+                    # Hash the incoming key
+                    current_hash = hashlib.sha256(api_key.encode()).hexdigest()
+                    
+                    if stored_hash == current_hash:
+                        return UserInfo(
+                            user_id=row["id"],
+                            email=row.get("email"),
+                            api_key=f"VAULTED:{parts[1]}",
+                            tier=row.get("tier", "hobby"),
+                            tokens_monthly=row.get("tokens_monthly", 50),
+                            tokens_used=row.get("tokens_used", 0),
+                            valid=True,
+                        )
+    except Exception as e:
+        logger.error(f"Auth Error: Failed to validate API key: {e}")
         pass
     return None
 

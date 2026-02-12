@@ -4,12 +4,11 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const ROLES = [
+    "Context Layer",
+    "Architecture Memory",
     "Senior Engineer",
-    "Chief Strategist",
-    "Security Officer",
     "Tech Lead",
-    "QA Architect",
-    "Product Manager"
+    "System of Record"
 ];
 
 interface RotatingRoleProps {
@@ -18,7 +17,7 @@ interface RotatingRoleProps {
     suffix?: string;
 }
 
-export function RotatingRole({ className, prefix = "The ", suffix = " on your monolith." }: RotatingRoleProps) {
+export function RotatingRole({ className, prefix = "The ", suffix = " for your architecture." }: RotatingRoleProps) {
     const [index, setIndex] = useState(0);
     const [fade, setFade] = useState(true);
 

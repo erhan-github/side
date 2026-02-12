@@ -1,6 +1,7 @@
 import { getProfile } from "@/lib/dal/profile";
 import { PageHeader } from "@/components/dashboard/shell/PageHeader";
 import { SectionShell } from "@/components/dashboard/shell/SectionShell";
+import { ApiKeySection } from "@/components/dashboard/account/ApiKeySection";
 import { Shield, Key, User } from "lucide-react";
 
 export default async function AccountPage() {
@@ -37,17 +38,7 @@ export default async function AccountPage() {
                     </div>
                 </SectionShell>
 
-                <SectionShell
-                    title="Security Keys"
-                    icon={Key}
-                >
-                    <p className="text-xs text-zinc-500 mb-6">
-                        Primary API Key ID: <span className="font-mono text-white">{profile.api_key ? profile.api_key.substring(0, 8) + '...' : 'Not Generated'}</span>
-                    </p>
-                    <button className="w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg border border-white/10 text-xs font-bold uppercase tracking-widest transition-colors">
-                        Generate New API Key
-                    </button>
-                </SectionShell>
+                <ApiKeySection initialKey={profile.api_key} />
             </div>
         </div>
     );

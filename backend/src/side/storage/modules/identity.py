@@ -148,6 +148,13 @@ class IdentityService:
                 email=profile_data.get("email")
             )
 
+        from side.utils.vault import SecretVault
+        
+        # [SECURITY]: Secure the token in the vault first
+        if identity.access_token:
+            SecretVault.store_token(identity.id, identity.access_token)
+            identity.access_token = f"sk_{identity.tier}_VAULTED"
+
         with self.engine.connection() as conn:
             conn.execute(
                 """
@@ -196,14 +203,22 @@ class IdentityService:
             )
 
     def get_user_profile(self, project_id: str) -> Identity | None:
-        """Get the unified profile."""
+        """Get the unified profile with vaulted tokens injected."""
         with self.engine.connection() as conn:
             row = conn.execute(
                 "SELECT * FROM profile WHERE id = ?", (project_id,)
             ).fetchone()
             
             if row:
-                return Identity.from_row(row)
+                profile = Identity.from_row(row)
+                
+                # [SECURITY]: Re-inject token from vault
+                from side.utils.vault import SecretVault
+                vaulted_token = SecretVault.get_token(project_id)
+                if vaulted_token:
+                    profile.access_token = vaulted_token
+                
+                return profile
             return None
 
     def get_token_balance(self, project_id: str) -> dict[str, Any]:
@@ -258,11 +273,15 @@ class IdentityService:
             row = conn.execute("SELECT COUNT(*) as count FROM profile").fetchone()
             return row["count"] if row else 0
 
-    def charge_action(self, project_id: str, action_key: str) -> bool:
+    def charge_action(self, project_id: str, action_key: Any) -> bool:
         """
         [ECONOMY]: Deducts SUs for a specific Action.
         Returns True if successful, False if insufficient funds.
         """
+        # [FIX]: Handle Enum types for sqlite3 compatibility
+        if hasattr(action_key, 'value'):
+            action_key = action_key.value
+
         with self.engine.connection() as conn:
             # 1. Get Cost
             cost_row = conn.execute(

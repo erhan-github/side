@@ -5,7 +5,7 @@ from .utils import ux, get_engine, get_user_profile as get_profile
 
 def handle_login(args):
     engine = get_engine()
-    identity = get_user_profile(engine)
+    identity = get_profile(engine)
     project_id = engine.get_project_id(".")
     
     # 1. PATH A: API Key (Pro Flow)
@@ -39,6 +39,8 @@ def handle_login(args):
     AUTH_DOMAIN = "https://sidelith.com"
     if os.environ.get("SIDE_ENV") == "dev":
         AUTH_DOMAIN = "http://localhost:3999"
+    elif os.environ.get("SIDE_ENV") == "staging":
+        AUTH_DOMAIN = "https://staging.sidelith.com"
     
     PORT = 54321
     REDIRECT_URI = f"http://localhost:{PORT}/callback"
@@ -96,7 +98,7 @@ def handle_login(args):
 def check_auth_or_login(tier=None):
     """JIT Auth check: triggers login if no profile exists."""
     engine = get_engine()
-    identity = get_user_profile(engine)
+    identity = get_profile(engine)
     project_id = engine.get_project_id(".")
     profile = identity.get_user_profile(project_id)
     
@@ -112,7 +114,7 @@ def check_auth_or_login(tier=None):
 def handle_profile(args):
     """View current Identity & detailed SU Balance."""
     engine = get_engine()
-    identity = get_user_profile(engine)
+    identity = get_profile(engine)
     project_id = engine.get_project_id(".")
     profile = identity.get_user_profile(project_id)
     
@@ -134,7 +136,7 @@ def handle_profile(args):
 def handle_usage(args):
     """Exposes high-fidelity Cursor-level usage summary."""
     engine = get_engine()
-    identity = get_user_profile(engine)
+    identity = get_profile(engine)
     project_id = engine.get_project_id(".")
     
     summary = identity.get_cursor_usage_summary(project_id)

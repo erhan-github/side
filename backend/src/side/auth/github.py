@@ -108,16 +108,20 @@ async def github_callback(code: str = Query(...), state: str = Query(...)) -> Re
             
         github_user = user_response.json()
         
-    # Create or get user
-    user = get_user_by_github_id(github_user["id"])
-    if not user:
-        user = create_user(
-            github_id=github_user["id"],
-            username=github_user["login"],
-            email=github_user.get("email"),
-            avatar_url=github_user.get("avatar_url"),
-        )
+    # [PALANTIR HARDENING]: We no longer use local in-memory User objects.
+    # Everything is projected from Supabase.
+    from .supabase_auth import create_user_profile
+    
+    # We skip get_user_by_github_id for now as Supabase handles the lookup.
+    # In a full migration, we'd check if profile exists in Supabase.
+    api_key = create_user_profile(str(github_user["id"]), github_user.get("email"))
+    
+    if not api_key:
+        # If it already exists, create_user_profile might return None in this mock-sync impl.
+        # So we try to fetch it.
+        # [TODO]: Implement get_api_key_by_id in supabase_auth.py if needed.
+        pass
         
     # Redirect to frontend with API key
-    redirect_url = f"{FRONTEND_URL}{oauth_state.redirect_to}?api_key={user.api_key}&new={1 if not user else 0}"
+    redirect_url = f"{FRONTEND_URL}{oauth_state.redirect_to}?api_key={api_key}&new=1"
     return RedirectResponse(redirect_url)

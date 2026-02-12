@@ -61,6 +61,8 @@ def main():
     # Wizard
     wizard_parser = subparsers.add_parser("wizard", help="Run the First-Run Experience Setup Wizard")
     
+    args = parser.parse_args()
+
     handlers = {
         "login": handle_login,
         "profile": handle_profile,
