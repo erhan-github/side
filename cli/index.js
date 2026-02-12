@@ -42,7 +42,7 @@ function showLanding() {
 
 function showHelp() {
     console.log(chalk.bold.cyan('Usage:'));
-    console.log('  sidelith <command> [options]\n');
+    console.log('  side <command> [options]\n');
     console.log(chalk.bold.cyan('Commands:'));
     console.log(chalk.white('  install ') + chalk.dim('  Connect Sidelith to Cursor or VS Code'));
     console.log(chalk.white('  auth    ') + chalk.dim('  Link your local agent to Sidelith Cloud'));
@@ -50,13 +50,13 @@ function showHelp() {
     console.log(chalk.white('  help    ') + chalk.dim('  Display this help message'));
     console.log(chalk.white('  version ') + chalk.dim('  Show version information\n'));
     console.log(chalk.bold.cyan('Quick Start:'));
-    console.log('  1. run ' + chalk.green('sidelith install'));
-    console.log('  2. run ' + chalk.green('sidelith auth'));
-    console.log('  3. run ' + chalk.green('sidelith doctor\n'));
+    console.log('  1. run ' + chalk.green('side install'));
+    console.log('  2. run ' + chalk.green('side auth'));
+    console.log('  3. run ' + chalk.green('side doctor\n'));
 }
 
 async function handleAuth() {
-    console.log(chalk.bold.white('\n🔑 Side | Authentication Bridge\n'));
+    console.log(chalk.bold.white('\n🔑 Sidelith | Authentication Bridge\n'));
 
     const dashboardUrl = 'https://sidelith.com/dashboard';
     console.log(chalk.blue('  -> Opening your Sidelith Dashboard...'));
@@ -107,7 +107,7 @@ async function handleAuth() {
 
         await fs.writeFile(envPath, envContent.trim() + '\n');
         spinner.succeed(chalk.green('Authentication Successful.'));
-        console.log(chalk.dim('\nYour local agent is now linked to Side Cloud.'));
+        console.log(chalk.dim('\nYour local agent is now linked to Sidelith Cloud.'));
         console.log(chalk.dim('Run `side doctor` to verify connectivity.'));
     } catch (error) {
         spinner.fail('Authentication failed.');
@@ -121,7 +121,7 @@ async function handleDoctor() {
     const envPath = path.join(process.cwd(), '.env');
     if (!await fs.pathExists(envPath)) {
         console.log(chalk.red('✗ .env file missing in current directory.'));
-        console.log(chalk.dim('  Run `sidelith auth` to initialize.'));
+        console.log(chalk.dim('  Run `side auth` to initialize.'));
         return;
     }
 
@@ -148,7 +148,7 @@ async function handleDoctor() {
         }
     } else {
         console.log(chalk.red('✗ API Key: Missing or invalid format.'));
-        console.log(chalk.dim('  Run `sidelith auth` to link your account.'));
+        console.log(chalk.dim('  Run `side auth` to link your account.'));
     }
 
     // Check for Python/UV (Dual-stack check)
@@ -230,7 +230,7 @@ async function handleInstall() {
             "sidelith": {
                 "command": "uvx",
                 "args": [
-                    "sidelith",
+                    "side",
                     "--project-path",
                     normalizedProjectPath
                 ],
@@ -288,7 +288,7 @@ async function handleInstall() {
 
         console.log('\n' + chalk.bold.blue('Next Steps:'));
         console.log('1. Restart ' + editor);
-        console.log('2. Run `sidelith auth` to link your Sidelith Cloud account');
+        console.log('2. Run `side auth` to link your Sidelith Cloud account');
         console.log('3. Open the AI Pane and ask: "Explain the project strategy"');
 
     } catch (error) {

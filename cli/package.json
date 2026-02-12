@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Sidelith - One Click Strategic AI Installer",
     "bin": {
-        "sidelith": "./index.js",
+        "side": "./index.js",
         "lith": "./index.js"
     },
     "scripts": {

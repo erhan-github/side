@@ -72,8 +72,8 @@ src/side/
 ## CLI Commands
 
 ```bash
-# Run the MCP server
-sidelith
+# Run the Sidelith daemon/server
+side
 
 # Run CLI commands
 side audit --deep

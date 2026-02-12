@@ -1,5 +1,5 @@
 """
-Side Cloud API.
+Sidelith Cloud API.
 
 Capacity-based limits, not feature-based.
 Everyone gets the same features. Upgrade is just more capacity (CP).

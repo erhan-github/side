@@ -28,8 +28,11 @@ Install and connect to your project:
 
 ```bash
 curl -sL sidelith.com/install | sh
-cd your-project
-side connect
+```
+
+### 2. Connect Your Project
+```bash
+side auth
 ```
 
 Test it in Cursor or VS Code:
@@ -146,4 +149,5 @@ Built with: Python, SQLite, Tree-sitter, MCP
 
 ---
 
+**Sidelith Cloud** - Hosted API for high-throughput reasoning and team collaboration.
 **Sidelith** - AI memory for your codebase.

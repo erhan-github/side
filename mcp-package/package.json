@@ -4,7 +4,7 @@
   "description": "Sidelith MCP - High-Integrity Contextual Intelligence for Sovereign Engineering",
   "main": "index.js",
   "bin": {
-    "sidelith-mcp": "./bin/sidelith-mcp.js"
+    "side-mcp": "./bin/sidelith-mcp.js"
   },
   "scripts": {
     "start": "node index.js"

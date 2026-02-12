@@ -1,5 +1,5 @@
 """
-Side Cloud - Hosted API for paid tier.
+Sidelith Cloud - Hosted API for paid tier.
 """
 from .api import app
 
