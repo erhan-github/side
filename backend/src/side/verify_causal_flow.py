@@ -44,7 +44,7 @@ async def test_causal_integrity():
     
     # 3. Verify Relational Persistence
     logger.info("💾 Step 3: Verifying relational persistence in SQLite...")
-    causal_timeline = engine.audit.get_causal_timeline(session_id)
+    causal_timeline = engine.audits.get_causal_timeline(session_id)
     
     has_signal = any(t["type"] == "SIGNAL" and t["data"]["tool"] == "XCODE_SCAVENGER" for t in causal_timeline)
     has_reasoning = any(t["type"] == "REASONING" and t["data"]["event_type"] == "FIX_APPLIED" for t in causal_timeline)

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface BrandLogoProps {
@@ -17,21 +18,26 @@ export function BrandLogo({ className, showIcon = true, size = "md" }: BrandLogo
     };
 
     const iconSizes = {
-        sm: "w-4 h-4",
-        md: "w-5 h-5",
-        lg: "w-8 h-8"
+        sm: 20,
+        md: 24,
+        lg: 40
     };
 
     return (
-        <Link href="/" className={cn("flex items-center gap-2.5 group", className)}>
+        <Link href="/" className={cn("flex items-center gap-3 group", className)}>
             {showIcon && (
-                <div className={cn(
-                    "bg-white rounded-sm group-hover:rotate-90 transition-transform duration-500",
-                    iconSizes[size]
-                )} />
+                <div className="relative flex items-center justify-center">
+                    <Image 
+                        src="/assets/sidelith_small_icon.png" 
+                        alt="Sidelith" 
+                        width={iconSizes[size]} 
+                        height={iconSizes[size]}
+                        className="group-hover:rotate-12 transition-transform duration-500"
+                    />
+                </div>
             )}
             <div className={cn(
-                "font-bold tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent group-hover:from-emerald-400 group-hover:to-blue-400 transition-all duration-300",
+                "font-bold tracking-tighter bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent group-hover:from-white group-hover:to-white transition-all duration-300",
                 sizeClasses[size]
             )}>
                 Sidelith

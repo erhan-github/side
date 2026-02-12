@@ -51,7 +51,7 @@ engine = ContextEngine()
 # Consolidated Registry: Use engine-provided instances to prevent redundant migrations
 identity = engine.profile
 strategic = engine.plans
-audit = engine.audit
+audit = engine.audits
 operational = engine.operational
 
 context_service = ContextService(Path.cwd(), engine=engine)

@@ -46,7 +46,7 @@ class GoalValidator:
         supporting_context = "\n\n".join(artifact_signals) if artifact_signals else "No supporting artifacts found."
 
         # 2. Fetch Recent Activities (Representing code generations)
-        activities = self.engine.audit.get_recent_activities(project_id, limit=5)
+        activities = self.engine.audits.get_recent_activities(project_id, limit=5)
         code_snippets = []
         for activity in activities:
             if activity.tool in ["EDITOR", "GENERATOR", "LLM_ENGINE"]:
@@ -81,7 +81,7 @@ class GoalValidator:
 
     async def _log_goal_drift(self, project_id: str, report: Dict[str, Any]):
         """Logs a goal drift event and emits a HUD signal."""
-        self.engine.audit.log_activity(
+        self.engine.audits.log_activity(
             project_id=project_id,
             tool="GOAL_VALIDATOR",
             action="GOAL_DRIFT_DETECTED",

@@ -57,7 +57,7 @@ class CloudDistiller:
         """Triggers the distillation process for a causal thread."""
         try:
             # 1. Fetch the causal thread from Audit Service
-            timeline = self.engine.audit.get_causal_timeline(session_id)
+            timeline = self.engine.audits.get_causal_timeline(session_id)
             
             # 2. Extract the relevant ancestral path
             # (In a real implementation, we'd use Timeline Projector logic here)

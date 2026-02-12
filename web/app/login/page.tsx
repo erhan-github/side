@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Github, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -48,12 +49,9 @@ export default function LoginPage() {
         <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
             <div className="max-w-md w-full">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2 justify-center mb-12">
-                    <div className="h-8 w-8 bg-white rounded-sm" />
-                    <span className="font-bold text-2xl tracking-tighter uppercase italic">
-                        Side<span className="not-italic lowercase font-light text-zinc-500">lith</span>
-                    </span>
-                </Link>
+                <div className="flex justify-center mb-12">
+                    <BrandLogo size="lg" />
+                </div>
 
                 {/* Header - FIXED: Removed jargon */}
                 <div className="text-center mb-10">

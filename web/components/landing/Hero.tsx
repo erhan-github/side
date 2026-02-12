@@ -1,9 +1,11 @@
 import { ArrowRight } from "lucide-react";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export function Hero() {
     return (
         <section className="w-full max-w-7xl mx-auto px-6 pt-8 pb-16 z-10">
             <div className="max-w-4xl">
+                <BrandLogo size="lg" className="mb-8 opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both" />
                 <h1 className="text-5xl md:text-7xl font-extrabold mb-8 bg-gradient-to-br from-white to-white/80 bg-clip-text text-transparent animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-both leading-[1.05] tracking-tight pb-1">
                     AI coding tools that remember your architecture.
                 </h1>

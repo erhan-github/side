@@ -40,7 +40,7 @@ class ContextService(LifecycleComponent):
         self.project_path = project_path
         self.engine = engine
         self.plans = engine.plans
-        self.audits = engine.audit
+        self.audits = engine.audits
         self.buffer = buffer
         
         self.mmap = MmapStore(project_path)
