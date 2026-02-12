@@ -1,12 +1,10 @@
 """
-Sidelith - Context Engine for AI Coding Tools.
+Sidelith - High-Integrity Context Engine for AI Development.
 
-Sidelith indexes your codebase locally and injects structural context into AI-powered
-development tools (Cursor, VS Code, Claude) via the Model Context Protocol (MCP).
-This allows AI assistants to understand your project's unique architecture, patterns, 
-and conventions without transmitting source code to the cloud for indexing.
+Independently orchestrates architectural context, structural patterns, and project intent 
+to empower AI-powered development tools (Cursor, VS Code, Zed) via MCP.
 
-Core Philosophy: Local-First, Privacy-Focused, Performance-Optimized.
+Enterprise Grade. Local First. Characteristically Clean.
 """
 
 __version__ = "1.1.0-STABLE"

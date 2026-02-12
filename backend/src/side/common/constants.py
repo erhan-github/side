@@ -8,7 +8,7 @@ class Origin(str, Enum):
     HYBRID = "hybrid"
 
 class Outcome(str, Enum):
-    """Outcome of a forensic transaction."""
+    """Outcome of a audit transaction."""
     PASS = "PASS"
     FAIL = "FAIL"
     WARN = "WARN"

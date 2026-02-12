@@ -1,5 +1,5 @@
 """
-[LAYER 4] Activity Distiller - The Activity Log Compiler.
+ Activity Distiller - The Activity Log Compiler.
 Distills raw transaction streams into high-fidelity "Observations" (Facts).
 """
 import logging
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class CodeMonitor:
     def __init__(self, ledger: AuditService):
-        self.audit = ledger
+        self.audits = ledger
         self.llm = LLMClient()
         self.config = LLMConfigs.get_config("fact_extraction")
 
@@ -24,7 +24,7 @@ class CodeMonitor:
         """
         Scans recent activity logs and extracts new "Invariant Facts".
         """
-        activities = self.audit.get_recent_activities(project_id, limit=limit)
+        activities = self.audits.get_recent_activities(project_id, limit=limit)
         if not activities:
             return 0
             
@@ -63,7 +63,7 @@ class CodeMonitor:
         """Store a verified observation."""
         # Simple deduplication check could go here
         try:
-            with self.audit.engine.connection() as conn:
+            with self.audits.engine.connection() as conn:
                 conn.execute("""
                     INSERT INTO observations (id, content, context_tags, confidence, last_verified_at)
                     VALUES (?, ?, ?, ?, ?)
@@ -78,13 +78,3 @@ class CodeMonitor:
         except Exception as e:
             logger.warning(f"Failed to store observation: {e}")
             return False
-
-    def _parse_json(self, text: str) -> List[Dict[str, Any]]:
-        try:
-            if "```json" in text:
-                text = text.split("```json")[1].split("```")[0]
-            elif "```" in text:
-                text = text.split("```")[1].split("```")[0]
-            return json.loads(text)
-        except:
-            return []

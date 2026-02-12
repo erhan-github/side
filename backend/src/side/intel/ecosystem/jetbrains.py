@@ -59,7 +59,7 @@ class JetBrainsBridge:
                 plugin_version=payload.get("pluginVersion", "0.0.0")
             )
             
-            # Refactor: Use Phoenix Protocol (AuditStore)
+            # Refactor: Use Phoenix Protocol (AuditService)
             # We treat IDE context updates as 'Work Context' signals for Layer 2 RAM.
             # Refactor: Use Phoenix Protocol (AuditService)
             from side.storage.modules.base import ContextEngine

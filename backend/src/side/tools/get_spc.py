@@ -23,8 +23,8 @@ def get_spc():
         l_friction = ops.get_setting("local_friction_contribution") or "0.0"
         
         # [PERCEPTION]: Fetch Strategic Alerts
-        from side.storage.modules.strategy import StrategicStore
-        registry = StrategicStore(engine)
+        from side.storage.modules.strategy import DecisionStore
+        registry = DecisionStore(engine)
         plans = registry.get_recent_plans(project_id, limit=5)
         alerts = [{"id": r["id"], "reason": r["rejection_reason"], "file": r["file_path"]} for r in rejections]
 

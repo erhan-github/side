@@ -1,6 +1,6 @@
 """
-DocVerifyAdapter: The "Documentation Truth" Probe.
-Identifies discrepancies between project documentation (READMEs) and structural reality.
+DocVerifyAdapter: The "Documentation Compliance" Probe.
+Identifies discrepancies between project documentation (READMEs) and structural state.
 """
 
 import re
@@ -17,7 +17,7 @@ class DocVerifyAdapter(AuditAdapter):
     def __init__(self, project_path: Path):
         super().__init__(project_path)
         self.engine = ContextEngine()
-        self.identity = IdentityService(self.engine)
+        self.profile = IdentityService(self.engine)
 
     def is_available(self) -> bool:
         """Always available as it uses internal regex/logic."""
@@ -33,14 +33,14 @@ class DocVerifyAdapter(AuditAdapter):
         findings = []
         doc_files = ["README.md", "CONTRIBUTING.md", "ARCHITECTURE.md"]
         
-        # 1. Get Structural Reality
+        # 1. Get Structural State
         project_id = ContextEngine.get_project_id(self.project_path)
-        profile = self.identity.get_user_profile(project_id)
+        profile = self.profile.get_user_profile(project_id)
         if not profile:
             logger.warning("DocVerify: No profile found for project.")
             return []
             
-        reality = {
+        state = {
             "tech_stack": profile.get("tech_stack", {}),
             "tier": profile.get("tier", "hobby"),
             "design_pattern": profile.get("design_pattern", "declarative")
@@ -49,20 +49,20 @@ class DocVerifyAdapter(AuditAdapter):
         for doc_name in doc_files:
             doc_path = self.project_path / doc_name
             if doc_path.exists():
-                findings.extend(self._verify_file(doc_path, reality))
+                findings.extend(self._verify_file(doc_path, state))
                 
         return findings
 
-    def _verify_file(self, path: Path, reality: Dict[str, Any]) -> List[Finding]:
+    def _verify_file(self, path: Path, state: Dict[str, Any]) -> List[Finding]:
         findings = []
         try:
             content = path.read_text(errors='ignore')
             lines = content.splitlines()
             
             # --- PROBE 1: Tech Stack Mismatch ---
-            # Example: README says "Powered by PostgreSQL" but reality is "SQLite"
+            # Example: README says "Powered by PostgreSQL" but state is "SQLite"
             db_claims = re.findall(r"(?i)(postgres|postgresql|sqlite|mongodb|mysql|redis|supabase)", content)
-            actual_frameworks = [f.lower() for f in reality["tech_stack"].get("frameworks", [])]
+            actual_frameworks = [f.lower() for f in state["tech_stack"].get("frameworks", [])]
             
             # Simple check: If a DB is claimed in README but not found in tech_stack signals
             # This is a heuristic - we look for the dominant DB claim.

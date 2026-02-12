@@ -28,16 +28,16 @@ def handle_audit(args):
     """Codebase Audit Wrapper"""
     from side.tools.audit import handle_run_audit
     
-    ux.display_status(f"Starting Codebase Audit (Dimension: {args.dimension})...", level="info")
+    ux.display_status(f"Starting Codebase Audit (Category: {args.category})...", level="info")
     
     severity = args.severity
     if severity == "all":
         severity = "critical,high,medium,low,info"
         
     result = asyncio.run(handle_run_audit({
-        "dimension": args.dimension,
+        "category": args.category,
         "severity": severity
     }))
-    ux.display_header(f"Audit Report: {args.dimension.upper()}")
+    ux.display_header(f"Audit Report: {args.category.upper()}")
     ux.display_panel(result)
     ux.display_footer()

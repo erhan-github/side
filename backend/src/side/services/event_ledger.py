@@ -22,7 +22,7 @@ class EventLedgerService:
     """
 
     def __init__(self, ledger: AuditService, cache: SessionCache, buffer=None):
-        self.audit = audit
+        self.audits = audit
         self.operational = operational
         self.buffer = buffer
         self._running = False
@@ -179,7 +179,7 @@ class EventLedgerService:
             }))
         else:
             # Save to Audit Store as a 'Verified Pattern'
-            self.audit.log_activity(
+            self.audits.log_activity(
                 project_id="SYSTEM",
                 tool="EVENT_LEDGER",
                 action="event_correlation",

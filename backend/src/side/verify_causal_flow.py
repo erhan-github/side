@@ -14,12 +14,12 @@ async def test_causal_integrity():
     engine = ContextEngine(project_path)
     service = ContextService(project_path, engine)
     
-    session_id = f"test-palantir-{uuid.uuid4().hex[:8]}"
+    session_id = f"test-enterprise-{uuid.uuid4().hex[:8]}"
     fix_id = f"fix-{uuid.uuid4().hex[:4]}"
     
-    logger.info(f"🚀 Starting Palantir-Level Causal Test. Session: {session_id}")
+    logger.info(f"🚀 Starting Enterprise-Level Causal Test. Session: {session_id}")
     
-    # 1. Simulate a Friction Signal (A Crash)
+    # 1. Trigger a Friction Signal (A Crash)
     logger.info("📡 Step 1: Simulating log crash signal...")
     await service.log_friction_event(
         source="XCODE_SCAVENGER",
@@ -31,7 +31,7 @@ async def test_causal_integrity():
         }
     )
     
-    # 2. Simulate Decision History
+    # 2. Record Decision History
     logger.info("🧠 Step 2: Simulating AI history chain...")
     history = HistoryManager.get(fix_id)
     if not history:

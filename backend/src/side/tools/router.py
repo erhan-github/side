@@ -23,7 +23,7 @@ TOOL_COSTS = {
     "strategic_review": ActionCost.STRATEGIC_ALIGN,
     "plan": ActionCost.HUB_EVOLVE,
     "check": ActionCost.HUB_EVOLVE,
-    "run_audit": ActionCost.FORENSIC_PULSE,
+    "run_audit": ActionCost.AUDIT_PULSE,
     "reindex_dna": ActionCost.CONTEXT_BOOST,
     "welcome": ActionCost.WELCOME,
 }
@@ -64,7 +64,7 @@ async def handle_tool_call(name: str, arguments: dict[str, Any]) -> str:
     
     # 3. Verify balance before execution
     if cost > 0:
-        balance_info = db.identity.get_token_balance(project_id)
+        balance_info = db.profile.get_token_balance(project_id)
         if balance_info["balance"] < cost:
             return f"""
 ⚠️ **Insufficient Strategic Units (SUs)**
@@ -100,9 +100,9 @@ Required for `{name}`: `{cost} SUs`
         target_action = action_map.get(name, SystemAction.HUB_UPDATE)
         billing.charge(project_id, target_action, name, arguments)
         
-        # Ensure free tools are also logged in ForensicStore
+        # Ensure free tools are also logged in AuditService
         if cost == 0:
-            db.forensic.log_activity(project_id, name, "execution", 0, tier="free")
+            db.audits.log_activity(project_id, name, "execution", 0, tier="free")
                 
         return result
     except Exception as e:

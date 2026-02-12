@@ -48,8 +48,10 @@ class AntigravitySource(IntentSource):
                     if "updatedAt" in meta:
                          ts = meta["updatedAt"].replace("Z", "+00:00")
                          started_at = datetime.fromisoformat(ts)
-                except:
-                    pass
+                except Exception as e:
+                    # Use silent_logger to avoid terminal noise while capturing telemetry issues
+                    from side.utils.silent_logger import silent_logger
+                    silent_logger.error(f"Antigravity metadata parse failed: {e}")
             
             # If no meta summary, check tasks
             if not raw_intent and node.get("tasks"):

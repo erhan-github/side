@@ -13,6 +13,7 @@ sys.path.append(str(project_root))
 
 from side.storage.modules.base import ContextEngine
 from side.storage.modules.audit import AuditService
+from side.intel.tree_indexer import update_branch
 
 import logging
 logger = logging.getLogger("side.watcher")
@@ -68,6 +69,9 @@ class SidelithEventHandler(FileSystemEventHandler):
                 self.loop
             )
 
+    async def _service_reaper(self) -> None:
+        """Self-Healing mechanism for background services."""
+
     def _check_event_storm(self) -> bool:
         """Detects high-IO situations (npm install, etc) and throttles observation."""
         now = time.time()
@@ -111,12 +115,12 @@ class SidelithEventHandler(FileSystemEventHandler):
                 cost_tokens=0
             )
             # Remove fat
-            self.audit.cleanup_expired_data()
+            self.ledger.cleanup_expired_data()
         except Exception as e:
             logger.error(f"⚠️ Consistency Check Error: {e}")
 
     def _should_ignore(self, filepath: str) -> bool:
-        # [GITIGNORE INHERITANCE]: Dimension 3 of Strategic Audit
+        # [GITIGNORE INHERITANCE]: Strategic Audit
         from side.utils.ignore_store import get_ignore_store
         ignore_store = get_ignore_store(self.engine.get_repo_root())
         
@@ -160,7 +164,7 @@ class SidelithEventHandler(FileSystemEventHandler):
                 outcome_status = "DRIFT"
             
             # Health check costs 0 SU for background watcher
-            self.audit.log_activity(
+            self.ledger.log_activity(
                 project_id=self.project_id,
                 tool="watcher",
                 action=f"FILE_MOD:{rel_path}",
@@ -168,7 +172,15 @@ class SidelithEventHandler(FileSystemEventHandler):
                 payload={"outcome": outcome_status}
             )
             
-            # 3. Console Feedback -> Logger Feedback
+            # 3. CRITICAL: Trigger Fractal Index Update (Merkle Consistency)
+            try:
+                # Run sync to block event propagation if needed, but here we just trigger
+                update_branch(self.engine.get_repo_root(), Path(filepath), schema_store=self.engine.schema)
+                logger.info(f"⚡ [FRACTAL]: Selective index update for {rel_path}")
+            except Exception as e:
+                logger.warning(f"⚠️ Fractal Sync Failed for {rel_path}: {e}")
+            
+            # 4. Console Feedback -> Logger Feedback
             if result.status == HealthStatus.VIOLATION:
                  logger.error(f"🚨 [CRITICAL VIOLATION]: {filepath}")
                  for v in result.violations:
@@ -194,11 +206,11 @@ async def start_watcher(path: str):
     except Exception as e:
         logger.warning(f"⚠️ Could not set process niceness: {e}")
     engine = ContextEngine()
-    ledger = AuditService(engine)
+    ledger = engine.audits
     project_id = ContextEngine.get_project_id(str(path_obj))
     loop = asyncio.get_running_loop()
     
-    event_handler = SidelithEventHandler(engine, audit, loop, project_id)
+    event_handler = SidelithEventHandler(engine, ledger, loop, project_id)
     observer = Observer()
     observer.schedule(event_handler, str(path_obj), recursive=True)
     observer.start()

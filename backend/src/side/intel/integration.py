@@ -3,7 +3,7 @@ import hashlib
 from pathlib import Path
 from typing import List, Dict, Any
 from side.storage.modules.identity import IdentityService
-from side.storage.modules.strategy import StrategicStore
+from side.storage.modules.strategy import DecisionStore
 from side.storage.modules.transient import OperationalStore
 from side.storage.modules.base import ContextEngine # Keep ContextEngine for ContextEngine.get_project_id and OperationalStore
 
@@ -14,7 +14,7 @@ class Integration:
     The 'Collective Intelligence' Layer.
     Identifies shared signals between Projects and harvests Technical Patterns.
     """
-    def __init__(self, engine: ContextEngine, profile: IdentityService, registry: StrategicStore, project_path: Path, buffer=None):
+    def __init__(self, engine: ContextEngine, profile: IdentityService, registry: DecisionStore, project_path: Path, buffer=None):
         self.engine = engine
         self.profile = profile
         self.registry = registry

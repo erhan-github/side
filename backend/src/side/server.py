@@ -8,7 +8,7 @@ HANDOVER NOTE: Resource URIs use the 'side://' scheme.
 
 from mcp.server.fastmcp import FastMCP
 from side.storage.modules.base import ContextEngine
-from .storage.modules.strategy import StrategicStore
+from .storage.modules.strategy import DecisionStore
 from .storage.modules.audit import AuditService
 from .storage.modules.transient import SessionCache
 from .intel.context_service import ContextService
@@ -49,8 +49,8 @@ app = mcp.sse_app # Export for uvicorn
 engine = ContextEngine()
 
 # Consolidated Registry: Use engine-provided instances to prevent redundant migrations
-identity = engine.identity
-strategic = engine.strategic
+identity = engine.profile
+strategic = engine.plans
 audit = engine.audit
 operational = engine.operational
 
@@ -60,10 +60,7 @@ context_service = ContextService(Path.cwd(), engine=engine)
 prompt_manager = DynamicPromptManager()
 register_prompt_handlers(mcp, prompt_manager)
 
-# ---------------------------------------------------------------------
-# ---------------------------------------------------------------------
-# DIMENSION 5: RESOURCE GOVERNOR (Resources)
-# ---------------------------------------------------------------------
+# Resource Governance
 from .services.resource_limiter import ResourceLimiter
 
 # Background Services Management
@@ -77,21 +74,21 @@ def start_background_services():
     governor = ResourceLimiter(operational_store=operational)
     governor.start()
     
-    # [KAR-8.1] Event-Driven Log Intelligence (LogSentinel)
+    # Event-Driven Log Intelligence (LogSentinel)
     log_monitor = LogMonitor(audit=audit, project_path=Path.cwd())
     log_monitor.start()
     
-    # [KAR-8.2] Optimized File Intelligence (Palantir)
-    logger.info("⚡ [NEURAL]: Activating Optimized File Sentinel...")
+    # Optimized File Intelligence
+    logger.info("📡 [CONTEXT]: Activating Optimized File Sentinel...")
     file_watcher = FileWatcher(Path.cwd())
     file_watcher.start()
     
-    # [PHASE 7]: Recursive Wisdom (Self-Healing)
+    # System Self-Correction
     rule_gen = RuleGenerator(engine=engine)
     pattern_analyzer = PatternAnalyzer(engine=engine, synthesizer=rule_gen)
     pattern_analyzer.start()
     
-    # [PHASE 8]: System Awareness (Environment Sync)
+    # System Awareness
     brain_dir = Path("/Users/erhanerdogan/.gemini/antigravity/brain/04116347-7316-4c02-9296-5252e02bc954")
     awareness = SystemAwareness(engine=engine, brain_dir=brain_dir)
     awareness.start()
@@ -109,14 +106,14 @@ def get_system_context() -> str:
     This is the 'Golden Record' the Agent sees.
     """
     try:
-        # [PERFORMANCE]: Skipping forensic log for high-frequency resource polling
+        # [PERFORMANCE]: Skipping audit log for high-frequency resource polling
         mandates = strategic.list_decisions(category="mandate")
         rejections = strategic.list_rejections(limit=10)
         
         # 2. Pattern Injection
         # Search for patterns relevant to the current repository DNA
         # Using a default 'global' hash for now, in real use this would be derived from the current focus
-        pattern_suggestions = engine.strategic.get_patterns(context_hash="dna:primary")
+        pattern_suggestions = engine.plans.get_patterns(context_hash="dna:primary")
         
         context = {
             "mandates": [m["answer"] for m in mandates],
@@ -199,7 +196,7 @@ def query_patterns(topic: str) -> str:
     Research: Semantic search over historical patterns.
     """
     # Use the new PatternStore for suggestions
-    results = engine.strategic.get_patterns(topic)
+    results = engine.plans.get_patterns(topic)
     return json.dumps(results, indent=2)
 
 # ---------------------------------------------------------------------

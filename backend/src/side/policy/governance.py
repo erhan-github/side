@@ -1,5 +1,5 @@
 """
-[LAYER 6] Governance Policy - The Compliance Moat.
+ Governance Policy - The Compliance Moat.
 Ensures Enterprise Safety via Automated Redaction and Retention.
 """
 

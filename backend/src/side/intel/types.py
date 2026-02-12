@@ -105,7 +105,7 @@ class ReasoningNode:
 
 @dataclass
 class FixMetrics:
-    """Multi-dimensional metrics for a verified fix."""
+    """Multi-categorical metrics for a verified fix."""
     time_spent_seconds: float = 0.0     # From detection to verification
     fix_attempts: int = 1               # How many attempts to resolve
     persistence_score: float = 0.0      # 0.0-1.0, how long issue persisted

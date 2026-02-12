@@ -36,7 +36,7 @@ class TokenBucket:
 
 class ResourceLimiter(threading.Thread):
     """
-    Polices Dimension 5: Memory < 1% CPU, < 500MB RAM.
+    Polices Memory < 1% CPU, < 500MB RAM.
     Uses Token Bucket to throttle background operations when under load.
     """
     def __init__(self, operational_store=None):

@@ -41,8 +41,8 @@ class ContextTracker:
             identity: Identity store instance
         """
         self.operational = operational
-        self.strategic = strategic
-        self.identity = identity
+        self.plans = strategic
+        self.profile = identity
         
         # Cognitive State (Flow State Tracking)
         self._last_active_time = datetime.now(timezone.utc)
@@ -152,11 +152,11 @@ class ContextTracker:
 
     async def _deduct_su(self, action_key: str, project_id: str = "default"):
         """Deducts SUs for high-value cognitive acts."""
-        if not self.identity:
+        if not self.profile:
             return
         try:
-            cost = self.identity.get_su_cost(action_key)
-            self.identity.update_token_balance(project_id, -cost)
+            cost = self.profile.get_su_cost(action_key)
+            self.profile.update_token_balance(project_id, -cost)
             logger.info(f"💰 [ECONOMY]: Deducted {cost} SU for {action_key}")
         except Exception as e:
             logger.warning(f"Economy Error: {e}")
@@ -218,8 +218,8 @@ class ContextTracker:
 
             # [INTENT-CORRELATION] Fetch active goals
             goals = []
-            if self.strategic:
-                plans = self.strategic.list_plans(status="active")
+            if self.plans:
+                plans = self.plans.list_plans(status="active")
                 goals = [p["title"] for p in plans[:3]]
             
             goal_str = f"ACTIVE GOALS: {', '.join(goals)}" if goals else ""

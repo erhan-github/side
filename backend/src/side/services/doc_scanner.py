@@ -3,7 +3,7 @@ import re
 import logging
 import uuid
 from pathlib import Path
-from side.storage.modules.strategy import StrategicStore
+from side.storage.modules.strategy import DecisionStore
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +13,8 @@ class DocScanner:
     Ingests project goals from raw documentation files.
     """
     
-    def __init__(self, registry: StrategicStore):
-        self.registry = registry
+    def __init__(self, plans: DecisionStore):
+        self.plans = plans
 
     async def scavenge(self, root_path: Path):
         """
@@ -22,8 +22,6 @@ class DocScanner:
         """
         logger.info("🔭 [DOC_SCANNER]: Scanning for Project Goals...")
         
-        # Database is the primary source; Scavenger acts as a bridge for existing docs.
-
         # Priority 3: docs/*.md
         docs_dir = root_path / "docs"
         if docs_dir.exists():
@@ -42,13 +40,13 @@ class DocScanner:
             for title in matches:
                 # Add to Strategic Store if not exists
                 plan_id = f"scan_{uuid.uuid5(uuid.NAMESPACE_DNS, title).hex[:8]}"
-                self.registry.save_goal(
-                    project_id="default",
-                    plan_id=plan_id,
-                    title=title,
-                    plan_type=p_type,
-                    description=f"Auto-scanned from {file_path.name}"
-                )
+                self.plans.save_plan("default", {
+                    "id": plan_id,
+                    "title": title,
+                    "plan_type": p_type,
+                    "description": f"Auto-scanned from {file_path.name}",
+                    "status": "active"
+                })
             logger.info(f"🔭 [DOC_SCANNER]: Ingested {len(matches)} plans from {file_path.name}")
         except Exception as e:
             logger.error(f"DocScanner failed for {file_path}: {e}")

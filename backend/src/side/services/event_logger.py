@@ -54,7 +54,7 @@ class EventLogger:
         """Periodic audit loop."""
         while self._running:
             try:
-                report = await self.audit_all_signals()
+                report = await self.audits_all_signals()
                 self._save_report(report)
                 
                 # Update Operational Ledger with Reachability Index

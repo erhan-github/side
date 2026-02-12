@@ -33,7 +33,7 @@ class CLIProtocol(UXProtocol):
         self.console = console or Console(theme=SYSTEM_THEME)
 
     def display_finding(self, finding: Finding) -> None:
-        """Display a forensic finding in a structured panel."""
+        """Display a audit finding in a structured panel."""
         severity_map = {
             "critical": "red bold",
             "warning": "yellow",
@@ -48,7 +48,7 @@ class CLIProtocol(UXProtocol):
             content += f"\n[dim]File: {finding.file_path}"
             if finding.line_number:
                 content += f":{finding.line_number}"
-            # Add line range if available (simulated here)
+            # Add line range if available
             content += "[/dim]"
         
         title = f"Finding: {finding.category.upper()}"

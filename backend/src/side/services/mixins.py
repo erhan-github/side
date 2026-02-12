@@ -7,25 +7,33 @@ logger = logging.getLogger(__name__)
 class ServiceLifecycleMixin:
     """
     Mixin to provide standardized lifecycle management for background services.
-    [PALANTIR-LEVEL]: Uniformity in task tracking and health monitoring.
+    Uniformity in task tracking and health monitoring.
     """
     def __init__(self):
         self._tasks: Dict[str, asyncio.Task] = {}
         self._status: Dict[str, Any] = {"services": {}}
 
-    async def launch_service(self, name: str, coro_or_func: Coroutine | Any, *args, **kwargs) -> asyncio.Task:
+    async def launch_service(self, name: str, component_or_func: Any, *args, **kwargs) -> asyncio.Task:
         """Launches a service and tracks its lifecycle."""
         logger.info(f"Launching service: {name}...")
         
-        if asyncio.iscoroutine(coro_or_func):
-            task = asyncio.create_task(coro_or_func)
+        from side.services.base import LifecycleComponent
+        
+        if isinstance(component_or_func, LifecycleComponent):
+            # Lifecycle Pattern
+            await component_or_func.setup()
+            task = asyncio.create_task(component_or_func.start())
+            component_or_func.status = "running"
+        elif asyncio.iscoroutine(component_or_func):
+            task = asyncio.create_task(component_or_func)
         else:
-            task = asyncio.create_task(coro_or_func(*args, **kwargs))
+            task = asyncio.create_task(component_or_func(*args, **kwargs))
             
         self._tasks[name] = task
         self._status["services"][name] = {
             "status": "running",
-            "healthy": True
+            "healthy": True,
+            "instance": component_or_func if isinstance(component_or_func, LifecycleComponent) else None
         }
         
         return task

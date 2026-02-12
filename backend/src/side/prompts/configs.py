@@ -10,7 +10,7 @@ class LLMConfigs:
     # --- [Core Intelligence] ---
     CODE_VALIDATOR = {"temperature": 0.1, "max_tokens": 1024}
     GOAL_VALIDATOR = {"temperature": 0.1, "max_tokens": 1024}
-    FORENSICS = {"temperature": 0.0, "max_tokens": 2048}
+    AUDITS = {"temperature": 0.0, "max_tokens": 2048}
     
     # --- [Universal Intelligence] ---
     REFLECTION = {"temperature": 0.0, "max_tokens": 512}

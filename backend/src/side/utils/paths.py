@@ -33,7 +33,7 @@ def get_side_dir(current_path: Path | str | None = None) -> Path:
     The `current_path` parameter is ignored for backwards compatibility.
     
     Returns:
-        Path to the global Sidelith data directory (~/.side-mcp by default).
+        Path to the global Sidelith data directory (~/.side by default).
     """
     from ..env import env
     root = env.get_side_root()

@@ -15,7 +15,7 @@ from typing import Any, Dict, List
 
 from side.storage.modules.base import ContextEngine
 from side.storage.modules.identity import IdentityService
-from side.storage.modules.strategy import StrategicStore
+from side.storage.modules.strategy import DecisionStore
 from side.storage.modules.audit import AuditService
 from side.storage.modules.transient import SessionCache
 from side.utils.memory_diagnostics import get_diagnostics as get_memory_diagnostics
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class ServiceManager(ServiceLifecycleMixin):
     """
     Manages all background services.
-    [PALANTIR-LEVEL]: Inherits lifecycle uniformity via ServiceLifecycleMixin.
+    Inherits lifecycle uniformity via ServiceLifecycleMixin.
     """
 
     def __init__(self, project_path: str | Path):
@@ -35,16 +35,16 @@ class ServiceManager(ServiceLifecycleMixin):
         self.project_path = Path(project_path).resolve()
         self.engine = ContextEngine()
         self.profile = IdentityService(self.engine)
-        self.registry = StrategicStore(self.engine)
-        self.ledger = AuditService(self.engine)
-        self.cache = SessionCache(self.engine)
+        self.plans = DecisionStore(self.engine)
+        self.audits = AuditService(self.engine)
+        self.operational = SessionCache(self.engine)
         
         from side.services.data_buffer import DataBuffer
         from side.config import config
         self.buffer = DataBuffer({
-            'strategic': self.registry,
-            'audit': self.ledger,
-            'operational': self.cache
+            'plans': self.plans,
+            'audits': self.audits,
+            'operational': self.operational
         })
         
         self._running = False
@@ -144,7 +144,7 @@ class ServiceManager(ServiceLifecycleMixin):
         await self.launch_service("isolation_audit", self._run_periodic_audit)
         
         # 2. Context Tracker
-        self.context_tracker = ContextTracker(self.operational, self.strategic, self.identity)
+        self.context_tracker = ContextTracker(self.operational, self.plans, self.profile)
         await self.launch_service("context_tracker", self.context_tracker.watch_forever, self.project_path)
 
         # 3. System Health
@@ -152,7 +152,7 @@ class ServiceManager(ServiceLifecycleMixin):
         await self.launch_service("system_health", self.system_health.run_forever)
 
         # 4. Event Ledger
-        self.event_ledger = EventLedgerService(self.audit, self.operational, buffer=self.buffer)
+        self.event_ledger = EventLedgerService(self.audits, self.operational, buffer=self.buffer)
         await self.launch_service("event_ledger", self.event_ledger.watch_logs)
         
         # 5. Socket Listener
@@ -160,12 +160,12 @@ class ServiceManager(ServiceLifecycleMixin):
         await self.launch_service("socket_listener", self.socket_listener.start)
 
         # 6. State Snapshot
-        self.state_snapshot = StateSnapshotService(self.engine, self.strategic, self.audit, self.operational)
+        self.state_snapshot = StateSnapshotService(self.engine, self.plans, self.audits, self.operational)
         await self.launch_service("state_snapshot", self.state_snapshot.start)
         
         # 7. ContextService
-        self.context_service = ContextService(self.project_path, buffer=self.buffer)
-        await self.launch_service("auto_intel", self.context_service.feed)
+        self.context_service = ContextService(self.project_path, self.engine, buffer=self.buffer)
+        await self.launch_service("auto_intel", self.context_service)
 
         # 8. System Monitor
         self.system_monitor = SystemMonitorService(self.buffer, self.project_path)
@@ -186,11 +186,11 @@ class ServiceManager(ServiceLifecycleMixin):
         self.metrics_calculator = MetricsCalculator(self.buffer)
         
         # 13. Doc Scanner
-        self.goal_ingestor = GoalIngestor(self.strategic)
+        self.goal_ingestor = GoalIngestor(self.plans)
         await self.launch_service("doc_scanner", self.goal_ingestor.scavenge, self.project_path)
         
         if hasattr(self, "event_ledger"):
-            self.event_ledger.roi_callback = self.metrics_calculator.simulate_resolution_impact
+            self.event_ledger.roi_callback = self.metrics_calculator.estimate_resolution_impact
         
         logger.info("Service Manager started all background engines via Mixin.")
 
@@ -257,7 +257,7 @@ class ServiceManager(ServiceLifecycleMixin):
                 await asyncio.sleep(30)
     
     async def _service_reaper(self) -> None:
-        """[Hyper-Ralph] Self-Healing."""
+        """[High-Integrity] Self-Healing."""
         while self._running:
             try:
                 await asyncio.sleep(60)
@@ -276,7 +276,8 @@ class ServiceManager(ServiceLifecycleMixin):
             loop = asyncio.get_event_loop()
             for sig in (signal.SIGTERM, signal.SIGINT):
                 loop.add_signal_handler(sig, lambda: asyncio.create_task(self.stop()))
-        except (NotImplementedError, RuntimeError): pass
+        except (NotImplementedError, RuntimeError) as e:
+            logger.warning(f"Could not setup signal handlers (likely non-Unix platform): {e}")
 
     def get_status(self) -> Dict[str, Any]:
         """Get current service status."""

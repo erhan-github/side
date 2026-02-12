@@ -30,7 +30,7 @@ async def handle_reindex_dna(arguments: dict[str, Any]) -> str:
     db = get_engine()
     project_id = db.get_project_id()
     
-    if not db.identity.charge_action(project_id, "CONTEXT_BOOST"):
+    if not db.profile.charge_action(project_id, "CONTEXT_BOOST"):
         return "🚫 [INSUFFICIENT FUNDS]: Context Densification requires 15 SUs. Run 'side login' or upgrade."
     
     print(f"🧠 [CONTEXT DENSIFICATION]: Building the codebase architecture at {project_path}...")

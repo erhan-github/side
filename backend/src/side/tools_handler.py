@@ -14,20 +14,20 @@ from mcp.types import TextContent
 from side.tools.audit_tool import AuditTool
 from side.tools import handle_tool_call
 
-logger = logging.getLogger("side-mcp")
+logger = logging.getLogger("side")
 
 async def call_tool_handler(server, name: str, arguments: dict[str, Any] | None, 
                           _audit_tool, _memory_interceptor) -> list[TextContent]:
     """
     Handle tool calls with Extreme Fuzz-Resistance & Environment Isolation.
     """
-    # [Extreme God Mode] Forensic 13: Subprocess Environment Isolation
+    # [Extreme God Mode] Audit 13: Subprocess Environment Isolation
     # Ensure sensitive keys are NEVER leaked to shell subprocesses spawned here.
     SENSITIVE_KEYS = ["GROQ_API_KEY", "SUPABASE_SERVICE_ROLE_KEY", "LEMONSQUEEZY_API_KEY"]
     for key in SENSITIVE_KEYS:
         os.environ.pop(key, None) # Remove from current process env before any potential shell spawn
     
-    # [Extreme God Mode] Forensic 8: Fuzz-Resistance
+    # [Extreme God Mode] Audit 8: Fuzz-Resistance
     # Reject insane payloads immediately.
     MAX_ARG_SIZE = 1000000 # 1MB limit for arguments
     arg_str = str(arguments)
@@ -61,9 +61,9 @@ async def call_tool_handler(server, name: str, arguments: dict[str, Any] | None,
 
     except Exception as err:
         logger.error(f"❌ {name} ERROR: {str(err)}\n{traceback.format_exc()}")
-        return [TextContent(type="text", text=f"Side Forensic Error: {str(err)}")]
+        return [TextContent(type="text", text=f"Side Audit Error: {str(err)}")]
 
-def register_tool_handlers(server, _forensics_tool, _memory_interceptor):
+def register_tool_handlers(server, _audit_tool, _memory_interceptor):
     @server.call_tool()
     async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextContent]:
-        return await call_tool_handler(server, name, arguments, _forensics_tool, _memory_interceptor)
+        return await call_tool_handler(server, name, arguments, _audit_tool, _memory_interceptor)

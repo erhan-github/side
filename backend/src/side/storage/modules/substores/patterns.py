@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class PublicPatternStore:
     """
     Sub-store for Architectural and Executable knowledge fragments.
-    [PALANTIR-LEVEL]: Consolidated from legacy pattern_store.py.
+    Consolidated from legacy pattern_store.py.
     """
     def __init__(self, engine):
         self.engine = engine

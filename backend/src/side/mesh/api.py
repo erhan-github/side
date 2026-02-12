@@ -113,7 +113,7 @@ class UsageResponse(BaseModel):
     month: str
 
 class LedgerItem(BaseModel):
-    """Forensic ledger item."""
+    """Audit ledger item."""
     timestamp: float
     operation: str
     cost: int
@@ -174,8 +174,8 @@ async def get_billing_ledger(
     limit: int = 50
 ):
     """
-    Get forensic transaction ledger (**Billing Ledger**).
-    PALANTIR-LEVEL TRANSPARENCY:
+    Get audit transaction ledger (**Billing Ledger**).
+    ENTERPRISE-GRADE TRANSPARENCY:
     Every capacity deduction is logged and auditable.
     """
     return limiter.get_billing_ledger(user.user_id, limit)

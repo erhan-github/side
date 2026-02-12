@@ -105,14 +105,14 @@ async def run_onboarding(project_root: str) -> dict:
     profile = await auto_intel.get_or_create_profile(project_root)
     project_id = db.get_project_id()
     
-    # 3. Real Forensics Audit (The Spear)
-    from side.tools.forensics_tool import ForensicsTool
-    spear = ForensicsTool()
-    findings = spear.scan_project(str(project_root))
+    # 3. Real Baseline Audit (The Spear)
+    from side.tools.audit_tool import AuditTool
+    spear = AuditTool(root)
+    report, findings = await spear.scan_codebase("Perform a comprehensive baseline architecture review.")
     
     # 4. [Anti-Abuse] Claim Trial (Repo Lock)
     billing = BillingService(db)
-    billing.claim_trial(project_root)
+    billing.claim_trial()
     
     # 5. Calculate Strategic IQ
     iq_score = 100  # Default starter score
@@ -122,7 +122,7 @@ async def run_onboarding(project_root: str) -> dict:
     # 6. Store baseline in System Database
     # Save as a strategic fact for future reference
     from uuid import uuid4
-    db.strategic.save_fact(
+    db.plans.save_fact(
         fact_id=str(uuid4()),
         project_id=project_id,
         content=f"Day 1 Baseline: {project_name} ({', '.join(stack)}) - Score: {baseline_score}%",
@@ -136,7 +136,7 @@ async def run_onboarding(project_root: str) -> dict:
         }
     )
     
-    # 7. Store initial findings as audits (already happens in forensics tool)
+    # 7. Store initial findings as audits (already happens in audits tool)
     # No need to duplicate in .md file
     
     # 8. Ensure gitignore has .side-id entry

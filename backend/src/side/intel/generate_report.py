@@ -20,23 +20,26 @@ logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger("report")
 logger.setLevel(logging.INFO)
 
-CURRENT_SESSION_ID = "961563dd-1539-429e-91a0-fea6661096cd"
-
 async def generate_report():
-    print(f"🕵️  GENERATING GOAL TRACKER REPORT FOR SESSION: {CURRENT_SESSION_ID}\n")
-    
     db = SimplifiedDatabase()
+    
+    # Dynamic session lookup (HACK REMOVED)
+    recent_sessions = db.goal_tracker.list_sessions(limit=1)
+    if not recent_sessions:
+        print("❌ No sessions found in DB to report on.")
+        return
+        
+    session_id = recent_sessions[0]['session_id']
+    print(f"🕵️  GENERATING GOAL TRACKER REPORT FOR SESSION: {session_id}\n")
     
     # 1. Ingest
     print("👉 Phase 1: Ingestion (MetaJSON Extraction)")
     ingester = ConversationIngester(db=db)
-    # Force ingest of this specific session if possible, or just scan all
     await ingester.ingest_all()
     
-    session = db.goal_tracker.get_session(CURRENT_SESSION_ID)
+    session = db.goal_tracker.get_session(session_id)
     if not session:
         print("❌ Session not found in DB! (Check if task.md exists and connector is working)")
-        # Attempt manual hydration for debugging if connector fails
         return
 
     print(f"   ✅ Detected Intent: '{session['raw_intent'][:60]}...'")
@@ -47,22 +50,25 @@ async def generate_report():
     print("\n👉 Phase 2: Verification (Audit Triangulation)")
     verifier = OutcomeVerifier(db)
     
-    # Convert dict back to dataclass for verification logic
     from side.intel.conversation_session import ConversationSession, ClaimedOutcome as EnumClaimedOutcome
     
-    # Check if claimed outcome is set; if not (maybe bridge didn't sync walkthrough yet), force it for demo
+    # Formalizing Outcome handling
     if session['claimed_outcome'] == "UNKNOWN":
         print("   ⚠️  Walkthrough not fully synced? Forcing check based on artifacts...")
-        # In a real run, we'd wait for connector. Here we simulate the connector update
         session['claimed_outcome'] = "FIXED" 
+
+    try:
+        outcome_enum = EnumClaimedOutcome(session['claimed_outcome'])
+    except ValueError:
+        logger.warning(f"Invalid outcome '{session['claimed_outcome']}', falling back to UNKNOWN")
+        outcome_enum = EnumClaimedOutcome.UNKNOWN
 
     session_obj = ConversationSession(
         session_id=session['session_id'],
         project_id=session['project_id'],
         started_at=datetime.fromisoformat(session['started_at']) if session.get('started_at') else None,
         ended_at=datetime.fromisoformat(session['ended_at']) if session.get('ended_at') else datetime.now(),
-        # Hack to handle string vs enum if needed, but constructor expects enum
-        claimed_outcome=EnumClaimedOutcome(session['claimed_outcome']),
+        claimed_outcome=outcome_enum,
         raw_intent=session['raw_intent']
     )
     

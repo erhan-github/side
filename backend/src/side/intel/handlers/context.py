@@ -11,11 +11,10 @@ class PromptBuilder:
     Constructs high-fidelity context prompts for LLM interactions.
     Optimized for 'Thin the Fat' architecture to minimize token overhead.
     """
-    def __init__(self, project_path: Path, engine, strategic, memory):
+    def __init__(self, project_path: Path, engine, strategic):
         self.project_path = project_path
         self.engine = engine
-        self.strategic = strategic
-        self.memory = memory
+        self.plans = strategic
         self.token_budget = 16000 # Default budget for total context
         
     def gather_context(self, active_file: str = None, topic: str = None, include_code: bool = True) -> str:
@@ -33,9 +32,13 @@ class PromptBuilder:
         # 2. LONG-TERM MEMORY (Recall)
         search_q = f"{topic} {active_file}" if topic else str(active_file)
         if search_q:
-            memories = self.memory.recall(search_q)
-            if memories:
-                context_parts.append(memories)
+            project_id = self.engine.get_project_id()
+            memories_raw = self.plans.recall_facts(query=search_q, project_id=project_id, limit=5)
+            if memories_raw:
+                summary = "🧠 [RECALLED CONTEXT]:\n"
+                for m in memories_raw:
+                    summary += f"- {m['content']} (Tags: {m['tags']})\n"
+                context_parts.append(summary)
 
         # 3. ACTIVE FOCUS & SOURCE (Surgical)
         if active_file:
@@ -64,7 +67,7 @@ class PromptBuilder:
         if not search_q or len(search_q) < 3:
             return
 
-        wisdom_hits = self.strategic.search_wisdom(search_q, limit=3)
+        wisdom_hits = self.plans.search_wisdom(search_q, limit=3)
         if wisdom_hits:
             w_text = "\n".join([f"- {w['wisdom_text']} (Confidence: {w['confidence']})" for w in wisdom_hits])
             parts.append(f"🧠 [WISDOM]:\n{w_text}")
@@ -125,7 +128,7 @@ class PromptBuilder:
             
             top_files = unique_candidates[:limit]
             if not top_files:
-                return f"- [LAYER 3]: No direct code matches found for '{query}'."
+                return f"- No direct code matches found for '{query}'."
                 
             output = [f"## 3. SURGICAL CONTEXT (Matched '{query}'):"]
             for _, rel_path in top_files:
@@ -138,16 +141,16 @@ class PromptBuilder:
         except Exception as e:
             return f"- [LAYER 3 ERROR]: Surgical retrieval failed: {e}"
 
-    def get_episodic_context(self, forensic, limit: int = 15, project_id: str = "global") -> str:
+    def get_episodic_context(self, audit, limit: int = 15, project_id: str = "global") -> str:
         """
         Retrieves recent context from the Ledger with Causal Threading.
         """
         try:
             from side.intel.session_analyzer import SessionAnalyzer
-            analyzer = SessionAnalyzer(forensic, self.strategic)
+            analyzer = SessionAnalyzer(audit, self.plans)
             
-            # Attempt to find current session for Palantir-style threading
-            latest = forensic.get_recent_activities(project_id, limit=1)
+            # Attempt to find current session for Enterprise-style threading
+            latest = audit.get_recent_activities(project_id, limit=1)
             session_id = None
             if latest:
                 # Handle both dict and object types from different stores
@@ -161,7 +164,7 @@ class PromptBuilder:
             logger.error(f"Episodic load failed: {e}")
             return f"## [RAM ERROR]: Failed to load episodic context: {e}"
 
-    def get_operational_reality(self) -> str:
+    def get_ai_memory(self) -> str:
         """
         Derives the 'Truth' from Git status and recent commits.
         """
@@ -172,18 +175,18 @@ class PromptBuilder:
             cmd_status = ["git", "status", "-s"]
             status_out = subprocess.check_output(cmd_status, cwd=self.project_path, text=True, stderr=subprocess.STDOUT).strip()
             
-            reality = "**Recent Commits (The Vector):**\n"
+            state = "**Recent Commits (The Vector):**\n"
             for line in log_out.splitlines():
-                reality += f"- {line}\n"
-            reality += "\n**Active Measures (The Now):**\n"
+                state += f"- {line}\n"
+            state += "\n**Active Measures (The Now):**\n"
             if status_out:
                 for line in status_out.splitlines()[:5]:
-                    reality += f"- {line}\n"
+                    state += f"- {line}\n"
             else:
-                reality += "- Clean Working Tree (Steady State).\n"
-            return reality
+                state += "- Clean Working Tree (Steady State).\n"
+            return state
         except Exception as e:
-            return f"- [ERROR] Could not derive Operational Reality: {e}"
+            return f"- [ERROR] Could not derive AI Memory: {e}"
 
     async def refresh_context_for_file(self, path: Path):
         """Async hook for context invalidation/refresh."""

@@ -4,7 +4,7 @@ Centralized Template Library - Sidelith Intelligence SOT.
 
 # 🛡️ THE GENERATIVE GUARDIAN
 GuardianPrompt = """
-Analyze the following LLM-generated code against our SOVEREIGN RULES and PROJECT OBSERVATIONS.
+Analyze the following LLM-generated code against our PROJECT RULES and PROJECT OBSERVATIONS.
 
 INTENT: {prompt_intent}
 
@@ -55,7 +55,7 @@ PRIMARY INTENT:
 STRATEGIC ARTIFACTS (Supporting Context):
 {supporting_context}
 
-RECENT GENERATED CODE (Forensic Reality):
+RECENT GENERATED CODE (Audit Log State):
 {code_context}
 
 GOAL:
@@ -66,7 +66,7 @@ CRITICAL REASONING:
 1. STRATEGIC PARITY: Prioritize Git Intent if it contradicts a stale task.md.
 2. ARTIFACT GROUNDING: Use the Supporting Context to understand the "Architecture Manifesto" and "Best Practices" agreed upon in previous conversations.
 3. DRIFT vs DEBT: Mission Drift is strategic divergence.
-4. FORENSIC CONFIDENCE: These code snippets are raw forensic truth.
+4. AUDIT CONFIDENCE: These code snippets are captured from the active session.
 
 Output strictly JSON:
 {{
@@ -83,8 +83,8 @@ Output strictly JSON:
 }}
 """
 
-# 🕵️ FORENSICS TASK
-ForensicsTask = """You are a Code Forensics Engine specializing in identifying REAL security vulnerabilities.
+# 📋 SECURITY AUDIT TASK
+SecurityAuditTask = """You are a Security Audit Engine specializing in identifying REAL security vulnerabilities.
 
 **Query**: "{query}"
 
@@ -166,26 +166,6 @@ Output strictly JSON in this format:
 """
 
 # --- [Universal Intelligence Consolidation] ---
-
-SurpriseAnalysisPrompt = """
-Analyze this Action/Outcome pair. Calculate the SURPRISE SCORE (0.0 - 1.0) based on how unexpected the reality was compared to the intent.
-
-Intent: {intent}
-Tool: {tool}
-Actual Outcome: {outcome}
-
-ONTOLOGY:
-- CRITICAL (>0.8): Failed expectations, bugs, architectural pivots.
-- STRATEGIC (0.4-0.8): User preferences, new features, non-standard success.
-- ROUTINE (<0.4): Expected success, standard operations.
-
-Output strictly JSON:
-{{
-    "tag": "CRITICAL" | "STRATEGIC" | "ROUTINE",
-    "score": float,
-    "reason": "Why?"
-}}
-"""
 
 FactExtractionPrompt = """
 Analyze the provided activity stream and extract INVARIANT FACTS.

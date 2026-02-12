@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class TestGenerator:
     """
-    Generates reproduction test cases (Red Tests) from forensic findings.
+    Generates reproduction test cases (Red Tests) from audit findings.
     Part of the "Generative QA" (Software 2.0) pivot.
     """
 

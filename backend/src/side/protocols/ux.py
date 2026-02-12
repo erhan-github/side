@@ -11,7 +11,7 @@ class UXProtocol(ABC):
 
     @abstractmethod
     def display_finding(self, finding: Finding) -> None:
-        """Display a forensic finding."""
+        """Display a audit finding."""
         pass
 
     @abstractmethod

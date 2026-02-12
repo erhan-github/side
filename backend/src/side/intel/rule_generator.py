@@ -57,27 +57,27 @@ class RuleGenerator:
             if "concurrency" in invariants:
                 val = invariants["concurrency"]
                 if val == "async_first":
-                    self.engine.strategic.set_rule("architecture", "preferred_paradigms", ["async/await"])
-                    self.engine.strategic.set_rule("architecture", "banned_patterns", ["blocking_io_in_async"])
+                    self.engine.plans.set_rule("architecture", "preferred_paradigms", ["async/await"])
+                    self.engine.plans.set_rule("architecture", "banned_patterns", ["blocking_io_in_async"])
 
             # 2. Network Law
             if "http_client" in invariants:
                 client = invariants["http_client"]
                 if client == "httpx":
-                    self.engine.strategic.set_rule("architecture", "preferred_libraries", ["httpx"])
-                    self.engine.strategic.set_rule("architecture", "banned_libraries", ["requests", "urllib3"])
+                    self.engine.plans.set_rule("architecture", "preferred_libraries", ["httpx"])
+                    self.engine.plans.set_rule("architecture", "banned_libraries", ["requests", "urllib3"])
                 elif client == "requests":
-                    self.engine.strategic.set_rule("architecture", "preferred_libraries", ["requests"])
+                    self.engine.plans.set_rule("architecture", "preferred_libraries", ["requests"])
 
             # 3. Typing Law
             if "typing" in invariants:
                 if invariants["typing"] == "strict":
-                    self.engine.strategic.set_rule("style", "type_hints_required", True)
-                    self.engine.strategic.set_rule("style", "no_any", True)
+                    self.engine.plans.set_rule("style", "type_hints_required", True)
+                    self.engine.plans.set_rule("style", "no_any", True)
             
             # 4. Universal Security Laws (Always enforced)
-            self.engine.strategic.set_rule("security", "block_hardcoded_secrets", True)
-            self.engine.strategic.set_rule("security", "require_env_vars", True)
+            self.engine.plans.set_rule("security", "block_hardcoded_secrets", True)
+            self.engine.plans.set_rule("security", "require_env_vars", True)
 
             logger.info("📜 [RULE_GENERATOR]: Code rules updated in SQLite.")
         except Exception as e:
@@ -85,7 +85,7 @@ class RuleGenerator:
             
     def get_active_rules(self) -> str:
         """Reads the currently active generated rules from DB as JSON string."""
-        rules = self.engine.strategic.get_all_rules()
+        rules = self.engine.plans.get_all_rules()
         if rules:
             return json.dumps(rules, indent=2)
         return ""

@@ -15,7 +15,7 @@ class HistoryPlayer:
 
     def __init__(self, project_path: Path, audit_service: AuditService):
         self.project_path = project_path
-        self.audit = audit_service
+        self.audits = audit_service
         self.engine = audit_service.engine
 
     def rewind_to_session_start(self, session_id: str, start_commit: str) -> Dict[str, Any]:
@@ -38,7 +38,7 @@ class HistoryPlayer:
         # 2. DB ROLLBACK (The Memory)
         try:
             # LOG THE REWIND
-            self.audit.log_activity(
+            self.audits.log_activity(
                 project_id=self.project_path.name,
                 tool="history_player",
                 action="session_rewind",

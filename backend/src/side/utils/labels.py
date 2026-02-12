@@ -1,13 +1,13 @@
 """
-Forensic Label Registry - Standardized identifiers and iconography.
+Audit Label Registry - Standardized identifiers and iconography.
 """
 
 from typing import Dict, Any
 
-class ForensicLabel:
+class AuditLabel:
     """Central registry for standard finding categories and their visual representations."""
     
-    # Label Mapping: Dimension -> (Label, Icon, Color/Tone)
+    # Label Mapping: Category -> (Label, Icon, Color/Tone)
     REGISTRY = {
         "security":          {"tag": "SECURITY",      "icon": "🛡️", "desc": "Security & Protection"},
         "logic":             {"tag": "LOGIC",         "icon": "🧩", "desc": "Logical Consistency"},
@@ -29,24 +29,24 @@ class ForensicLabel:
     }
 
     @classmethod
-    def get(cls, dimension: str) -> Dict[str, str]:
-        """Get label data for a dimension, with fallback."""
+    def get(cls, category: str) -> Dict[str, str]:
+        """Get label data for a category, with fallback."""
         # Case-insensitive matching
-        dim_clean = dimension.lower()
-        if dim_clean in cls.REGISTRY:
-            return cls.REGISTRY[dim_clean]
+        cat_clean = category.lower()
+        if cat_clean in cls.REGISTRY:
+            return cls.REGISTRY[cat_clean]
             
-        # Fallback for unknown dimensions
-        return {"tag": dimension.upper()[:10], "icon": "🧭", "desc": "Forensic Insight"}
+        # Fallback for unknown categories
+        return {"tag": category.upper()[:10], "icon": "🧭", "desc": "Audit Insight"}
 
     @classmethod
-    def format_title(cls, dimension: str, title: str) -> str:
+    def format_title(cls, category: str, title: str) -> str:
         """Format a title string with icon and tag: 🛡️ [SECURITY] Title"""
-        data = cls.get(dimension)
+        data = cls.get(category)
         return f"{data['icon']} [{data['tag']}] {title}"
 
     @classmethod
-    def format_terminal(cls, dimension: str, title: str) -> str:
+    def format_terminal(cls, category: str, title: str) -> str:
         """Format for terminal output: [SECURITY] 🛡️ Title"""
-        data = cls.get(dimension)
+        data = cls.get(category)
         return f"[{data['tag']}] {data['icon']} {title}"

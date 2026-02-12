@@ -4,9 +4,15 @@ import time
 import json
 import os
 from pathlib import Path
-from typing import Dict, Any, List, Optional, TYPE_CHECKING
+from typing import Dict, List, Optional, Any, TYPE_CHECKING
+from side.models.core import Finding
+from side.storage.modules import ContextEngine
+from side.utils.crypto import shield
 
-from side.intel.memory import MemoryManager
+if TYPE_CHECKING:
+    from side.storage.modules import ContextEngine
+
+
 from side.intel.connector import Connector
 from side.intel.tree_indexer import run_context_scan
 from side.intel.code_monitor import CodeMonitor
@@ -19,22 +25,25 @@ from side.services.doc_scanner import DocScanner
 
 logger = logging.getLogger(__name__)
 
-class ContextService:
+from side.services.base import LifecycleComponent
+
+class ContextService(LifecycleComponent):
     """
     Orchestrates system intelligence, delegating to specialized handlers.
+    Implements LifecycleComponent for deterministic orchestration.
     """
 
     def __init__(self, project_path: Path, engine: ContextEngine, buffer=None):
+        super().__init__(name="auto_intel")
         from side.storage.modules.mmap_store import MmapStore
         
         self.project_path = project_path
         self.engine = engine
-        self.strategic = engine.strategic
-        self.forensic = engine.audit
+        self.plans = engine.plans
+        self.audits = engine.audit
         self.buffer = buffer
         
         self.mmap = MmapStore(project_path)
-        self.memory = MemoryManager(self.strategic, project_id=self.engine.get_project_id())
         
         # Brain Path Strategy
         env_brain = os.getenv("SIDE_BRAIN_PATH")
@@ -43,21 +52,55 @@ class ContextService:
 
         # Initialize Handlers
         self.indexer = CodeIndexer(self.project_path, self.engine, self.brain_path, self.buffer)
-        self.history = HistoryAnalyzer(self.project_path, self.engine, self.brain_path, self.strategic)
-        self.janitor = MaintenanceService(self.strategic, self.engine)
-        self.orchestrator = PromptBuilder(self.project_path, self.engine, self.strategic, self.memory)
-        self.doc_scanner = DocScanner(self.strategic)
+        self.history = HistoryAnalyzer(self.project_path, self.engine, self.brain_path, self.plans)
+        self.janitor = MaintenanceService(self.plans, self.engine)
+        self.orchestrator = PromptBuilder(self.project_path, self.engine, self.plans)
+        self.doc_scanner = DocScanner(self.plans)
 
-    async def setup(self):
-        """Initializes the intelligence context."""
+    async def get_ai_memory_snapshot(self) -> str:
+        """Retrieves the official AI Memory for the project."""
+        project_id = self.engine.get_project_id(self.project_path)
+        return self.orchestrator.get_ai_memory()
+
+    async def setup(self, force: bool = False) -> None:
+        """Initializes the intelligence context with high-integrity caching."""
         start_time = time.time()
-        logger.info("Initiating Context Scan...")
-        run_context_scan(self.project_path, schema_store=self.engine.schema)
-        logger.info(f"Scan completed in {time.time() - start_time:.2f}s.")
+        project_id = self.engine.get_project_id(self.project_path)
         
-        config = await self.sync_checkpoint()
+        # 1. Try Cache First
+        if not force:
+            cache = self.engine.operational.get_fingerprint(project_id)
+            if cache:
+                logger.info("🧠 [CONTEXT]: Restored state from AI Memory cache.")
+                await self.sync_checkpoint()
+                return
+
+        logger.info("🔭 [CONTEXT]: Cache miss. Initiating Deep Context Scan...")
+        run_context_scan(self.project_path, schema_store=self.engine.schema)
+        
+        # 2. Persist to Cache
+        fingerprint = self.orchestrator.get_ai_memory()
+        stats = self._get_project_stats()
+        self.engine.operational.save_fingerprint(project_id, {"dna": fingerprint}, stats)
+        
+        logger.info(f"✨ [CONTEXT]: Scan completed and cached in {time.time() - start_time:.2f}s.")
+        await self.sync_checkpoint()
         await self._sync_mmap_patterns()
-        return config
+
+    async def start(self) -> None:
+        """The main intelligence feed loop."""
+        await self.feed()
+
+    async def teardown(self) -> None:
+        """Standard teardown for intelligence state."""
+        logger.info("Tearing down ContextService...")
+        await self.sync_checkpoint()
+
+    async def feed(self):
+        """Original feed logic, now wrapped by start()."""
+        # Placeholder for the actual feed implementation if it exists elsewhere 
+        # or logic being moved here.
+        pass
 
     async def sync_checkpoint(self):
         """Serializes current state to local telemetry."""
@@ -113,16 +156,16 @@ class ContextService:
                                 try:
                                     with open(path, 'rb') as f:
                                         total_lines += sum(1 for _ in f)
-                                except Exception:
-                                    pass
-            except (PermissionError, FileNotFoundError):
-                pass
+                                except Exception as e:
+                                    logger.debug(f"Deep Scan: Could not read {path}: {e}")
+            except (PermissionError, FileNotFoundError) as e:
+                logger.debug(f"Deep Scan: Path inaccessible {curr}: {e}")
         return {"nodes": nodes, "total_lines": total_lines}
 
     async def _sync_mmap_patterns(self):
         """Syncs public patterns to Mmap Store."""
         try:
-            patterns = self.strategic.list_public_patterns()
+            patterns = self.plans.list_public_patterns()
             fragments = []
             for p in patterns:
                 sig_hash = p.get('signal_hash')
@@ -161,7 +204,7 @@ class ContextService:
         return self.orchestrator.get_surgical_context(query, limit)
 
     def get_episodic_context(self, limit: int = 15) -> str:
-        return self.orchestrator.get_episodic_context(self.forensic, limit)
+        return self.orchestrator.get_episodic_context(self.audits, limit)
 
     def get_condensed_dna(self) -> str:
         return self.indexer.get_condensed_dna()
@@ -169,7 +212,7 @@ class ContextService:
     async def optimize_weights(self) -> dict:
         """Regenerate the context cache."""
         from side.intel.code_monitor import CodeMonitor
-        monitor = CodeMonitor(self.forensic)
+        monitor = CodeMonitor(self.audits)
         new_facts = await monitor.distill_observations(self.engine.get_project_id(), limit=20)
         
         from side.utils.context_cache import ContextCache
@@ -182,7 +225,7 @@ class ContextService:
     def enrich_system_prompt(self, base_prompt: str, context: str) -> str:
         return f"{base_prompt}\n\n=== CONTEXT ===\n{context}\n===============\n"
 
-    def _get_operational_reality(self) -> str:
+    def _get_ai_memory(self) -> str:
         return self.orchestrator.get_git_status()
 
     # --- Event-Driven Architecture ---
@@ -201,7 +244,8 @@ class ContextService:
             logger.info(f"Structure change detected: {path.name} ({event_type})")
             
             if event_type == "deleted":
-                pass
+                await self.indexer.drop_single(path)
+                logger.debug(f"Context purged for deleted file: {path.name}")
             elif event_type == "created":
                 await self.indexer.scan_single(path)
                 

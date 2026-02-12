@@ -1,7 +1,7 @@
 """
 Conversation Session Data Models
 
-Palantir-Grade ontology for LLM-User exchange tracking.
+Enterprise-Grade ontology for LLM-User exchange tracking.
 [MIGRATED]: See backend/src/side/models/intent.py
 """
 

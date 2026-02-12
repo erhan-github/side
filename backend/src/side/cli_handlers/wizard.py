@@ -7,7 +7,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 from rich.panel import Panel
 from rich.prompt import Prompt, Confirm
 
-from .utils import ux, get_engine, get_profile
+from .utils import ux, get_engine, get_user_profile as get_profile
 from .auth import handle_login
 from .connect import patch_cursor_config, patch_vscode_config, patch_claude_config, check_auth_or_login
 
@@ -39,7 +39,8 @@ def handle_wizard(args):
         ux.display_status("No active session found.", level="warning")
         if Confirm.ask("Login with browser?", default=True):
             from argparse import Namespace
-            # Trigger login flow
+            from .auth import handle_login
+            # Trigger login flow with administrative bootstrap tier
             handle_login(Namespace(key=None, tier="hobby"))
             # Re-fetch
             profile = identity.get_user_profile(project_id)
@@ -82,7 +83,7 @@ def handle_wizard(args):
     ux.console.print("\n[bold cyan]Step 3/5: Initial Indexing[/bold cyan]")
     ux.console.print("[dim]This creates your project's memory. Takes ~30 seconds.[/dim]")
     
-    from side.intel.fractal_indexer import run_fractal_scan
+    from side.intel.tree_indexer import run_context_scan as run_fractal_scan
     
     # We'll run the scan in a background thread or just run it with a spinner since run_fractal_scan prints to stdout usually.
     # ideally we'd hook into progress, but for MVP we capture stdout or just show spinner.
@@ -102,9 +103,9 @@ def handle_wizard(args):
     ux.display_status(f"Indexed {file_count} files", level="success")
     ux.display_status("Generated Structural Graph (Merkle-Validated)", level="success")
     
-    # Calculate Cost (Fake/Simulated for UX based on file count)
-    cost = max(0.5, round(file_count * 0.015, 1))
-    ux.display_status(f"SU Cost: {cost} SUs", level="info")
+    # Calculate Real Cost
+    cost = identity.get_su_cost("CONTEXT_BOOST")
+    ux.display_status(f"SU Cost: {cost} SUs (Standard Context Build)", level="info")
 
     time.sleep(0.5)
 

@@ -18,9 +18,9 @@ from .substores.memory import MemoryStore
 
 logger = logging.getLogger(__name__)
 
-class StrategicStore:
+class DecisionStore:
     """
-    [STRATEGY]: Orchestrator for Time-Weighted Strategic Memory.
+    Orchestrator for Time-Weighted Strategic Memory.
     Provides "Fractal Context" and "Temporal Search" capabilities.
     """
     def __init__(self, engine: ContextEngine):

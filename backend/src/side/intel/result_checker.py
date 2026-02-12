@@ -22,7 +22,7 @@ class ResultChecker:
 
     def __init__(self, db: SimplifiedDatabase):
         self.db = db
-        self.audit = db.audit
+        self.audits = db.audits
         self.store = db.goal_tracker
 
     def verify_session(self, session: ConversationSession) -> VerifiedOutcome:
@@ -43,7 +43,7 @@ class ResultChecker:
         
         # 2. Check Audit Logs for Errors
         # We look for high-severity audits in the project window
-        recent_audits = self.audit.get_recent_audits(session.project_id, limit=50)
+        recent_audits = self.audits.get_recent_audits(session.project_id, limit=50)
         
         relevant_errors = []
         for audit in recent_audits:
@@ -65,7 +65,7 @@ class ResultChecker:
             return VerifiedOutcome.FALSE_POSITIVE
             
         # 3. Check for immediate user "undo" or "revert" (from FileWatcher/Activities)
-        recent_activities = self.audit.get_recent_activities(session.project_id, limit=50)
+        recent_activities = self.audits.get_recent_activities(session.project_id, limit=50)
         for act in recent_activities:
             # Parse timestamp (handle various formats)
             try:

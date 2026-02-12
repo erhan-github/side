@@ -1,5 +1,5 @@
 """
-[PHASE 6.2] Multi-Dimensional Metrics Calculator
+[PHASE 6.2] Multi-Categorical Metrics Calculator
 Calculates Time Spent, Persistence, Commonality, and Difficulty for verified fixes.
 """
 import time
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class MetricsCalculator:
     """
-    Calculates multi-dimensional metrics for verified fixes.
+    Calculates multi-categorical metrics for verified fixes.
     These metrics power the Cloud Distillation Protocol.
     """
     
@@ -45,7 +45,7 @@ class MetricsCalculator:
             error_pattern: Optional error pattern for commonality lookup.
         
         Returns:
-            A FixMetrics object with all dimensions calculated.
+            A FixMetrics object with all categories calculated.
         """
         time_spent = self.calculate_time_spent(issue_detected_at, verification_at)
         persistence = self.calculate_persistence(issue_detected_at, fix_applied_at)

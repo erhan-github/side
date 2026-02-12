@@ -10,10 +10,10 @@ class StateSnapshotService:
     Compresses high-frequency events into hourly state summaries.
     """
     
-    def __init__(self, engine, strategic, forensic, operational):
+    def __init__(self, engine, strategic, audit, operational):
         self.engine = engine
-        self.strategic = strategic
-        self.forensic = forensic
+        self.plans = strategic
+        self.audit = audit
         self.operational = operational
         self._task = None
         self._last_distillation = datetime.now()
@@ -56,17 +56,16 @@ class StateSnapshotService:
         """Orchestrate the continuous synthesis process."""
         logger.info("⚡ [ROLLING_CHRONICLE]: Initiating Continuous Distillation...")
         
-        # 1. Decay Strategic Fat
-        strat_counts = self.strategic.decay_strategic_fat(days=30)
+        # 1. Decay Strategic History
+        strat_counts = self.plans.decay_strategic_history(days=30)
         
-        # 2. Distill Forensic Memory
-        for_counts = self.forensic.distill_forensic_memory(days=14)
+        # 2. Distill Audit Log Memory
+        for_counts = self.audit.distill_audit_memory(days=14)
         
-        # 3. [KAR-6.1] Unified Distillation
         # Before pruning raw activities, we distill them into high-entropy lessons.
-        activity_summaries = await self.forensic.summarize_activity_bursts(days=30)
+        activity_summaries = await self.audit.summarize_activity_bursts(days=30)
         for summary in activity_summaries:
-            self.strategic.save_learning(
+            self.plans.save_learning(
                 learning_id=f"distill_{summary['tool']}_{int(datetime.now().timestamp())}",
                 impact="medium",
                 insight=f"Distilled Learning from {summary['intensity']} activities in {summary['tool']}.",
@@ -74,20 +73,19 @@ class StateSnapshotService:
             )
             
         # 4. Prune raw activities
-        act_count = self.forensic.prune_activities(days=30)
+        act_count = self.audit.prune_activities(days=30)
         
         total_forgotten = sum(strat_counts.values()) + sum(for_counts.values()) + act_count
         
-        # [SOC 2 AUDIT TRAIL]
         project_id = self.engine.get_project_id()
-        self.forensic.log_activity(
+        self.audit.log_activity(
             project_id=project_id,
             tool="ROLLING_CHRONICLE",
             action="cache_decay",
             payload={
                 "forgotten": total_forgotten,
                 "strat": strat_counts,
-                "forensic": for_counts,
+                "audit": for_counts,
                 "activities_pruned": act_count,
                 "window": "ROLLING_ACTIVE_WINDOW"
             }

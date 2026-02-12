@@ -9,12 +9,12 @@ from datetime import datetime, timezone
 import json
 
 from side.storage.modules.audit import AuditService
-from side.storage.modules.strategy import StrategicStore
+from side.storage.modules.strategy import DecisionStore
 
 class SessionAnalyzer:
-    def __init__(self, audit: AuditService, strategic: StrategicStore):
-        self.audit = audit
-        self.strategic = strategic
+    def __init__(self, audit: AuditService, strategic: DecisionStore):
+        self.audits = audit
+        self.plans = strategic
 
     def get_session_context(self, session_id: str, limit: int = 5) -> str:
         """
@@ -23,7 +23,7 @@ class SessionAnalyzer:
         """
         try:
             # 1. Fetch activities for this session
-            activities = self.audit.get_causal_timeline(session_id)
+            activities = self.audits.get_causal_timeline(session_id)
             if not activities:
                 return "## [SESSION_HISTORY]: No history for this session."
 
@@ -74,10 +74,10 @@ class SessionAnalyzer:
         """
         try:
             # 1. Fetch Recent Activities (The Raw Stream)
-            activities = self.audit.get_recent_activities(project_id, limit=limit)
+            activities = self.audits.get_recent_activities(project_id, limit=limit)
             
             # 2. Fetch Work Context (The Focus)
-            work_ctx = self.audit.get_latest_work_context(str(Path.cwd()))
+            work_ctx = self.audits.get_latest_work_context(str(Path.cwd()))
             
             # 3. Construct the Narrative
             report = ["## 2. SESSION TIMELINE (Recent History)"]

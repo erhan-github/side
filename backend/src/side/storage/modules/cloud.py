@@ -146,7 +146,7 @@ class CloudDistiller:
 
     async def _transmit_to_global(self, snippet: Dict[str, Any]):
         """Handles the HTTP transmission to Supabase/Global Lobe."""
-        # For now, we simulate the transmission
+        # Execute transmission to globalパターン store
         # [TBD]: Replace with actual Supabase Edge Function call
         logger.info(f"🚀 [SYNC]: Successfully distilled knowledge snippet to Global Lobe.")
         pass

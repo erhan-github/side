@@ -38,7 +38,7 @@ class IdentityService:
                 tokens_monthly INTEGER DEFAULT 500,
                 tokens_used INTEGER DEFAULT 0,
                 premium_count INTEGER DEFAULT 0, -- Count of strategic actions
-                cycle_ended_at TIMESTAMP, -- Legacy typo fix placeholder
+                cycle_ended_at TIMESTAMP,
                 design_pattern TEXT DEFAULT 'declarative',
                 is_airgapped INTEGER DEFAULT 0,
                 access_token TEXT, -- [SYSTEM LOCKDOWN]: The trackable sk- key
@@ -55,7 +55,8 @@ class IdentityService:
             conn.execute("ALTER TABLE profile ADD COLUMN access_token TEXT")
             conn.execute("ALTER TABLE profile ADD COLUMN email TEXT")
             logger.info("MIGRATION: Added access_token, email and billing columns to profile")
-        except: pass
+        except Exception as e:
+            logger.debug(f"ℹ️ [MIGRATION]: Token-level columns already exist or migration skipped: {e}")
         
         # ─────────────────────────────────────────────────────────────
         # PRIVACY TABLE: CONSENTS - User Opt-Ins
@@ -88,15 +89,10 @@ class IdentityService:
         # Seed default values from Single Source of Truth
         from side.models.pricing import ActionCost
         
-        # [KARPATHY SUMMIT]: Purge legacy jargon if exists
-        old_keys = ('CORE_REFACT', 'AUTH_SHIFT', 'FORENSIC_AUDIT', 'SHELL_COMMAND', 
-                    'GHOST_REFACTOR', 'SEMANTIC_BOOST', 'STRATEGIC_PIVOT')
-        conn.execute(f"DELETE FROM su_valuation WHERE action_key IN {old_keys}")
-
         defaults = [
             ('LOGIC_MUTATION', ActionCost.LOGIC_MUTATION, 'Architectural refactor'),
             ('IDENTITY_RECONFIG', ActionCost.IDENTITY_RECONFIG, 'Identity Rotation/Migration'),
-            ('FORENSIC_PULSE', ActionCost.FORENSIC_PULSE, 'Forensic-level static analysis'),
+            ('AUDIT_PULSE', ActionCost.AUDIT_PULSE, 'Security audit static analysis'),
             ('SIGNAL_CAPTURE', ActionCost.SIGNAL_CAPTURE, 'Passive terminal friction capture'),
             ('HUB_EVOLVE', ActionCost.HUB_EVOLVE, 'Strategy Center update (plan/check)'),
             ('CONTEXT_BOOST', ActionCost.CONTEXT_BOOST, 'Context Densification (Pattern Index)'),
@@ -115,11 +111,12 @@ class IdentityService:
             conn.execute("ALTER TABLE profile ADD COLUMN design_pattern TEXT DEFAULT 'declarative'")
             conn.execute("ALTER TABLE profile ADD COLUMN is_airgapped INTEGER DEFAULT 0")
             logger.info("MIGRATION: Added architectural signals to profile")
-        except: pass
+        except Exception as e:
+            logger.debug(f"ℹ️ [MIGRATION]: Architectural signals already exist or migration skipped: {e}")
 
 
     def update_profile(self, project_id: str, profile_data: dict[str, Any] | Identity) -> None:
-        """Update the Sovereign Identity Profile."""
+        """Update the High-Integrity Identity Profile."""
         if isinstance(profile_data, Identity):
             identity = profile_data
         else:

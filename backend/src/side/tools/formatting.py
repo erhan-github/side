@@ -95,7 +95,7 @@ def format_decision(
 def format_strategy(
     question: str,
     iq_display: str, 
-    dimensions: dict,
+    categories: dict,
     top_focus: str,
     llm_context: str = "",
     elapsed: float = 0.0,
@@ -105,12 +105,12 @@ def format_strategy(
     output = format_header("Strategic Analysis")
     output += format_key_value("Inquiry", question) + "\n\n"
     
-    # Dimensions
+    # Categories
     dim_str = ""
-    for dim, score in dimensions.items():
+    for cat, score in categories.items():
         status = "Good" if score >= 25 else "Attention Needed"
         dim_str += f"- {dim}: {score} ({status})\n"
-    output += format_section("Dimensions", dim_str)
+    output += format_section("Categories", cat_str)
     
     output += format_key_value("Top Focus", top_focus) + "\n"
     

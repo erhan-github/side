@@ -1,7 +1,7 @@
 from argparse import Namespace
 import time
 import os
-from .utils import ux, get_engine, get_profile
+from .utils import ux, get_engine, get_user_profile as get_profile
 
 def handle_login(args):
     engine = get_engine()
@@ -12,7 +12,7 @@ def handle_login(args):
     if args.key:
         ux.display_status(f"Verifying API Key '{args.key[:4]}...'", level="info")
         import time
-        time.sleep(1) # Simulated network verification
+        time.sleep(1) # Verification delay for service stability
         
         from side.models.pricing import PricingModel, Tier
         

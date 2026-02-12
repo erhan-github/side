@@ -4,6 +4,7 @@ Core Intelligence Engine - SQLite Persistence Layer.
 
 import sqlite3
 import logging
+import os
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator, Any
@@ -51,28 +52,70 @@ class ContextEngine:
         if self.db_path.exists():
             self.harden_permissions()
         
-        # Initialize sub-stores
-        # Initialize sub-stores
-        from side.storage.modules.strategy import StrategicStore
-        from side.storage.modules.audit import AuditService
-        from side.storage.modules.accounting import AccountingStore
-        from .identity import IdentityService
-        from .transient import SessionCache
-        from .substores.patterns import PublicPatternStore
-        from .cloud import CloudDistiller
+        # Lazy Init Map
+        self._stores = {}
         
-        from side.storage.modules.schema import SchemaStore
-        
-        self.strategic = StrategicStore(self)
-        self.audit = AuditService(self)
-        self.forensic = self.audit # Safety alias for legacy modules
-        self.accounting = AccountingStore(self)
-        self.identity = IdentityService(self)
-        self.operational = SessionCache(self)
-        self.wisdom = PublicPatternStore(self)
-        self.schema = SchemaStore(self)
-        self.global_lobe = CloudDistiller(self)
-        self.global_lobe.start()
+    @property
+    def plans(self):
+        """Project Plan - Long-term decisions and roadmap."""
+        if "plans" not in self._stores:
+            from .strategy import DecisionStore
+            self._stores["plans"] = DecisionStore(self)
+        return self._stores["plans"]
+
+    @property
+    def audits(self):
+        """Audit Log - Secure record of operations."""
+        if "audits" not in self._stores:
+            from .audit import AuditService
+            self._stores["audits"] = AuditService(self)
+        return self._stores["audits"]
+
+    @property
+    def profile(self):
+        """User Profile - Project identity and preferences."""
+        if "profile" not in self._stores:
+            from .identity import IdentityService
+            self._stores["profile"] = IdentityService(self)
+        return self._stores["profile"]
+
+    @property
+    def ledger(self):
+        """Billing Ledger - SU consumption records."""
+        if "ledger" not in self._stores:
+            from .accounting import Ledger
+            self._stores["ledger"] = Ledger(self)
+        return self._stores["ledger"]
+
+    @property
+    def operational(self):
+        if "operational" not in self._stores:
+            from .transient import OperationalStore
+            self._stores["operational"] = OperationalStore(self)
+        return self._stores["operational"]
+
+    @property
+    def wisdom(self):
+        if "wisdom" not in self._stores:
+            from .substores.patterns import PublicPatternStore
+            self._stores["wisdom"] = PublicPatternStore(self)
+        return self._stores["wisdom"]
+
+    @property
+    def schema(self):
+        if "schema" not in self._stores:
+            from side.storage.modules.schema import SchemaStore
+            self._stores["schema"] = SchemaStore(self)
+        return self._stores["schema"]
+
+    @property
+    def global_lobe(self):
+        if "global_lobe" not in self._stores:
+            from .cloud import CloudDistiller
+            distiller = CloudDistiller(self)
+            distiller.start()
+            self._stores["global_lobe"] = distiller
+        return self._stores["global_lobe"]
 
     @contextmanager
     def connection(self) -> Generator[sqlite3.Connection, None, None]:
@@ -194,8 +237,8 @@ class ContextEngine:
             import os
             try:
                 os.chmod(self.db_path, 0o600)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"🛡️ [SECURITY]: Failed to harden permissions on {self.db_path}: {e}")
 
     @staticmethod
     def get_project_id(project_path: str | Path | None = None) -> str:
@@ -221,22 +264,28 @@ class ContextEngine:
                     id_file.write_text(f"sealed:{shield.seal(unsealed)}")
                     return unsealed
                 elif raw_content.startswith("sealed:"):
-                    return shield.unseal(raw_content[7:])
+                    import base64
+                    try:
+                        sealed_b64 = raw_content[7:]
+                        return shield.unseal(base64.b64decode(sealed_b64))
+                    except Exception:
+                        # Fallback for old plaintext or corrupt seals
+                        return raw_content
                 return raw_content
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"ℹ️ [MIGRATION]: Project ID unseal failed (expected for legacy plaintext): {e}")
         
         import hashlib
         path_hash = hashlib.sha256(str(project_path).encode()).hexdigest()[:16]
         try:
             # Seal for first-time creation
-            id_file.write_text(f"sealed:{shield.seal(path_hash)}")
+            import base64
+            sealed_bytes = shield.seal(path_hash)
+            sealed_b64 = base64.b64encode(sealed_bytes).decode()
+            id_file.write_text(f"sealed:{sealed_b64}")
             os.chmod(id_file, 0o600)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"❌ [IDENTITY]: Failed to seal unique Project ID: {e}")
             
         return path_hash
 
-    def atomic_backup(self) -> None:
-        """Alias for perform_maintenance to satisfy Tier-4 legacy probes."""
-        self.perform_maintenance()

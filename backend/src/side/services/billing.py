@@ -20,7 +20,7 @@ from side.models.pricing import ActionCost
 class SystemAction(Enum):
     HUB_UPDATE = "hub_update"
     PLAN_UPDATE = "plan_update"
-    FORENSIC_SCAN = "forensic_scan"
+    AUDIT_SCAN = "audit_scan"
     STRATEGIC_ANALYSIS = "strategic_analysis"
 
 
@@ -28,7 +28,7 @@ class SystemAction(Enum):
 ACTION_COSTS = {
     SystemAction.HUB_UPDATE: ActionCost.HUB_EVOLVE,
     SystemAction.PLAN_UPDATE: ActionCost.HUB_EVOLVE,
-    SystemAction.FORENSIC_SCAN: 10,
+    SystemAction.AUDIT_SCAN: 10,
     SystemAction.STRATEGIC_ANALYSIS: 25,
 }
 
@@ -71,7 +71,7 @@ class BillingService:
         """
         Check if user has enough tokens for the action.
         
-        [STRATEGY]: Check cloud first, fall back to local cache.
+        Check cloud first, fall back to local cache.
         """
         cost = ACTION_COSTS.get(action, 0)
         if cost == 0:
@@ -84,7 +84,7 @@ class BillingService:
         
         # Fall back to local cache
         try:
-            balance_data = self.db.identity.get_token_balance(project_id)
+            balance_data = self.db.profile.get_token_balance(project_id)
             current = balance_data.get("balance", 0)
             return current >= cost
         except Exception as e:
@@ -157,10 +157,10 @@ class BillingService:
             
             # Track premium usage
             if cost > 0:
-                self.db.identity.increment_premium_count(project_id)
+                self.db.profile.increment_premium_count(project_id)
             
             # Deduct from local balance
-            self.db.identity.update_token_balance(project_id, -cost)
+            self.db.profile.update_token_balance(project_id, -cost)
             
             logger.info(f"💰 [LOCAL]: Charged {cost} SUs for {action.value}")
             return True
@@ -198,7 +198,7 @@ class BillingService:
         balance = self._get_cloud_balance()
         if balance is not None:
             try:
-                self.db.identity.set_cached_balance(project_id, balance)
+                self.db.profile.set_cached_balance(project_id, balance)
             except AttributeError:
                 # Method might not exist yet
                 pass
@@ -223,7 +223,7 @@ class BillingService:
                 pass
         
         # Local summary
-        return self.db.identity.get_cursor_usage_summary(project_id)
+        return self.db.profile.get_cursor_usage_summary(project_id)
     
     
     def claim_trial(self) -> bool:
@@ -231,7 +231,7 @@ class BillingService:
         One-time trial grant check.
         
         Trials are automatically granted on signup via Supabase Database Triggers.
-        This method is a placeholder for future manual claim logic if needed.
+        This method handles future manual claim logic.
         """
         # Logic handled by PostgreSQL Trigger: on_auth_user_created -> grant_trial()
         return True

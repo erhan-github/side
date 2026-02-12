@@ -13,12 +13,14 @@ from mcp.types import (
     TextContent,
 )
 
-from side.storage.modules.base import ContextEngine
-from side.storage.modules.transient import SessionCache
-from side.storage.modules.identity import IdentityService
-from side.storage.modules.strategy import StrategicStore
+from side.storage.modules import (
+    ContextEngine,
+    SessionCache,
+    IdentityService,
+    DecisionStore
+)
 
-logger = logging.getLogger("side-mcp")
+logger = logging.getLogger("side")
 
 class DynamicPromptManager:
     """
@@ -28,16 +30,16 @@ class DynamicPromptManager:
     def __init__(self):
         from side.storage.modules.audit import AuditService
         self.engine = ContextEngine()
-        self.audit = AuditService(self.engine)
-        self.strategic = StrategicStore(self.engine)
+        self.audits = AuditService(self.engine)
+        self.plans = DecisionStore(self.engine)
         self.cache = SessionCache(self.engine)
-        self.identity = IdentityService(self.engine)
+        self.profile = IdentityService(self.engine)
         self.project_path = Path.cwd()
         self.project_id = ContextEngine.get_project_id(self.project_path)
 
     def handle_technical_question(self, question: str) -> GetPromptResult:
-        profile = self.identity.get_user_profile(self.project_id) or {}
-        decisions = self.strategic.list_rejections(self.project_id, limit=3)
+        profile = self.profile.get_user_profile(self.project_id) or {}
+        decisions = self.plans.list_rejections(self.project_id, limit=3)
         past_decisions = "\n".join([f"- Q: {r['question']} -> A: {r['answer']}" for r in decisions]) if decisions else "None."
 
         text = (
@@ -51,9 +53,9 @@ class DynamicPromptManager:
         return GetPromptResult(description="Technical Consultation", messages=[self._msg(text)])
 
     def handle_status(self) -> GetPromptResult:
-        all_plans = self.strategic.list_plans(self.project_id, status="active")
+        all_plans = self.plans.list_plans(self.project_id, status="active")
         top_focus = all_plans[0]['title'] if all_plans else "No active directives."
-        activities = self.audit.get_recent_activities(self.project_id, limit=5)
+        activities = self.audits.get_recent_activities(self.project_id, limit=5)
         recent_context = "\n".join([f"- {a['action']} ({a.get('tool', 'manual')})" for a in activities]) if activities else "None."
         
         text = (
@@ -65,7 +67,7 @@ class DynamicPromptManager:
         return GetPromptResult(description="Status Update", messages=[self._msg(text)])
 
     def handle_fix_issues(self) -> GetPromptResult:
-        findings = self.audit.get_recent_activities(self.project_id, limit=20)
+        findings = self.audits.get_recent_activities(self.project_id, limit=20)
         violations = [f for f in findings if f.get('outcome') == 'VIOLATION']
         top_issue = violations[0] if violations else (findings[0] if findings else None)
         
@@ -81,7 +83,7 @@ class DynamicPromptManager:
         return GetPromptResult(description=f"Fix: {top_issue.get('message', 'Issue')}", messages=[self._msg(text)])
 
     def handle_readiness(self) -> GetPromptResult:
-        findings = self.audit.get_recent_activities(self.project_id, limit=50)
+        findings = self.audits.get_recent_activities(self.project_id, limit=50)
         crit = len([f for f in findings if f.get('outcome') == 'VIOLATION'])
         status = "🔴 BLOCKED" if crit > 0 else "🟢 CLEAR"
         

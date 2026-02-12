@@ -1,6 +1,6 @@
 """
-Phase 9: Intent-to-Code Parity - The Mission Auditor.
-Compares Human Intent (Artifacts) with Generative Reality (Code).
+Goal Validator - The Objective Auditor.
+Compares Human Intent (Artifacts) with Generative State (Code).
 """
 
 import logging
@@ -50,7 +50,7 @@ class GoalValidator:
         code_snippets = []
         for activity in activities:
             if activity.tool in ["EDITOR", "GENERATOR", "LLM_ENGINE"]:
-                # [SIGNAL FIDELITY]: Use diffs for structural reality
+                # [SIGNAL FIDELITY]: Use diffs for structural state
                 code_snippets.append(f"File: {activity.payload.get('file', 'unknown')}\n{activity.payload.get('diff', 'no diff available')}")
 
         code_context = "\n\n".join(code_snippets)

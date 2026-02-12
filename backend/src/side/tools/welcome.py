@@ -37,7 +37,8 @@ async def handle_welcome(arguments: dict[str, Any]) -> str:
         # Get latest health
         # memory = AuditMemory(project_path)
         # progress = memory.get_progress()
-        progress = {"has_history": False} # Placeholder
+        progress = {"has_history": False} # Initial state
+        return progress
         
         if progress.get("has_history"):
             return f"""

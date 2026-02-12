@@ -1,10 +1,10 @@
 {
-  "name": "@sidemcp/mcp",
+  "name": "@sidelith/mcp",
   "version": "1.0.0",
-  "description": "Side MCP - The Strategic Partner that thinks for you",
+  "description": "Sidelith MCP - High-Integrity Contextual Intelligence for Sovereign Engineering",
   "main": "index.js",
   "bin": {
-    "side-mcp": "./bin/side-mcp.js"
+    "sidelith-mcp": "./bin/sidelith-mcp.js"
   },
   "scripts": {
     "start": "node index.js"

@@ -1,5 +1,5 @@
 """
-ForensicLogger: Enterprise-grade telemetry decorator for MCP tools.
+AuditLogger: Enterprise-grade telemetry decorator for MCP tools.
 
 Captures:
 - Execution duration

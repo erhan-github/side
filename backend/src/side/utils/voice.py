@@ -9,7 +9,7 @@ from typing import Any, List
 from pathlib import Path
 
 class SystemVoice:
-    """Utility to inject context and density into forensic findings."""
+    """Utility to inject context and density into audit findings."""
 
     @staticmethod
     def _clean_msg(result: Any) -> str:
@@ -51,7 +51,7 @@ class SystemVoice:
         
         body = f" {msg}." if msg else ""
         
-        # Dimension-Based Technical Impact (Zero Fluff)
+        # Category-Based Technical Impact (Zero Fluff)
         impacts = {
             "sec": " This increases the attack surface and compromises data integrity.",
             "perf": " This leads to resource exhaustion and degrades the system's operational efficiency.",
@@ -154,12 +154,12 @@ class SystemVoice:
              
              # Multiline strip of known legacy headers/prefixes
              import re
-             # 1. Strip Empathy & dimension headers globally
+             # 1. Strip Empathy & category headers globally
              notes = raw_discovery.replace("Hey Side!", "").replace("Hey Chat!", "").strip()
              empathy_fluff = [
                  "I've detected a technical improvement.",
                  "I've flagged code that requires hardening.",
-                 "I've detected a sovereignty risk.",
+                 "I've detected an integrity risk.",
                  "I've identified a logic refinement.",
                  "I found a strategic opportunity.",
                  "Everything looks great in Security!",
@@ -171,7 +171,7 @@ class SystemVoice:
              
              # 2. Strip Discovery headers globally (Anomaly found in...)
              # Aggressive block-level stripping
-             notes = re.sub(r"(System Intelligence|Forensic|Logic|Structural|Critical|Security)\s*(anomaly|risk|breach|rot|intelligence|Opportunity)\s*(found|detected|refinement|signals)\s*(in|at|detected|within)\s*.*?(:\d+)?\.\s*", "", notes, flags=re.IGNORECASE)
+             notes = re.sub(r"(System Intelligence|Audit|Logic|Structural|Critical|Security)\s*(anomaly|risk|breach|rot|intelligence|Opportunity)\s*(found|detected|refinement|signals)\s*(in|at|detected|within)\s*.*?(:\d+)?\.\s*", "", notes, flags=re.IGNORECASE)
              notes = re.sub(r"Scanned \d+ .*? files with System Intelligence\.\s*", "", notes, flags=re.IGNORECASE)
 
              # 3. Strip all known fluff impact phrases (Global search & destroy)
@@ -188,7 +188,7 @@ class SystemVoice:
                  r"This creates technical friction and impacts the project's overall reliability\.?",
                  r"This degrades system consistency and impacts long-term reliability\.?",
                  r"Unhandled edge cases degrade the system's reliability and increase long-term technical debt\.?",
-                 r"Sovereignty breach detected in.*?\.\s*",
+                 r"Integrity breach detected in.*?\.\s*",
                  r"Strategic risk detected in.*?\.\s*",
                  r"Found \d+ endpoints, \d+ with visible auth\.?"
              ]
@@ -224,13 +224,13 @@ class SystemVoice:
         return cls.express_fusion(mock)
 
     @classmethod
-    def fusion_literal(cls, emoji: str, dimension: str, discovery: str, suggestion: str) -> str:
+    def fusion_literal(cls, emoji: str, category: str, discovery: str, suggestion: str) -> str:
         """Helper for literal fusion blocks."""
         is_nominal = "NOMINAL" in discovery.upper() or "Everything looks great" in discovery or "verified" in discovery.lower()
         if is_nominal and not any(char.isdigit() for char in discovery): # If it has digits like "10 anomalies", it's not nominal
-            empathy = f"Logic gates verified in {dimension}."
+            empathy = f"Logic gates verified in {category}."
         else:
-            empathy = f"Operational signals detected in {dimension}."
+            empathy = f"Operational signals detected in {category}."
             
         # Clean up suggestion to avoid quotes and "Hey Side/Chat" repetition
         clean_suggestion = suggestion.strip('"').strip("'")

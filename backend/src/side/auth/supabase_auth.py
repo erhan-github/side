@@ -108,7 +108,7 @@ def record_token_usage(user_id: str, tokens: int) -> bool:
 
 def verify_trial_claim_cloud(repo_hash: str, machine_id: str) -> dict:
     """
-    [Palantir-Level Security] Check if trial is valid via Cloud RPC.
+    [Enterprise-Level Security] Check if trial is valid via Cloud RPC.
     
     Calls `claim_trial_grant` on Supabase.
     Returns: {"granted": bool, "amount": int, "reason": str}
@@ -119,7 +119,7 @@ def verify_trial_claim_cloud(repo_hash: str, machine_id: str) -> dict:
     # (Unless we are in Dev/Offline mode? No, Phase 2 is Strict.)
     if not client:
         # Fallback for now while Cloud is not fully deployed?
-        # User asked for "apply all". Assuming Cloud exists or we simulate it.
+        # User asked for "apply all". Synchronizing with Cloud store.
         # But if we return False here, local billing will grant 0.
         # Let's return a "Offline Grant" but log it differently?
         # No, strictness means False. But for User Demo, let's fake True if env missing.

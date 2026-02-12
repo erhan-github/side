@@ -5,6 +5,7 @@ Implements System-level audit using OSS tools (Semgrep) + LLM synthesis.
 """
 
 import logging
+import asyncio
 from pathlib import Path
 from typing import Any
 from side.tools.audit_adapters import SemgrepAdapter, Finding
@@ -23,7 +24,6 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     3. Aggregate & Save findings
     4. LLM synthesizes remediation (Phase 4)
     """
-    import asyncio
     from side.tools.core import get_engine
     from side.intel.language_detector import detect_primary_languages
     from side.tools.audit_adapters import (
@@ -33,26 +33,32 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
         GosecAdapter,
         SwiftLintAdapter,
         DetektAdapter,
-        DocVerifyAdapter
+        DocVerifyAdapter,
+        DebtAdapter
     )
     
-    dimension = arguments.get('dimension', 'general')
-    severity_filter = arguments.get('severity', 'high,medium,critical').upper().split(',')
+    category = arguments.get('category', 'general')
+    severity_filter = arguments.get('severity', 'high,medium,critical,info').upper().split(',')
     project_path = get_repo_root()
     
     # Charge for Audit (10 SUs)
-    from side.tools.core import get_engine
     db = get_engine()
     project_id = db.get_project_id()
     
-    if not db.identity.charge_action(project_id, "SYSTEM_AUDIT"):
+    from side.services.billing import SystemAction
+    if not db.profile.charge_action(project_id, SystemAction.AUDIT_SCAN):
         return "🚫 [INSUFFICIENT FUNDS]: System Audit requires 10 SUs. Run 'side login' or upgrade."
     
     # 1. Detect Languages
     languages = detect_primary_languages(project_path)
     
     # 2. Select & Initialize Adapters
-    adapters = [SemgrepAdapter(project_path), DocVerifyAdapter(project_path)] # Semgrep and DocVerify are polyglot baselines
+    # Semgrep and DocVerify are polyglot baselines. DebtAdapter is our custom monorepo scanner.
+    adapters = [
+        SemgrepAdapter(project_path), 
+        DocVerifyAdapter(project_path),
+        DebtAdapter(project_path)
+    ]
     
     if "python" in languages:
         adapters.append(BanditAdapter(project_path))
@@ -156,7 +162,7 @@ async def handle_run_audit(arguments: dict[str, Any]) -> str:
     try:
         print("🎯 [PATTERNS]: Extracting architecture signals for your Pattern Store...")
         from side.intel.pattern_distiller import PatternDistiller
-        distiller = PatternDistiller(db.strategic)
+        distiller = PatternDistiller(db.plans)
         await distiller.distill_audit_findings(all_findings)
     except Exception as e:
         logger.warning(f"Pattern extraction failed: {e}")
@@ -206,7 +212,7 @@ if __name__ == "__main__":
     
     args = {}
     if len(sys.argv) > 1:
-        args['dimension'] = sys.argv[1]
+        args['category'] = sys.argv[1]
     
     try:
         result = asyncio.run(handle_run_audit(args))

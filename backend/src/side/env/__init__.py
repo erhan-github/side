@@ -1,6 +1,6 @@
 """
-Deterministic Path Provider - The Sovereign Environment Engine.
-Provides centralized, configurable path resolution for all Sidelith components.
+Sidelith Environment Engine.
+Deterministic path resolution and high-integrity environment state management.
 """
 
 import os
@@ -8,20 +8,20 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-logger = logging.getLogger("side-mcp")
+logger = logging.getLogger("side")
 
 def load_env_file() -> None:
     """Load environment variables from .env file."""
     # Check multiple possible locations (in priority order)
     possible_paths = [
-        # Project root (side-mcp/.env) - most likely location
+        # Project root (side/.env) - most likely location
         Path(__file__).parent.parent.parent / ".env",
         # Current working directory
         Path.cwd() / ".env",
         # Parent of cwd (if running from src/)
         Path.cwd().parent / ".env",
         # User config directory
-        Path.home() / ".side-mcp" / ".env",
+        Path.home() / ".side" / ".env",
     ]
 
     for env_path in possible_paths:
@@ -41,7 +41,7 @@ def load_env_file() -> None:
         except Exception:
             continue
     
-    # [Hyper-Ralph] Scenario 61 Fix: Insecure Env Loading
+    # [High-Integrity] Scenario 61 Fix: Insecure Env Loading
     # Verify .env permissions (should be 600 or 400)
     dotenv_path = Path(".env")
     if dotenv_path.exists():
@@ -78,7 +78,7 @@ class EnvironmentEngine:
         if env_root:
             return Path(env_root).resolve()
         
-        return Path.home() / ".side-mcp"
+        return Path.home() / ".side"
     
     @classmethod
     def get_db_path(cls, project_id: Optional[str] = None) -> Path:

@@ -56,7 +56,7 @@ class LogMonitor:
     Monitors friction points using FS Events (High Performance) + Async Streams.
     """
     def __init__(self, audit: AuditService, project_path: Path):
-        self.audit = audit
+        self.audits = audit
         self.project_path = project_path
         self.stop_event = threading.Event()
         self.threads = []
@@ -89,7 +89,7 @@ class LogMonitor:
         # Only watch if it exists and we are on Mac
         if self.xcode_root.exists():
             # DerivedData is huge. We might want to poll this specific one or watch specific subdirs?
-            # For Palantir-level optimization, watching the WHOLE DerivedData is risky.
+            # For High-Integrity optimization, watching the WHOLE DerivedData is risky.
             # Let's keep Xcode as a slow poller for now, or watch only specific active builds if known.
             # Decision: Keep Xcode as Poller (Safety), Move Generic + NextJS to Watchdog.
             pass
@@ -248,7 +248,7 @@ class LogMonitor:
                         "snippet": line, 
                         "type": err_type, 
                         "file": str(source),
-                        "causal_frame": causal_frame # [PALANTIR HI-FI]
+                        "causal_frame": causal_frame # [HIGH-INTEGRITY]
                     }
                 )
 
@@ -259,7 +259,7 @@ class LogMonitor:
         project_id = ContextEngine.get_project_id(self.project_path)
         
         logger.info(f"🚨 [MONITOR]: Captured {source} {event_type}")
-        self.audit.log_activity(
+        self.audits.log_activity(
             project_id=project_id,
             tool="LOG_MONITOR",
             action=f"capture_{source.lower()}",

@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any
 
-from side.storage.modules.strategy import StrategicStore
+from side.storage.modules.strategy import DecisionStore
 from side.utils.llm_helpers import extract_json
 from side.prompts import Personas, StrategicFrictionPrompt, LLMConfigs
 
@@ -21,8 +21,8 @@ class BackgroundService:
     Checks for TODO/HACK comments and cross-references them with active goals.
     """
 
-    def __init__(self, registry: StrategicStore, project_path: Path):
-        self.strategic = registry # Normalized name
+    def __init__(self, plans: DecisionStore, project_path: Path):
+        self.plans = plans
         self.project_path = project_path
         self.config = LLMConfigs.get_config("strategic_auditor")
 
@@ -32,19 +32,17 @@ class BackgroundService:
         """
         findings = []
         
-        # 1. Get Strategic Context from the Hub
+        # 1. Get Strategic Context
         from side.storage.modules.base import ContextEngine
         project_id = ContextEngine.get_project_id(self.project_path)
-        active_plans = self.registry.list_plans(project_id, status="active")
+        active_plans = self.plans.list_plans(project_id, status="active")
         
         # 2. Scan for Technical Signals (TODO, HACK, FIXME)
-        # We limit scan to source files
         extensions = {'.py', '.js', '.ts', '.tsx', '.go', '.rs', '.java'}
         excludes = {'.git', 'node_modules', '__pycache__', 'venv', 'env', 'dist', 'build'}
         
         for path in self.project_path.rglob('*'):
             if path.is_file() and path.suffix in extensions:
-                # Basic exclude check
                 if any(part in excludes for part in path.parts):
                     continue
                     
@@ -56,7 +54,6 @@ class BackgroundService:
                             clean_line = line.strip()[:200]
                             rel_path = str(path.relative_to(self.project_path))
                             
-                            # Software 2.0 Analysis
                             judgement = await self.analyze_signal(clean_line, rel_path, i + 1)
                             
                             if judgement:
@@ -74,13 +71,11 @@ class BackgroundService:
 
     async def analyze_signal(self, comment: str, file_path: str, line_no: int) -> Dict[str, Any] | None:
         """
-        [Software 2.0] Uses the LLM to judge if a technical signal is a strategic risk.
-        Replaces the fragile Regex/Dictionary lookups with a Virtual CTO.
+        Uses the LLM to judge if a technical signal is a strategic risk.
         """
-        # 1. Fetch Strategic Context (The Hub)
         from side.storage.modules.base import ContextEngine
         project_id = ContextEngine.get_project_id(self.project_path)
-        active_plans = self.strategic.list_plans(project_id, status="active")
+        active_plans = self.plans.list_plans(project_id, status="active")
         context_str = "\n".join([f"- {p['title']}" for p in active_plans])
         
         prompt = StrategicFrictionPrompt.format(
@@ -92,7 +87,6 @@ class BackgroundService:
         try:
             from side.llm.client import LLMClient
             client = LLMClient()
-            # We use a lower latency model if possible, or standard.
             response = await client.complete_async(
                 messages=[{"role": "user", "content": prompt}],
                 system_prompt=Personas.STRATEGIC_AUDITOR,
@@ -105,6 +99,6 @@ class BackgroundService:
             return extract_json(response)
                 
         except Exception as e:
-            logger.warning(f"Provocateur failed: {e}")
+            logger.warning(f"Background analysis failed: {e}")
             
         return None

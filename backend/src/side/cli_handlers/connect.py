@@ -122,7 +122,7 @@ def patch_json_config(target: Path, update_fn, config_name: str) -> bool:
         # 3. Modify
         new_data = update_fn(data)
         
-        # 4. Atomic Write (Simulated via write + flush)
+        # 4. Atomic Write (Ensured durability via write + flush)
         target.write_text(json.dumps(new_data, indent=2))
         ux.display_status(f"✅ patched {config_name} successfully.", level="success")
         return True

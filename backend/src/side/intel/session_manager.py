@@ -17,7 +17,7 @@ class SessionManager:
 
     def __init__(self, project_path: Path, audit_service: AuditService):
         self.project_path = project_path
-        self.audit = audit_service
+        self.audits = audit_service
         self.session_file = self.project_path / ".side" / "session.json"
         
         self._current_session_id: Optional[str] = None
@@ -68,7 +68,7 @@ class SessionManager:
         self._persist_state(state)
         
         # 3. Log Start
-        self.audit.log_activity(
+        self.audits.log_activity(
             project_id=self.project_path.name, # Using directory name as ID for local dev
             tool="session_manager",
             action="session_start",
@@ -99,7 +99,7 @@ class SessionManager:
         self._persist_state(state)
         
         # 3. Log End
-        self.audit.log_activity(
+        self.audits.log_activity(
             project_id=self.project_path.name,
             tool="session_manager",
             action="session_end",

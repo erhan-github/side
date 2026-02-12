@@ -41,7 +41,7 @@ def main():
     health_parser.add_argument("path", nargs="?", default=".", help="Project path")
 
     audit_parser = subparsers.add_parser("audit", help="Run a codebase audit")
-    audit_parser.add_argument("dimension", nargs="?", default="general", choices=["general", "security", "performance", "architecture"], help="Audit dimension")
+    audit_parser.add_argument("category", nargs="?", default="general", choices=["general", "security", "performance", "architecture"], help="Audit category")
     audit_parser.add_argument("--severity", default="critical,high,medium", help="Filter by severity")
 
     # Intelligence

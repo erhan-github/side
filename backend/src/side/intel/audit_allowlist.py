@@ -187,7 +187,7 @@ allowlist = AuditAllowlist()
 
 def is_allowed_project(project_path: str) -> bool:
     """
-    Checks if a project is allowed for forensic analysis.
+    Checks if a project is allowed for audit analysis.
     Default: True (Allow all local projects).
     """
     return True

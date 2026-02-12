@@ -15,7 +15,7 @@ class HistoryAnalyzer:
         self.project_path = project_path
         self.engine = engine
         self.brain_path = brain_path
-        self.strategic = strategic
+        self.plans = strategic
         self.config = LLMConfigs.get_config("commit_analysis")
 
     async def historic_feed(self, months: int = 3) -> List[Dict[str, Any]]:
@@ -65,7 +65,7 @@ class HistoryAnalyzer:
                     continue
 
                 # Tier 2: Strategic Boost (LLM Analysis)
-                if not self.engine.accounting.deduct_task_su(
+                if not self.engine.ledger.deduct_task_su(
                     project_id=project_id,
                     task_type="semantic_boost",
                     llm_tokens_in=min(3500, len(diff_content)),
@@ -78,7 +78,7 @@ class HistoryAnalyzer:
                     continue
 
                 # --- INTENT CORRELATION ---
-                correlated_objectives = self.strategic.find_objectives_by_symbols(project_id, modified_symbols)
+                correlated_objectives = self.plans.find_objectives_by_symbols(project_id, modified_symbols)
                 objective_titles = [obj['title'] for obj in correlated_objectives]
 
                 prompt = CommitAnalysisPrompt.format(
@@ -162,3 +162,8 @@ class HistoryAnalyzer:
             cache = ContextCache(self.project_path, self.engine)
             cache.generate(force=True)
             logger.info("✨ [BRAIN]: Context cache regenerated from database.")
+    async def process_latest_commit(self):
+        """Analyzes the absolute latest commit."""
+        logger.info("🔍 [HISTORY]: Processing latest commit pulse...")
+        # For now, trigger a short historical analysis to pick it up
+        await self.historic_feed(months=1)

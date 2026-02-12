@@ -59,7 +59,7 @@ class ActionCost:
     """
     SIGNAL_CAPTURE = 1     # Real-time terminal ingestion
     HUB_EVOLVE = 10        # Strategic Hub update (plan/check)
-    FORENSIC_PULSE = 10    # Deep forensic analysis
+    AUDIT_PULSE = 10    # Deep audit analysis
     CONTEXT_BOOST = 15     # High-fidelity architectural audit
     IDENTITY_RECONFIG = 30 # Authentication logic change (Rotation/Migration)
     LOGIC_MUTATION = 50    # Architectural refactor

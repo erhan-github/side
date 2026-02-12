@@ -6,7 +6,7 @@ from .base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
-class AccountingStore:
+class Ledger:
     """
     Manages the 'Context Economy'.
     Tracks SU (Service Unit) balance and deductions.
@@ -93,7 +93,7 @@ class AccountingStore:
         "pulse_scan": 0.5,          # Regex pre-commit validation
         "mesh_wisdom": 4.0,         # Cross-project knowledge sharing
         "context_synthesis": 2.5,   # 30-day intelligence assembly
-        "forensic_log": 0.3,        # SQLite write operation
+        "audit_log": 0.3,        # SQLite write operation
         "shield_fix": 1.5,          # Vault integration + auto-fix
         "roi_calculation": 1.0,     # Counterfactual ROI logic
     }
@@ -115,7 +115,7 @@ class AccountingStore:
     FREE_TASKS = {
         "pulse_scan",
         "ast_extraction",
-        "forensic_log",
+        "audit_log",
         "file_watcher",
         "git_hook_detection",
         "intent_correlation"

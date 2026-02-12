@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 class MaintenanceService:
     def __init__(self, strategic, engine):
-        self.strategic = strategic
+        self.plans = strategic
         self.engine = engine
 
     async def autonomous_janitor(self, throttle_hook=None) -> int:
@@ -16,11 +16,11 @@ class MaintenanceService:
         pruned_count = 0
         
         # 1. PRUNE: Conflict Decay
-        rejections = self.strategic.list_rejections(limit=100)
+        rejections = self.plans.list_rejections(limit=100)
         # (Simplified logic from original - placeholder for full implementation)
         
         # 2. PRUNE: Redundancy (SimHash Deduplication)
-        patterns = self.strategic.list_public_patterns()
+        patterns = self.plans.list_public_patterns()
         hashes = {} # hash -> id
         
         for w in patterns:
@@ -45,7 +45,7 @@ class MaintenanceService:
                 hashes[w_hash] = w['id']
 
         # 3. Timeline Decay
-        purged_stale = self.strategic.purge_stale_rejections(days=180)
+        purged_stale = self.plans.purge_stale_rejections(days=180)
         pruned_count += purged_stale
 
         # 4. Limit Decay

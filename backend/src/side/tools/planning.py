@@ -48,17 +48,17 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     if not query:
         return "❌ Please specify the goal or task to check."
     
-    all_plans = db.strategic.list_plans(project_id=db.get_project_id())
+    all_plans = db.plans.list_plans(project_id=db.get_project_id())
     matching = next((p for p in all_plans if query.lower() in p['title'].lower()), None)
     
     if not matching:
         return f"❓ Could not find plan matching: \"{query}\""
     
-    db.strategic.update_plan_status(matching['id'], 'done')
+    db.plans.update_plan_status(matching['id'], 'done')
 
     # STRATEGIC OUTCOME: Record Directive Fulfillment
     try:
-        db.audit.log_activity(
+        db.audits.log_activity(
             project_id=db.get_project_id(),
             tool="instrumentation",
             action=f"Directive Fulfilled: {matching['title'][:30]}",
@@ -85,8 +85,8 @@ async def handle_check(arguments: dict[str, Any]) -> str:
     
     # LOG COMPLETION
     try:
-        profile = db.identity.get_user_profile(db.get_project_id())
-        db.audit.log_activity(
+        profile = db.profile.get_user_profile(db.get_project_id())
+        db.audits.log_activity(
             project_id=db.get_project_id(),
             tool="check",
             action=f"Completed: {matching['title'][:50]}{'...' if len(matching['title']) > 50 else ''}",
@@ -120,16 +120,16 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
     
     # 1. Auto-Detection via Git DNA
     project_id = db.get_project_id()
-    pending_goals = db.strategic.list_plans(project_id=project_id, status="active")
+    pending_goals = db.plans.list_plans(project_id=project_id, status="active")
     if pending_goals:
         detected = await auto_intel.detect_goal_completion(pending_goals)
         for d in detected:
-            db.strategic.update_plan_status(d["goal_id"], "done")
+            db.plans.update_plan_status(d["goal_id"], "done")
             
             # LOG AUTO-COMPLETION
             try:
-                profile = db.identity.get_user_profile(db.get_project_id())
-                db.audit.log_activity(
+                profile = db.profile.get_user_profile(db.get_project_id())
+                db.audits.log_activity(
                     project_id=db.get_project_id(),
                     tool="plan",
                     action=f"Auto-alignment: {d['goal_title'][:40]}{'...' if len(d['goal_title']) > 40 else ''}",
@@ -157,12 +157,12 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         elif any(kw in goal_lower for kw in ["fix", "add", "remove"]): plan_type = "task"
         else: plan_type = "goal"
         
-        db.strategic.save_plan(project_id=project_id, plan_id=goal_id, title=goal_text, plan_type=plan_type, due_date=due_date)
+        db.plans.save_plan(project_id=project_id, plan_id=goal_id, title=goal_text, plan_type=plan_type, due_date=due_date)
         
         # LOG NEW PLAN
         try:
-            profile = db.identity.get_user_profile(db.get_project_id())
-            db.audit.log_activity(
+            profile = db.profile.get_user_profile(db.get_project_id())
+            db.audits.log_activity(
                 project_id=db.get_project_id(),
                 tool="plan",
                 action=f"INTENTION CAPTURE: {goal_text[:50]}{'...' if len(goal_text) > 50 else ''}",
@@ -179,7 +179,7 @@ async def handle_plan(arguments: dict[str, Any]) -> str:
         
         output += f"📎 [INTENTION CAPTURED]: [{plan_type.upper()}] {goal_text}\n"
 
-    all_plans = db.strategic.list_plans(project_id=project_id)
+    all_plans = db.plans.list_plans(project_id=project_id)
     output += format_plan(all_plans)
     
     return output

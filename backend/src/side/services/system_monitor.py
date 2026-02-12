@@ -194,7 +194,7 @@ class SystemLogHandler(logging.Handler):
     """Bridge for ingesting logging.ERROR/WARNING into the Central Store."""
     def __init__(self, auditor: SystemMonitorService):
         super().__init__(level=logging.WARNING)
-        self.auditor = auditor
+        self.auditsor = auditor
 
     def emit(self, record):
         if record.levelno >= logging.WARNING:
@@ -206,4 +206,4 @@ class SystemLogHandler(logging.Handler):
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "causal_score": 0.7 if record.levelno >= logging.ERROR else 0.4
             }
-            self.auditor._enqueue_signal(signal)
+            self.auditsor._enqueue_signal(signal)

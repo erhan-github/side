@@ -21,7 +21,7 @@ async def handle_decide(args: dict[str, Any]) -> str:
     db = get_engine()
     project_id = db.get_project_id()
     
-    if not db.identity.charge_action(project_id, "STRATEGIC_ALIGN"):
+    if not db.profile.charge_action(project_id, "STRATEGIC_ALIGN"):
         return "🚫 [INSUFFICIENT FUNDS]: Strategic Alignment requires 50 SUs. Run 'side login' or upgrade."
     
     # Auto-Inject Strategic Context
@@ -31,7 +31,7 @@ async def handle_decide(args: dict[str, Any]) -> str:
     project_context = intel.gather_context(topic=question, active_file=active_file)
     
     llm = LLMClient()
-    prompt = f"🎯 Strategic Question: {question}\n🛠️ Operational Context: {base_context}\n\nProvide a high-density architectural decision anchored in technical reality."
+    prompt = f"🎯 Strategic Question: {question}\n🛠️ Operational Context: {base_context}\n\nProvide a high-density architectural decision anchored in technical state."
     
     system_prompt = intel.enrich_system_prompt(
         Personas.STRATEGIC_ARCHITECT, 
@@ -58,7 +58,7 @@ async def handle_strategy(args: dict[str, Any]) -> str:
     db = get_engine()
     project_id = db.get_project_id()
     
-    if not db.identity.charge_action(project_id, "STRATEGIC_ALIGN"):
+    if not db.profile.charge_action(project_id, "STRATEGIC_ALIGN"):
         return "🚫 [INSUFFICIENT FUNDS]: Strategic Alignment requires 50 SUs. Run 'side login' or upgrade."
     
     intel = get_ai_memory()

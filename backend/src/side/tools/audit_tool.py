@@ -24,7 +24,7 @@ class AuditTool:
 
     async def scan_codebase(self, query: str) -> str:
         """
-        Recursively scan the codebase for a specific forensic query.
+        Recursively scan the codebase for a specific audit query.
         Example: "Find all hardcoded secrets" or "Check ensuring strict type adherence"
         """
         # 1. Discovery Phase: Find relevant files
@@ -115,15 +115,15 @@ class AuditTool:
         # Extract file paths from content to get context guidance
         context_guidance = self._extract_context_guidance(content)
         
-        from side.prompts import Personas, ForensicsTask, LLMConfigs
+        from side.prompts import Personas, SecurityAuditTask, LLMConfigs
         
-        prompt = ForensicsTask.format(
+        prompt = SecurityAuditTask.format(
             query=query,
             content=content,
             context_guidance=context_guidance
         )
         
-        config = LLMConfigs.get_config("forensics")
+        config = LLMConfigs.get_config("audits")
         
         try:
             response = await self.llm.complete_async(

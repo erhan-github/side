@@ -4,45 +4,59 @@ Provides type-safe, self-documenting data contracts across the entire mesh.
 """
 
 from datetime import datetime
+from enum import Enum
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field, ConfigDict
 
 
+class Severity(str, Enum):
+    """Normalized severity levels across all tools."""
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+    INFO = "INFO"
+
 class Finding(BaseModel):
-    """Audit finding from the intelligence layer."""
+    """Normalized audit finding across all security tools and intelligence."""
     
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
     
     id: str = Field(..., description="Unique finding identifier")
     project_id: str = Field(..., description="Project identifier")
+    tool: str = Field(default="sidelith", description="Source tool (e.g., semgrep, bandit)")
     category: str = Field(..., description="Finding category (security, performance, architecture)")
-    severity: str = Field(..., description="Severity level (critical, high, medium, low, info)")
+    severity: str = Field(..., description="Severity level (CRITICAL, HIGH, MEDIUM, LOW, INFO)")
+    rule_id: Optional[str] = Field(None, description="Tool-specific rule identifier")
     title: str = Field(..., description="Finding title")
     description: str = Field(..., description="Detailed description")
     file_path: Optional[str] = Field(None, description="File path where finding was detected")
-    line_number: Optional[int] = Field(None, description="Line number in file")
+    line_number: Optional[int] = Field(None, alias="line", description="Line number in file")
+    column: Optional[int] = Field(None, description="Column number")
     code_snippet: Optional[str] = Field(None, description="Relevant code snippet")
-    recommendation: Optional[str] = Field(None, description="Recommended fix")
+    recommendation: Optional[str] = Field(None, alias="suggested_fix", description="Recommended fix")
+    message: Optional[str] = Field(None, description="Detailed message (alias for description in some contexts)")
+    cwe_id: Optional[str] = Field(None, description="CWE identifier")
+    owasp_category: Optional[str] = Field(None, description="OWASP Top 10 category")
+    confidence: Optional[str] = Field(None, description="Confidence level (HIGH, MEDIUM, LOW)")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
     
     @classmethod
-    def from_row(cls, row: tuple) -> "Finding":
-        """Create Finding from SQLite row."""
-        return cls(
-            id=row[0],
-            project_id=row[1],
-            category=row[2],
-            severity=row[3],
-            title=row[4],
-            description=row[5],
-            file_path=row[6],
-            line_number=row[7],
-            code_snippet=row[8],
-            recommendation=row[9],
-            metadata=row[10] if isinstance(row[10], dict) else {},
-            created_at=row[11] if len(row) > 11 else datetime.utcnow()
-        )
+    def from_row(cls, row: dict | tuple) -> "Finding":
+        """Create Finding from SQLite row or dict."""
+        if isinstance(row, tuple):
+            data = dict(row)
+        else:
+            data = row
+        
+        # Mapping legacy fields if necessary
+        if "message" in data and "description" not in data:
+            data["description"] = data["message"]
+        if "description" in data and "message" not in data:
+            data["message"] = data["description"]
+            
+        return cls(**data)
 
 
 class Pattern(BaseModel):
@@ -163,7 +177,7 @@ class Identity(BaseModel):
         """Create Identity from SQLite row."""
         if isinstance(row, tuple):
             # This would need mapping indexes if we used fetchall() without row_factory
-            # But IdentityStore uses dict-like access usually.
+            # But IdentityService uses dict-like access usually.
             # However, for core models, we should be robust.
              return cls(**dict(zip(cls.model_fields.keys(), row))) # Dangerous if order differs
         
@@ -319,7 +333,7 @@ class OperationalSetting(BaseModel):
 
 
 class SignalReport(BaseModel):
-    """Deep forensic report from Signal Auditor."""
+    """Deep audit report from Signal Auditor."""
     
     zsh_history: Dict[str, Any] = Field(..., description="Zsh history reachability and metadata")
     os_log: Dict[str, Any] = Field(..., description="OS log reachability")

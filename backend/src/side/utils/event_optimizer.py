@@ -1,5 +1,5 @@
 """
-Event-Driven Optimization Engine - Palantir-Level Performance
+Event-Driven Optimization Engine - Enterprise-Level Performance
 
 This module implements event-driven architecture that listens ONLY at friction points
 where Sidelith adds value in the developer-AI workflow.
@@ -406,6 +406,6 @@ async def handle_error(event: Event):
     """Handle errors - always log."""
     logger.error(f"Error occurred: {event.payload.get('error')}")
     
-    # Log to forensic store
+    # Log to audit store
     # Check if repeated error
     # Suggest fixes

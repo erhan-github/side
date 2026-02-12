@@ -14,7 +14,8 @@ from .base import ContextEngine
 
 logger = logging.getLogger(__name__)
 
-class SessionCache:
+class OperationalStore:
+    """Enterprise-grade Operational Store - Handles Cache, Metadata, and Telemetry."""
     def __init__(self, engine: ContextEngine):
         self.engine = engine
         with self.engine.connection() as conn:
@@ -63,6 +64,18 @@ class SessionCache:
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_telemetry_status ON telemetry_alerts(status)")
+        
+        # ─────────────────────────────────────────────────────────────
+        # REPO_FINGERPRINT - Persistent Cache for project profiles
+        # ─────────────────────────────────────────────────────────────
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS repo_fingerprint (
+                project_id TEXT PRIMARY KEY,
+                data JSON NOT NULL,
+                stats JSON NOT NULL,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
     def get_version(self) -> str:
         """Get the database schema version."""
@@ -225,3 +238,33 @@ class SessionCache:
             stats["db_size_bytes"] = db_path.stat().st_size if db_path.exists() else 0
             stats["db_size_mb"] = stats["db_size_bytes"] / (1024 * 1024)
             return stats
+
+    def save_fingerprint(self, project_id: str, data: Dict, stats: Dict) -> None:
+        """Saves repo fingerprint to avoid re-scanning."""
+        with self.engine.connection() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO repo_fingerprint (project_id, data, stats, last_updated)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                """,
+                (project_id, json.dumps(data), json.dumps(stats))
+            )
+
+    def get_fingerprint(self, project_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieves cached fingerprinted state."""
+        with self.engine.connection() as conn:
+            row = conn.execute(
+                "SELECT data, stats, last_updated FROM repo_fingerprint WHERE project_id = ?",
+                (project_id,)
+            ).fetchone()
+            if row:
+                return {
+                    "data": json.loads(row["data"]),
+                    "stats": json.loads(row["stats"]),
+                    "last_updated": row["last_updated"]
+                }
+        return None
+
+
+# Export names for backward compatibility and service standardization
+SessionCache = OperationalStore

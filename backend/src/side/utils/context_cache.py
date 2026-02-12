@@ -70,7 +70,7 @@ class ContextCache:
             
             # Metrics (summary only, details in DB)
             "metrics": {
-                "plans_count": len(self.db.strategic.list_plans(project_id=project_id)),
+                "plans_count": len(self.db.plans.list_plans(project_id=project_id)),
                 "facts_count": len(self._get_recent_facts(project_id)),
                 "last_activity": self._get_last_activity_time(project_id)
             }
@@ -132,7 +132,7 @@ class ContextCache:
     def _get_strategic_timeline(self, project_id: str) -> list:
         """Get strategic plans as timeline."""
         try:
-            plans = self.db.strategic.list_plans(project_id=project_id)
+            plans = self.db.plans.list_plans(project_id=project_id)
             return [
                 {
                     "id": p.get("id"),
@@ -148,7 +148,7 @@ class ContextCache:
     def _get_recent_facts(self, project_id: str) -> list:
         """Get recent facts for context."""
         try:
-            facts = self.db.strategic.recall_facts("", project_id, limit=10)
+            facts = self.db.plans.recall_facts("", project_id, limit=10)
             return [
                 {
                     "content": f.get("content"),
@@ -162,14 +162,14 @@ class ContextCache:
     def _get_fingerprint(self, project_id: str) -> dict:
         """Get project fingerprint."""
         try:
-            return self.db.identity.get_project_fingerprint(project_id) or {}
+            return self.db.profile.get_project_fingerprint(project_id) or {}
         except Exception:
             return {}
     
     def _get_last_activity_time(self, project_id: str) -> Optional[str]:
         """Get last activity timestamp."""
         try:
-            activities = self.db.forensic.get_recent_activities(project_id, limit=1)
+            activities = self.db.audits.get_recent_activities(project_id, limit=1)
             if activities:
                 return activities[0].get("created_at")
             return None

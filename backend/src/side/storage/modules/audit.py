@@ -21,7 +21,7 @@ class AuditService:
             self.init_schema(conn)
 
     def init_schema(self, conn):
-        """Initialize forensic tables."""
+        """Initialize audit tables."""
         # ─────────────────────────────────────────────────────────────
         # CORE TABLE 7: AUDITS - Audit History
         # ─────────────────────────────────────────────────────────────
@@ -151,7 +151,7 @@ class AuditService:
             )
         """)
         # ─────────────────────────────────────────────────────────────
-        # [LAYER 4] CORE TABLE 14: OBSERVATIONS - Strategic Facts
+        #  CORE TABLE 14: OBSERVATIONS - Strategic Facts
         # ─────────────────────────────────────────────────────────────
         conn.execute("""
             CREATE TABLE IF NOT EXISTS observations (
@@ -227,7 +227,7 @@ class AuditService:
                 session_id = getattr(act, 'session_id', act.payload.get('session_id'))
                 parent_id = getattr(act, 'parent_id', act.payload.get('parent_id'))
 
-                # [CAUSAL THREADING]: If no parent_id provided, link to the last activity in this session
+                # Link to the last activity in this session if parent_id not provided
                 if parent_id is None and session_id:
                     cursor = conn.execute(
                         "SELECT id FROM activities WHERE session_id = ? ORDER BY id DESC LIMIT 1",
@@ -246,7 +246,7 @@ class AuditService:
                     (project_id, tool, action, cost_tokens, tier, sealed_payload, session_id, parent_id)
                 )
                 
-                # [GLOBAL LOBE]: Trigger shadow distillation on high-friction events
+                # Trigger Shadow Distillation on high-friction events
                 if tool == "LOG_MONITOR" or "error" in action.lower():
                     if hasattr(self.engine, 'global_lobe'):
                         self.engine.global_lobe.trigger_distillation(session_id, {
@@ -278,7 +278,7 @@ class AuditService:
             results = []
             for row in rows:
                 data = dict(row)
-                # [UNSEAL TRANSPARENCY]: Intelligence requires decrypted payloads
+                # Intelligence requires decrypted payloads
                 if data.get('payload'):
                     try:
                         payload_raw = shield.unseal(data['payload'])
@@ -321,7 +321,7 @@ class AuditService:
             
             timeline = []
             for row in activities:
-                # Use simplified representation for Context Projection
+                # Use simplified representation for Context Snapshot
                 timeline.append({
                     "type": "SIGNAL",
                     "data": {

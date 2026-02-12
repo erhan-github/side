@@ -236,11 +236,11 @@ async def handle_developer_debug(event: Event):
     from side.storage import get_activity_ledger
     ledger = get_activity_ledger()
 
-    # Forensic time-travel
-    # Query forensic store for file history
+    # Audit time-travel
+    # Query audit store for file history
     history = audit.get_recent_activities(project_id, limit=5)
     
-    # Suggest fixes (Placeholder for V1)
+    # Identifies remediations for the detected friction point
     # in V2 this would query a vector DB
     ledger.log_activity(
         project_id=project_id,
@@ -353,7 +353,7 @@ async def handle_file_structure_change(event: Event):
 @event_bus.on(FrictionPoint.ERROR_OCCURRED, EventPriority.CRITICAL)
 async def handle_error(event: Event):
     """
-    Handle error - always log for forensics.
+    Handle error - always log for audits.
     
     Value:
     - Build error history

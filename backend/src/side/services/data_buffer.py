@@ -15,7 +15,7 @@ class DataBuffer:
     """
     
     def __init__(self, stores: Dict[str, Any], flush_interval: float = 2.0, max_buffer_size: int = 1000):
-        self.stores = stores # {'strategic': strat, 'forensic': for, 'operational': op}
+        self.stores = stores # {'strategic': strat, 'audit': for, 'operational': op}
         self.flush_interval = flush_interval
         self.max_buffer_size = max_buffer_size
         

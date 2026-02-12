@@ -27,7 +27,7 @@ class ProjectIgnore:
         "coverage", "tmp", "temp", "logs"
     }
 
-    # Palantir-level default configuration
+    # High-Integrity default configuration
     DEFAULT_SIDEIGNORE_CONTENT = """# Sidelith Ignore File
 # Defines the boundaries of Sidelith's awareness.
 # Format: gitignore-style glob patterns.

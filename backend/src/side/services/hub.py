@@ -29,9 +29,9 @@ async def get_strategic_hub_data(db: Any) -> Dict[str, Any]:
     logger.info(f"🏛️ [HUB]: Fetching Strategic Hub data for {project_id}")
     
     # 1. Collect Data from Database (Single Source of Truth)
-    plans = db.strategic.list_plans(project_id=project_id)
-    activities = db.audit.get_recent_activities(project_id=project_id, limit=5)
-    audits = db.audit.get_recent_audits(project_id=project_id, limit=10)
+    plans = db.plans.list_plans(project_id=project_id)
+    activities = db.audits.get_recent_activities(project_id=project_id, limit=5)
+    audits = db.audits.get_recent_audits(project_id=project_id, limit=10)
     
     # 2. Process data
     friction = [a for a in audits if a.get('severity') in ['CRITICAL', 'HIGH', 'VIOLATION']]
@@ -67,7 +67,7 @@ async def get_strategic_friction(db: Any) -> List[Dict[str, Any]]:
     This provides the "Strategic Friction & Audit Remediation" snapshot for the Hub.
     """
     project_id = db.get_project_id()
-    audits = db.audit.get_recent_audits(project_id=project_id, limit=20)
+    audits = db.audits.get_recent_audits(project_id=project_id, limit=20)
     
     friction = []
     for issue in audits:

@@ -59,7 +59,7 @@ class LLMClient:
         
         # Lean Architecture
         self.engine = ContextEngine()
-        self.identity = IdentityService(self.engine)
+        self.profile = IdentityService(self.engine)
         self.operational = SessionCache(self.engine)
         
         self._load_dotenv()
@@ -85,7 +85,7 @@ class LLMClient:
                 # AIRGAP TIER CHECK
                 # We must query the identity store directly to verify entitlement
                 project_id = ContextEngine.get_project_id(".")
-                profile = self.identity.get_user_profile(project_id)
+                profile = self.profile.get_user_profile(project_id)
                 tier = profile.tier if profile else "hobby"
                 
                 # Only 'airgapped' or 'enterprise' allowed (Enterprise might get local too)
@@ -165,7 +165,7 @@ class LLMClient:
         4. User Preference (Settings Toggle)
         """
         project_id = ContextEngine.get_project_id(".")
-        profile = self.identity.get_user_profile(project_id)
+        profile = self.profile.get_user_profile(project_id)
         tier = profile.tier if profile else "trial"
         
         # 1. AIRGAP: Force local, no exceptions
@@ -288,8 +288,8 @@ class LLMClient:
                 in_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
                 out_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
                 
-                # Use AccountingStore to record the task
-                engine.accounting.deduct_task_su(
+                # Use Ledger to record the task
+                engine.ledger.deduct_task_su(
                     project_id=project_id,
                     task_type="raw_llm_inference",
                     llm_tokens_in=in_tokens,
@@ -344,7 +344,7 @@ class LLMClient:
                 # Check for High Tech entitlement before switching to Ollama
                 if next_provider == LLMProvider.OLLAMA:
                     project_id = ContextEngine.get_project_id(".")
-                    profile = self.identity.get_user_profile(project_id)
+                    profile = self.profile.get_user_profile(project_id)
                     tier = profile.get("tier", "trial") if profile else "trial"
                     if tier not in ["airgapped", "enterprise"]:
                          logger.critical(f"❌ [PROVIDER FAILURE]: Total Failure. {e}")

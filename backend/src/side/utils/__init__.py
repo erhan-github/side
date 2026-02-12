@@ -9,6 +9,7 @@ from .retry import ResilientHTTPClient, retry_with_backoff
 from .crypto import shield
 from .ignore_store import get_ignore_store
 from .event_optimizer import event_bus
+from .labels import AuditLabel
 
 __all__ = [
     # Error handling
@@ -32,4 +33,7 @@ __all__ = [
     
     # Event Management
     "event_bus",
+
+    # Visual Identity
+    "AuditLabel",
 ]

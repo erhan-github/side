@@ -59,7 +59,7 @@ class TerminalMonitor:
             cwd = parts[2]
 
             # Log to Activity Ledger
-            self.db.forensic.log_activity(
+            self.db.audits.log_activity(
                 project_id=self.project_id,
                 tool="terminal",
                 action="TERMINAL_EXEC",

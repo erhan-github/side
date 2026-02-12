@@ -134,7 +134,7 @@ class ResilientHTTPClient:
         """
         Initialize resilient HTTP client with 'Smart Timeout' logic.
         
-        [Hyper-Ralph] DNS Blackhole Fix: We use a multi-stage timeout
+        [High-Integrity] DNS Blackhole Fix: We use a multi-stage timeout
         to detect DNS failures in <500ms rather than waiting for 10s.
         """
         self.timeout = timeout

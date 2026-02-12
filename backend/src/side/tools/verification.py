@@ -2,7 +2,7 @@
 from typing import Any, Dict
 import time
 from dataclasses import dataclass
-from side.tools.forensics_tool import ForensicsTool
+from side.tools.audit_tool import AuditTool
 from side.qa.generator import TestGenerator
 from pathlib import Path
 
@@ -19,14 +19,11 @@ class VerificationTool:
         finding_type = args.get("finding_type")
         file_path = args.get("file_path")
         
-        finding_type = args.get("finding_type")
-        file_path = args.get("file_path")
-        
-        # 1. Run targeted scan using ForensicsTool (LLM-based)
-        tool = ForensicsTool(Path("."))
+        # 1. Run targeted scan using AuditTool (LLM-based)
+        tool = AuditTool(Path("."))
         query = f"Check specifically for '{finding_type}' issues in {file_path or 'the codebase'}."
         
-        report = await tool.scan_codebase(query)
+        report, findings = await tool.scan_codebase(query)
         
         # 2. Heuristic check of the report
         if "No issues found" in report or "Clean" in report:

@@ -17,7 +17,7 @@ class MetricsCalculator:
         self.buffer = buffer
         self.config = LLMConfigs.get_config("value_estimation")
 
-    async def simulate_resolution_impact(self, problem: str, resolution: str):
+    async def estimate_resolution_impact(self, problem: str, resolution: str):
         """
         Estimates the cost savings of a fix.
         """
@@ -43,7 +43,7 @@ class MetricsCalculator:
                     "action": "value_estimation",
                     "payload": {
                         "problem": problem,
-                        "simulated_impact": data,
+                        "estimated_impact": data,
                         "timestamp": datetime.now(timezone.utc).isoformat()
                     }
                 })

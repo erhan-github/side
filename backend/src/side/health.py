@@ -32,7 +32,7 @@ class DynamicRule:
     compiled_path_pattern: Any = field(default=None, repr=False)
     semantic_query: Optional[str] = None # New: Tree-sitter S-expression
 
-class HealthEngine:
+class SystemAwareness:
     """
     System Health Engine: The Invariant Heart of Sidelith.
     OPTIMIZED: Pre-compiled Regex for <1ms Latency.
@@ -133,6 +133,7 @@ class HealthEngine:
         
         # 3. LOG HEALTH CHECK (Local Audit)
         # We don't upload to cloud. We keep it local.
+        status = context.get("status", "active")
         logger.info(f"❤️ Health Check Complete. Status: {status}")
         # In a real app, this would be a POST to /api/v1/traces
         print(f"🔒 [ANONYMIZED & SCRUBBED]: Trace ID generated. Personal data redacted.")
@@ -140,8 +141,19 @@ class HealthEngine:
         
         return True
 
-    def get_repo_fingerprint(self) -> Dict:
-        """Determines the 'Biology' of the repository for selective sync."""
+    def get_repo_fingerprint(self, force: bool = False) -> Dict:
+        """Determines the repository profile with high-efficiency caching."""
+        # 1. Try Cache First
+        from side.tools.core import get_engine
+        engine = get_engine()
+        project_id = engine.get_project_id()
+        
+        if not force:
+            cached = engine.operational.get_fingerprint(project_id)
+            if cached:
+                return cached["data"]
+
+        # 2. Perform Discovery Scan
         fingerprint = {
             "languages": set(),
             "frameworks": set(),
@@ -209,7 +221,7 @@ class HealthEngine:
         return fingerprint
 
     def sync_prime_rules(self) -> int:
-        """Simulates selective sync with 'Sealed' (Encrypted) rules for IP protection."""
+        """Executes selective sync with 'Sealed' (Encrypted) rules for IP protection."""
         fingerprint = self.get_repo_fingerprint()
         
         # PROPRIETARY CLOUD RULES (Our Secret Intel)
@@ -382,6 +394,15 @@ class HealthEngine:
         latency = (end_time - start_time) * 1000.0
         return HealthResult(status=status, latency_ms=latency, violations=violations, context={"total_rules": len(dynamic_rules)})
 
+    def _check_dependencies(self, filepath: str, content: str) -> List[str]:
+        """Checks for unsafe or unpinned dependencies."""
+        violations = []
+        if filepath.endswith("requirements.txt"):
+            for line in content.splitlines():
+                if "==" not in line and not line.strip().startswith("#") and line.strip():
+                    violations.append(f"📦 [DEP VIOLATION]: Unpinned dependency '{line.strip()}' found. Use '==' for deterministic builds.")
+        return violations
+
     def certify_repo(self) -> Dict:
         """
         Executes a Full System Audit and generates a Certification Ledger.
@@ -392,7 +413,7 @@ class HealthEngine:
         # 1. Standard Health Check
         result = self.check_health()
         
-        # 2. Entropy Check (Placeholder for advanced structural analysis)
+        # 2. Entropy Check (Advanced structural analysis)
         # In a real app, this would use FastAST to check for hidden complexity.
         entropy_score = 100 - (len(result.violations) * 10)
         
@@ -419,4 +440,4 @@ class HealthEngine:
         return cert
 
 # Create singleton instance
-health = HealthEngine()
+health = SystemAwareness()

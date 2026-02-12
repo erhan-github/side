@@ -44,7 +44,7 @@ class Activity(SQLModel, table=True):
     created_at: str = Field(index=True, default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class Finding(SQLModel, table=True):
-    """Forensic Findings (replaces 'audits' table)."""
+    """Audit Findings (replaces 'audits' table)."""
     __tablename__ = "audits"
 
     id: Optional[int] = Field(default=None, primary_key=True)

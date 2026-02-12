@@ -1,5 +1,5 @@
 """
-Forensics Package - OSS Security Tool Integration.
+Audits Package - OSS Security Tool Integration.
 
 This package integrates proven open-source security tools:
 - Semgrep (universal, primary)
