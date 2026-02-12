@@ -54,9 +54,9 @@ const OPPORTUNITIES = [
     {
         id: "CQ-003",
         emoji: "✍️",
-        title: "Split Monolithic `simple_db.py`",
-        desc: "File exceeds 1,900 lines. High maintenance risk.",
-        prompt: "Refactor `backend/src/side/storage/simple_db.py` by extracting the schema initialization and query helper methods into separate modules within a `storage/` package.",
+        title: "Audit Modular ContextEngine",
+        desc: "Verify cross-module DNA consistency.",
+        prompt: "Review `backend/src/side/storage/modules/base.py` and its interaction with domain sub-stores to ensure strict isolation and forensic integrity after the modular refactor.",
         impact: "Maintainability"
     }
 ];

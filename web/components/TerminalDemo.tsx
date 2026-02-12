@@ -21,7 +21,7 @@ const commands = [
     { cmd: "side query 'Why Postgres?'", output: "   [09:16:05] 🧠 Querying System Registry..." },
     { cmd: "", output: "   >> FACT: Switched to Postgres on Jan 12 (Commit a7f2)" },
     { cmd: "", output: "   >> REASON: 'SQLite lock contention during bulk writes'" },
-    { cmd: "", output: "   >> SOURCE: MONOLITH.md (Line 450)" },
+    { cmd: "", output: "   >> SOURCE: ARCHITECTURE.md (Line 450)" },
 ];
 
 export function TerminalDemo() {

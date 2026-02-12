@@ -23,8 +23,8 @@ export function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/changelog" className="text-sm text-white/40 hover:text-white transition-colors">
-                                    Changelog
+                                <Link href="/security" className="text-sm text-white/40 hover:text-white transition-colors">
+                                    Security
                                 </Link>
                             </li>
                         </ul>
@@ -35,12 +35,13 @@ export function Footer() {
                         <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4">Company</h3>
                         <ul className="space-y-3">
                             <li>
-                                <Link href="/about" className="text-sm text-white/40 hover:text-white transition-colors">
-                                    About
-                                </Link>
+                                <a href="https://github.com/erhan-github/side" target="_blank" rel="noopener noreferrer" className="text-sm text-white/40 hover:text-white transition-colors flex items-center gap-2">
+                                    <Github className="w-4 h-4" />
+                                    Repository
+                                </a>
                             </li>
                             <li>
-                                <a href="mailto:hello@sidelith.com" className="text-sm text-white/40 hover:text-white transition-colors">
+                                <a href="mailto:support@sidelith.com" className="text-sm text-white/40 hover:text-white transition-colors">
                                     Contact
                                 </a>
                             </li>
