@@ -14,16 +14,16 @@ from rich.status import Status
 from side.models.core import Finding, Activity
 from .ux import UXProtocol
 
-# [DESIGN]: System Theme
+# [DESIGN]: System Theme - Minimalist & High-Fidelity
 SYSTEM_THEME = Theme({
-    "info": "cyan",
+    "info": "white",
     "warning": "yellow",
     "error": "red bold",
-    "success": "green bold",
-    "finding": "magenta",
-    "activity": "blue",
-    "header": "gold1 bold",
-    "footer": "grey50 italic",
+    "success": "cyan bold",
+    "finding": "cyan",
+    "activity": "bright_black",
+    "header": "white bold",
+    "footer": "grey37 italic",
 })
 
 class CLIProtocol(UXProtocol):
@@ -33,54 +33,50 @@ class CLIProtocol(UXProtocol):
         self.console = console or Console(theme=SYSTEM_THEME)
 
     def display_finding(self, finding: Finding) -> None:
-        """Display a audit finding in a structured panel."""
+        """Display an audit finding with minimalist structure."""
         severity_map = {
             "critical": "red bold",
             "warning": "yellow",
-            "low": "blue",
-            "info": "cyan"
+            "low": "white",
+            "info": "white dim"
         }
         color = severity_map.get(finding.severity.lower(), "white")
         
-        content = f"[bold]{finding.title}[/bold]\n"
-        content += f"[italic]{finding.description}[/italic]\n"
-        if finding.file_path:
-            content += f"\n[dim]File: {finding.file_path}"
-            if finding.line_number:
-                content += f":{finding.line_number}"
-            # Add line range if available
-            content += "[/dim]"
+        # Vertical Rule Style
+        self.console.print(f"\n[bold {color}]| {finding.title.upper()}[/bold {color}]")
+        self.console.print(f"| [italic]{finding.description}[/italic]")
         
-        title = f"Finding: {finding.category.upper()}"
-        self.console.print(Panel(content, title=f"[{color}]{title}[/{color}]", border_style=color.split()[0]))
+        if finding.file_path:
+            location = f"{finding.file_path}"
+            if finding.line_number:
+                location += f":{finding.line_number}"
+            self.console.print(f"| [dim]Location: {location}[/dim]")
 
     def display_activity(self, activity: Activity) -> None:
-        """Display a system activity."""
-        self.console.print(f"🧬 [activity]{activity.tool}[/activity]: {activity.action} [dim]({activity.cost_tokens} SUs)[/dim]")
+        """Display system activity with subtle tracing."""
+        self.console.print(f" [activity]→[/activity] {activity.action} [dim]({activity.tool})[/dim]")
 
     def display_status(self, message: str, level: str = "info") -> None:
-        """Display a status message."""
+        """Display a status message with consistent markers."""
         prefix = {
-            "info": "ℹ️ ",
-            "warning": "⚠️ ",
-            "error": "❌ ",
-            "success": "✅ "
-        }.get(level, "")
+            "info": "  ",
+            "warning": "! ",
+            "error": "✕ ",
+            "success": "✓ "
+        }.get(level, "  ")
         self.console.print(f"{prefix}[{level}]{message}[/{level}]")
 
     def display_header(self, title: str, subtitle: Optional[str] = None) -> None:
-        """Display a UI header with ASCII art or styling."""
+        """Display a clean UI header."""
         self.console.print("\n")
-        self.console.print(f"[header]{'=' * 60}[/header]")
-        self.console.print(f"[header]  {title.upper()}[/header]")
+        self.console.print(f"[header]{title.upper()}[/header]")
         if subtitle:
-            self.console.print(f"  [dim]{subtitle}[/dim]")
-        self.console.print(f"[header]{'=' * 60}[/header]")
+            self.console.print(f"[dim]{subtitle}[/dim]")
+        self.console.print("")
 
     def display_footer(self) -> None:
-        """Display the System Footer."""
-        self.console.print(f"[footer]{'-' * 60}[/footer]")
-        self.console.print("[footer]  SIDELITH | Detective AI | System Core[/footer]\n")
+        """Display System Footer."""
+        self.console.print(f"[footer]SIDELITH SYSTEM CORE[/footer]\n")
 
     def render_table(self, title: str, columns: List[str], rows: List[List[Any]]) -> None:
         """Render a data table."""

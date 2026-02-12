@@ -18,16 +18,12 @@ def handle_wizard(args):
     """
     
     # [HEADER]
-    ux.console.print("\n")
-    ux.console.print(Panel.fit(
-        "[bold white]SIDELITH SETUP WIZARD[/bold white]\n"
-        "[dim]Initializing AI Context Layer...[/dim]",
-        border_style="cyan"
-    ))
+    # [HEADER]
+    ux.display_header("Sidelith Setup Wizard", subtitle="Initializing AI Context Layer")
     time.sleep(1)
 
     # --- STEP 1: AUTHENTICATION ---
-    ux.console.print("\n[bold cyan]Step 1/5: Authentication[/bold cyan]")
+    ux.console.print("[bold]1/5[/bold] Authentication")
     
     # Check current identity
     engine = get_engine()
@@ -54,7 +50,7 @@ def handle_wizard(args):
     time.sleep(0.5)
 
     # --- STEP 2: PROJECT DETECTION ---
-    ux.console.print("\n[bold cyan]Step 2/5: Project Detection[/bold cyan]")
+    ux.console.print("\n[bold]2/5[/bold] Project Detection")
     
     cwd = Path.cwd()
     matches = []
@@ -80,7 +76,7 @@ def handle_wizard(args):
     time.sleep(0.5)
     
     # --- STEP 3: INITIAL INDEXING ---
-    ux.console.print("\n[bold cyan]Step 3/5: Initial Indexing[/bold cyan]")
+    ux.console.print("\n[bold]3/5[/bold] Initial Indexing")
     ux.console.print("[dim]This creates your project's memory. Takes ~30 seconds.[/dim]")
     
     from side.intel.tree_indexer import run_context_scan as run_fractal_scan
@@ -110,7 +106,7 @@ def handle_wizard(args):
     time.sleep(0.5)
 
     # --- STEP 4: IDE INTEGRATION ---
-    ux.console.print("\n[bold cyan]Step 4/5: IDE Integration[/bold cyan]")
+    ux.console.print("\n[bold]4/5[/bold] IDE Integration")
     
     # Detect standard IDEs
     found_ides = []
@@ -155,7 +151,7 @@ def handle_wizard(args):
     time.sleep(0.5)
 
     # --- STEP 5: FIRST CONTEXT TEST ---
-    ux.console.print("\n[bold cyan]Step 5/5: Verification[/bold cyan]")
+    ux.console.print("\n[bold]5/5[/bold] Verification")
     
     if "Cursor" in found_ides:
         ux.console.print("Let's verify everything works.")
@@ -171,12 +167,7 @@ def handle_wizard(args):
         ux.console.print("Setup is complete. Open your IDE to verify Sidelith is active.")
 
     ux.console.print("\n")
-    ux.console.print(Panel.fit(
-        "[green]Setup Complete! 🎉[/green]\n\n"
-        "Your AI tools now remember your project.\n\n"
-        "Next steps:\n"
-        "- Ask your IDE about your codebase architecture\n"
-        "- Run [bold]side watch[/bold] to monitor changes in real-time",
-        title="SUCCESS",
-        border_style="green"
-    ))
+    ux.display_header("Setup Complete", subtitle="Your AI tools now remember your project")
+    ux.display_status("Ask your IDE about your codebase architecture")
+    ux.display_status("Run 'side watch' to monitor changes in real-time")
+    ux.display_footer()

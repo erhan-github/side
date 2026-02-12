@@ -2,7 +2,11 @@
 Core Intelligence Engine - SQLite Persistence Layer.
 """
 
-import sqlite3
+try:
+    # HIJACK: Use pysqlite3-binary if available for guaranteed FTS5/JSON1 support
+    import pysqlite3 as sqlite3
+except ImportError:
+    import sqlite3
 import logging
 import os
 from contextlib import contextmanager
@@ -190,6 +194,10 @@ class ContextEngine:
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA synchronous=NORMAL")
         conn.execute("PRAGMA foreign_keys=ON")
+        
+        # [PERFORMANCE]: Palantir-level monorepo optimizations
+        conn.execute("PRAGMA threads=4")
+        conn.execute("PRAGMA mmap_size=30000000000") # 30GB address space (virtual memory only)
         return conn
     
     def _create_encrypted_connection(self) -> sqlite3.Connection:

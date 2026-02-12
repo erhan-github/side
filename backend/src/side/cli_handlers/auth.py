@@ -46,7 +46,7 @@ def handle_login(args):
     REDIRECT_URI = f"http://localhost:{PORT}/callback"
     LOGIN_URL = f"{AUTH_DOMAIN}/login?cli_redirect={REDIRECT_URI}"
     
-    print("🔐 [AUTH]: Initiating Authentication...")
+    ux.display_status("Initiating Authentication...", level="info")
     ux.display_status(f"Opening browser: {LOGIN_URL}", level="info")
     webbrowser.open(LOGIN_URL)
     
