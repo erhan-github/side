@@ -65,7 +65,7 @@ class PublicPatternStore:
                     id, 
                     intent, 
                     keywords, 
-                    tokenize='porter uni'
+                    tokenize='porter unicode61'
                 )
             """)
             conn.execute("""
